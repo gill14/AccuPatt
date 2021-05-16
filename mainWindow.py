@@ -3,16 +3,12 @@ from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtGui as qtg
 from PyQt5 import uic
-import pandas as pd
-import matplotlib.pyplot as plt
-from pathlib import Path
 
-from appInfo import AppInfo
+from editFlyin import EditFlyin
 from editApplicatorInfo import EditApplicatorInfo
 from editAircraft import EditAircraft
 from editSpraySystem import EditSpraySystem
 from editTrims import EditTrims
-from dataAccuPatt import DataAccuPatt
 from fileTools import FileTools
 from readString import ReadString
 from stringPlotter import StringPlotter
@@ -29,6 +25,10 @@ class MainWindow(baseclass):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
+        #Load in Settings or use defaults
+        self.settings = qtc.QSettings('BG Application Consulting','AccuPatt')
+        self.currentDirectory = self.settings.value('dir', type=str)
+
         #Declare a new SeriesData Container
         self.seriesData = SeriesData()
 
@@ -37,6 +37,7 @@ class MainWindow(baseclass):
         self.ui.actionCreate_Report.triggered.connect(self.makeReport)
 
         #Setup AppInfo Tab
+        self.ui.buttonEditFlyinInfo.clicked.connect(self.editFlyin)
         self.ui.buttonEditApplicatorInfo.clicked.connect(self.editApplicatorInfo)
         self.ui.buttonEditAircraft.clicked.connect(self.editAircraft)
         self.ui.buttonEditSpraySystem.clicked.connect(self.editSpraySystem)
@@ -68,12 +69,13 @@ class MainWindow(baseclass):
         #Get the file
         #fname, filter_ = qtw.QFileDialog.getOpenFileName(self, 'Open file', 'home', "AccuPatt files (*.xlsx)")
         #dA = dataAccuPatt(fname)
-        fname = "/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt 2.x.x/N802ET 03.xlsx"
+        fname = "/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt/Testing/N802ET 03.xlsx"
 
         #Load in the values
         self.seriesData = FileTools.load_from_accupatt_1_file(file=fname)
 
         #Populate AppInfo tab
+        self.updateFlyinUI()
         self.updateApplicatorInfo(self.seriesData.info)
         self.updateAircraft(self.seriesData.info)
         self.updateSpraySystem(self.seriesData.info)
@@ -120,6 +122,24 @@ class MainWindow(baseclass):
             mplCanvasRT=self.ui.plotWidgetRacetrack.canvas,
             mplCanvasBF=self.ui.plotWidgetBackAndForth.canvas,
             tableView=self.ui.tableWidgetCV)
+
+    def editFlyin(self):
+        #Create popup and send current appInfo vals to popup
+        e = EditFlyin(self.currentDirectory, self.seriesData.info, self)
+        #Connect Slot to retrieve Vals back from popup
+        e.applied.connect(self.updateFlyinUI)
+        #Start Loop
+        e.exec_()
+
+    def updateFlyinUI(self, newDirectory=None):
+        if not newDirectory == None:
+            self.settings.setValue('dir', newDirectory)
+            self.currentDirectory = newDirectory
+        self.ui.labelSaveFolder.setText(self.currentDirectory)
+        self.ui.labelEvent.setText(self.seriesData.info.flyin_name)
+        self.ui.labelLocation.setText(self.seriesData.info.flyin_location)
+        self.ui.labelDate.setText(self.seriesData.info.flyin_date)
+        self.ui.labelAnalyst.setText(self.seriesData.info.flyin_analyst)
 
     def editApplicatorInfo(self):
         #Create popup and send current appInfo vals to popup

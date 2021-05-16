@@ -4,6 +4,11 @@ from dataclasses import dataclass
 class AppInfo:
     """A Container class for storing Application Info"""
 
+    flyin_name: str = ""
+    flyin_location: str = ""
+    flyin_date: str = ""
+    flyin_analyst: str = ""
+
     pilot: str = ""
     business: str = ""
     street: str = ""

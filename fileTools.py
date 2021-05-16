@@ -20,6 +20,11 @@ class FileTools:
         dExcitationData = data.getExcitationData()
         #initialize SeriesData object to store all info
         s = SeriesData()
+        #Pull *Flyin* data from Fly-In Tab
+        s.info.flyin_name = dFlyin.at[0,0]
+        s.info.flyin_location = dFlyin.at[1,0]
+        s.info.flyin_date = dFlyin.at[2,0]
+        s.info.flyin_analyst = dFlyin.at[3,0]
         #Pull *Applicator Info* data from AppInfo Tab
         s.info.pilot = dAircraft.at[0,'Value']
         s.info.business = dAircraft.at[1,'Value']

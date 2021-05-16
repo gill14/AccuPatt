@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1114</width>
+    <width>1098</width>
     <height>622</height>
    </rect>
   </property>
@@ -48,7 +48,7 @@
        <enum>QTabWidget::North</enum>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>0</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideRight</enum>
@@ -149,17 +149,23 @@
                    </font>
                   </property>
                   <property name="text">
-                   <string>Event Name:</string>
+                   <string>Name:</string>
                   </property>
                  </widget>
                 </item>
                 <item>
                  <widget class="QLabel" name="labelEvent">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>16777215</height>
+                   </size>
                   </property>
                   <property name="font">
                    <font>
@@ -173,6 +179,9 @@
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="wordWrap">
+                   <bool>true</bool>
                   </property>
                  </widget>
                 </item>
@@ -364,30 +373,39 @@
                   </property>
                  </widget>
                 </item>
-                <item>
-                 <widget class="QLabel" name="labelSaveFolder">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <pointsize>12</pointsize>
-                    <weight>75</weight>
-                    <bold>true</bold>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string>TextLabel</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
                </layout>
+              </item>
+              <item>
+               <widget class="QLabel" name="labelSaveFolder">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>160</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+                <property name="wordWrap">
+                 <bool>true</bool>
+                </property>
+               </widget>
               </item>
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_34">
@@ -405,7 +423,7 @@
                  </spacer>
                 </item>
                 <item>
-                 <widget class="QToolButton" name="buttonEditApplicatorInfo_2">
+                 <widget class="QToolButton" name="buttonEditFlyinInfo">
                   <property name="font">
                    <font>
                     <weight>75</weight>
@@ -426,7 +444,7 @@
                    <string notr="true">background-color: rgba(0, 152, 0, 153)</string>
                   </property>
                   <property name="text">
-                   <string>Edit Applicator Info</string>
+                   <string>Edit Fly-In Info</string>
                   </property>
                   <property name="icon">
                    <iconset>
@@ -1910,7 +1928,7 @@
                    <string notr="true">background-color: rgba(0, 152, 0, 153)</string>
                   </property>
                   <property name="text">
-                   <string>Edit Applicator Info</string>
+                   <string>Edit Series</string>
                   </property>
                   <property name="icon">
                    <iconset>
@@ -3278,7 +3296,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1114</width>
+     <width>1098</width>
      <height>22</height>
     </rect>
    </property>
