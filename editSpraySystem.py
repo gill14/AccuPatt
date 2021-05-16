@@ -20,9 +20,7 @@ class EditSpraySystem(baseclass):
         # Your code will go here
         self.ui = Ui_Form()
         self.ui.setupUi(self)
-        #Load from Aircraft Excel file
-        #self.df_map = pd.read_excel(self.nozzleFile, sheet_name=None)
-        #self.nozzles = self.df_map.keys()
+        #Load from AtomizationModel class
         self.nozzles = AtomizationModel.nozzles
 
         #Init comboboxes

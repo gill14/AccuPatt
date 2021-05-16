@@ -137,10 +137,9 @@ class ReportMaker:
         t_observables.wrapOn(c, 50, 30)
         t_observables.drawOn(c, 255, 620)
 
-
         #Droplet Spectrum
         droplet_spectrum = [
-            [TTR('AATRU Model'), 'Category:', seriesData.calc_dsc()],
+            [TTR('USDA Model'), 'Category:', seriesData.calc_dsc()],
             ['', 'VMD:', f'{seriesData.calc_dv05()} μm'],
             ['', 'Dv0.1:', f'{seriesData.calc_dv01()} μm'],
             ['', 'Dv0.9:', f'{seriesData.calc_dv09()} μm'],
