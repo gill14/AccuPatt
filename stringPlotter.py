@@ -6,16 +6,6 @@ from scipy.stats import variation
 
 class StringPlotter:
 
-    """def drawRaw(mplCanvas, x, y):
-        ax = mplCanvas.ax
-        print(x)
-        ax.clear()
-        x = x[50:1000]
-        y = y[50:1000]
-        ax.plot(x, y)
-
-        mplCanvas.draw()"""
-
     def drawIndividual(mplCanvas, pattern):
         d = pattern.data
         dm = pattern.dataMod
