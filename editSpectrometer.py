@@ -100,23 +100,40 @@ class EditSpectrometer(baseclass):
         try:
             self.settings.setValue('target_excitation_wavelength', int(self.ui.lineEditEx.text()))
         except:
-            print('unable to set target_excitation_wavelength to settings')
+            self._show_validation_error(
+                'Entered TARGET EXCITATION WAVELENGTH cannot be converted to an INTEGER')
             return
         try:
             self.settings.setValue('target_emission_wavelength', int(self.ui.lineEditEm.text()))
         except:
-            print('unable to set target_emission_wavelength to settings')
+            self._show_validation_error(
+                'Entered TARGET EMISSION WAVELENGTH cannot be converted to an INTEGER')
             return
         try:
             self.settings.setValue('integration_time_ms', int(self.ui.lineEditIntegrationTime.text()))
         except:
-            print('unable to set integration_time_ms to settings')
+            self._show_validation_error(
+                'Entered INTEGRATION TIME cannot be converted to an INTEGER')
             return
+        
         #All Valid, go ahead and accept and let main know to update vals
         self.applied.emit()
 
         self.accept()
         self.close()
+
+    def _show_validation_error(self, message):
+        msg = qtw.QMessageBox()
+        msg.setIcon(qtw.QMessageBox.Critical)
+        msg.setText("Input Validation Error")
+        msg.setInformativeText(message)
+        #msg.setWindowTitle("MessageBox demo")
+        #msg.setDetailedText("The details are as follows:")
+        msg.setStandardButtons(qtw.QMessageBox.Ok)
+        result = msg.exec()
+        if result == qtw.QMessageBox.Ok:
+            self.raise_()
+            self.activateWindow()
 
 if __name__ == '__main__':
     app = qtw.QApplication(sys.argv)

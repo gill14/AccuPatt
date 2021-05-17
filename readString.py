@@ -41,29 +41,7 @@ class ReadString(baseclass):
         self.ui.setupUi(self)
         #Import Settings
         self.settings = qtc.QSettings('BG Application Consulting','AccuPatt')
-        #Serial Port
-        if not self.settings.contains('serial_port_device'):
-            self.settings.setValue('serial_port_device', '')
-        #Flightline Length
-        if not self.settings.contains('flightline_length'):
-            self.settings.setValue('flightline_length', 150)
-        #Flightline Length Units
-        if not self.settings.contains('flightline_length_units'):
-            self.settings.setValue('flightline_length_units', 'ft')
-        #Advance Speed
-        if not self.settings.contains('advance_speed'):
-            self.settings.setValue('advance_speed', 1.70)
-        #Excitation Wavelength
-        if not self.settings.contains('target_excitation_wavelength'):
-            self.settings.setValue('target_excitation_wavelength', 525)
-        #Emission Wavelength
-        if not self.settings.contains('target_emission_wavelength'):
-            self.settings.setValue('target_emission_wavelength', 575)
-        #Integration Time
-        if not self.settings.contains('integration_time_ms'):
-            self.settings.setValue('integration_time_ms', 100)
-        self.settings.sync()
-        #
+        #Make ref to seriesData/passData for later updating in on_applied
         self.passData = passData
         #Pass Info fields
         self.ui.labelPass.setText(passData.name)
@@ -144,16 +122,16 @@ class ReadString(baseclass):
                 return
         #Inform spectrometer of new int time
         self.spec.integration_time_micros(self.settings.value(
-            'integration_time_ms') * 1000)
+            'integration_time_ms', defaultValue=100, type=int) * 1000)
 
         #Populate Spectrometer labels
         self.ui.labelSpec.setText(f"Spectrometer: {self.spec.model}")
         self.ui.labelExcitation.setText(
-            f"Excitation: {self.settings.value('target_excitation_wavelength')} nm")
+            f"Excitation: {self.settings.value('target_excitation_wavelength', defaultValue=525, type=int)} nm")
         self.ui.labelEmission.setText(
-            f"Emission: {self.settings.value('target_emission_wavelength')} nm")
+            f"Emission: {self.settings.value('target_emission_wavelength', defaultValue=575, type=int)} nm")
         self.ui.labelIntegrationTime.setText(
-            f"Integration Time: {self.settings.value('integration_time_ms')} ms")
+            f"Integration Time: {self.settings.value('integration_time_ms', defaultValue=100, type=int)} ms")
         self.checkReady()
 
 
@@ -167,7 +145,7 @@ class ReadString(baseclass):
 
     def setupStringDrive(self):
         try:
-            self.ser = serial.Serial(self.settings.value('serial_port_device'),
+            self.ser = serial.Serial(self.settings.value('serial_port_device', defaultValue='', type=str),
                 baudrate=9600, timeout=1)
             self.ser_connected = True
         except:
@@ -178,11 +156,11 @@ class ReadString(baseclass):
         self.ui.labelStringDrive.setText(f'String Drive Port: {self.ser.name}')
         print(self.ser.name)
         self.ui.labelStringLength.setText("String Length: "
-            f"{self.strip_num(self.settings.value('flightline_length', type=float))} "
-            f"{self.settings.value('flightline_length_units')}")
+            f"{self.strip_num(self.settings.value('flightline_length', defaultValue=150, type=float))} "
+            f"{self.settings.value('flightline_length_units', defaultValue='ft', type=str)}")
         self.ui.labelStringVelocity.setText(f"String Velocity: "
-            f"{self.strip_num(self.settings.value('advance_speed',type=float))} "
-            f"{self.settings.value('flightline_length_units')}/sec")
+            f"{self.strip_num(self.settings.value('advance_speed', defaultValue=1.70, type=float))} "
+            f"{self.settings.value('flightline_length_units', defaultValue = 'ft', type=str)}/sec")
         #Enale/Disable manual drive buttons
         self.ui.buttonManualReverse.setEnabled(self.ser_connected)
         self.ui.buttonManualForward.setEnabled(self.ser_connected)
@@ -241,14 +219,14 @@ class ReadString(baseclass):
         #clear plot and re-initialize np arrays
         self.clear()
         #Initialize needed values for plotting
-        self.fl = self.settings.value('flightline_length',type=float)
-        it_sec = self.settings.value('integration_time_ms', type=float) / 1000
-        len_per_sec = self.settings.value('advance_speed', type=float)
+        self.fl = self.settings.value('flightline_length', defaultValue=150.0, type=float)
+        it_sec = self.settings.value('integration_time_ms', defaultValue=100.0, type=float) / 1000
+        len_per_sec = self.settings.value('advance_speed', defaultValue=1.70, type=float)
         self.len_per_frame = it_sec * len_per_sec
         self.emissionPix = np.abs(self.spec.wavelengths()-self.settings.value(
-            'target_emission_wavelength')).argmin()
+            'target_emission_wavelength', defaultValue=575, type=int)).argmin()
         self.excitationPix = np.abs(self.spec.wavelengths()-self.settings.value(
-            'target_excitation_wavelength')).argmin()
+            'target_excitation_wavelength', defaultValue=525, type=int)).argmin()
         #Start String Drive (forward)
         self.ser.write(self.forward_start.encode())
         #Initialize timer
@@ -303,7 +281,7 @@ class ReadString(baseclass):
         #Pattern
         p.setData(self.x, self.y, self.y_ex)
 
-        #All Valid, go ahead and accept and let main know to update vals
+        #All Valid, go ahead and accept and let main know to update vals in UI
         self.applied.emit(p)
 
         self.accept()

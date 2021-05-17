@@ -24,28 +24,6 @@ class EditStringDrive(baseclass):
 
         #Load in Settings or use defaults
         self.settings = qtc.QSettings('BG Application Consulting','AccuPatt')
-        #Serial Port
-        if self.settings.contains('serial_port_device'):
-            self.serial_port_device = self.settings.value('serial_port_device')
-        else:
-            self.serial_port_device = ''
-        #Flightline Length
-        if self.settings.contains('flightline_length'):
-            self.flightline_length = self.settings.value('flightline_length', type=float)
-        else:
-            self.flightline_length = 150
-        #Flightline Length Units
-        if self.settings.contains('flightline_length_units'):
-            self.flightline_length_units = self.settings.value('flightline_length_units')
-        else:
-            self.flightline_length_units = 'ft'
-        #Advance Speed
-        if self.settings.contains('advance_speed'):
-            self.advance_speed = self.settings.value('advance_speed', type=float)
-        else:
-            self.advance_speed = 1.70
-
-
 
         #Hook up serial port combobox signal
         self.ui.comboBoxSerialPort.currentTextChanged[str].connect(self.on_sp_selected)
@@ -57,12 +35,18 @@ class EditStringDrive(baseclass):
 
         #Init flightline Length
         self.ui.comboBoxFlightlineLengthUnits.currentTextChanged[str].connect(self.on_fl_units_selected)
-        self.ui.lineEditFlightlineLength.setText(self.strip_num(self.flightline_length))
+        self.ui.lineEditFlightlineLength.setText(self.strip_num(
+            self.settings.value('flightline_length', defaultValue=150.0, type=float)
+        ))
         self.ui.comboBoxFlightlineLengthUnits.addItems(self.units_length)
-        self.ui.comboBoxFlightlineLengthUnits.setCurrentText(self.flightline_length_units)
+        self.ui.comboBoxFlightlineLengthUnits.setCurrentText(
+            self.settings.value('flightline_length_units', defaultValue='ft', type=str)
+        )
 
         #Init advance Speed
-        self.ui.lineEditSpeed.setText(self.strip_num(self.advance_speed))
+        self.ui.lineEditSpeed.setText(self.strip_num(
+            self.settings.value('advance_speed', defaultValue=1.70, type=float)
+        ))
 
         #Utilize built-in signals
         self.ui.buttonBox.accepted.connect(self.on_applied)
@@ -77,7 +61,9 @@ class EditStringDrive(baseclass):
         for item in list:
             self.ui.comboBoxSerialPort.addItems([item.device])
         #Check if saved port in box
-        index = self.ui.comboBoxSerialPort.findText(self.serial_port_device)
+        index = self.ui.comboBoxSerialPort.findText(
+            self.settings.value('serial_port_device', defaultValue='', type=str)
+        )
         self.ui.comboBoxSerialPort.setCurrentIndex(index)
 
     def on_sp_selected(self):
@@ -105,25 +91,36 @@ class EditStringDrive(baseclass):
         if not self.ui.comboBoxSerialPort.currentText() == '':
             self.settings.setValue('serial_port_device',self.ui.comboBoxSerialPort.currentText())
         try:
-            self.settings.setValue('flightline_length',self.ui.lineEditFlightlineLength.text())
+            self.settings.setValue('flightline_length',float(self.ui.lineEditFlightlineLength.text()))
         except:
-            print('unable to set flightline_length to settings')
+            self._show_validation_error(
+                'Entered FLIGHTLINE LENGTH cannot be converted to a NUMBER')
             return
+        self.settings.setValue('flightline_length_units',self.ui.comboBoxFlightlineLengthUnits.currentText())
         try:
-            self.settings.setValue('flightline_length_units',self.ui.comboBoxFlightlineLengthUnits.currentText())
+            self.settings.setValue('advance_speed',float(self.ui.lineEditSpeed.text()))
         except:
-            print('unable to set flightline_length_units to settings')
-            return
-        try:
-            self.settings.setValue('advance_speed',self.ui.lineEditSpeed.text())
-        except:
-            print('unable to set advance_speed to settings')
+            self._show_validation_error(
+                'Entered ADVANCE SPEED cannot be converted to a NUMBER')
             return
         #All Valid, go ahead and accept and let main know to update vals
         self.applied.emit()
 
         self.accept()
         self.close()
+
+    def _show_validation_error(self, message):
+        msg = qtw.QMessageBox()
+        msg.setIcon(qtw.QMessageBox.Critical)
+        msg.setText("Input Validation Error")
+        msg.setInformativeText(message)
+        #msg.setWindowTitle("MessageBox demo")
+        #msg.setDetailedText("The details are as follows:")
+        msg.setStandardButtons(qtw.QMessageBox.Ok)
+        result = msg.exec()
+        if result == qtw.QMessageBox.Ok:
+            self.raise_()
+            self.activateWindow()
 
 if __name__ == '__main__':
     app = qtw.QApplication(sys.argv)
