@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 from io import BytesIO
 from reportlab.pdfgen import canvas
 from reportlab.graphics import renderPDF
@@ -208,11 +207,6 @@ class ReportMaker:
         t.wrapOn(c, 100, 250)
         t.drawOn(c, 450, 45)
 
-        #Test Table
-
-
-
-
         c.showPage()
         c.save()
 
@@ -237,78 +231,3 @@ class TTR(Flowable):       #TableTextRotate
     def wrap(self,aW,aH):
          canv = self.canv
          return canv._leading, canv.stringWidth(self.text)
-
-def test():
-    fig = plt.figure(figsize=(6.5, 2))
-    plt.plot([1,2,3,4])
-    plt.ylabel('some numbers')
-    plt.tight_layout()
-
-    imgdata = BytesIO()
-    fig.savefig(imgdata, format='svg')
-    imgdata.seek(0)  # rewind the data
-
-    drawing=svg2rlg(imgdata)
-
-    c = canvas.Canvas('test2.pdf',pagesize=letter)
-    width, height = letter
-    c.setLineCap(2)
-    c.setFont("Helvetica", 8)
-
-    #Applicator Info Box
-    c.line(20,705,175,705)
-    c.line(175,705,175,775)
-    c.line(175,775,20,775)
-    c.line(20,775,20,705)
-    c.drawString(25, 760, "Pilot")
-    c.drawString(25, 750, "Business")
-    c.drawString(25, 740, "Address Line 1")
-    c.drawString(25, 730, "Address Line 2")
-    c.drawString(25, 720, "Phone Number")
-    c.drawString(25, 710, "Email")
-
-    #Aircraft Info Box
-    x,y = 190,705
-    w,h = 100,60
-    c.line(x,y,x,y+h)
-    c.line(x,y,x+15,y)
-    c.line(x,y+h,x+15,y+h)
-    c.drawString(x+5, y+h-15, "Registration #")
-    c.drawString(x+5, y+h-25, "Aircraft Make")
-    c.drawString(x+5, y+h-35, "Aircraft Model")
-    c.drawString(x+5, y+h-45, "Wingspan")
-    c.drawString(x+5, y+h-55, "Winglets?")
-
-    #Spray System
-    x,y = 20,620
-    w,h = 100,70
-    c.line(x,y,x,y+h)
-    c.line(x,y,x+15,y)
-    c.line(x,y+h,x+15,y+h)
-    c.drawString(x+5, y+h-15, "Target Swath")
-    c.drawString(x+5, y+h-25, "Target Rate")
-    c.drawString(x+5, y+h-35, "Boom Pressure")
-    c.drawString(x+5, y+h-45, "Boom Width %")
-    c.drawString(x+5, y+h-55, "Boom Drop")
-    c.drawString(x+5, y+h-65, "Nozzle Spacing")
-
-    #Nozzles
-    x,y = 135,620
-    w,h = 100,70
-    c.line(x,y,x,y+h)
-    c.line(x,y,x+15,y)
-    c.line(x,y+h,x+15,y+h)
-    c.drawString(x+5, y+h-15, "Nozzle Set #1")
-    c.drawString(x+5, y+h-25, "Nozzle Type @ Def Angle")
-    c.drawString(x+5, y+h-35, "Nozzle Size xQuant")
-    c.drawString(x+5, y+h-45, "Nozzle Set #2")
-    c.drawString(x+5, y+h-55, "Nozzle Type @ Def Angle")
-    c.drawString(x+5, y+h-65, "Nozzle Size xQuant")
-
-    renderPDF.draw(drawing,c, 10, 255)
-    renderPDF.draw(drawing,c, 10, 445)
-
-    c.showPage()
-    c.save()
-
-#test()

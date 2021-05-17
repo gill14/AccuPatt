@@ -1,8 +1,10 @@
 import pandas as pd
 import numpy as np
+import json, dataclasses, os
 
 from dataAccuPatt import DataAccuPatt
 from seriesData import SeriesData
+from appInfo import AppInfo
 from passData import Pass
 
 class FileTools:
@@ -107,12 +109,45 @@ class FileTools:
                 else:
                     #If pass not created from series data, make one here
                     p = Pass(name=name)
-                p.trimL = dPatternInfo.at[0,column_name]
-                p.trimR = dPatternInfo.at[1,column_name]
-                p.trimV = dPatternInfo.at[2,column_name]
+                p.trim_l = dPatternInfo.at[0,column_name]
+                p.trim_r = dPatternInfo.at[1,column_name]
+                p.trim_v = dPatternInfo.at[2,column_name]
                 p.data = dPatternData[['loc',column_name]]
                 p.data_ex = dExcitationData[['loc',column_name]]
 
                 s.passes[name] = p
 
         return s
+
+    def load_from_accupatt_2_file(directory):
+        seriesData = SeriesData()
+        for f in os.listdir(directory):
+            if f.endswith('.series'):
+                #Load in AppInfo from the .series file
+                with open(directory+os.path.sep+f, 'r') as j:
+                    seriesData.info = AppInfo(**json.loads(j.read()))
+            if f.endswith('.pass'):
+                #Load in each Pass from the .pass files
+                with open(directory+os.path.sep+f, 'r') as j:
+                    p = Pass(**json.loads(j.read()))
+                    #data(_ex,_mod) are loaded as dicts, conver to df's
+                    p.data = pd.DataFrame.from_dict(p.data)
+                    p.data_ex = pd.DataFrame.from_dict(p.data_ex)
+                    seriesData.passes[p.name] = p
+        return seriesData
+
+    def writeToJSONFile(path, fileName, seriesData):
+        #Make a folder for series if needed
+        folder = path + os.path.sep + fileName
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        #Make the .series file
+        filePathNameWExt = folder + os.path.sep + fileName + '.series'
+        with open(filePathNameWExt, 'w') as fp:
+            json.dump(dataclasses.asdict(seriesData.info), fp, indent=4)
+        #Make the .pass files
+        for key, value in seriesData.passes.items():
+            filePathNameWExt = folder + os.path.sep + fileName + ' - ' + key + '.pass'
+            with open(filePathNameWExt, 'w') as fp:
+                json.dump(value.__dict__, fp, indent=4, default=lambda df: json.loads(df.to_json()))
+

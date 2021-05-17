@@ -7,31 +7,40 @@ class Pass:
     c = {'kph_mph': 0.621371,
         'kn_mph': 1.15078}
 
-    def __init__(self, name=''):
+    def __init__(self, name='',
+            ground_speed=None, ground_speed_units='mph',
+            spray_height=None, spray_height_units='ft',
+            pass_heading=None, wind_direction=None,
+            wind_speed=None, wind_speed_units='mph',
+            temperature = None, temperature_units='°F',
+            humidity=None, include_in_composite=True,
+            excitation_wav=None, emission_wav=None,
+            trim_l=0, trim_r=0, trim_v=0,
+            data_ex=None, data=None, data_mod=None):
         #Info Stuff
         self.name = name
-        self.ground_speed = None
-        self.ground_speed_units =  'mph'
-        self.spray_height = None
-        self.spray_height_units = 'ft'
-        self.pass_heading = None
-        self.wind_direction = None
-        self.wind_speed = None
-        self.wind_speed_units = 'mph'
-        self.temperature = None
-        self.temperature_units = '°F'
-        self.humidity = None
-        #Pattern stuff
-        self.data_ex = None
-        self.data = None #Holds original Data
-        self.dataMod = None #Holds data with all requested modifications
-        self.trimL = 0
-        self.trimR = 0
-        self.trimV = 0
-        self.excitationWav = 0
-        self.emissionWav = 0
+        self.ground_speed = ground_speed
+        self.ground_speed_units =  ground_speed_units
+        self.spray_height = spray_height
+        self.spray_height_units = spray_height_units
+        self.pass_heading = pass_heading
+        self.wind_direction = wind_direction
+        self.wind_speed = wind_speed
+        self.wind_speed_units = wind_speed_units
+        self.temperature = temperature
+        self.temperature_units = temperature_units
+        self.humidity = humidity
         #Include in Composite by default
-        self.includeInComposite = True
+        self.include_in_composite = include_in_composite
+        #Pattern stuff
+        self.excitation_wav = excitation_wav
+        self.emission_wav = emission_wav
+        self.trim_l = trim_l
+        self.trim_r = trim_r
+        self.trim_v = trim_v
+        self.data = data #Holds original Data
+        self.data_mod = data_mod #Holds data with all requested modifications
+        self.data_ex = data_ex #Holds Excitation Data
 
     def modifyData(self, isCentroid=True, isSmooth=True):
         d = self.data.copy()
@@ -43,24 +52,24 @@ class Pass:
         #Smooth it
         if isSmooth:
             d = self.smooth(d)
-        #Set dataMod for plot use
-        self.dataMod = d.copy()
+        #Set data_mod for plot use
+        self.data_mod = d.copy()
 
     def trimLRV(self, dataIntermediate):
         name = self.name
         d = dataIntermediate
         #Trim Left
-        d.loc[:self.trimL-1,[name]] = -1
+        d.loc[d.index[:self.trim_l],name] = -1
         #Trim Right
-        d.loc[(d[name].size-self.trimR):,[name]] = -1
+        d.loc[d.index[(-1-self.trim_r):],name] = -1
         #Find new min inside untrimmed area
-        min = d[d>-1].loc[:,[name]].min(skipna=True)
+        min = d[d>-1].loc[d.index[:],name].min(skipna=True)
         #subtract min from all points
-        d[name] = d.loc[:,[name]].sub(min,axis=1)
+        d[name] = d.loc[d.index[:],name].sub(min,axis=1)
         #clip all negative values (from trimmed areas) to 0
-        d[name] = d[[name]].clip(lower=0)
+        d[name] = d[name].clip(lower=0)
         #Trim Vertical
-        d[name] = d.loc[:,[name]].sub(self.trimV,axis=1)
+        d[name] = d.loc[d.index[:],name].sub(self.trim_v,axis=1)
         #Set modified data in pattern object
         return d
 
@@ -93,10 +102,10 @@ class Pass:
         pattern_ex = np.array([x_data, y_ex_data])
         self.data_ex = pd.DataFrame(data=pattern_ex, columns=['loc', self.name])
 
-    def setTrims(self, trimL, trimR, trimV):
-        self.trimL = trimL
-        self.trimR = trimR
-        self.trimV = trimV
+    def setTrims(self, trim_l, trim_r, trim_v):
+        self.trim_l = trim_l
+        self.trim_r = trim_r
+        self.trim_v = trim_v
 
     '''
     The methods below are used to convert and calculate info values as needed

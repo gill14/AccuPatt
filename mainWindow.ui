@@ -3314,9 +3314,11 @@
    </property>
    <widget class="QMenu" name="menuImport">
     <property name="title">
-     <string>Import</string>
+     <string>File</string>
     </property>
     <addaction name="actionImportAccuPattFile"/>
+    <addaction name="actionSave"/>
+    <addaction name="actionOpen"/>
    </widget>
    <widget class="QMenu" name="menuNew_Series">
     <property name="title">
@@ -3367,6 +3369,16 @@
   <action name="actionEdit_Logo">
    <property name="text">
     <string>Edit Logo</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open</string>
    </property>
   </action>
  </widget>

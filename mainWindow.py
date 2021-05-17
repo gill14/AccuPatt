@@ -34,6 +34,8 @@ class MainWindow(baseclass):
 
         #Setup MenuBar
         self.ui.actionImportAccuPattFile.triggered.connect(self.importAccuPatt)
+        self.ui.actionSave.triggered.connect(self.saveFile)
+        self.ui.actionOpen.triggered.connect(self.openFile)
         self.ui.actionCreate_Report.triggered.connect(self.makeReport)
 
         #Setup AppInfo Tab
@@ -60,7 +62,7 @@ class MainWindow(baseclass):
         self.ui.spinBoxSimulatedSwathPasses.valueChanged.connect(self.updateSimulations)
 
         #For Testing Expedience
-        self.importAccuPatt()
+        #self.importAccuPatt()
 
         # Your code ends here
         self.show()
@@ -74,6 +76,24 @@ class MainWindow(baseclass):
         #Load in the values
         self.seriesData = FileTools.load_from_accupatt_1_file(file=fname)
 
+        self.update_all_ui()
+
+        #Update StatusBar
+        self.ui.statusbar.showMessage(f'Current File: {fname}')
+
+    def saveFile(self):
+        FileTools.writeToJSONFile(
+            path=self.currentDirectory,
+            fileName=self.seriesData.info.regnum+' '+self.seriesData.info.series,
+            seriesData=self.seriesData
+        )
+
+    def openFile(self):
+        directory = qtw.QFileDialog.getExistingDirectory(self, 'Select Folder')
+        self.seriesData = FileTools.load_from_accupatt_2_file(directory=directory)
+        self.update_all_ui()
+
+    def update_all_ui(self):
         #Populate AppInfo tab
         self.updateFlyinUI()
         self.updateApplicatorInfo(self.seriesData.info)
@@ -106,12 +126,8 @@ class MainWindow(baseclass):
         self.ui.horizontalSliderSimulatedSwath.setMinimum(round(minn))
         self.ui.horizontalSliderSimulatedSwath.setMaximum(round(maxx))
 
-
         #Test new plot methods
         self.updatePlots()
-
-        #Update StatusBar
-        self.ui.statusbar.showMessage(f'Current File: {fname}')
 
     def makeReport(self):
         r = ReportMaker()
@@ -258,7 +274,7 @@ class MainWindow(baseclass):
         if item.text() not in self.seriesData.passes.keys():
             return
         p = self.seriesData.passes[item.text()]
-        p.includeInComposite = (item.checkState() == qtc.Qt.Checked)
+        p.include_in_composite = (item.checkState() == qtc.Qt.Checked)
         self.updatePlots()
 
     def updatePlots(self):

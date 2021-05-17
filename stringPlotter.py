@@ -8,7 +8,7 @@ class StringPlotter:
 
     def drawIndividual(mplCanvas, pattern):
         d = pattern.data
-        dm = pattern.dataMod
+        dm = pattern.data_mod
 
         ax = mplCanvas.ax
         ax.clear()
@@ -59,7 +59,7 @@ class StringPlotter:
 
         ax2 = mplCanvas2.ax
         ax2.clear()
-        ax2.plot(pattern.dataMod['loc'], pattern.dataMod[pattern.name])
+        ax2.plot(pattern.data_mod['loc'], pattern.data_mod[pattern.name])
 
         mplCanvas2.draw()
 
@@ -71,8 +71,8 @@ class StringPlotter:
         ax.set_xlabel(f'Location ({series.info.swath_units})')
         for key in series.passes.keys():
             p = series.passes[key]
-            if p.includeInComposite:
-                l, = ax.plot(p.dataMod['loc'], p.dataMod[key])
+            if p.include_in_composite:
+                l, = ax.plot(p.data_mod['loc'], p.data_mod[key])
                 l.set_label(p.name)
         ax.set_ylim(ymin=0)
         ax.legend()
@@ -85,7 +85,7 @@ class StringPlotter:
         ax.set_yticks([])
         ax.set_xlabel(f'Location ({series.info.swath_units})')
 
-        l, = ax.plot(series.patternAverage.dataMod['loc'], series.patternAverage.dataMod['Average'], color="black", linewidth=3)
+        l, = ax.plot(series.patternAverage.data_mod['loc'], series.patternAverage.data_mod['Average'], color="black", linewidth=3)
         l.set_label('Average')
         ax.set_ylim(ymin=0)
         ax.legend()
@@ -96,13 +96,13 @@ class StringPlotter:
         #Get adjusted swath from series object
         swathWidth = series.info.swath_adjusted
         #Find number of points per swathwidth for shifting
-        loc = series.patternAverage.dataMod['loc'].copy()
+        loc = series.patternAverage.data_mod['loc'].copy()
         center = loc[(loc>=-swathWidth/2) & (loc<=swathWidth/2)]
         pts = center.count().item()
-        loc = pd.to_numeric(series.patternAverage.dataMod['loc'].copy())
+        loc = pd.to_numeric(series.patternAverage.data_mod['loc'].copy())
         #Quick identifiers for readability
-        a = series.patternAverage.dataMod['Average'].copy()
-        ai = series.patternAverageInverted.dataMod['AverageInverted'].copy()
+        a = series.patternAverage.data_mod['Average'].copy()
+        ai = series.patternAverageInverted.data_mod['AverageInverted'].copy()
 
         axes = [mplCanvasRacetrack.ax, mplCanvasBackAndForth.ax]
         for ax in axes:
@@ -164,13 +164,13 @@ class StringPlotter:
 
     def calcCV(series, numAdjascentPassesPerSide, swathWidth, isBackAndForth):
         #Find number of points per swathwidth for shifting
-        loc = series.patternAverage.dataMod['loc'].copy()
+        loc = series.patternAverage.data_mod['loc'].copy()
         center = loc[(loc>=-swathWidth/2) & (loc<=swathWidth/2)]
         pts = center.count().item()
-        #loc = pd.to_numeric(series.patternAverage.dataMod['loc'].copy())
+        #loc = pd.to_numeric(series.patternAverage.data_mod['loc'].copy())
         #Quick identifiers for readability
-        a = series.patternAverage.dataMod['Average'].copy()
-        ai = series.patternAverageInverted.dataMod['AverageInverted'].copy()
+        a = series.patternAverage.data_mod['Average'].copy()
+        ai = series.patternAverageInverted.data_mod['AverageInverted'].copy()
 
         sum = a.copy()
         for i in range(numAdjascentPassesPerSide):

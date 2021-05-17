@@ -32,7 +32,7 @@ class SeriesData:
         areas = {}
         areasa = []
         for key, value in self.passes.items():
-            v = np.trapz(y=value.dataMod[key], x=value.dataMod['loc'], axis=0)
+            v = np.trapz(y=value.data_mod[key], x=value.data_mod['loc'], axis=0)
             areas[key] = v
             areasa.append(v)
         scalers = {}
@@ -41,7 +41,7 @@ class SeriesData:
             scalers[k] = maxx/areas[k]
         for key, value in self.passes.items():
             p = self.passes[key]
-            p.dataMod[key] = p.dataMod[key].multiply(scalers[key])
+            p.data_mod[key] = p.data_mod[key].multiply(scalers[key])
 
     def averagePattern(self):
         #df placeholder
@@ -50,11 +50,11 @@ class SeriesData:
         d = pd.DataFrame()
         for key, value in self.passes.items():
             #Only include passes checked from listview
-            if value.includeInComposite:
+            if value.include_in_composite:
                 #add loc column to placeholder, will be overwritten each time with identical values
-                average['loc'] = value.dataMod['loc']
+                average['loc'] = value.data_mod['loc']
                 #add each modified pattern data to temp df
-                d[key] = value.dataMod[key]
+                d[key] = value.data_mod[key]
         if not average.empty:
             #take the column-wise average and add that series to the placeholder
             average['Average'] = d.mean(axis='columns')
