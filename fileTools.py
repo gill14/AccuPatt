@@ -38,7 +38,7 @@ class FileTools:
         s.info.email = dAircraft.at[7,'Value']
         #Pull *Aircraft* data from AppInfo Tab
         s.info.regnum = dAircraft.at[8,'Value']
-        s.info.series = dAircraft.at[9,'Value']
+        
         s.info.make = dAircraft.at[10,'Value']
         s.info.model = dAircraft.at[11,'Value']
         s.info.set_wingspan(dAircraft.at[25,'Value'])
@@ -78,6 +78,10 @@ class FileTools:
             s.info.boom_width_units = 'm'
             s.info.boom_drop_units = 'cm'
             s.info.nozzle_spacing_units = 'cm'
+
+        #Pull *Series* data from file
+        s.info.series = dAircraft.at[9,'Value']
+        s.info.notes = dAircraft.at[31, 'Value']
 
         #Clear any stored individual passes
         s.passes.clear()

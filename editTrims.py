@@ -4,6 +4,7 @@ from PyQt5 import QtGui as qtg
 from PyQt5 import uic
 
 import copy
+import sys
 
 from passData import Pass
 from stringPlotter import StringPlotter
@@ -34,15 +35,15 @@ class EditTrims(baseclass):
         self.ui.verticalSliderTrimV.setMinimum(0)
         self.ui.verticalSliderTrimV.setMaximum(maxv)
         #Set initial values on sliders
-        self.ui.horizontalSliderTrimL.setSliderPosition(pattern.trimL)
-        self.ui.horizontalSliderTrimR.setSliderPosition(pattern.trimR)
-        self.ui.verticalSliderTrimV.setSliderPosition(pattern.trimV)
+        self.ui.horizontalSliderTrimL.setSliderPosition(pattern.trim_l)
+        self.ui.horizontalSliderTrimR.setSliderPosition(pattern.trim_r)
+        self.ui.verticalSliderTrimV.setSliderPosition(pattern.trim_v)
         #Setup signals for sliders
-        self.ui.horizontalSliderTrimL.valueChanged[int].connect(self.updateTrimL)
+        self.ui.horizontalSliderTrimL.valueChanged[int].connect(self.updatetrim_l)
         self.ui.horizontalSliderTrimL.sliderReleased.connect(self.redrawPlots)
-        self.ui.horizontalSliderTrimR.valueChanged[int].connect(self.updateTrimR)
+        self.ui.horizontalSliderTrimR.valueChanged[int].connect(self.updatetrim_r)
         self.ui.horizontalSliderTrimR.sliderReleased.connect(self.redrawPlots)
-        self.ui.verticalSliderTrimV.valueChanged[int].connect(self.updateTrimV)
+        self.ui.verticalSliderTrimV.valueChanged[int].connect(self.updatetrim_v)
         self.ui.verticalSliderTrimV.sliderReleased.connect(self.redrawPlots)
 
         self.ui.buttonBox.accepted.connect(self.on_applied)
@@ -57,23 +58,23 @@ class EditTrims(baseclass):
         # Your code ends here
         self.show()
 
-    def updateTrimL(self, trimL):
+    def updatetrim_l(self, trim_l):
         p = self.pattern_OG
-        p.trimL = trimL
-        self.ui.labelTrimL.setText(f"Trim Left = {trimL}")
+        p.trim_l = trim_l
+        self.ui.labeltrim_l.setText(f"Trim Left = {trim_l}")
 
-    def updateTrimR(self, trimR):
+    def updatetrim_r(self, trim_r):
         p = self.pattern_OG
-        p.trimR = trimR
-        self.ui.labelTrimR.setText(f"Trim Right = {trimR}")
+        p.trim_r = trim_r
+        self.ui.labeltrim_r.setText(f"Trim Right = {trim_r}")
 
-    def updateTrimV(self, trimV):
+    def updatetrim_v(self, trim_v):
         p = self.pattern_OG
-        p.trimV = trimV
-        self.ui.labelTrimV.setText(f"Trim Vertical = {trimV}")
+        p.trim_v = trim_v
+        self.ui.labeltrim_v.setText(f"Trim Vertical = {trim_v}")
 
     def redrawPlots(self):
-        print(f"Trim L = {self.pattern_OG.trimL}, Trim R = {self.pattern_OG.trimR}, Trim V = {self.pattern_OG.trimV}")
+        print(f"Trim L = {self.pattern_OG.trim_l}, Trim R = {self.pattern_OG.trim_r}, Trim V = {self.pattern_OG.trim_v}")
         self.pattern_OG.modifyData(
             isCentroid=self.isAlignCentroid,
             isSmooth=self.isSmooth)
@@ -85,7 +86,7 @@ class EditTrims(baseclass):
 
     def on_applied(self):
         #Accept changes already made and notify requestor
-        self.pattern.setTrims(trimL=self.pattern_OG.trimL, trimR=self.pattern_OG.trimR, trimV=self.pattern_OG.trimV)
+        self.pattern.setTrims(trim_l=self.pattern_OG.trim_l, trim_r=self.pattern_OG.trim_r, trim_v=self.pattern_OG.trim_v)
         self.applied.emit()
         self.accept
 
@@ -93,7 +94,6 @@ class EditTrims(baseclass):
         self.reject
 
 if __name__ == '__main__':
-    app = QtGui.QApplication([])
-    gui = NewWindow()
-    gui.show()
-    app.exec_()
+    app = qtw.QApplication(sys.argv)
+    w = EditTrims(Pass(), True, True)
+    sys.exit(app.exec_())

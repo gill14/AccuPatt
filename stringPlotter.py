@@ -22,12 +22,12 @@ class StringPlotter:
         #find what will be min after L/R trim
         dd = d.copy()
         #Trim Left
-        dd.loc[:pattern.trimL-1,[pattern.name]] = -1
+        dd.loc[:pattern.trim_l-1,[pattern.name]] = -1
         #Trim Right
-        dd.loc[(dd[pattern.name].size-pattern.trimR):,[pattern.name]] = -1
+        dd.loc[(dd[pattern.name].size-pattern.trim_r):,[pattern.name]] = -1
         #Find new min inside untrimmed area
         min = dd[dd>-1].loc[:,[pattern.name]].min(skipna=True)
-        #Remove min from pattern to accurately show how trimV will be applied later
+        #Remove min from pattern to accurately show how trim_v will be applied later
         d[pattern.name] = d.loc[:,[pattern.name]].sub(min, axis=1)
         d[pattern.name] = d[[pattern.name]].clip(lower=0)
 
@@ -35,9 +35,9 @@ class StringPlotter:
         ax1.clear()
         ax1.plot(d['loc'],d[pattern.name])
 
-        xL = pd.to_numeric(d.iloc[:pattern.trimL,0])
-        xR = pd.to_numeric(d.iloc[d[pattern.name].size-pattern.trimR:,0])
-        xC = pd.to_numeric(d.iloc[pattern.trimL:d[pattern.name].size-pattern.trimR,0])
+        xL = pd.to_numeric(d.iloc[:pattern.trim_l,0])
+        xR = pd.to_numeric(d.iloc[d[pattern.name].size-pattern.trim_r:,0])
+        xC = pd.to_numeric(d.iloc[pattern.trim_l:d[pattern.name].size-pattern.trim_r,0])
         y1 = d[pattern.name].min()
         y2 = d[pattern.name].max()
 
@@ -50,17 +50,17 @@ class StringPlotter:
             print('right fill')
             print(xR)
             ax1.fill_between(xR, y1, y2, facecolor='black', alpha=0.4)
-        if pattern.trimV > 0:
-            ax1.fill_between(xC, y1, pattern.trimV, facecolor='black', alpha=0.4)
-
+        if pattern.trim_v > 0:
+            ax1.fill_between(xC, y1, pattern.trim_v, facecolor='black', alpha=0.4)
+        ax1.set_ylabel('Pre-Trim')
+        mplCanvas1.fig.set_tight_layout(True)
         mplCanvas1.draw()
-
-
 
         ax2 = mplCanvas2.ax
         ax2.clear()
         ax2.plot(pattern.data_mod['loc'], pattern.data_mod[pattern.name])
-
+        ax2.set_ylabel('Post-Trim')
+        mplCanvas2.fig.set_tight_layout(True)
         mplCanvas2.draw()
 
     def drawOverlay(mplCanvas, series):

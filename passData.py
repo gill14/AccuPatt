@@ -65,11 +65,11 @@ class Pass:
         #Find new min inside untrimmed area
         min = d[d>-1].loc[d.index[:],name].min(skipna=True)
         #subtract min from all points
-        d[name] = d.loc[d.index[:],name].sub(min,axis=1)
+        d[name] = d[name].sub(min)
         #clip all negative values (from trimmed areas) to 0
         d[name] = d[name].clip(lower=0)
         #Trim Vertical
-        d[name] = d.loc[d.index[:],name].sub(self.trim_v,axis=1)
+        d[name] = d[name].sub(self.trim_v)
         #Set modified data in pattern object
         return d
 

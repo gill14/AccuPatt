@@ -48,6 +48,7 @@ class AppInfo:
     nozzle_spacing_units: str = ""
 
     series: int = 1
+    notes: str = ""
     date: str = ""
     time: str = ""
     temperature: float = 0
@@ -79,6 +80,10 @@ class AppInfo:
         self.rate_units = appInfo.rate_units
         self.pressure = appInfo.pressure
         self.pressure_units = appInfo.pressure_units
+
+    def updateSeries(self, appInfo):
+        self.series = appInfo.series
+        self.notes = appInfo.notes
 
     def addressLine1(self) -> str:
         return self.street
@@ -172,6 +177,9 @@ class AppInfo:
             return f'{self.strip_num(self.humidity)}%'
         else:
             return ''
+
+    def string_series(self) -> str:
+        return f'{self.strip_num(self.series)}'
 
     def strip_num(self, x) -> str:
         if type(x) is str:

@@ -4,6 +4,7 @@ from PyQt5 import QtCore as qtc
 from PyQt5 import QtGui as qtg
 from PyQt5 import uic
 
+from passData import Pass
 from editFlyin import EditFlyin
 from editApplicatorInfo import EditApplicatorInfo
 from editAircraft import EditAircraft
@@ -99,6 +100,7 @@ class MainWindow(baseclass):
         self.updateApplicatorInfo(self.seriesData.info)
         self.updateAircraft(self.seriesData.info)
         self.updateSpraySystem(self.seriesData.info)
+        self.updateSeries(self.seriesData.info)
 
         #Disable all items in listViews
         for i in range(self.ui.listWidgetPassSelection.count()):
@@ -215,6 +217,14 @@ class MainWindow(baseclass):
         self.ui.labelBoomWidth.setText(appInfo.string_boom_width())
         self.ui.labelBoomDrop.setText(appInfo.string_boom_drop())
         self.ui.labelNozzleSpacing.setText(appInfo.string_nozzle_spacing())
+
+    def updateSeries(self, appInfo):
+        #update applicable vals in SeriesData.AppInfo Object
+        self.seriesData.info.updateSeries(appInfo)
+        #update applicable vals on App Info Tab
+        self.ui.labelSeriesNumber.setText(appInfo.string_series())
+        self.ui.labelNotes.setText(appInfo.notes)
+        
 
     def updatePass(self, passData):
         #If pass already exists in seriesData.passes dict, update it

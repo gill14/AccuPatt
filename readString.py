@@ -93,15 +93,14 @@ class ReadString(baseclass):
         self.y = []
         self.y_ex = []
 
-        if not passData.data == None:
-            if not passData.data.empty:
-                self.x = np.array(passData.data['loc'].values, dtype=float)
-                self.y = np.array(passData.data[passData.name].values, dtype=float)
-                self.y_ex = np.array(passData.data_ex[passData.name].values, dtype=float)
-                self.set_plotdata(name='emission', data_x=self.x, data_y=self.y)
-                #self.set_plotdata(name='excitation', data_x=self.x, data_y=self.y_ex)
-                self.set_plotdata(name='emission', data_x=self.x, data_y=self.y)
-                #self.set_plotdata(name='excitation', data_x=self.x, data_y=self.y_ex)
+        if not passData.data.empty:
+            self.x = np.array(passData.data['loc'].values, dtype=float)
+            self.y = np.array(passData.data[passData.name].values, dtype=float)
+            self.y_ex = np.array(passData.data_ex[passData.name].values, dtype=float)
+            self.set_plotdata(name='emission', data_x=self.x, data_y=self.y)
+            #self.set_plotdata(name='excitation', data_x=self.x, data_y=self.y_ex)
+            self.set_plotdata(name='emission', data_x=self.x, data_y=self.y)
+            #self.set_plotdata(name='excitation', data_x=self.x, data_y=self.y_ex)
 
         #Utilize built-in signals
         self.ui.buttonBox.accepted.connect(self.on_applied)

@@ -2,8 +2,10 @@ from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtGui as qtg
 from PyQt5 import uic
+
 import pandas as pd
 from pathlib import Path
+import sys
 
 from appInfo import AppInfo
 
@@ -120,7 +122,6 @@ class EditAircraft(baseclass):
             self.activateWindow()
 
 if __name__ == '__main__':
-    app = QtGui.QApplication([])
-    gui = NewWindow()
-    gui.show()
-    app.exec_()
+    app = qtw.QApplication(sys.argv)
+    w = EditAircraft(AppInfo())
+    sys.exit(app.exec_())
