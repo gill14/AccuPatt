@@ -7,6 +7,10 @@ class Pass:
     c = {'kph_mph': 0.621371,
         'kn_mph': 1.15078}
 
+    center_method_none = -1
+    center_method_centroid = 0
+    center_method_cod = 1
+
     def __init__(self, name='',
             ground_speed=None, ground_speed_units='mph',
             spray_height=None, spray_height_units='ft',
@@ -42,13 +46,17 @@ class Pass:
         self.data_mod = data_mod #Holds data with all requested modifications
         self.data_ex = data_ex #Holds Excitation Data
 
-    def modifyData(self, isCentroid=True, isSmooth=True):
+    def modifyData(self, isCenter=True, isSmooth=True):
         d = self.data.copy()
         #Trim it
         d = self.trimLRV(d)
-        #Centroid it
-        if isCentroid:
-            d = self.centroidify(d)
+        #Center it
+        centerMethod = self.center_method_none
+        if isCenter:
+            #Testing centroid vs cod
+            #centerMethod = self.center_method_centroid
+            centerMethod = self.center_method_cod
+        d = self.centerify(d, centerMethod)
         #Smooth it
         if isSmooth:
             d = self.smooth(d)
@@ -73,20 +81,50 @@ class Pass:
         #Set modified data in pattern object
         return d
 
-    def centroidify(self, dataIntermediate):
+    def centerify(self, dataIntermediate, centerMethod):
         name = self.name
         d = dataIntermediate
         #Need min for shifts out of x range
         min = d[name].min(skipna=True)
-        #calculate centroid
-        centroid = (d[name] * d['loc']).sum() / d[name].sum()
-        #convert calculated centroid to integer points to shift plot
+        c = 0
+        if centerMethod == self.center_method_none:
+            #No centering applied
+            return d
+        elif centerMethod == self.center_method_centroid:
+            #Use Centroid
+            c = self.calcCentroid(d)
+        elif centerMethod == self.center_method_cod:
+            #Use Center of Distribution
+            c = self.calcCenterOfDistribution(d)
+        #convert calculated center to integer points to shift plot
         sampleLength = d['loc'][1] - d['loc'][0]
-        centroidPoints = -round(centroid / sampleLength)
+        centerPoints = -round(c / sampleLength)
         #shift pattern by centroidPoints
-        d[name] = d[name].shift(periods = centroidPoints, fill_value=min)
+        d[name] = d[name].shift(periods = centerPoints, fill_value=min)
         #return the modified data
         return d
+
+    def calcCentroid(self, dataIntermediate):
+        name = self.name
+        d = dataIntermediate
+        return (d[name] * d['loc']).sum() / d[name].sum()
+
+    def calcCenterOfDistribution(self, dataIntermediate):
+        #Alt method using Center of Distribution
+        name = self.name
+        d = dataIntermediate
+        sumNumerator = 0.0
+        sumDenominator = 0.0
+        for i in range(0,len(d.index)-1, 1):
+            D = d.at[i, name]
+            Dn = d.at[i+1, name]
+            X = d.at[i, 'loc']
+            Xn = d.at[i+1, 'loc']
+            #Calc Numerator and add to summation
+            sumNumerator += (D*(Xn+X) + (Dn-D)*(2*Xn+X)/3)
+            sumDenominator += (Dn+D)
+        #Calc and return CoD
+        return sumNumerator / sumDenominator
 
     def smooth(self, dataIntermediate):
         d = dataIntermediate

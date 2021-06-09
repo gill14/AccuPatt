@@ -15,18 +15,18 @@ class SeriesData:
         self.patternAverage = Pass(name='Average')
         self.patternAverageInverted = Pass(name='AverageInverted')
 
-    def modifyPatterns(self, isCentroid, isSmoothIndividual, isEqualize, isSmoothAverage):
+    def modifyPatterns(self, isCenter, isSmoothIndividual, isEqualize, isSmoothAverage):
         #apply individual pattern modifications
         for key, value in self.passes.items():
-            value.modifyData(isCentroid=isCentroid, isSmooth=isSmoothIndividual)
+            value.modifyData(isCenter=isCenter, isSmooth=isSmoothIndividual)
         #apply cross-pattern modifications
         if isEqualize:
             self.equalizePatterns()
         #Generate Average Pattern
         self.averagePattern()
         #Apply avearge pattern modifications
-        self.patternAverage.modifyData(isCentroid=isCentroid, isSmooth=isSmoothAverage)
-        self.patternAverageInverted.modifyData(isCentroid=isCentroid, isSmooth=isSmoothAverage)
+        self.patternAverage.modifyData(isCenter=isCenter, isSmooth=isSmoothAverage)
+        self.patternAverageInverted.modifyData(isCenter=isCenter, isSmooth=isSmoothAverage)
 
     def equalizePatterns(self):
         areas = {}

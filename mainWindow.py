@@ -72,7 +72,7 @@ class MainWindow(baseclass):
         #Get the file
         #fname, filter_ = qtw.QFileDialog.getOpenFileName(self, 'Open file', 'home', "AccuPatt files (*.xlsx)")
         #dA = dataAccuPatt(fname)
-        fname = "/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt/Testing/N802ET 03.xlsx"
+        fname = "/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt/Testing/N502LY 02.xlsx"
 
         #Load in the values
         self.seriesData = FileTools.load_from_accupatt_1_file(file=fname)
@@ -236,7 +236,7 @@ class MainWindow(baseclass):
         self.ui.listWidgetPassSelection.setCurrentItem(current)
         p = self.seriesData.passes[current.text()]
         p.modifyData(
-            isCentroid=(self.ui.checkBoxAlignCentroid.checkState()==qtc.Qt.Checked),
+            isCenter=(self.ui.checkBoxAlignCentroid.checkState()==qtc.Qt.Checked),
             isSmooth=(self.ui.checkBoxSmoothIndividual.checkState()==qtc.Qt.Checked))
         StringPlotter.drawIndividual(mplCanvas=self.ui.plotWidgetIndividual.canvas, pattern=p)
         #Update the info labels on the individual pass tab
@@ -289,7 +289,7 @@ class MainWindow(baseclass):
 
     def updatePlots(self):
         self.seriesData.modifyPatterns(
-            isCentroid=self.ui.checkBoxAlignCentroid.checkState() == qtc.Qt.Checked,
+            isCenter=self.ui.checkBoxAlignCentroid.checkState() == qtc.Qt.Checked,
             isSmoothIndividual=self.ui.checkBoxSmoothIndividual.checkState() == qtc.Qt.Checked,
             isEqualize=self.ui.checkBoxEqualizeArea.checkState() == qtc.Qt.Checked,
             isSmoothAverage=self.ui.checkBoxSmoothAverage.checkState() == qtc.Qt.Checked)
