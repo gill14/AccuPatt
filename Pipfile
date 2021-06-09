@@ -1,0 +1,22 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pyqt5 = "*"
+seabreeze = "*"
+serial = "*"
+matplotlib = "*"
+scipy = "*"
+pyqtgraph = "*"
+reportlab = "*"
+svglib = "*"
+pandas = "*"
+numpy = "*"
+openpyxl = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.8"

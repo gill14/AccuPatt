@@ -6,7 +6,6 @@ from PyQt5 import QtGui as qtg
 from PyQt5 import uic
 
 import serial
-from serial.tools import list_ports
 
 Ui_Form, baseclass = uic.loadUiType('editStringDrive.ui')
 
