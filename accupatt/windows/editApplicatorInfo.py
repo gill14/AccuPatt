@@ -1,15 +1,16 @@
-from PyQt5 import QtWidgets as qtw
-from PyQt5 import QtCore as qtc
-from PyQt5 import QtGui as qtg
+import sys, os
+
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import pyqtSignal
 from PyQt5 import uic
 
-from appInfo import AppInfo
+from accupatt.models.appInfo import AppInfo
 
-Ui_Form, baseclass = uic.loadUiType('editApplicatorInfo.ui')
+Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editApplicatorInfo.ui'))
 
 class EditApplicatorInfo(baseclass):
 
-    applied = qtc.pyqtSignal(AppInfo)
+    applied = pyqtSignal(AppInfo)
 
     def __init__(self, appInfo, parent = None):
         super().__init__()
@@ -49,7 +50,7 @@ class EditApplicatorInfo(baseclass):
         self.accept
 
 if __name__ == '__main__':
-    app = QtGui.QApplication([])
-    gui = NewWindow()
+    app = QApplication([])
+    gui = EditApplicatorInfo(appInfo=None)
     gui.show()
     app.exec_()

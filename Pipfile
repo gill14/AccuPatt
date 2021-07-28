@@ -15,6 +15,7 @@ svglib = "*"
 pandas = "*"
 numpy = "*"
 openpyxl = "*"
+qtrangeslider = "*"
 
 [dev-packages]
 

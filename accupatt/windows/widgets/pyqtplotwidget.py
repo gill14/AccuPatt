@@ -1,13 +1,13 @@
-import sys
-import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore, QtGui
-import numpy as np
+from PyQt5.QtWidgets import QApplication
 
-class  PyQtPlotWidget(pg.GraphicsWindow):
+from pyqtgraph import GraphicsWindow
+from pyqtgraph.Qt import QtGui
+
+class  PyQtPlotWidget(GraphicsWindow):
     #pg.setConfigOption('background', 'w')
     #pg.setConfigOption('foreground', 'k')
     def __init__(self, parent=None, **kargs):
-        pg.GraphicsWindow.__init__(self, **kargs)
+        GraphicsWindow.__init__(self, **kargs)
         self.setParent(parent)
 
 if __name__ == '__main__':

@@ -20,7 +20,8 @@ class Pass:
             humidity=None, include_in_composite=True,
             excitation_wav=None, emission_wav=None,
             trim_l=0, trim_r=0, trim_v=0,
-            data_ex=None, data=None, data_mod=None):
+            data_ex=None, data=None, data_mod=None,
+            spray_cards=None):
         #Info Stuff
         self.name = name
         self.ground_speed = ground_speed
@@ -45,6 +46,8 @@ class Pass:
         self.data = data #Holds original Data
         self.data_mod = data_mod #Holds data with all requested modifications
         self.data_ex = data_ex #Holds Excitation Data
+        #Cards
+        self.spray_cards = spray_cards
 
     def modifyData(self, isCenter=True, isSmooth=True):
         d = self.data.copy()
@@ -55,7 +58,7 @@ class Pass:
         if isCenter:
             #Testing centroid vs cod
             #centerMethod = self.center_method_centroid
-            centerMethod = self.center_method_cod
+            centerMethod = self.center_method_centroid
         d = self.centerify(d, centerMethod)
         #Smooth it
         if isSmooth:

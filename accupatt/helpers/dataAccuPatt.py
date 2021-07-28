@@ -7,15 +7,6 @@ class DataAccuPatt:
         self.dataFile = inputFile
 
     def readFromFile(self):
-        """self.flyinData = pd.read_excel (self.dataFile, sheet_name='Fly-In Data', header=None, dtype=str)
-        self.flyinData = self.flyinData.fillna('')
-        self.aircraftData = pd.read_excel (self.dataFile, sheet_name='Aircraft Data', header=None, dtype=str)
-        self.aircraftData = self.aircraftData.fillna('')
-        self.seriesData = pd.read_excel (self.dataFile, sheet_name='Series Data')
-        self.seriesData = self.seriesData.fillna('')
-        self.patternData = pd.read_excel (self.dataFile, sheet_name='Pattern Data', header=None)"""
-        #self.df3 = self.df3.replace('nan','')
-
         #Load entire WB into dict of sheets
         self.df_map = pd.read_excel(self.dataFile, sheet_name=None, header=None)
         #Assign reference dfs to each sheet

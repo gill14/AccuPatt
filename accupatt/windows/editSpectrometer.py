@@ -1,18 +1,17 @@
-import sys
+import sys, os
 import numpy as np
 
-from PyQt5 import QtWidgets as qtw
-from PyQt5 import QtCore as qtc
-from PyQt5 import QtGui as qtg
+from PyQt5.QtWidgets import QApplication, QMessageBox
+from PyQt5.QtCore import QSettings, pyqtSignal
 from PyQt5 import uic
 
 from seabreeze.spectrometers import Spectrometer
 
-Ui_Form, baseclass = uic.loadUiType('editSpectrometer.ui')
+Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editSpectrometer.ui'))
 
 class EditSpectrometer(baseclass):
 
-    applied = qtc.pyqtSignal()
+    applied = pyqtSignal()
 
     def __init__(self, spectrometer=None):
         super().__init__()
@@ -21,7 +20,7 @@ class EditSpectrometer(baseclass):
         self.ui.setupUi(self)
 
         #Load in Settings or use defaults
-        self.settings = qtc.QSettings('BG Application Consulting','AccuPatt')
+        self.settings = QSettings('BG Application Consulting','AccuPatt')
         #Excitation Wavelength
         if self.settings.contains('target_excitation_wavelength'):
             self.target_excitation_wavelength = self.settings.value('target_excitation_wavelength', type=int)
@@ -123,19 +122,19 @@ class EditSpectrometer(baseclass):
         self.close()
 
     def _show_validation_error(self, message):
-        msg = qtw.QMessageBox()
-        msg.setIcon(qtw.QMessageBox.Critical)
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Critical)
         msg.setText("Input Validation Error")
         msg.setInformativeText(message)
         #msg.setWindowTitle("MessageBox demo")
         #msg.setDetailedText("The details are as follows:")
-        msg.setStandardButtons(qtw.QMessageBox.Ok)
+        msg.setStandardButtons(QMessageBox.Ok)
         result = msg.exec()
-        if result == qtw.QMessageBox.Ok:
+        if result == QMessageBox.Ok:
             self.raise_()
             self.activateWindow()
 
 if __name__ == '__main__':
-    app = qtw.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     w = EditSpectrometer()
     sys.exit(app.exec_())

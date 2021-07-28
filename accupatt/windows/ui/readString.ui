@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1146</width>
+    <width>1098</width>
     <height>615</height>
    </rect>
   </property>
@@ -819,7 +819,7 @@ padding: 4px;</string>
   <customwidget>
    <class>PyQtPlotWidget</class>
    <extends>QWidget</extends>
-   <header>pyqtplotwidget.h</header>
+   <header>accupatt/windows/widgets/pyqtplotwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

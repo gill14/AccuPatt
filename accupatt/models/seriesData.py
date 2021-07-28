@@ -1,15 +1,17 @@
 import pandas as pd
 import numpy as np
 
-from appInfo import AppInfo
-from passData import Pass
-from atomizationModel import AtomizationModel, AtomizationModelMulti
+from accupatt.helpers.atomizationModel import AtomizationModel, AtomizationModelMulti
+
+from accupatt.models.appInfo import AppInfo
+from accupatt.models.passData import Pass
 
 
 class SeriesData:
     """A Container class for storing all Series info"""
 
     def __init__(self):
+        self.filePath = ''
         self.info = AppInfo()
         self.passes = {}
         self.patternAverage = Pass(name='Average')

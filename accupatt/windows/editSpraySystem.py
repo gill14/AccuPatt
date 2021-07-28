@@ -1,19 +1,20 @@
-from PyQt5 import QtWidgets as qtw
-from PyQt5 import QtCore as qtc
-from PyQt5 import QtGui as qtg
-from PyQt5 import uic
-import pandas as pd
+import sys, os
 import numpy as np
-from pathlib import Path
 
-from appInfo import AppInfo
-from atomizationModel import AtomizationModel
+from PyQt5.QtWidgets import QApplication, QMessageBox
+from PyQt5.QtCore import pyqtSignal
+from PyQt5 import uic
 
-Ui_Form, baseclass = uic.loadUiType('editSpraySystem.ui')
+
+
+from accupatt.models.appInfo import AppInfo
+from accupatt.helpers.atomizationModel import AtomizationModel
+
+Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editSpraySystem.ui'))
 
 class EditSpraySystem(baseclass):
 
-    applied = qtc.pyqtSignal(AppInfo)
+    applied = pyqtSignal(AppInfo)
 
     def __init__(self, appInfo, parent = None):
         super().__init__()
@@ -172,20 +173,20 @@ class EditSpraySystem(baseclass):
         self.close()
 
     def show_validation_error(self, message):
-        msg = qtw.QMessageBox()
-        msg.setIcon(qtw.QMessageBox.Critical)
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Critical)
         msg.setText("Input Validation Error")
         msg.setInformativeText(message)
         #msg.setWindowTitle("MessageBox demo")
         #msg.setDetailedText("The details are as follows:")
-        msg.setStandardButtons(qtw.QMessageBox.Ok)
+        msg.setStandardButtons(QMessageBox.Ok)
         result = msg.exec()
-        if result == qtw.QMessageBox.Ok:
+        if result == QMessageBox.Ok:
             self.raise_()
             self.activateWindow()
 
 if __name__ == '__main__':
-    app = QtGui.QApplication([])
+    app = QApplication([])
     gui = NewWindow()
     gui.show()
     app.exec_()

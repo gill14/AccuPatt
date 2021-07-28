@@ -1,17 +1,16 @@
-import sys
+import sys, os
 
-from PyQt5 import QtWidgets as qtw
-from PyQt5 import QtCore as qtc
-from PyQt5 import QtGui as qtg
+from PyQt5.QtWidgets import QApplication, QMessageBox
+from PyQt5.QtCore import QSettings, pyqtSignal
 from PyQt5 import uic
 
 import serial
 
-Ui_Form, baseclass = uic.loadUiType('editStringDrive.ui')
+Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editStringDrive.ui'))
 
 class EditStringDrive(baseclass):
 
-    applied = qtc.pyqtSignal()
+    applied = pyqtSignal()
 
     units_length = {'ft','m'}
 
@@ -22,7 +21,7 @@ class EditStringDrive(baseclass):
         self.ui.setupUi(self)
 
         #Load in Settings or use defaults
-        self.settings = qtc.QSettings('BG Application Consulting','AccuPatt')
+        self.settings = QSettings('BG Application Consulting','AccuPatt')
 
         #Hook up serial port combobox signal
         self.ui.comboBoxSerialPort.currentTextChanged[str].connect(self.on_sp_selected)
@@ -109,19 +108,19 @@ class EditStringDrive(baseclass):
         self.close()
 
     def _show_validation_error(self, message):
-        msg = qtw.QMessageBox()
-        msg.setIcon(qtw.QMessageBox.Critical)
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Critical)
         msg.setText("Input Validation Error")
         msg.setInformativeText(message)
         #msg.setWindowTitle("MessageBox demo")
         #msg.setDetailedText("The details are as follows:")
-        msg.setStandardButtons(qtw.QMessageBox.Ok)
+        msg.setStandardButtons(QMessageBox.Ok)
         result = msg.exec()
-        if result == qtw.QMessageBox.Ok:
+        if result == QMessageBox.Ok:
             self.raise_()
             self.activateWindow()
 
 if __name__ == '__main__':
-    app = qtw.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     w = EditStringDrive()
     sys.exit(app.exec_())

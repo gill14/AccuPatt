@@ -1,28 +1,27 @@
 import numpy as np
-import sys
+import sys, os
 
-from PyQt5 import QtWidgets as qtw
-from PyQt5 import QtCore as qtc
-from PyQt5 import QtGui as qtg
+from PyQt5.QtWidgets import QApplication, QMessageBox
+from PyQt5.QtCore import QSettings, QTimer, pyqtSignal
 from PyQt5 import uic
 
 from seabreeze.spectrometers import Spectrometer
 import serial
-from time import time
-import pyqtgraph as pg
+import pyqtgraph
 
-from stringPlotter import StringPlotter
-from pyqtplotwidget import PyQtPlotWidget
-from passData import Pass
-from editStringDrive import EditStringDrive
-from editSpectrometer import EditSpectrometer
+#from accupatt.helpers.stringPlotter import StringPlotter
+#from accupatt.widgets.pyqtplotwidget import PyQtPlotWidget
+from accupatt.models.passData import Pass
 
-Ui_Form, baseclass = uic.loadUiType('readString.ui')
+from accupatt.windows.editStringDrive import EditStringDrive
+from accupatt.windows.editSpectrometer import EditSpectrometer
+
+Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'readString.ui'))
 
 class ReadString(baseclass):
     """ A Container for communicating with the Spectrometer and String Drive"""
 
-    applied = qtc.pyqtSignal(Pass)
+    applied = pyqtSignal(Pass)
 
     units_gs = {'mph','kph'}
     units_sh = {'ft','m'}
@@ -40,7 +39,7 @@ class ReadString(baseclass):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         #Import Settings
-        self.settings = qtc.QSettings('BG Application Consulting','AccuPatt')
+        self.settings = QSettings('BG Application Consulting','AccuPatt')
         #Make ref to seriesData/passData for later updating in on_applied
         self.passData = passData
         #Pass Info fields
@@ -81,9 +80,9 @@ class ReadString(baseclass):
 
         #Setup plot
         self.traces = dict()
-        pg.setConfigOptions(antialias=True)
-        pg.setConfigOption('background', 'k')
-        pg.setConfigOption('foreground', 'w')
+        pyqtgraph.setConfigOptions(antialias=True)
+        pyqtgraph.setConfigOption('background', 'k')
+        pyqtgraph.setConfigOption('foreground', 'w')
         self.w = self.ui.plotWidget
         self.w.setWindowTitle(f'{passData.name} Raw Data')
         self.p = self.w.addPlot(labels =  {'left':'Intensity', 'bottom':'Location'})
@@ -229,7 +228,7 @@ class ReadString(baseclass):
         #Start String Drive (forward)
         self.ser.write(self.forward_start.encode())
         #Initialize timer
-        self.timer = qtc.QTimer(self)
+        self.timer = QTimer(self)
         #Set the timeout action
         self.timer.timeout.connect(self.plotFrame)
         self.plotFrame()
@@ -319,19 +318,19 @@ class ReadString(baseclass):
             return f'{round(float(x), 2):.2f}'
 
     def _show_validation_error(self, message):
-        msg = qtw.QMessageBox()
-        msg.setIcon(qtw.QMessageBox.Critical)
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Critical)
         msg.setText("Input Validation Error")
         msg.setInformativeText(message)
         #msg.setWindowTitle("MessageBox demo")
         #msg.setDetailedText("The details are as follows:")
-        msg.setStandardButtons(qtw.QMessageBox.Ok)
+        msg.setStandardButtons(QMessageBox.Ok)
         result = msg.exec()
-        if result == qtw.QMessageBox.Ok:
+        if result == QMessageBox.Ok:
             self.raise_()
             self.activateWindow()
 
 if __name__ == '__main__':
-    app = qtw.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     w = ReadString(Pass())
     sys.exit(app.exec_())

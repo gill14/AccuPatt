@@ -1,13 +1,14 @@
-from PyQt5 import QtWidgets as qtw
-from PyQt5 import QtCore as qtc
-from PyQt5 import QtGui as qtg
+import sys, os
+
+from PyQt5.QtWidgets import QApplication, QFileDialog
+from PyQt5.QtCore import pyqtSignal
 from PyQt5 import uic
 
-Ui_Form, baseclass = uic.loadUiType('editFlyin.ui')
+Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editFlyin.ui'))
 
 class EditFlyin(baseclass):
 
-    applied = qtc.pyqtSignal(str)
+    applied = pyqtSignal(str)
 
     def __init__(self, currentDirectory, appInfo, parent = None):
         super().__init__()
@@ -32,7 +33,7 @@ class EditFlyin(baseclass):
         self.show()
 
     def editFolder(self):
-        folderpath = qtw.QFileDialog.getExistingDirectory(self, 'Select Folder')
+        folderpath = QFileDialog.getExistingDirectory(self, 'Select Folder')
         self.ui.labelPath.setText(folderpath)
 
     def editDate(self, date):
@@ -51,7 +52,7 @@ class EditFlyin(baseclass):
         self.accept
 
 if __name__ == '__main__':
-    app = QtGui.QApplication([])
+    app = QApplication([])
     gui = NewWindow()
     gui.show()
     app.exec_()

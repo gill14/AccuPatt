@@ -1,19 +1,18 @@
-from PyQt5 import QtWidgets as qtw
-from PyQt5 import QtCore as qtc
-from PyQt5 import QtGui as qtg
+from PyQt5.QtWidgets import QApplication, QMessageBox
+from PyQt5.QtCore import pyqtSignal
 from PyQt5 import uic
 
 import pandas as pd
 from pathlib import Path
-import sys
+import sys, os
 
-from appInfo import AppInfo
+from accupatt.models.appInfo import AppInfo
 
-Ui_Form, baseclass = uic.loadUiType('editAircraft.ui')
+Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editAircraft.ui'))
 
 class EditAircraft(baseclass):
 
-    applied = qtc.pyqtSignal(AppInfo)
+    applied = pyqtSignal(AppInfo)
 
     aircraftFile = Path(__file__).parent /"resources"/"AgAircraftData.xlsx"
 
@@ -109,19 +108,19 @@ class EditAircraft(baseclass):
         self.close()
 
     def show_validation_error(self, message):
-        msg = qtw.QMessageBox()
-        msg.setIcon(qtw.QMessageBox.Critical)
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Critical)
         msg.setText("Input Validation Error")
         msg.setInformativeText(message)
         #msg.setWindowTitle("MessageBox demo")
         #msg.setDetailedText("The details are as follows:")
-        msg.setStandardButtons(qtw.QMessageBox.Ok)
+        msg.setStandardButtons(QMessageBox.Ok)
         result = msg.exec()
-        if result == qtw.QMessageBox.Ok:
+        if result == QMessageBox.Ok:
             self.raise_()
             self.activateWindow()
 
 if __name__ == '__main__':
-    app = qtw.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     w = EditAircraft(AppInfo())
     sys.exit(app.exec_())

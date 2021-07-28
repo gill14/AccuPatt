@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>942</width>
+    <width>1064</width>
     <height>728</height>
    </rect>
   </property>
@@ -194,7 +194,7 @@
   <customwidget>
    <class>MplWidget</class>
    <extends>QWidget</extends>
-   <header>mplwidget.h</header>
+   <header>accupatt/windows/widgets/mplwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

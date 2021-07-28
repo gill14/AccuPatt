@@ -2,10 +2,11 @@ import pandas as pd
 import numpy as np
 import json, dataclasses, os
 
-from dataAccuPatt import DataAccuPatt
-from seriesData import SeriesData
-from appInfo import AppInfo
-from passData import Pass
+from accupatt.helpers.dataAccuPatt import DataAccuPatt
+from accupatt.models.seriesData import SeriesData
+from accupatt.models.appInfo import AppInfo
+from accupatt.models.passData import Pass
+from accupatt.models.sprayCard import SprayCard
 
 class FileTools:
 
@@ -123,7 +124,8 @@ class FileTools:
 
         return s
 
-    def load_from_accupatt_2_file(directory):
+    #Old method
+    def _load_from_accupatt_2_file(directory):
         seriesData = SeriesData()
         for f in os.listdir(directory):
             if f.endswith('.series'):
@@ -140,6 +142,30 @@ class FileTools:
                     seriesData.passes[p.name] = p
         return seriesData
 
+    def load_from_accupatt_2_file(directory):
+        seriesData = SeriesData()
+        for (dirpath, dirnames, filenames) in os.walk(directory):
+            for f in filenames:
+                if f.endswith('.series'):
+                    #Load in AppInfo from the .series file
+                    with open(dirpath+os.path.sep+f, 'r') as j:
+                        seriesData.info = AppInfo(**json.loads(j.read()))
+                if f.endswith('.pass'):
+                    #Load in each Pass from the .pass files
+                    p = None
+                    with open(dirpath+os.path.sep+f, 'r') as j:
+                        p = Pass(**json.loads(j.read()))
+                        #data(_ex,_mod) are loaded as dicts, conver to df's
+                        p.data = pd.DataFrame.from_dict(p.data)
+                        p.data_ex = pd.DataFrame.from_dict(p.data_ex)
+                        if p.spray_cards:
+                            for i,val in enumerate(p.spray_cards):
+                                #Change dicts to SprayCard objects in-place in list
+                                p.spray_cards[i] = SprayCard.load_from_json(val)
+                        seriesData.passes[p.name] = p
+        return seriesData
+
+    #TODO: Update this to match new load above
     def writeToJSONFile(path, fileName, seriesData):
         #Make a folder for series if needed
         folder = path + os.path.sep + fileName
@@ -151,7 +177,11 @@ class FileTools:
             json.dump(dataclasses.asdict(seriesData.info), fp, indent=4)
         #Make the .pass files
         for key, value in seriesData.passes.items():
-            filePathNameWExt = folder + os.path.sep + fileName + ' - ' + key + '.pass'
+            fname = fileName + ' P' + key[-1]
+            subfolder = folder + os.path.sep + fname
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+            filePathNameWExt = subfolder + os.path.sep + fname + '.pass'
             with open(filePathNameWExt, 'w') as fp:
                 json.dump(value.__dict__, fp, indent=4, default=lambda df: json.loads(df.to_json()))
 

@@ -1,19 +1,17 @@
-from PyQt5 import QtWidgets as qtw
-from PyQt5 import QtCore as qtc
-from PyQt5 import QtGui as qtg
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import pyqtSignal
 from PyQt5 import uic
 
-import copy
-import sys
+import copy, sys, os
 
-from passData import Pass
-from stringPlotter import StringPlotter
+from accupatt.models.passData import Pass
+from accupatt.helpers.stringPlotter import StringPlotter
 
-Ui_Form, baseclass = uic.loadUiType('editTrims.ui')
+Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editTrims.ui'))
 
 class EditTrims(baseclass):
 
-    applied = qtc.pyqtSignal()
+    applied = pyqtSignal()
 
     def __init__(self, pattern, isAlignCentroid, isSmoothIndividual, parent = None):
         super().__init__()
@@ -94,6 +92,6 @@ class EditTrims(baseclass):
         self.reject
 
 if __name__ == '__main__':
-    app = qtw.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     w = EditTrims(Pass(), True, True)
     sys.exit(app.exec_())
