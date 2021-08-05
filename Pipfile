@@ -16,6 +16,8 @@ pandas = "*"
 numpy = "*"
 openpyxl = "*"
 qtrangeslider = "*"
+scikit-image = "*"
+imutils = "*"
 
 [dev-packages]
 

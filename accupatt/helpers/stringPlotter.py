@@ -12,7 +12,7 @@ class StringPlotter:
 
         ax = mplCanvas.ax
         ax.clear()
-        #ax.plot(d['loc'],d[pattern.name])
+        if not isinstance(d, pd.DataFrame): return
         ax.plot(dm['loc'],dm[pattern.name])
 
         mplCanvas.draw()
@@ -71,11 +71,13 @@ class StringPlotter:
         ax.set_xlabel(f'Location ({series.info.swath_units})')
         for key in series.passes.keys():
             p = series.passes[key]
+            if not isinstance(p.data, pd.DataFrame): continue
             if p.include_in_composite:
                 l, = ax.plot(p.data_mod['loc'], p.data_mod[key])
                 l.set_label(p.name)
         ax.set_ylim(ymin=0)
-        ax.legend()
+        h,l = ax.get_legend_handles_labels()
+        if len(h) > 0: ax.legend()
         mplCanvas.fig.set_tight_layout(True)
         mplCanvas.draw()
 
@@ -84,6 +86,21 @@ class StringPlotter:
         ax.clear()
         ax.set_yticks([])
         ax.set_xlabel(f'Location ({series.info.swath_units})')
+
+        #Get adjusted swath from series object
+        swathWidth = series.info.swath_adjusted
+        print(swathWidth)
+        #Find number of points per swathwidth for shifting
+        loc = series.patternAverage.data_mod['loc'].copy()
+        center = loc[(loc>=-swathWidth/2) & (loc<=swathWidth/2)]
+        print(center)
+        pts = center.count().item()
+        loc = pd.to_numeric(series.patternAverage.data_mod['loc'].copy())
+        sumCenter = series.patternAverage.data_mod['Average'][series.patternAverage.data_mod['Average'].index.isin(center.index)]
+        avg = sumCenter.mean(axis='rows')
+        #m, = ax.plot([-swathWidth/2,swathWidth/2], [avg,avg], color='black', dashes=[5,5])
+        m = ax.fill_between([-swathWidth/2,swathWidth/2], 0, avg/2, facecolor='black', alpha=0.25)
+        m.set_label('Effective Swath')
 
         l, = ax.plot(series.patternAverage.data_mod['loc'], series.patternAverage.data_mod['Average'], color="black", linewidth=3)
         l.set_label('Average')

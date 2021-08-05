@@ -514,7 +514,11 @@
         <enum>QLayout::SetNoConstraint</enum>
        </property>
        <item>
-        <widget class="QGraphicsView" name="graphicsView"/>
+        <widget class="QGraphicsView" name="graphicsView">
+         <property name="viewportUpdateMode">
+          <enum>QGraphicsView::MinimalViewportUpdate</enum>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QGraphicsView" name="graphicsView2"/>

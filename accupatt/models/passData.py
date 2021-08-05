@@ -50,6 +50,7 @@ class Pass:
         self.spray_cards = spray_cards
 
     def modifyData(self, isCenter=True, isSmooth=True):
+        if not isinstance(self.data, pd.DataFrame): return
         d = self.data.copy()
         #Trim it
         d = self.trimLRV(d)

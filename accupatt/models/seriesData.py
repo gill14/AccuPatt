@@ -20,6 +20,7 @@ class SeriesData:
     def modifyPatterns(self, isCenter, isSmoothIndividual, isEqualize, isSmoothAverage):
         #apply individual pattern modifications
         for key, value in self.passes.items():
+            if not isinstance(value.data, pd.DataFrame): continue
             value.modifyData(isCenter=isCenter, isSmooth=isSmoothIndividual)
         #apply cross-pattern modifications
         if isEqualize:
@@ -34,6 +35,7 @@ class SeriesData:
         areas = {}
         areasa = []
         for key, value in self.passes.items():
+            if not isinstance(value.data, pd.DataFrame): continue
             v = np.trapz(y=value.data_mod[key], x=value.data_mod['loc'], axis=0)
             areas[key] = v
             areasa.append(v)
@@ -42,6 +44,7 @@ class SeriesData:
         for k in areas.keys():
             scalers[k] = maxx/areas[k]
         for key, value in self.passes.items():
+            if not isinstance(value.data, pd.DataFrame): continue
             p = self.passes[key]
             p.data_mod[key] = p.data_mod[key].multiply(scalers[key])
 
@@ -51,6 +54,7 @@ class SeriesData:
         #temp df to average accross columns
         d = pd.DataFrame()
         for key, value in self.passes.items():
+            if not isinstance(value.data, pd.DataFrame): continue
             #Only include passes checked from listview
             if value.include_in_composite:
                 #add loc column to placeholder, will be overwritten each time with identical values

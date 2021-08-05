@@ -1,10 +1,9 @@
 from PyQt5.QtWidgets import QApplication, QGraphicsScene, QGraphicsPixmapItem
 from PyQt5.QtCore import Qt, QSettings, pyqtSignal
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtGui import QImage, QPixmap, QResizeEvent
 from PyQt5 import uic
 
 import os, sys, copy
-import numpy as np
 
 from accupatt.models.sprayCard import SprayCard
 
@@ -41,11 +40,22 @@ class EditThreshold(baseclass):
             self.sprayCard.threshold_method_color = self.settings.value('threshold_method_color', defaultValue=SprayCard.THRESHOLD_METHOD_INCLUDE, type=int)
         if self.sprayCard.threshold_color_hue is None:
             print('devaulting hue')
-            self.sprayCard.threshold_color_hue = self.settings.value('threshold_color_hue', defaultValue=np.array([180,240]))
+            self.sprayCard.threshold_color_hue = self.settings.value('threshold_color_hue', defaultValue=[180,240])
         if self.sprayCard.threshold_color_saturation is None:
-            self.sprayCard.threshold_color_saturation = self.settings.value('threshold_color_saturation', defaultValue=np.array([6,255]))
+            self.sprayCard.threshold_color_saturation = self.settings.value('threshold_color_saturation', defaultValue=[6,255])
         if self.sprayCard.threshold_color_brightness is None:
-            self.sprayCard.threshold_color_brightness = self.settings.value('threshold_color_brightness', defaultValue=np.array([0,255]))
+            self.sprayCard.threshold_color_brightness = self.settings.value('threshold_color_brightness', defaultValue=[0,255])
+
+        #Show original
+        self.pixmap_item_original = QGraphicsPixmapItem()
+        scene1 = QGraphicsScene(self)
+        scene1.addItem(self.pixmap_item_original)
+        self.ui.graphicsView.setScene(scene1)
+        #Show threshold
+        self.pixmap_item_thresh = QGraphicsPixmapItem()
+        scene2 = QGraphicsScene(self)
+        scene2.addItem(self.pixmap_item_thresh)
+        self.ui.graphicsView2.setScene(scene2)
 
         #Signals for toggling group boxes
         self.ui.groupBoxGrayscale.toggled[bool].connect(self.toggleGrayscale)
@@ -65,8 +75,12 @@ class EditThreshold(baseclass):
         self.ui.rangeSliderSaturation.setValue([self.sprayCard.threshold_color_saturation[0],self.sprayCard.threshold_color_saturation[1]])
         self.ui.rangeSliderBrightness.setValue([self.sprayCard.threshold_color_brightness[0],self.sprayCard.threshold_color_brightness[1]])
         
+        
+
         #Signals for controls
-        self.ui.radioButtonAutomatic.toggled[bool].connect(self.toggleThresholdMethodGrayscale)
+        self.ui.radioButtonAutomatic.toggled.connect(self.toggleThresholdMethodGrayscale)
+        self.ui.radioButtonManual.toggled.connect(self.toggleThresholdMethodGrayscale)
+        self.ui.sliderGrayscale.valueChanged[int].connect(self.updateThresholdGrayscale)
         self.ui.radioButtonInclude.toggled[bool].connect(self.toggleThresholdMethodColor)
         #self.ui.radioButtonExclude.toggled[bool].connect(self.toggleThresholdMethodColor)
         self.ui.rangeSliderHue.valueChanged[tuple].connect(self.updateHue)
@@ -79,52 +93,52 @@ class EditThreshold(baseclass):
         self.ui.buttonBox.accepted.connect(self.on_applied)
         self.ui.buttonBox.rejected.connect(self.reject)
 
-        #Show original
-        img = QImage(sprayCard.filepath) #QImage object
-        #img = img.scaled(self.ui.labelImage1.width(),65535, aspectRatioMode=Qt.KeepAspectRatio, transformMode=Qt.SmoothTransformation) # To scale image for example and keep its Aspect Ratio  
-        scene1 = QGraphicsScene(self)
-        pix = QPixmap.fromImage(img)
-        item = QGraphicsPixmapItem(pix)
-        scene1.addItem(item)
-        self.ui.graphicsView.setScene(scene1)     
-        #Show threshold
-        self.pixmap_item = QGraphicsPixmapItem()
-        scene = QGraphicsScene(self)
-        scene.addItem(self.pixmap_item)
-        self.ui.graphicsView2.setScene(scene)
-
         #Configure sliders
         self.ui.rangeSliderHue.setEdgeLabelMode(0)
         self.ui.rangeSliderSaturation.setEdgeLabelMode(0)
         self.ui.rangeSliderBrightness.setEdgeLabelMode(0)
 
-        self.updateSprayCardView()
-
         # Your code ends here
         self.show()
+        self.updateSprayCardView()
+        self.sprayCard.image_watershed()
+
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        super().resizeEvent(event)
+        self.updateSprayCardView()
 
     def scrollGV2(self, value):
         self.ui.graphicsView2.verticalScrollBar().setValue(value)
 
     def toggleGrayscale(self, boo):
         self.ui.groupBoxColor.setChecked(not boo)
-        #self.updateSprayCardView()
+        thresh_type = SprayCard.THRESHOLD_TYPE_COLOR
+        if boo: thresh_type = SprayCard.THRESHOLD_TYPE_GRAYSCALE
+        self.sprayCard.set_threshold_type(type=thresh_type)
+        self.updateSprayCardView()
+
+    def updateThresholdGrayscale(self, thresh):
+        self.sprayCard.set_threshold_grayscale(threshold=thresh)
+        self.updateSprayCardView()
 
     def toggleThresholdMethodGrayscale(self, boo):
         method = SprayCard.THRESHOLD_METHOD_AUTOMATIC
-        if boo:
+        if self.ui.radioButtonManual.isChecked():
             method = SprayCard.THRESHOLD_METHOD_MANUAL
         self.sprayCard.threshold_method_grayscale = method
 
     def toggleColor(self, boo):
         self.ui.groupBoxGrayscale.setChecked(not boo)
-        #self.updateSprayCardView()
+        thresh_type = SprayCard.THRESHOLD_TYPE_GRAYSCALE
+        if boo: thresh_type = SprayCard.THRESHOLD_TYPE_COLOR
+        self.sprayCard.set_threshold_type(type=thresh_type)
+        self.updateSprayCardView()
 
     def toggleThresholdMethodColor(self):
         if self.ui.radioButtonInclude.isChecked():
-            self.sprayCard.threshold_method_color = SprayCard.THRESHOLD_METHOD_INCLUDE
+            self.sprayCard.threshold_method_color = self.sprayCard.THRESHOLD_METHOD_INCLUDE
         elif self.ui.radioButtonExclude.isChecked():
-            self.sprayCard.threshold_method_color = SprayCard.THRESHOLD_METHOD_EXCLUDE
+            self.sprayCard.threshold_method_color = self.sprayCard.THRESHOLD_METHOD_EXCLUDE
         self.updateSprayCardView()
 
     def updateHue(self, vals):
@@ -147,32 +161,37 @@ class EditThreshold(baseclass):
         self.ui.checkBoxApplyToAllPass.setEnabled(not boo)
 
     def updateSprayCardView(self):
-        if self.sprayCard is None: return
-        cvImg = self.sprayCard.image_threshold_color()
-        if cvImg is None: return
-        '''
-        height, width, channel = cvImg.shape
-        bytesPerLine = 3 * width
-        qImg = QImage(cvImg.data, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
-        '''
-        height, width = cvImg.shape
-        bytesPerLine = 1 * width
-        qImg = QImage(cvImg.data, width, height, bytesPerLine, QImage.Format_Grayscale8)
-        
-        pixmap = QPixmap.fromImage(qImg)
-        self.pixmap_item.setPixmap(pixmap)
+        #Left Image (1)
+        cvImg1 = self.sprayCard.image_contour(fillShapes=False)
+        self.pixmap_item_original.setPixmap(QPixmap.fromImage(self.qImg_from_cvImg(cvImg1)))
+        #Right Image(2)
+        cvImg2 = self.sprayCard.image_contour(fillShapes=True)
+        #cvImg2 = self.sprayCard.image_watershed()
+        self.pixmap_item_thresh.setPixmap(QPixmap.fromImage(self.qImg_from_cvImg(cvImg2)))
+        #Auto-resize to fit width of crad to width of graphicsView
+        scene = self.ui.graphicsView2.scene()
+        scene.setSceneRect(scene.itemsBoundingRect())
+        self.ui.graphicsView2.fitInView(scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
+        self.ui.graphicsView.fitInView(scene.sceneRect(), Qt.KeepAspectRatioByExpanding)  
+
+    def qImg_from_cvImg(self, cvImg):
+        height, width = cvImg.shape[:2]
+        if len(cvImg.shape) == 2:
+            bytesPerLine = 1 * width
+            qImg = QImage(cvImg.data, width, height, bytesPerLine, QImage.Format_Grayscale8)
+        elif len(cvImg.shape) == 3:
+            bytesPerLine = 3 * width
+            qImg = QImage(cvImg.data, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+        return qImg
 
     def on_applied(self):
-        #Accept changes already made and notify requestor
-        cardsToApplyTo = {}
         #Cycle through passes
         for pass_key,pass_value in self.seriesData.passes.items():
-            #Check if should check if should apply to pass (no typo)
+            #Check if should apply to pass
             if pass_key == self.passData.name or self.ui.checkBoxApplyToAllSeries.checkState() == Qt.Checked:
                 #Cycle through cards in pass
                 for card in pass_value.spray_cards:
                     if card.name == self.sprayCard_OG.name or self.ui.checkBoxApplyToAllPass.checkState() == Qt.Checked:
-                        p = self.seriesData.passes[pass_key]
                         #Apply
                         #Set overall type
                         card.set_threshold_type(self.sprayCard.threshold_type)

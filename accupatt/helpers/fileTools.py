@@ -2,7 +2,8 @@ import pandas as pd
 import numpy as np
 import json, dataclasses, os
 
-from accupatt.helpers.dataAccuPatt import DataAccuPatt
+from shutil import copy2
+
 from accupatt.models.seriesData import SeriesData
 from accupatt.models.appInfo import AppInfo
 from accupatt.models.passData import Pass
@@ -11,140 +12,148 @@ from accupatt.models.sprayCard import SprayCard
 class FileTools:
 
     def load_from_accupatt_1_file(file):
-        #Load in the file
-        data = DataAccuPatt(file)
-        data.readFromFile()
-        #get dataframes for each sheet
-        dFlyin = data.getFlyinData()
-        dAircraft = data.getAircraftData()
-        dSeries = data.getSeriesData()
-        dPatternInfo = data.getPatternInfo()
-        dPatternData = data.getPatternData()
-        dExcitationData = data.getExcitationData()
+        #indicator for metric
+        isMetric = False
+
+        #Load entire WB into dict of sheets
+        df_map = pd.read_excel(file, sheet_name=None, header=None)
+  
         #initialize SeriesData object to store all info
         s = SeriesData()
-        #Pull *Flyin* data from Fly-In Tab
-        s.info.flyin_name = dFlyin.at[0,0]
-        s.info.flyin_location = dFlyin.at[1,0]
-        s.info.flyin_date = dFlyin.at[2,0]
-        s.info.flyin_analyst = dFlyin.at[3,0]
-        #Pull *Applicator Info* data from AppInfo Tab
-        s.info.pilot = dAircraft.at[0,'Value']
-        s.info.business = dAircraft.at[1,'Value']
-        s.info.street = dAircraft.at[3,'Value']
-        s.info.city = dAircraft.at[4,'Value']
-        s.info.state = dAircraft.at[5,'Value']
-        s.info.zip = dAircraft.at[6,'Value']
-        s.info.phone = dAircraft.at[2,'Value']
-        s.info.email = dAircraft.at[7,'Value']
-        #Pull *Aircraft* data from AppInfo Tab
-        s.info.regnum = dAircraft.at[8,'Value']
-        
-        s.info.make = dAircraft.at[10,'Value']
-        s.info.model = dAircraft.at[11,'Value']
-        s.info.set_wingspan(dAircraft.at[25,'Value'])
-        s.info.winglets = dAircraft.at[30,'Value']
-        #Pull *Spray System* data from AppInfo Tab
-        s.info.set_swath(string=dAircraft.at[22,'Value'])
-        s.info.set_swath_adjusted(string=dAircraft.at[23,'Value'])
-        s.info.set_rate(string=dAircraft.at[21,'Value'])
-        s.info.set_pressure(string=dAircraft.at[20,'Value'])
-        s.info.nozzle_type_1 = dAircraft.at[12,'Value']
-        s.info.set_nozzle_size_1(string=dAircraft.at[14,'Value'])
-        s.info.set_nozzle_deflection_1(string=dAircraft.at[15,'Value'])
-        s.info.set_nozzle_quantity_1(string=dAircraft.at[13,'Value'])
-        s.info.nozzle_type_2 = dAircraft.at[16,'Value']
-        s.info.set_nozzle_size_2(string=dAircraft.at[18,'Value'])
-        s.info.set_nozzle_deflection_2(string=dAircraft.at[19,'Value'])
-        s.info.set_nozzle_quantity_2(string=dAircraft.at[17,'Value'])
-        s.info.set_boom_width(string=dAircraft.at[26,'Value'])
-        s.info.set_boom_drop(string=dAircraft.at[28,'Value'])
-        s.info.set_nozzle_spacing(string=dAircraft.at[29,'Value'])
-        if dAircraft.at[32,'Value'] == 'False':
-            #Non-Metric
-            s.info.swath_units = 'ft'
-            s.info.rate_units = 'gpa'
-            s.info.pressure_units = 'psi'
-            s.info.wingspan_units = 'ft'
-            s.info.boom_width_units = 'ft'
-            s.info.boom_drop_units = 'in'
-            s.info.nozzle_spacing_units = 'in'
 
-        else:
-            #Metric
-            s.info.swath_units = 'm'
-            s.info.rate_units = 'l/ha'
-            s.info.pressure_units = 'bar'
-            s.info.wingspan_units = 'm'
-            s.info.boom_width_units = 'm'
-            s.info.boom_drop_units = 'cm'
-            s.info.nozzle_spacing_units = 'cm'
+        #Pull data from Fly-In Tab
+        df = df_map['Fly-In Data'].fillna('')
+        for row in range(df.shape[0]):
+            if row == 0: s.info.flyin_name = df.iat[row,0]
+            if row == 1: s.info.flyin_location = df.iat[row,0]
+            if row == 2: s.info.flyin_date = df.iat[row,0]
+            if row == 3: s.info.flyin_analyst = df.iat[row,0]
 
-        #Pull *Series* data from file
-        s.info.series = dAircraft.at[9,'Value']
-        s.info.notes = dAircraft.at[31, 'Value']
+        #Pull data from AppInfo Tab
+        df = df_map['Aircraft Data'].fillna('')
+        for row in range(df.shape[0]):
+            #string value from col 1
+            val = str(df.iat[row,1])
+            #string value from col 2
+            if df.shape[1] > 2: val2 = str(df.iat[row,2])
+            #asign as needed
+            if row == 0: s.info.pilot = val
+            if row == 1: s.info.business = val
+            if row == 2: s.info.phone = val
+            if row == 3: s.info.street = val
+            if row == 4: s.info.city = val
+            if row == 5: s.info.state = val
+            if row == 5 and df.shape[1] > 2: s.info.zip = val2
+            if row == 6: s.info.regnum = val
+            if row == 7: s.info.series = val
+            if row == 8: s.info.make = val
+            if row == 9: s.info.model = val
+            if row == 10: s.info.nozzle_type_1 = val
+            if row == 11: s.info.set_nozzle_quantity_1(val)
+            if row == 12: s.info.set_nozzle_size_1(val)
+            if row == 13: s.info.set_nozzle_deflection_1(val)
+            if row == 14: s.info.nozzle_type_2 = val
+            if row == 15: s.info.set_nozzle_quantity_2(val)
+            if row == 16: s.info.set_nozzle_size_2(val)
+            if row == 17: s.info.set_nozzle_deflection_2(val)
+            if row == 18: s.info.set_pressure(val)
+            if row == 19: s.info.set_rate(val)
+            if row == 20: s.info.set_swath(val)
+            if row == 20 and df.shape[1] > 2: s.info.set_swath_adjusted(val2)
+            if row == 26: s.info.time = val
+            if row == 27: s.info.set_wingspan(val)
+            if row == 28: s.info.set_boom_width(val)
+            if row == 30: s.info.set_boom_drop(val)
+            if row == 31: s.info.set_nozzle_spacing(val)
+            if row == 32: s.info.winglets = val
+            if row == 33: s.info.notes = val
+            if row == 35:
+                isMetric = (val == 'True')
+                if isMetric:
+                    s.info.swath_units = 'm'
+                    s.info.rate_units = 'l/ha'
+                    s.info.pressure_units = 'bar'
+                    s.info.wingspan_units = 'm'
+                    s.info.boom_width_units = 'm'
+                    s.info.boom_drop_units = 'cm'
+                    s.info.nozzle_spacing_units = 'cm'
+                else:
+                    s.info.swath_units = 'ft'
+                    s.info.rate_units = 'gpa'
+                    s.info.pressure_units = 'psi'
+                    s.info.wingspan_units = 'ft'
+                    s.info.boom_width_units = 'ft'
+                    s.info.boom_drop_units = 'in'
+                    s.info.nozzle_spacing_units = 'in'
 
+        #Pull data from Series Data tab
+        df = df_map['Series Data'].fillna('')
+        df.columns = df.iloc[0]
         #Clear any stored individual passes
         s.passes.clear()
         #Search for any active passes and create entries in seriesData.passes dict
-        for c in dSeries.columns[1:]:
-            n = str(c)
-            if not str(dSeries.at[1,n]) == '':
-                p = Pass(name=n)
-                p.ground_speed = float(dSeries.at[1,n])
-                p.ground_speed_units='mph'
-                p.spray_height=float(dSeries.at[2,n])
-                p.spray_height_units='ft'
-                p.pass_heading=int(dSeries.at[3,n])
-                p.wind_direction=int(dSeries.at[4,n])
-                p.wind_speed=float(dSeries.at[5,n])
-                p.wind_speed_units='mph'
-                p.temperature = int(dSeries.at[6,'Pass 1'])
-                p.temperature_units = '°F'
-                p.humidity = int(dSeries.at[7,'Pass 1'])
+        for column in df.columns[1:]:
+            if not str(df.at[1,column]) == '':
+                p = Pass(name=column)
+                p.set_ground_speed(str(df.at[1,column]))
+                p.set_spray_height(str(df.at[2,column]))
+                p.set_pass_heading(str(df.at[3,column]))
+                p.set_wind_direction(str(df.at[4,column]))
+                p.set_wind_speed(str(df.at[5,column]))
+                if column == 'Pass 1':
+                    s.info.set_temperature(str(df.at[6,column]))
+                    s.info.set_humidity(str(df.at[7,column]))
+                    s.info.temperature_units = '°C' if isMetric else '°F'
+                p.ground_speed_units = 'kph' if isMetric else 'mph'
+                p.spray_height_units = 'm' if isMetric else 'ft'
+                p.wind_speed_units = 'kph' if isMetric else 'mph'
+                s.passes[column] = p
 
-                s.passes[n] = p
+        #Pull data from Pattern Data tab
+        df = df_map['Pattern Data'].fillna('')
+        if df.shape[1] < 13: df['nan'] = ''
+        print(df)
+        #Make new empty dataframe for info
+        df_info = pd.DataFrame({'Pass 1':[], 'Pass 2':[], 'Pass 3':[], 'Pass 4':[], 'Pass 5':[], 'Pass 6':[]})
+        #Append trims
+        dd = df.iloc[0:3,[2, 4, 6, 8, 10, 12]]
+        dd.columns = ['Pass 1', 'Pass 2', 'Pass 3', 'Pass 4', 'Pass 5', 'Pass 6']
+        df_info = df_info.append(dd, ignore_index=True)
+        #Append string length and sample length
+        dd = df.iloc[1:2,[1, 3, 5, 7, 9, 11]]
+        dd.columns = ['Pass 1', 'Pass 2', 'Pass 3', 'Pass 4', 'Pass 5', 'Pass 6']
+        df_info = df_info.append(dd, ignore_index=True)
+        print(df_info)
+        #Make a dataframe for emission data points
+        df_emission = pd.DataFrame({'loc':[], 'Pass 1':[], 'Pass 2':[], 'Pass 3':[], 'Pass 4':[], 'Pass 5':[], 'Pass 6':[]})
+        dd = df.iloc[5:,[0,2,4,6,8,10,12]]
+        dd.columns = ['loc', 'Pass 1', 'Pass 2', 'Pass 3', 'Pass 4', 'Pass 5', 'Pass 6']
+        df_emission = df_emission.append(dd, ignore_index=True)
+
+        #Make a dataframe for excitation data points
+        df_excitation = pd.DataFrame({'loc':[], 'Pass 1':[], 'Pass 2':[], 'Pass 3':[], 'Pass 4':[], 'Pass 5':[], 'Pass 6':[]})
+        dd = df.iloc[5:,[0,1,3,5,7,9,11]]
+        dd.columns = ['loc', 'Pass 1', 'Pass 2', 'Pass 3', 'Pass 4', 'Pass 5', 'Pass 6']
+        df_excitation = df_excitation.append(dd, ignore_index=True)
 
         #Pull patterns and place them into seriesData.passes dicts by name (created above)
-        for column_name in dPatternInfo:
-            if str(dPatternInfo.at[3,column_name]) != 'nan':
-                name = column_name
-                if name in s.passes.keys():
-                    p = s.passes[name]
-                else:
-                    #If pass not created from series data, make one here
-                    p = Pass(name=name)
-                p.trim_l = dPatternInfo.at[0,column_name]
-                p.trim_r = dPatternInfo.at[1,column_name]
-                p.trim_v = dPatternInfo.at[2,column_name]
-                p.data = dPatternData[['loc',column_name]]
-                p.data_ex = dExcitationData[['loc',column_name]]
-
-                s.passes[name] = p
+        for column in df_info:
+            if not str(df_info.at[3,column]) == '':
+                if column in s.passes.keys():
+                    p = s.passes[column]
+                    p.trim_l = 0 if df_info.at[0,column] == '' else int(df_info.at[0,column])
+                    p.trim_r = 0 if df_info.at[1,column] == '' else int(df_info.at[1,column])
+                    p.trim_v = 0 if df_info.at[2,column] == '' else df_info.at[2,column]
+                    p.data = df_emission[['loc',column]]
+                    p.data_ex = df_excitation[['loc',column]]
+                    s.passes[column] = p
 
         return s
-
-    #Old method
-    def _load_from_accupatt_2_file(directory):
-        seriesData = SeriesData()
-        for f in os.listdir(directory):
-            if f.endswith('.series'):
-                #Load in AppInfo from the .series file
-                with open(directory+os.path.sep+f, 'r') as j:
-                    seriesData.info = AppInfo(**json.loads(j.read()))
-            if f.endswith('.pass'):
-                #Load in each Pass from the .pass files
-                with open(directory+os.path.sep+f, 'r') as j:
-                    p = Pass(**json.loads(j.read()))
-                    #data(_ex,_mod) are loaded as dicts, conver to df's
-                    p.data = pd.DataFrame.from_dict(p.data)
-                    p.data_ex = pd.DataFrame.from_dict(p.data_ex)
-                    seriesData.passes[p.name] = p
-        return seriesData
 
     def load_from_accupatt_2_file(directory):
         seriesData = SeriesData()
         for (dirpath, dirnames, filenames) in os.walk(directory):
+            base_name = os.path.basename(os.path.normpath(directory))
             for f in filenames:
                 if f.endswith('.series'):
                     #Load in AppInfo from the .series file
@@ -159,10 +168,14 @@ class FileTools:
                         p.data = pd.DataFrame.from_dict(p.data)
                         p.data_ex = pd.DataFrame.from_dict(p.data_ex)
                         if p.spray_cards:
-                            for i,val in enumerate(p.spray_cards):
-                                #Change dicts to SprayCard objects in-place in list
-                                p.spray_cards[i] = SprayCard.load_from_json(val)
+                            #get a handle on the card folder 
+                            folder = os.path.join(directory, base_name + ' P' + p.name[-1], 'cards')
+                            if os.path.exists(folder):
+                                for i,val in enumerate(p.spray_cards):
+                                    #Change dicts to SprayCard objects in-place in list
+                                    p.spray_cards[i] = SprayCard.load_from_json(val, folder)
                         seriesData.passes[p.name] = p
+        seriesData.filePath = directory
         return seriesData
 
     #TODO: Update this to match new load above
@@ -185,3 +198,16 @@ class FileTools:
             with open(filePathNameWExt, 'w') as fp:
                 json.dump(value.__dict__, fp, indent=4, default=lambda df: json.loads(df.to_json()))
 
+    def saveImage(src_file, series_dir, pass_data, spray_card):
+        #Create cards folder if needed
+        base_name = os.path.basename(os.path.normpath(series_dir))
+        folder = os.path.join(series_dir, base_name + ' P' + pass_data.name[-1], 'cards')
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        dest_file = os.path.join(folder, spray_card.name + '.png')
+        #Copy the file
+        print('Source: '+src_file)
+        print('Destination: '+dest_file)
+        copy2(src_file, dest_file)
+        #Update SprayCard object
+        spray_card.filepath = dest_file

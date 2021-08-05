@@ -59,22 +59,22 @@ class EditTrims(baseclass):
     def updatetrim_l(self, trim_l):
         p = self.pattern_OG
         p.trim_l = trim_l
-        self.ui.labeltrim_l.setText(f"Trim Left = {trim_l}")
+        self.ui.labelTrimL.setText(f"Trim Left = {trim_l}")
 
     def updatetrim_r(self, trim_r):
         p = self.pattern_OG
         p.trim_r = trim_r
-        self.ui.labeltrim_r.setText(f"Trim Right = {trim_r}")
+        self.ui.labelTrimR.setText(f"Trim Right = {trim_r}")
 
     def updatetrim_v(self, trim_v):
         p = self.pattern_OG
         p.trim_v = trim_v
-        self.ui.labeltrim_v.setText(f"Trim Vertical = {trim_v}")
+        self.ui.labelTrimV.setText(f"Trim Vertical = {trim_v}")
 
     def redrawPlots(self):
         print(f"Trim L = {self.pattern_OG.trim_l}, Trim R = {self.pattern_OG.trim_r}, Trim V = {self.pattern_OG.trim_v}")
         self.pattern_OG.modifyData(
-            isCentroid=self.isAlignCentroid,
+            isCenter=self.isAlignCentroid,
             isSmooth=self.isSmooth)
         StringPlotter.drawIndividualTrims(
             mplCanvas1=self.ui.plotWidgetTrims.canvas,

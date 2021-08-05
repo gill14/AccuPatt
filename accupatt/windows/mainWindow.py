@@ -1,6 +1,7 @@
+from posixpath import dirname
 import sys, os
 from PyQt5.QtWidgets import QApplication, QFileDialog, QListWidgetItem, QMessageBox, QGraphicsScene, QGraphicsPixmapItem
-from PyQt5.QtCore import Qt, QSettings
+from PyQt5.QtCore import Qt, QSettings, QSignalBlocker
 from PyQt5.QtGui import QPixmap
 from PyQt5 import uic
 
@@ -55,7 +56,7 @@ class MainWindow(baseclass):
         self.ui.buttonEditTrims.clicked.connect(self.editTrims)
 
         #Setup Composite Tab
-        self.ui.listWidgetIncludePasses.itemChanged[QListWidgetItem].connect(self.includePassesChanged)
+        self.ui.listWidgetIncludePasses.itemClicked[QListWidgetItem].connect(self.includePassesChanged)
         self.ui.checkBoxAlignCentroid.stateChanged[int].connect(self.updatePlots)
         self.ui.checkBoxEqualizeArea.stateChanged[int].connect(self.updatePlots)
         self.ui.checkBoxSmoothIndividual.stateChanged[int].connect(self.updatePlots)
@@ -63,7 +64,7 @@ class MainWindow(baseclass):
 
         #Setup Simulations Tab
         self.ui.horizontalSliderSimulatedSwath.valueChanged[int].connect(self.updateSwathAdjusted)
-        self.ui.horizontalSliderSimulatedSwath.sliderReleased.connect(self.updateSimulations)
+        #self.ui.horizontalSliderSimulatedSwath.sliderReleased.connect(self.updateSimulations)
         self.ui.spinBoxSimulatedSwathPasses.valueChanged.connect(self.updateSimulations)
 
         #Setup SprayCards Tab
@@ -81,9 +82,9 @@ class MainWindow(baseclass):
 
     def importAccuPatt(self):
         #Get the file
-        #fname, filter_ = QFileDialog.getOpenFileName(self, 'Open file', 'home', "AccuPatt files (*.xlsx)")
+        fname, filter_ = QFileDialog.getOpenFileName(self, 'Open file', '/Users/gill14/OneDrive/Matt Scott Share/Fly in data/2018 Reed Fly-In', "AccuPatt files (*.xlsx)")
         #dA = dataAccuPatt(fname)
-        fname = "/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt/Testing/N502LY 02.xlsx"
+        #fname = "/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt/Testing/N502LY 02.xlsx"
 
         #Load in the values
         self.seriesData = FileTools.load_from_accupatt_1_file(file=fname)
@@ -104,10 +105,14 @@ class MainWindow(baseclass):
         #directory = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder')
         #Testing only
         directory = '/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt/testing/N802ET S3'
+        self.currentDirectory = dirname(directory)
         self.seriesData = FileTools.load_from_accupatt_2_file(directory=directory)
         self.update_all_ui()
 
     def update_all_ui(self):
+        #indicator as to whether to call update plots at end of this method
+        shouldUpdatePlots = False
+
         #Populate AppInfo tab
         self.updateFlyinUI()
         self.updateApplicatorInfo(self.seriesData.info)
@@ -115,40 +120,42 @@ class MainWindow(baseclass):
         self.updateSpraySystem(self.seriesData.info)
         self.updateSeries(self.seriesData.info)
 
-        #Disable all items in listViews
-        for i in range(self.ui.listWidgetPassSelection.count()):
-            self.ui.listWidgetPassSelection.item(i).setFlags(Qt.NoItemFlags)
-            self.ui.listWidgetPassSelection.item(i).setCheckState(Qt.Unchecked)
-        for i in range(self.ui.listWidgetIncludePasses.count()):
-            self.ui.listWidgetIncludePasses.item(i).setFlags(Qt.NoItemFlags)
-            self.ui.listWidgetIncludePasses.item(i).setCheckState(Qt.Unchecked)
+        #Refresh ListWidgets
+        lvs = [self.ui.listWidgetPassSelection, self.ui.listWidgetIncludePasses, self.ui.listWidgetSprayCardPass]
+        for lv in lvs:
+            #Disable all items
+            for i in range(lv.count()):
+                lv.item(i).setFlags(Qt.NoItemFlags)
+                lv.item(i).setCheckState(Qt.Unchecked)
+            #Enable applicable passes
+            for key, val in self.seriesData.passes.items():
+                print(key)
+                print('is a key for')
+                print(val)
+            for key, value in self.seriesData.passes.items():
+                print('key for lv update')
+                print(key)
+                item = lv.findItems(key,Qt.MatchExactly)[0]
+                item.setFlags(Qt.ItemIsEnabled|Qt.ItemIsSelectable)
+                #Make the include passes lv user checkable
+                if lv==lvs[1]: item.setFlags(Qt.ItemIsEnabled|Qt.ItemIsSelectable|Qt.ItemIsUserCheckable)
+                #Set CheckState
+                if (lv==lvs[0] and value.data is not None) or (lv==lvs[1] and value.include_in_composite) or (lv==lvs[2] and value.spray_cards):
+                    item.setCheckState(Qt.Checked)    
+                shouldUpdatePlots = True
+        self.sprayCardPassSelectionChanged(self.ui.listWidgetSprayCardPass.currentItem(), None)
 
-        #Activate applicable Passes
-        for key, value in self.seriesData.passes.items():
-            item = self.ui.listWidgetPassSelection.findItems(key,Qt.MatchExactly)[0]
-            item.setFlags(Qt.ItemIsEnabled|Qt.ItemIsSelectable)
-            item.setCheckState(Qt.Checked)
-            item.setSelected(True)
-            item = self.ui.listWidgetIncludePasses.findItems(key,Qt.MatchExactly)[0]
-            item.setFlags(Qt.ItemIsEnabled|Qt.ItemIsUserCheckable)
-            item.setCheckState(Qt.Checked)
-
-        #Update the label for swath adjustment
+        #Update the swath adjustment slider
         self.ui.labelSimulatedSwath.setText(str(self.seriesData.info.swath_adjusted) + ' ' + self.seriesData.info.swath_units)
         minn = float(self.seriesData.info.swath) * 0.5
         maxx = float(self.seriesData.info.swath) * 1.5
-        self.ui.horizontalSliderSimulatedSwath.setValue(self.seriesData.info.swath_adjusted)
-        self.ui.horizontalSliderSimulatedSwath.setMinimum(round(minn))
-        self.ui.horizontalSliderSimulatedSwath.setMaximum(round(maxx))
+        with QSignalBlocker(self.ui.horizontalSliderSimulatedSwath) as blocker:
+            self.ui.horizontalSliderSimulatedSwath.setValue(self.seriesData.info.swath_adjusted)
+            self.ui.horizontalSliderSimulatedSwath.setMinimum(round(minn))
+            self.ui.horizontalSliderSimulatedSwath.setMaximum(round(maxx))
 
         #Test new plot methods
-        self.updatePlots()
-
-        #Populate SprayCards
-        for key, value in self.seriesData.passes.items():
-            if value.spray_cards:
-                item = self.ui.listWidgetSprayCardPass.findItems(key,Qt.MatchExactly)[0]
-                item.setCheckState(Qt.Checked)
+        if shouldUpdatePlots: self.updatePlots()
 
     def makeReport(self):
         r = ReportMaker()
@@ -244,7 +251,6 @@ class MainWindow(baseclass):
         self.ui.labelSeriesNumber.setText(appInfo.string_series())
         self.ui.labelNotes.setText(appInfo.notes)
         
-
     def updatePass(self, passData):
         #If pass already exists in seriesData.passes dict, update it
         #If pass not yet in seriesData.passes dict, add it
@@ -335,10 +341,12 @@ class MainWindow(baseclass):
     def updateSwathAdjusted(self, swath):
         self.seriesData.info.swath_adjusted = swath
         self.ui.labelSimulatedSwath.setText(str(swath)+ ' ' + self.seriesData.info.swath_units)
+        self.updateSimulations()
 
     def sprayCardPassSelectionChanged(self, current, previous):
-        if current.checkState() != Qt.Checked: return
+        if current.text() not in self.seriesData.passes: return
         p = self.seriesData.passes[current.text()]
+        if not p.spray_cards: return
         lwc = self.ui.listWidgetSprayCard
         lwc.clear()
         for card in p.spray_cards:
@@ -370,13 +378,14 @@ class MainWindow(baseclass):
         e.exec_()
 
     def updateSprayCardList(self):
+        self.saveFile()
         self.sprayCardPassSelectionChanged(current=self.ui.listWidgetSprayCardPass.currentItem(),previous=None)
 
     def loadCards(self):
         #Get a handle on the card in question
         p = self.seriesData.passes[self.ui.listWidgetSprayCardPass.currentItem().text()]
         #Open the Edit Threshold window for currently selected card
-        e = LoadCards(passData=p)
+        e = LoadCards(seriesData=self.seriesData, passData=p)
         #Connect Slot to retrieve Vals back from popup
         e.applied.connect(self.updateSprayCardList)
         #Start Loop
@@ -391,15 +400,20 @@ class MainWindow(baseclass):
         #Open the Edit Threshold window for currently selected card
         e = EditThreshold(sprayCard=c, passData=p, seriesData=self.seriesData)
         #Connect Slot to retrieve Vals back from popup
-        e.applied.connect(self.updateSprayCardView)
+        e.applied.connect(self.saveAndUpdateSprayCardView)
         #Start Loop
         e.exec_()
 
     def showSprayCardButtons(self, isShow: bool):
         self.ui.buttonEditThreshold.setEnabled(isShow)
 
+    def saveAndUpdateSprayCardView(self, sprayCard=None):
+        self.saveFile()
+        self.updateSprayCardView(sprayCard)
+
     def updateSprayCardView(self, sprayCard=None):
-        self.ui.graphicsView.scene().clear()
+        scene = self.ui.graphicsView.scene()
+        scene.clear()
         if sprayCard == None:
             if self.ui.listWidgetSprayCardPass.selectedItems():
                 p = self.seriesData.passes[self.ui.listWidgetSprayCardPass.currentItem().text()]
@@ -408,8 +422,10 @@ class MainWindow(baseclass):
         if sprayCard == None: return
         if sprayCard.filepath == None: return
         #Show original
-        item = QGraphicsPixmapItem(QPixmap(sprayCard.filepath))
-        self.ui.graphicsView.scene().addItem(item)
+        item = QGraphicsPixmapItem(QPixmap(sprayCard.filepath)) 
+        scene.addItem(item)
+        scene.setSceneRect(scene.itemsBoundingRect())
+        self.ui.graphicsView.fitInView(scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
         
 
 if __name__ == '__main__':
