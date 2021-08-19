@@ -9,6 +9,8 @@ from accupatt.models.appInfo import AppInfo
 from accupatt.models.passData import Pass
 from accupatt.models.sprayCard import SprayCard
 
+from accupatt.helpers.atomizationModel import AtomizationModel
+
 class FileTools:
 
     def load_from_accupatt_1_file(file):
@@ -197,6 +199,17 @@ class FileTools:
             filePathNameWExt = subfolder + os.path.sep + fname + '.pass'
             with open(filePathNameWExt, 'w') as fp:
                 json.dump(value.__dict__, fp, indent=4, default=lambda df: json.loads(df.to_json()))
+
+    def writeModelToJSONFile(path):
+        filepath_ls = path + os.path.sep + 'ls_dict' + '.json'
+        filepath_hs = path + os.path.sep + 'hs_dict' + '.json'
+        filepath_ref = path + os.path.sep + 'ref_nozzles' + '.json'
+        filepath_nozzles = path + os.path.sep + 'nozzles' + '.json'
+        with open(filepath_nozzles, 'w') as fp:
+            json.dump(AtomizationModel.nozzles, fp, indent=4)
+        with open(filepath_ref, 'w') as fp:
+            json.dump(AtomizationModel.ref_nozzles, fp, indent=4)
+       
 
     def saveImage(src_file, series_dir, pass_data, spray_card):
         #Create cards folder if needed

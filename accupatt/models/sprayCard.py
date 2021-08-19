@@ -41,84 +41,105 @@ class SprayCard:
         img = cv2.imread(self.filepath)
         return img
 
-    def image_threshold(self, inverted=False):
-        img_thresh = None
+    def _image_threshold(self, img):
         if self.threshold_type == self.THRESHOLD_TYPE_GRAYSCALE:
-            img_thresh = self._image_threshold_grayscale(img=self.image_original())
+            return self._image_threshold_grayscale(img)
         else:
-            img_thresh = self._image_threshold_color(img=self.image_original())
-        # Make this optional later
-        img_thresh = self._image_close_holes(img_thresh)
-        # Only inverted for display
-        if inverted:
-            img_thresh = cv2.bitwise_not(img_thresh)
-        return img_thresh
+            return self._image_threshold_color(img)
 
-    def _image_threshold_grayscale(self, img=None):
-        # Otsu's thresholding after Gaussian filtering
+    def _image_threshold_grayscale(self, img):
+        #Convert to grayscale
         img_gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-        #img_blur = cv2.GaussianBlur(img_gray,(5,5),0)
         if self.threshold_method_grayscale == self.THRESHOLD_METHOD_AUTOMATIC:
-            thresh_val,img_thresh = cv2.threshold(img_gray,self.threshold_grayscale,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)
-            print('OTSU'+str(thresh_val))
-        else:
-            _,img_thresh = cv2.threshold(img_gray,self.threshold_grayscale,255,cv2.THRESH_BINARY)
-            print(self.threshold_grayscale)
+            #Run Otsu Threshold, if threshold value is within ui-specified range, return it
+            thresh_val,_img_thresh = cv2.threshold(img_gray,0,255,cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+            if thresh_val <= self.threshold_grayscale:
+                return _img_thresh
+        #If manually thresholding, or auto returned threshold value outside ui-specified range, run manual thresh and return it
+        thresh_val,img_thresh = cv2.threshold(img_gray,self.threshold_grayscale,255,cv2.THRESH_BINARY_INV)
         return img_thresh
 
-    def _image_threshold_color(self, img=None):
+    def _image_threshold_color(self, img):
+        #Use HSV colorspace
         img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         if self.threshold_color_hue is None or self.threshold_color_saturation is None or self.threshold_color_brightness is None:
             return None
+        #Convenience arrays for user-defined HSB range values
         minHSV = np.array([self.threshold_color_hue[0], self.threshold_color_saturation[0], self.threshold_color_brightness[0]])
         maxHSV = np.array([self.threshold_color_hue[1], self.threshold_color_saturation[1], self.threshold_color_brightness[1]])
+        # Binarize image with TRUE for HSB values in user-defined range
         mask = cv2.inRange(img_hsv, minHSV, maxHSV)
+        # Invert image according to user defined method
         if self.threshold_method_color == self.THRESHOLD_METHOD_INCLUDE:
             mask = cv2.bitwise_not(mask)
         return mask
 
-    def _image_close_holes(self, img_thresh):
+    def _image_watershed(self, img_src, img_thresh):
+        thresh = img_thresh
+        # noise removal
         kernel = np.ones((3,3),np.uint8)
-        return cv2.morphologyEx(img_thresh, cv2.MORPH_CLOSE, kernel, iterations = 1)
+        opening = cv2.morphologyEx(thresh,cv2.MORPH_OPEN,kernel, iterations = 2)
+        # sure background area
+        sure_bg = cv2.dilate(opening,kernel,iterations=3)
+        # Finding sure foreground area
+        dist_transform = cv2.distanceTransform(opening,cv2.DIST_L2,5)
+        _, sure_fg = cv2.threshold(dist_transform,0.2*dist_transform.max(),255,0)
+        # Finding unknown region
+        sure_fg = np.uint8(sure_fg)
+        unknown = cv2.subtract(sure_bg,sure_fg)
+        # Marker labelling
+        _, markers = cv2.connectedComponents(sure_fg)
+        # Add one to all labels so that sure background is not 0, but 1
+        markers = markers+1
+        # Now, mark the region of unknown with zero
+        markers[unknown==255] = 0
+        markers = cv2.watershed(img_src,markers)
+        return markers
 
     def image_contour(self, fillShapes=False):
         img_src = self.image_original()
-        #If fillshapes, use blank white image
+        img_thresh = self._image_threshold(img=img_src)
+        #Apply Watershed
+        markers = self._image_watershed(img_src, img_thresh)
+        #Re-thresh
+        _, img_thresh = cv2.threshold(markers.astype(np.uint8), 0, 255, cv2.THRESH_BINARY|cv2.THRESH_OTSU)
+        #If fillshapes, use blank white image as src
         if fillShapes:
             img_src = np.zeros((img_src.shape[0], img_src.shape[1], 3), np.uint8)
             img_src[:] = (255, 255, 255)
-        return self._image_contour(img_src=img_src, fillShapes=fillShapes)
+        return self._image_contour(img_src, img_thresh, fillShapes)
 
-    def _image_contour(self, img_src, fillShapes=False):
-        img_thresh = self.image_threshold(inverted=False)
+    def _image_contour(self, img_src, img_thresh, fillShapes=False):
+        # Use img_thresh to find contours
         contours, _ = cv2.findContours(img_thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        minEllipse = [None]*len(contours)
-        for i, c in enumerate(contours):
-            if c.shape[0] > 5:
-                minEllipse[i] = cv2.fitEllipse(c)
-        # set thickness based on fillShape input param
-        color_contours = (138, 43, 226)
-        color_shapes = color_contours
+        # When !fillShapes(default), set thickness will outline contours on img_src using these colors
+        color_stain_not_counted = (138, 43, 226)
+        color_stain_counted = color_stain_not_counted
         thickness = 1
+        # When fillshapes, netagive thickness will fill contours on white image using these new colors
         if fillShapes: 
             thickness = -1
-            color_contours = (0, 0, 255)
-            color_shapes = (255, 0, 0)
-            img_src[img_thresh==0] = [0, 0, 255]
-        
-        # draw elipses on img_src
+            color_stain_not_counted = (0, 0, 255) # Color all contours Red
+            color_stain_counted = (255, 0, 0) # Color record-worthy contours Blue
+        # Iterate thorugh each contour
         for i, c in enumerate(contours):
-            # draw contours on img_src
-            #cv2.drawContours(img_src, contours, i, color_contours, thickness=1)
-            #Check if in bounds
+            # Check if in bounds
             x, y, w, h = cv2.boundingRect(c)
-            if x <= 0 or y <= 0 or w >=img_src.shape[1]-1 or h >= img_src.shape[0]-1:
+            # Draw uncounted contour if not the size of image itself
+            if w >=img_src.shape[1]-1 or h >= img_src.shape[0]-1:
                 continue
-            cv2.drawContours(img_src, contours, i, color_shapes, thickness=thickness)
-            # draw elipse if more than 5 points
-            #if c.shape[0] > 5:
-                #cv2.ellipse(img_src, minEllipse[i], color_shapes, thickness=thickness)
-
+            cv2.drawContours(img_src, contours, i, color_stain_not_counted, thickness=thickness)
+            # If contour touches edge, fail
+            if x <= 0 or y <= 0 or (x+w) >= img_src.shape[1]-1 or (y+h) >= img_src.shape[0]-1:
+                continue
+            # If contour is below the min pixel size, fail
+            if c.shape[0] < 1:
+                continue
+            # Draw record-worthy contour
+            cv2.drawContours(img_src, contours, i, color_stain_counted, thickness=thickness)
+            # If fillShapes, draw white borders on contours to show watershed seperation
+            if fillShapes:
+                cv2.drawContours(img_src, contours, i, (255,255,255), thickness=1)
         return img_src
 
     def set_threshold_type(self, type=THRESHOLD_TYPE_GRAYSCALE):

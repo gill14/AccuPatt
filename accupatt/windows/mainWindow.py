@@ -76,7 +76,7 @@ class MainWindow(baseclass):
         self.ui.graphicsView.setScene(QGraphicsScene(self))
         #For Testing Expedience
         #self.importAccuPatt()
-
+        FileTools.writeModelToJSONFile(QFileDialog.getExistingDirectory(self, 'Select Folder'))
         # Your code ends here
         self.show()
 

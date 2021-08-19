@@ -5,6 +5,7 @@ from PyQt5 import uic
 
 import os, sys, copy
 
+sys.path.insert(1, '/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt')
 from accupatt.models.sprayCard import SprayCard
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editThreshold.ui'))
@@ -74,8 +75,6 @@ class EditThreshold(baseclass):
         self.ui.rangeSliderHue.setValue([self.sprayCard.threshold_color_hue[0],self.sprayCard.threshold_color_hue[1]])
         self.ui.rangeSliderSaturation.setValue([self.sprayCard.threshold_color_saturation[0],self.sprayCard.threshold_color_saturation[1]])
         self.ui.rangeSliderBrightness.setValue([self.sprayCard.threshold_color_brightness[0],self.sprayCard.threshold_color_brightness[1]])
-        
-        
 
         #Signals for controls
         self.ui.radioButtonAutomatic.toggled.connect(self.toggleThresholdMethodGrayscale)
@@ -101,7 +100,6 @@ class EditThreshold(baseclass):
         # Your code ends here
         self.show()
         self.updateSprayCardView()
-        self.sprayCard.image_watershed()
 
     def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
@@ -121,11 +119,12 @@ class EditThreshold(baseclass):
         self.sprayCard.set_threshold_grayscale(threshold=thresh)
         self.updateSprayCardView()
 
-    def toggleThresholdMethodGrayscale(self, boo):
+    def toggleThresholdMethodGrayscale(self):
         method = SprayCard.THRESHOLD_METHOD_AUTOMATIC
         if self.ui.radioButtonManual.isChecked():
             method = SprayCard.THRESHOLD_METHOD_MANUAL
         self.sprayCard.threshold_method_grayscale = method
+        self.updateSprayCardView()
 
     def toggleColor(self, boo):
         self.ui.groupBoxGrayscale.setChecked(not boo)
@@ -165,8 +164,8 @@ class EditThreshold(baseclass):
         cvImg1 = self.sprayCard.image_contour(fillShapes=False)
         self.pixmap_item_original.setPixmap(QPixmap.fromImage(self.qImg_from_cvImg(cvImg1)))
         #Right Image(2)
+        #cvImg2 = self.sprayCard.image_contour(fillShapes=True)
         cvImg2 = self.sprayCard.image_contour(fillShapes=True)
-        #cvImg2 = self.sprayCard.image_watershed()
         self.pixmap_item_thresh.setPixmap(QPixmap.fromImage(self.qImg_from_cvImg(cvImg2)))
         #Auto-resize to fit width of crad to width of graphicsView
         scene = self.ui.graphicsView2.scene()
@@ -212,12 +211,15 @@ class EditThreshold(baseclass):
         self.reject
 
 if __name__ == '__main__':
+    
+    print('test')
     app = QApplication(sys.argv)
     sprayCard = SprayCard(name='test', filepath='/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt/testing/N802ET S3/N802ET S3 P3/cards/L-24.png')
-    sprayCard.set_threshold_type(SprayCard.THRESHOLD_TYPE_COLOR)
+    sprayCard.set_threshold_type(SprayCard.THRESHOLD_TYPE_GRAYSCALE)
+    sprayCard.set_threshold_method_grayscale(SprayCard.THRESHOLD_METHOD_AUTOMATIC)
     sprayCard.set_threshold_color_hue(min=0,max=255)
     sprayCard.set_threshold_color_saturation(min=0, max=255)
     sprayCard.set_threshold_color_brightness(min=0, max=188)
     sprayCard.set_threshold_method_color(SprayCard.THRESHOLD_METHOD_INCLUDE)
-    w = EditThreshold(sprayCard)
+    w = EditThreshold(sprayCard, None, None)
     sys.exit(app.exec_())
