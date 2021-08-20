@@ -47,17 +47,6 @@ class EditThreshold(baseclass):
         if self.sprayCard.threshold_color_brightness is None:
             self.sprayCard.threshold_color_brightness = self.settings.value('threshold_color_brightness', defaultValue=[0,255])
 
-        #Show original
-        self.pixmap_item_original = QGraphicsPixmapItem()
-        scene1 = QGraphicsScene(self)
-        scene1.addItem(self.pixmap_item_original)
-        self.ui.graphicsView.setScene(scene1)
-        #Show threshold
-        self.pixmap_item_thresh = QGraphicsPixmapItem()
-        scene2 = QGraphicsScene(self)
-        scene2.addItem(self.pixmap_item_thresh)
-        self.ui.graphicsView2.setScene(scene2)
-
         #Signals for toggling group boxes
         self.ui.groupBoxGrayscale.toggled[bool].connect(self.toggleGrayscale)
         self.ui.groupBoxColor.toggled[bool].connect(self.toggleColor)
@@ -86,8 +75,6 @@ class EditThreshold(baseclass):
         self.ui.rangeSliderSaturation.valueChanged[tuple].connect(self.updateSaturation)
         self.ui.rangeSliderBrightness.valueChanged[tuple].connect(self.updateBrightness)
         self.ui.checkBoxApplyToAllSeries.toggled[bool].connect(self.toggleApplyToAllSeries)
-        #Signals for syncing scrollbars
-        self.ui.graphicsView.verticalScrollBar().valueChanged[int].connect(self.scrollGV2)
         #ButtonBox
         self.ui.buttonBox.accepted.connect(self.on_applied)
         self.ui.buttonBox.rejected.connect(self.reject)
@@ -100,13 +87,6 @@ class EditThreshold(baseclass):
         # Your code ends here
         self.show()
         self.updateSprayCardView()
-
-    def resizeEvent(self, event: QResizeEvent) -> None:
-        super().resizeEvent(event)
-        self.updateSprayCardView()
-
-    def scrollGV2(self, value):
-        self.ui.graphicsView2.verticalScrollBar().setValue(value)
 
     def toggleGrayscale(self, boo):
         self.ui.groupBoxColor.setChecked(not boo)
@@ -162,26 +142,10 @@ class EditThreshold(baseclass):
     def updateSprayCardView(self):
         #Left Image (1)
         cvImg1 = self.sprayCard.image_contour(fillShapes=False)
-        self.pixmap_item_original.setPixmap(QPixmap.fromImage(self.qImg_from_cvImg(cvImg1)))
         #Right Image(2)
-        #cvImg2 = self.sprayCard.image_contour(fillShapes=True)
         cvImg2 = self.sprayCard.image_contour(fillShapes=True)
-        self.pixmap_item_thresh.setPixmap(QPixmap.fromImage(self.qImg_from_cvImg(cvImg2)))
-        #Auto-resize to fit width of crad to width of graphicsView
-        scene = self.ui.graphicsView2.scene()
-        scene.setSceneRect(scene.itemsBoundingRect())
-        self.ui.graphicsView2.fitInView(scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
-        self.ui.graphicsView.fitInView(scene.sceneRect(), Qt.KeepAspectRatioByExpanding)  
 
-    def qImg_from_cvImg(self, cvImg):
-        height, width = cvImg.shape[:2]
-        if len(cvImg.shape) == 2:
-            bytesPerLine = 1 * width
-            qImg = QImage(cvImg.data, width, height, bytesPerLine, QImage.Format_Grayscale8)
-        elif len(cvImg.shape) == 3:
-            bytesPerLine = 3 * width
-            qImg = QImage(cvImg.data, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
-        return qImg
+        self.ui.splitCardWidget.updateSprayCardView(cvImg1, cvImg2)
 
     def on_applied(self):
         #Cycle through passes

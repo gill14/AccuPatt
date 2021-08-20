@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1098</width>
-    <height>624</height>
+    <height>596</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -509,21 +509,7 @@
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_40">
-       <property name="sizeConstraint">
-        <enum>QLayout::SetNoConstraint</enum>
-       </property>
-       <item>
-        <widget class="QGraphicsView" name="graphicsView">
-         <property name="viewportUpdateMode">
-          <enum>QGraphicsView::MinimalViewportUpdate</enum>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QGraphicsView" name="graphicsView2"/>
-       </item>
-      </layout>
+      <widget class="SplitCardWidget" name="splitCardWidget" native="true"/>
      </item>
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout">
@@ -556,6 +542,12 @@
    <class>QLabeledSlider</class>
    <extends>QSlider</extends>
    <header>superqt</header>
+  </customwidget>
+  <customwidget>
+   <class>SplitCardWidget</class>
+   <extends>QWidget</extends>
+   <header>accupatt/windows/widgets/splitcardwidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

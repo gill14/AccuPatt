@@ -2,7 +2,6 @@ from posixpath import dirname
 import sys, os
 from PyQt5.QtWidgets import QApplication, QFileDialog, QListWidgetItem, QMessageBox, QGraphicsScene, QGraphicsPixmapItem
 from PyQt5.QtCore import Qt, QSettings, QSignalBlocker
-from PyQt5.QtGui import QPixmap
 from PyQt5 import uic
 
 from accupatt.models.passData import Pass
@@ -73,10 +72,8 @@ class MainWindow(baseclass):
         self.ui.buttonEditCards.clicked.connect(self.editSprayCardList)
         self.ui.buttonLoadCards.clicked.connect(self.loadCards)
         self.ui.buttonEditThreshold.clicked.connect(self.editThreshold)
-        self.ui.graphicsView.setScene(QGraphicsScene(self))
         #For Testing Expedience
         #self.importAccuPatt()
-        FileTools.writeModelToJSONFile(QFileDialog.getExistingDirectory(self, 'Select Folder'))
         # Your code ends here
         self.show()
 
@@ -412,8 +409,6 @@ class MainWindow(baseclass):
         self.updateSprayCardView(sprayCard)
 
     def updateSprayCardView(self, sprayCard=None):
-        scene = self.ui.graphicsView.scene()
-        scene.clear()
         if sprayCard == None:
             if self.ui.listWidgetSprayCardPass.selectedItems():
                 p = self.seriesData.passes[self.ui.listWidgetSprayCardPass.currentItem().text()]
@@ -421,12 +416,20 @@ class MainWindow(baseclass):
                     sprayCard = p.spray_cards[self.ui.listWidgetSprayCard.currentRow()]
         if sprayCard == None: return
         if sprayCard.filepath == None: return
-        #Show original
-        item = QGraphicsPixmapItem(QPixmap(sprayCard.filepath)) 
-        scene.addItem(item)
-        scene.setSceneRect(scene.itemsBoundingRect())
-        self.ui.graphicsView.fitInView(scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
-        
+        # Left Image (1)
+        cvImg1 = sprayCard.image_contour(fillShapes=False)
+        # Right Image (2)
+        cvImg2 = sprayCard.image_contour(fillShapes=True)
+        self.ui.splitCardWidget.updateSprayCardView(cvImg1, cvImg2)
+        #Stats
+        str_cov = format(sprayCard.stats.percent_coverage(),'0.2f')+'% Coverage'
+        str_drops_per_in2 = str(sprayCard.stats.stains_per_in2())+' Stains/in^2'
+        dv01, dv05, dv09, rs = sprayCard.stats.volumetric_stats()
+        str_dv01 = 'Dv10 = '+str(dv01)
+        str_dv05 = 'Dv50 = '+str(dv05)
+        str_dv09 = 'Dv90 = '+str(dv09)
+        str_rs = 'RS = '+format(rs, '0.2f')
+        self.ui.labelSprayCardStats.setText(str_cov+' --- '+str_drops_per_in2+' --- '+str_dv01+' --- '+str_dv05+' --- '+str_dv09+' --- '+str_rs)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

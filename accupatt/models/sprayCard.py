@@ -3,15 +3,7 @@ import numpy as np
 import cv2
 import json
 
-from skimage.feature import peak_local_max
-from skimage.segmentation import watershed
-from scipy import ndimage
-import imutils
-import random as rng
-import matplotlib.pyplot as plt
-
-from accupatt.models.seriesData import SeriesData
-
+from accupatt.models.sprayCardStats import SprayCardStats
 class SprayCard:
 
     THRESHOLD_TYPE_GRAYSCALE = 0
@@ -35,6 +27,7 @@ class SprayCard:
         self.threshold_color_saturation = None
         self.threshold_color_brightness = None
         self.dpi = dpi
+        self.stats = SprayCardStats(dpi=dpi)
 
     
     def image_original(self):
@@ -110,6 +103,9 @@ class SprayCard:
         return self._image_contour(img_src, img_thresh, fillShapes)
 
     def _image_contour(self, img_src, img_thresh, fillShapes=False):
+        # Place Holders for stains
+        stains_all = []
+        stains_validated = []
         # Use img_thresh to find contours
         contours, _ = cv2.findContours(img_thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         # When !fillShapes(default), set thickness will outline contours on img_src using these colors
@@ -125,22 +121,39 @@ class SprayCard:
         for i, c in enumerate(contours):
             # Check if in bounds
             x, y, w, h = cv2.boundingRect(c)
-            # Draw uncounted contour if not the size of image itself
-            if w >=img_src.shape[1]-1 or h >= img_src.shape[0]-1:
-                continue
-            cv2.drawContours(img_src, contours, i, color_stain_not_counted, thickness=thickness)
-            # If contour touches edge, fail
-            if x <= 0 or y <= 0 or (x+w) >= img_src.shape[1]-1 or (y+h) >= img_src.shape[0]-1:
-                continue
             # If contour is below the min pixel size, fail
             if c.shape[0] < 1:
                 continue
-            # Draw record-worthy contour
+            # Check if contour is entire image
+            if w >=img_src.shape[1]-1 and h >= img_src.shape[0]-1:
+                # Set area of image in stats
+                self.stats.area_px2 = cv2.contourArea(c)
+                continue
+            # If not below size threshold or entire image, show contour
+            cv2.drawContours(img_src, contours, i, color_stain_not_counted, thickness=thickness)
+            # Add contour area to list
+            stains_all.append(self.calc_contour_area(c))
+            # If contour touches edge, fail
+            if x <= 0 or y <= 0 or (x+w) >= img_src.shape[1]-1 or (y+h) >= img_src.shape[0]-1:
+                continue
+            # Draw record-worthy contour (over previously drawn contour, just new color)
             cv2.drawContours(img_src, contours, i, color_stain_counted, thickness=thickness)
+            # Add validated contour area to list
+            stains_validated.append(self.calc_contour_area(c))
             # If fillShapes, draw white borders on contours to show watershed seperation
             if fillShapes:
                 cv2.drawContours(img_src, contours, i, (255,255,255), thickness=1)
+
+        # Update stats with area lists
+        self.stats.stain_areas_all_px2 = stains_all
+        self.stats.stain_areas_valid_px2 = stains_validated
+
         return img_src
+
+    def calc_contour_area(self, contour):
+        # Default to simple Area
+        return cv2.contourArea(contour)
+        # ToDo include more area calculation options (mean feret, etc.)
 
     def set_threshold_type(self, type=THRESHOLD_TYPE_GRAYSCALE):
         self.threshold_type = type

@@ -3541,40 +3541,17 @@
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_16">
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_40">
-            <item>
-             <widget class="QGraphicsView" name="graphicsView">
-              <property name="sizeAdjustPolicy">
-               <enum>QAbstractScrollArea::AdjustToContents</enum>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-              </property>
-              <property name="dragMode">
-               <enum>QGraphicsView::ScrollHandDrag</enum>
-              </property>
-              <property name="viewportUpdateMode">
-               <enum>QGraphicsView::FullViewportUpdate</enum>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QGraphicsView" name="graphicsView2">
-              <property name="sizeAdjustPolicy">
-               <enum>QAbstractScrollArea::AdjustToContents</enum>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-              </property>
-              <property name="dragMode">
-               <enum>QGraphicsView::ScrollHandDrag</enum>
-              </property>
-              <property name="viewportUpdateMode">
-               <enum>QGraphicsView::FullViewportUpdate</enum>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <widget class="SplitCardWidget" name="splitCardWidget" native="true"/>
+          </item>
+          <item>
+           <widget class="QLabel" name="labelSprayCardStats">
+            <property name="text">
+             <string>Spray Card Statistics</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_37">
@@ -3616,16 +3593,6 @@
              </widget>
             </item>
            </layout>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_6">
-            <property name="text">
-             <string>Spray Card Statistics</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
           </item>
          </layout>
         </item>
@@ -3725,6 +3692,12 @@
    <class>MplWidget</class>
    <extends>QWidget</extends>
    <header>accupatt/windows/widgets/mplwidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>SplitCardWidget</class>
+   <extends>QWidget</extends>
+   <header>accupatt/windows/widgets/splitcardwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
