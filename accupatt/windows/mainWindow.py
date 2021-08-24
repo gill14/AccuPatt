@@ -1,6 +1,6 @@
 from posixpath import dirname
 import sys, os
-from PyQt5.QtWidgets import QApplication, QFileDialog, QListWidgetItem, QMessageBox, QGraphicsScene, QGraphicsPixmapItem
+from PyQt5.QtWidgets import QApplication, QFileDialog, QListWidgetItem, QMessageBox
 from PyQt5.QtCore import Qt, QSettings, QSignalBlocker
 from PyQt5 import uic
 
@@ -17,6 +17,7 @@ from accupatt.windows.editSpraySystem import EditSpraySystem
 from accupatt.windows.editTrims import EditTrims
 from accupatt.windows.editCardList import EditCardList
 from accupatt.windows.editThreshold import EditThreshold
+from accupatt.windows.editSpreadFactors import EditSpreadFactors
 from accupatt.windows.readString import ReadString
 from accupatt.windows.loadCards import LoadCards
 
@@ -72,6 +73,7 @@ class MainWindow(baseclass):
         self.ui.buttonEditCards.clicked.connect(self.editSprayCardList)
         self.ui.buttonLoadCards.clicked.connect(self.loadCards)
         self.ui.buttonEditThreshold.clicked.connect(self.editThreshold)
+        self.ui.buttonEditSpreadFactors.clicked.connect(self.editSpreadFactors)
         #For Testing Expedience
         #self.importAccuPatt()
         # Your code ends here
@@ -125,13 +127,7 @@ class MainWindow(baseclass):
                 lv.item(i).setFlags(Qt.NoItemFlags)
                 lv.item(i).setCheckState(Qt.Unchecked)
             #Enable applicable passes
-            for key, val in self.seriesData.passes.items():
-                print(key)
-                print('is a key for')
-                print(val)
             for key, value in self.seriesData.passes.items():
-                print('key for lv update')
-                print(key)
                 item = lv.findItems(key,Qt.MatchExactly)[0]
                 item.setFlags(Qt.ItemIsEnabled|Qt.ItemIsSelectable)
                 #Make the include passes lv user checkable
@@ -400,9 +396,23 @@ class MainWindow(baseclass):
         e.applied.connect(self.saveAndUpdateSprayCardView)
         #Start Loop
         e.exec_()
+    
+    def editSpreadFactors(self):
+        #Abort if no card image
+        if self.ui.listWidgetSprayCard.currentItem().checkState() != Qt.Checked: return
+        #Get a handle on the card in question
+        p = self.seriesData.passes[self.ui.listWidgetSprayCardPass.currentItem().text()]
+        c = p.spray_cards[self.ui.listWidgetSprayCard.currentRow()]
+        #Open the Edit Threshold window for currently selected card
+        e = EditSpreadFactors(sprayCard=c, passData=p, seriesData=self.seriesData)
+        #Connect Slot to retrieve Vals back from popup
+        e.applied.connect(self.saveAndUpdateSprayCardView)
+        #Start Loop
+        e.exec_()
 
     def showSprayCardButtons(self, isShow: bool):
         self.ui.buttonEditThreshold.setEnabled(isShow)
+        self.ui.buttonEditSpreadFactors.setEnabled(isShow)
 
     def saveAndUpdateSprayCardView(self, sprayCard=None):
         self.saveFile()
@@ -417,14 +427,14 @@ class MainWindow(baseclass):
         if sprayCard == None: return
         if sprayCard.filepath == None: return
         # Left Image (1)
-        cvImg1 = sprayCard.image_contour(fillShapes=False)
+        cvImg1 = sprayCard.image_processed(fillShapes=False)
         # Right Image (2)
-        cvImg2 = sprayCard.image_contour(fillShapes=True)
+        cvImg2 = sprayCard.image_processed(fillShapes=True)
         self.ui.splitCardWidget.updateSprayCardView(cvImg1, cvImg2)
         #Stats
-        str_cov = format(sprayCard.stats.percent_coverage(),'0.2f')+'% Coverage'
-        str_drops_per_in2 = str(sprayCard.stats.stains_per_in2())+' Stains/in^2'
-        dv01, dv05, dv09, rs = sprayCard.stats.volumetric_stats()
+        str_cov = format(sprayCard.percent_coverage(),'0.2f')+'% Coverage'
+        str_drops_per_in2 = str(sprayCard.stains_per_in2())+' Stains/in^2'
+        dv01, dv05, dv09, rs = sprayCard.volumetric_stats()
         str_dv01 = 'Dv10 = '+str(dv01)
         str_dv05 = 'Dv50 = '+str(dv05)
         str_dv09 = 'Dv90 = '+str(dv09)

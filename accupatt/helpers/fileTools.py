@@ -114,7 +114,6 @@ class FileTools:
         #Pull data from Pattern Data tab
         df = df_map['Pattern Data'].fillna('')
         if df.shape[1] < 13: df['nan'] = ''
-        print(df)
         #Make new empty dataframe for info
         df_info = pd.DataFrame({'Pass 1':[], 'Pass 2':[], 'Pass 3':[], 'Pass 4':[], 'Pass 5':[], 'Pass 6':[]})
         #Append trims
@@ -125,7 +124,6 @@ class FileTools:
         dd = df.iloc[1:2,[1, 3, 5, 7, 9, 11]]
         dd.columns = ['Pass 1', 'Pass 2', 'Pass 3', 'Pass 4', 'Pass 5', 'Pass 6']
         df_info = df_info.append(dd, ignore_index=True)
-        print(df_info)
         #Make a dataframe for emission data points
         df_emission = pd.DataFrame({'loc':[], 'Pass 1':[], 'Pass 2':[], 'Pass 3':[], 'Pass 4':[], 'Pass 5':[], 'Pass 6':[]})
         dd = df.iloc[5:,[0,2,4,6,8,10,12]]
@@ -219,8 +217,6 @@ class FileTools:
             os.makedirs(folder)
         dest_file = os.path.join(folder, spray_card.name + '.png')
         #Copy the file
-        print('Source: '+src_file)
-        print('Destination: '+dest_file)
         copy2(src_file, dest_file)
         #Update SprayCard object
         spray_card.filepath = dest_file

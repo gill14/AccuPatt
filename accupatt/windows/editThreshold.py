@@ -6,6 +6,7 @@ from PyQt5 import uic
 import os, sys, copy
 
 sys.path.insert(1, '/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt')
+import accupatt.config as cfg
 from accupatt.models.sprayCard import SprayCard
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editThreshold.ui'))
@@ -23,7 +24,7 @@ class EditThreshold(baseclass):
         #Get a handle on the card (will be used to commit changes in on_applied)
         self.sprayCard_OG = sprayCard
         #Make a working copy
-        self.sprayCard = copy.deepcopy(sprayCard)
+        self.sprayCard = copy.copy(sprayCard)
         #Get a handle to seriesData and passData to enable "Apply to all cards on save"
         self.seriesData = seriesData
         self.passData = passData
@@ -32,15 +33,14 @@ class EditThreshold(baseclass):
         self.settings = QSettings('BG Application Consulting','AccuPatt')
         #Set defaults to sprayCard if attributes do not exist
         if self.sprayCard.threshold_type is None:
-            self.sprayCard.threshold_type = self.settings.value('threshold_type', defaultValue=SprayCard.THRESHOLD_TYPE_COLOR, type=int)
+            self.sprayCard.threshold_type = self.settings.value('threshold_type', defaultValue=cfg.THRESHOLD_TYPE_COLOR, type=int)
         if self.sprayCard.threshold_method_grayscale is None:
-            self.sprayCard.threshold_method_grayscale = self.settings.value('threshold_method_grayscale', defaultValue=SprayCard.THRESHOLD_METHOD_AUTOMATIC, type=int)
+            self.sprayCard.threshold_method_grayscale = self.settings.value('threshold_method_grayscale', defaultValue=cfg.THRESHOLD_METHOD_AUTOMATIC, type=int)
         if self.sprayCard.threshold_grayscale is None:
             self.sprayCard.threshold_grayscale = self.settings.value('threshold_grayscale', defaultValue=153, type=int)
         if self.sprayCard.threshold_method_color is None:
-            self.sprayCard.threshold_method_color = self.settings.value('threshold_method_color', defaultValue=SprayCard.THRESHOLD_METHOD_INCLUDE, type=int)
+            self.sprayCard.threshold_method_color = self.settings.value('threshold_method_color', defaultValue=cfg.THRESHOLD_METHOD_INCLUDE, type=int)
         if self.sprayCard.threshold_color_hue is None:
-            print('devaulting hue')
             self.sprayCard.threshold_color_hue = self.settings.value('threshold_color_hue', defaultValue=[180,240])
         if self.sprayCard.threshold_color_saturation is None:
             self.sprayCard.threshold_color_saturation = self.settings.value('threshold_color_saturation', defaultValue=[6,255])
@@ -51,16 +51,16 @@ class EditThreshold(baseclass):
         self.ui.groupBoxGrayscale.toggled[bool].connect(self.toggleGrayscale)
         self.ui.groupBoxColor.toggled[bool].connect(self.toggleColor)
         #Select appropriate group box
-        self.ui.groupBoxGrayscale.setChecked(self.sprayCard.threshold_type == SprayCard.THRESHOLD_TYPE_GRAYSCALE)
+        self.ui.groupBoxGrayscale.setChecked(self.sprayCard.threshold_type == cfg.THRESHOLD_TYPE_GRAYSCALE)
 
         #Populate grayscale ui from spray card
-        self.ui.radioButtonAutomatic.setChecked(self.sprayCard.threshold_method_grayscale == SprayCard.THRESHOLD_METHOD_AUTOMATIC)
-        self.ui.radioButtonManual.setChecked(self.sprayCard.threshold_method_grayscale == SprayCard.THRESHOLD_METHOD_MANUAL)
+        self.ui.radioButtonAutomatic.setChecked(self.sprayCard.threshold_method_grayscale == cfg.THRESHOLD_METHOD_AUTOMATIC)
+        self.ui.radioButtonManual.setChecked(self.sprayCard.threshold_method_grayscale == cfg.THRESHOLD_METHOD_MANUAL)
         self.ui.sliderGrayscale.setValue(self.sprayCard.threshold_grayscale)
 
         #Populate color ui from spray card
-        self.ui.radioButtonInclude.setChecked(self.sprayCard.threshold_method_color == SprayCard.THRESHOLD_METHOD_INCLUDE)
-        self.ui.radioButtonManual.setChecked(self.sprayCard.threshold_method_color == SprayCard.THRESHOLD_METHOD_EXCLUDE)
+        self.ui.radioButtonInclude.setChecked(self.sprayCard.threshold_method_color == cfg.THRESHOLD_METHOD_INCLUDE)
+        self.ui.radioButtonManual.setChecked(self.sprayCard.threshold_method_color == cfg.THRESHOLD_METHOD_EXCLUDE)
         self.ui.rangeSliderHue.setValue([self.sprayCard.threshold_color_hue[0],self.sprayCard.threshold_color_hue[1]])
         self.ui.rangeSliderSaturation.setValue([self.sprayCard.threshold_color_saturation[0],self.sprayCard.threshold_color_saturation[1]])
         self.ui.rangeSliderBrightness.setValue([self.sprayCard.threshold_color_brightness[0],self.sprayCard.threshold_color_brightness[1]])
@@ -70,7 +70,7 @@ class EditThreshold(baseclass):
         self.ui.radioButtonManual.toggled.connect(self.toggleThresholdMethodGrayscale)
         self.ui.sliderGrayscale.valueChanged[int].connect(self.updateThresholdGrayscale)
         self.ui.radioButtonInclude.toggled[bool].connect(self.toggleThresholdMethodColor)
-        #self.ui.radioButtonExclude.toggled[bool].connect(self.toggleThresholdMethodColor)
+        self.ui.radioButtonExclude.toggled[bool].connect(self.toggleThresholdMethodColor)
         self.ui.rangeSliderHue.valueChanged[tuple].connect(self.updateHue)
         self.ui.rangeSliderSaturation.valueChanged[tuple].connect(self.updateSaturation)
         self.ui.rangeSliderBrightness.valueChanged[tuple].connect(self.updateBrightness)
@@ -90,8 +90,8 @@ class EditThreshold(baseclass):
 
     def toggleGrayscale(self, boo):
         self.ui.groupBoxColor.setChecked(not boo)
-        thresh_type = SprayCard.THRESHOLD_TYPE_COLOR
-        if boo: thresh_type = SprayCard.THRESHOLD_TYPE_GRAYSCALE
+        thresh_type = cfg.THRESHOLD_TYPE_COLOR
+        if boo: thresh_type = cfg.THRESHOLD_TYPE_GRAYSCALE
         self.sprayCard.set_threshold_type(type=thresh_type)
         self.updateSprayCardView()
 
@@ -100,24 +100,24 @@ class EditThreshold(baseclass):
         self.updateSprayCardView()
 
     def toggleThresholdMethodGrayscale(self):
-        method = SprayCard.THRESHOLD_METHOD_AUTOMATIC
+        method = cfg.THRESHOLD_METHOD_AUTOMATIC
         if self.ui.radioButtonManual.isChecked():
-            method = SprayCard.THRESHOLD_METHOD_MANUAL
+            method = cfg.THRESHOLD_METHOD_MANUAL
         self.sprayCard.threshold_method_grayscale = method
         self.updateSprayCardView()
 
     def toggleColor(self, boo):
         self.ui.groupBoxGrayscale.setChecked(not boo)
-        thresh_type = SprayCard.THRESHOLD_TYPE_GRAYSCALE
-        if boo: thresh_type = SprayCard.THRESHOLD_TYPE_COLOR
+        thresh_type = cfg.THRESHOLD_TYPE_GRAYSCALE
+        if boo: thresh_type = cfg.THRESHOLD_TYPE_COLOR
         self.sprayCard.set_threshold_type(type=thresh_type)
         self.updateSprayCardView()
 
     def toggleThresholdMethodColor(self):
         if self.ui.radioButtonInclude.isChecked():
-            self.sprayCard.threshold_method_color = self.sprayCard.THRESHOLD_METHOD_INCLUDE
+            self.sprayCard.threshold_method_color = cfg.THRESHOLD_METHOD_INCLUDE
         elif self.ui.radioButtonExclude.isChecked():
-            self.sprayCard.threshold_method_color = self.sprayCard.THRESHOLD_METHOD_EXCLUDE
+            self.sprayCard.threshold_method_color = cfg.THRESHOLD_METHOD_EXCLUDE
         self.updateSprayCardView()
 
     def updateHue(self, vals):
@@ -141,9 +141,9 @@ class EditThreshold(baseclass):
 
     def updateSprayCardView(self):
         #Left Image (1)
-        cvImg1 = self.sprayCard.image_contour(fillShapes=False)
+        cvImg1 = self.sprayCard.image_processed(fillShapes=False)
         #Right Image(2)
-        cvImg2 = self.sprayCard.image_contour(fillShapes=True)
+        cvImg2 = self.sprayCard.image_processed(fillShapes=True)
 
         self.ui.splitCardWidget.updateSprayCardView(cvImg1, cvImg2)
 
@@ -179,11 +179,11 @@ if __name__ == '__main__':
     print('test')
     app = QApplication(sys.argv)
     sprayCard = SprayCard(name='test', filepath='/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt/testing/N802ET S3/N802ET S3 P3/cards/L-24.png')
-    sprayCard.set_threshold_type(SprayCard.THRESHOLD_TYPE_GRAYSCALE)
-    sprayCard.set_threshold_method_grayscale(SprayCard.THRESHOLD_METHOD_AUTOMATIC)
+    sprayCard.set_threshold_type(cfg.THRESHOLD_TYPE_GRAYSCALE)
+    sprayCard.set_threshold_method_grayscale(cfg.THRESHOLD_METHOD_AUTOMATIC)
     sprayCard.set_threshold_color_hue(min=0,max=255)
     sprayCard.set_threshold_color_saturation(min=0, max=255)
     sprayCard.set_threshold_color_brightness(min=0, max=188)
-    sprayCard.set_threshold_method_color(SprayCard.THRESHOLD_METHOD_INCLUDE)
+    sprayCard.set_threshold_method_color(cfg.THRESHOLD_METHOD_INCLUDE)
     w = EditThreshold(sprayCard, None, None)
     sys.exit(app.exec_())

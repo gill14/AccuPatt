@@ -43,12 +43,8 @@ class StringPlotter:
 
         #Trims
         if len(xL) > 0:
-            print('left fill')
-            print(xL)
             ax1.fill_between(xL, y1, y2, facecolor='black', alpha=0.4)
         if len(xR) > 0:
-            print('right fill')
-            print(xR)
             ax1.fill_between(xR, y1, y2, facecolor='black', alpha=0.4)
         if pattern.trim_v > 0:
             ax1.fill_between(xC, y1, pattern.trim_v, facecolor='black', alpha=0.4)
@@ -89,11 +85,9 @@ class StringPlotter:
 
         #Get adjusted swath from series object
         swathWidth = series.info.swath_adjusted
-        print(swathWidth)
         #Find number of points per swathwidth for shifting
         loc = series.patternAverage.data_mod['loc'].copy()
         center = loc[(loc>=-swathWidth/2) & (loc<=swathWidth/2)]
-        print(center)
         pts = center.count().item()
         loc = pd.to_numeric(series.patternAverage.data_mod['loc'].copy())
         sumCenter = series.patternAverage.data_mod['Average'][series.patternAverage.data_mod['Average'].index.isin(center.index)]
