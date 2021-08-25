@@ -161,6 +161,10 @@ class SprayCard:
         sc.threshold_color_hue = json_dict['threshold_color_hue']
         sc.threshold_color_saturation = json_dict['threshold_color_saturation']
         sc.threshold_color_brightness = json_dict['threshold_color_brightness']
+        sc.spread_method = json_dict['spread_method']
+        sc.spread_factor_a = json_dict['spread_factor_a']
+        sc.spread_factor_b = json_dict['spread_factor_b']
+        sc.spread_factor_c = json_dict['spread_factor_c']
         return sc
 
     

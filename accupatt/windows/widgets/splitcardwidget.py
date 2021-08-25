@@ -52,6 +52,10 @@ class SplitCardWidget(QWidget):
         self.graphicsView2.fitInView(scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
         self.graphicsView1.fitInView(scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
 
+    def clearSprayCardView(self):
+        self.pixmap_item_original.setPixmap(QPixmap())
+        self.pixmap_item_thresh.setPixmap(QPixmap())
+
     def qImg_from_cvImg(cvImg):
         height, width = cvImg.shape[:2]
         if len(cvImg.shape) == 2:

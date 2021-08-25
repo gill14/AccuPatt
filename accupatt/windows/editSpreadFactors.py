@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QApplication, QMessageBox
-from PyQt5.QtCore import QSettings, pyqtSignal
+from PyQt5.QtCore import QSettings, Qt, pyqtSignal
 from PyQt5 import uic
 
 import pandas as pd
@@ -68,6 +68,8 @@ class EditSpreadFactors(baseclass):
         self.ui.spreadFactorBLineEdit.textChanged.connect(self.updateLabel)
         self.ui.spreadFactorCLineEdit.textChanged.connect(self.updateLabel)
 
+        self.ui.checkBoxApplyToAllSeries.toggled[bool].connect(self.toggleApplyToAllSeries)
+
         self.updateLabel()
        
         #ButtonBox
@@ -109,15 +111,15 @@ class EditSpreadFactors(baseclass):
             
         self.ui.labelEquation.setText(eqn)
 
+    def toggleApplyToAllSeries(self, boo:bool):
+        if boo: 
+            self.ui.checkBoxApplyToAllPass.setCheckState(Qt.Checked)
+        else:
+            self.ui.checkBoxApplyToAllPass.setCheckState(Qt.Unchecked)
+        self.ui.checkBoxApplyToAllPass.setEnabled(not boo)
 
     def on_applied(self):
-        # Update Spread Method on SprayCard object
-        if self.ui.radioButtonAdaptive.isChecked():
-            self.sprayCard.spread_method = cfg.SPREAD_METHOD_ADAPTIVE
-        elif self.ui.radioButtonDirect.isChecked():
-            self.sprayCard.spread_method = cfg.SPREAD_METHOD_DIRECT
-        else:
-            self.sprayCard.spread_method = cfg.SPREAD_METHOD_NONE
+        
         # Upate Spread Factors on SprayCard object
         # shortcuts for sf's
         a = self.ui.spreadFactorALineEdit.text()
@@ -140,6 +142,27 @@ class EditSpreadFactors(baseclass):
                 self.raise_()
                 self.activateWindow()
                 return
+        
+        #Cycle through passes
+        for pass_key,pass_value in self.seriesData.passes.items():
+            #Check if should apply to pass
+            if pass_key == self.passData.name or self.ui.checkBoxApplyToAllSeries.checkState() == Qt.Checked:
+                #Cycle through cards in pass
+                for card in pass_value.spray_cards:
+                    if card.name == self.sprayCard.name or self.ui.checkBoxApplyToAllPass.checkState() == Qt.Checked:
+                        #Apply
+                        # Spread Method
+                        if self.ui.radioButtonAdaptive.isChecked():
+                            card.spread_method = cfg.SPREAD_METHOD_ADAPTIVE
+                        elif self.ui.radioButtonDirect.isChecked():
+                            card.spread_method = cfg.SPREAD_METHOD_DIRECT
+                        else:
+                            card.spread_method = cfg.SPREAD_METHOD_NONE
+                        # Spread Factors
+                        card.spread_factor_a = float(a)
+                        card.spread_factor_b = float(b)
+                        card.spread_factor_c = float(c)
+
         self.applied.emit()
 
         self.accept()

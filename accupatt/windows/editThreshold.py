@@ -29,24 +29,6 @@ class EditThreshold(baseclass):
         self.seriesData = seriesData
         self.passData = passData
 
-        #Load in Settings
-        self.settings = QSettings('BG Application Consulting','AccuPatt')
-        #Set defaults to sprayCard if attributes do not exist
-        if self.sprayCard.threshold_type is None:
-            self.sprayCard.threshold_type = self.settings.value('threshold_type', defaultValue=cfg.THRESHOLD_TYPE_COLOR, type=int)
-        if self.sprayCard.threshold_method_grayscale is None:
-            self.sprayCard.threshold_method_grayscale = self.settings.value('threshold_method_grayscale', defaultValue=cfg.THRESHOLD_METHOD_AUTOMATIC, type=int)
-        if self.sprayCard.threshold_grayscale is None:
-            self.sprayCard.threshold_grayscale = self.settings.value('threshold_grayscale', defaultValue=153, type=int)
-        if self.sprayCard.threshold_method_color is None:
-            self.sprayCard.threshold_method_color = self.settings.value('threshold_method_color', defaultValue=cfg.THRESHOLD_METHOD_INCLUDE, type=int)
-        if self.sprayCard.threshold_color_hue is None:
-            self.sprayCard.threshold_color_hue = self.settings.value('threshold_color_hue', defaultValue=[180,240])
-        if self.sprayCard.threshold_color_saturation is None:
-            self.sprayCard.threshold_color_saturation = self.settings.value('threshold_color_saturation', defaultValue=[6,255])
-        if self.sprayCard.threshold_color_brightness is None:
-            self.sprayCard.threshold_color_brightness = self.settings.value('threshold_color_brightness', defaultValue=[0,255])
-
         #Signals for toggling group boxes
         self.ui.groupBoxGrayscale.toggled[bool].connect(self.toggleGrayscale)
         self.ui.groupBoxColor.toggled[bool].connect(self.toggleColor)

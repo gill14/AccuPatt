@@ -24,7 +24,7 @@ class LoadCards(baseclass):
         # Your code will go here
         self.seriesData = seriesData
         self.passData = passData
-        self.spray_cards = copy.deepcopy(passData.spray_cards)
+        self.spray_cards = copy.copy(passData.spray_cards)
 
         #Load in Settings
         self.settings = QSettings('BG Application Consulting','AccuPatt')

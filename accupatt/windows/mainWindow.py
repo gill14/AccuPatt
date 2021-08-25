@@ -356,7 +356,6 @@ class MainWindow(baseclass):
         p = self.seriesData.passes[self.ui.listWidgetSprayCardPass.currentItem().text()]
         #Get a handle on the currently selected card
         c = p.spray_cards[self.ui.listWidgetSprayCard.currentRow()]
-        if c.filepath == None: return
         self.showSprayCardButtons(c.filepath != None)
         self.updateSprayCardView(sprayCard=c)
 
@@ -424,22 +423,28 @@ class MainWindow(baseclass):
                 p = self.seriesData.passes[self.ui.listWidgetSprayCardPass.currentItem().text()]
                 if self.ui.listWidgetSprayCard.currentItem().checkState() == Qt.Checked:
                     sprayCard = p.spray_cards[self.ui.listWidgetSprayCard.currentRow()]
-        if sprayCard == None: return
-        if sprayCard.filepath == None: return
+        if sprayCard == None or sprayCard.filepath == None:
+            self.ui.splitCardWidget.clearSprayCardView()
+            self.ui.labelCoverage.setText('')
+            self.ui.labelStainsPerSqIn.setText('')
+            self.ui.labelDv01.setText('')
+            self.ui.labelVMD.setText('')
+            self.ui.labelDv09.setText('')
+            self.ui.labelRS.setText('')
+            return
         # Left Image (1)
         cvImg1 = sprayCard.image_processed(fillShapes=False)
         # Right Image (2)
         cvImg2 = sprayCard.image_processed(fillShapes=True)
         self.ui.splitCardWidget.updateSprayCardView(cvImg1, cvImg2)
         #Stats
-        str_cov = format(sprayCard.percent_coverage(),'0.2f')+'% Coverage'
-        str_drops_per_in2 = str(sprayCard.stains_per_in2())+' Stains/in^2'
         dv01, dv05, dv09, rs = sprayCard.volumetric_stats()
-        str_dv01 = 'Dv10 = '+str(dv01)
-        str_dv05 = 'Dv50 = '+str(dv05)
-        str_dv09 = 'Dv90 = '+str(dv09)
-        str_rs = 'RS = '+format(rs, '0.2f')
-        self.ui.labelSprayCardStats.setText(str_cov+' --- '+str_drops_per_in2+' --- '+str_dv01+' --- '+str_dv05+' --- '+str_dv09+' --- '+str_rs)
+        self.ui.labelCoverage.setText(format(sprayCard.percent_coverage(),'0.2f')+'%')
+        self.ui.labelStainsPerSqIn.setText(str(sprayCard.stains_per_in2()))
+        self.ui.labelDv01.setText(str(dv01))
+        self.ui.labelVMD.setText(str(dv05))
+        self.ui.labelDv09.setText(str(dv09))
+        self.ui.labelRS.setText(format(rs, '0.2f'))
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
