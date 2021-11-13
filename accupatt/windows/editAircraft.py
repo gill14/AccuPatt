@@ -6,6 +6,7 @@ import pandas as pd
 from pathlib import Path
 import sys, os
 
+import accupatt.config as cfg 
 from accupatt.models.appInfo import AppInfo
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editAircraft.ui'))
@@ -19,8 +20,6 @@ class EditAircraft(baseclass):
     units = {'ft','m'}
 
     winglets = {'Yes','No'}
-
-    ft_per_m = 3.28084
 
     def __init__(self, appInfo, parent = None):
         super().__init__()
@@ -75,7 +74,7 @@ class EditAircraft(baseclass):
                 df = df.set_index('Model')
                 ws = df.at[model,'Wingspan (FT)']
                 if self.ui.comboBoxWingspanUnits.currentText() == 'm':
-                    ws = ws / self.ft_per_m
+                    ws = ws / cfg.FT_PER_M
                     self.ui.lineEditWingspan.setText(f"{round(ws, 2):.2f}")
                 else:
                     self.ui.lineEditWingspan.setText(str(round(ws)))
@@ -84,9 +83,9 @@ class EditAircraft(baseclass):
         if self.ui.lineEditWingspan.text() != '':
             ws = float(self.ui.lineEditWingspan.text())
             if units == 'ft':
-                ws = ws * self.ft_per_m
+                ws = ws * cfg.FT_PER_M
             else:
-                ws = ws / self.ft_per_m
+                ws = ws / cfg.FT_PER_M
             self.ui.lineEditWingspan.setText(f"{round(ws,2):.2f}")
 
 

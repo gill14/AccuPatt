@@ -84,8 +84,8 @@ class SprayCardImageProcessor:
         # Use img_thresh to find contours
         contours, _ = cv2.findContours(img_thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         # When !fillShapes(default), set thickness will outline contours on img_src using these colors
-        color_stain_counted = cfg.COLOR_STAIN_OUTLJNE
-        color_stain_not_counted = cfg.COLOR_STAIN_OUTLJNE
+        color_stain_counted = cfg.COLOR_STAIN_OUTLINE
+        color_stain_not_counted = cfg.COLOR_STAIN_OUTLINE
         thickness = 1
         # When fillshapes, netagive thickness will fill contours on white image using these new colors
         if fillShapes: 

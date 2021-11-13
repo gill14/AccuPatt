@@ -51,9 +51,6 @@ class AppInfo:
     notes: str = ""
     date: str = ""
     time: str = ""
-    temperature: float = 0
-    temperature_units: str = ""
-    humidity: float = 0
 
     def updateApplicatorInfo(self, appInfo):
         self.pilot = appInfo.pilot
@@ -302,7 +299,7 @@ class AppInfo:
         self.nozzle_spacing = float(string)
         return True
 
-    def set_temperature(self, string) -> bool:
+    '''def set_temperature(self, string) -> bool:
         try:
             float(string)
         except ValueError:
@@ -316,7 +313,7 @@ class AppInfo:
         except ValueError:
             return False
         self.humidity = float(string)
-        return True
+        return True'''
 
     def set_num(self, field, string, type) -> bool:
         try:

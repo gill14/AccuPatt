@@ -41,16 +41,19 @@ class SplitCardWidget(QWidget):
         self.graphicsView2.horizontalScrollBar().setValue(value)
 
     def updateSprayCardView(self, cvImg1=None, cvImg2=None):
+        self.clearSprayCardView()
         if not (cvImg1 is None or cvImg2 is None):
             #Left Image (1)
             self.pixmap_item_original.setPixmap(QPixmap.fromImage(SplitCardWidget.qImg_from_cvImg(cvImg1)))
             #Right Image(2)
             self.pixmap_item_thresh.setPixmap(QPixmap.fromImage(SplitCardWidget.qImg_from_cvImg(cvImg2)))
-        #Auto-resize to fit width of crad to width of graphicsView
-        scene = self.graphicsView2.scene()
-        scene.setSceneRect(scene.itemsBoundingRect())
-        self.graphicsView2.fitInView(scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
-        self.graphicsView1.fitInView(scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
+        #Auto-resize to fit width of card to width of graphicsView
+        scene1 = self.graphicsView1.scene()
+        scene1.setSceneRect(scene1.itemsBoundingRect())
+        self.graphicsView1.fitInView(scene1.sceneRect(), Qt.KeepAspectRatioByExpanding)
+        scene2 = self.graphicsView2.scene()
+        scene2.setSceneRect(scene2.itemsBoundingRect())
+        self.graphicsView2.fitInView(scene2.sceneRect(), Qt.KeepAspectRatioByExpanding)
 
     def clearSprayCardView(self):
         self.pixmap_item_original.setPixmap(QPixmap())

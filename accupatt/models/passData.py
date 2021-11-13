@@ -1,3 +1,4 @@
+import uuid
 import pandas as pd
 import numpy as np
 import scipy.signal as sig
@@ -11,7 +12,7 @@ class Pass:
     center_method_centroid = 0
     center_method_cod = 1
 
-    def __init__(self, name='',
+    def __init__(self, id = '', number=0, name='',
             ground_speed=None, ground_speed_units='mph',
             spray_height=None, spray_height_units='ft',
             pass_heading=None, wind_direction=None,
@@ -20,10 +21,15 @@ class Pass:
             humidity=None, include_in_composite=True,
             excitation_wav=None, emission_wav=None,
             trim_l=0, trim_r=0, trim_v=0,
-            data_ex=None, data=None, data_mod=None,
-            spray_cards=None):
+            data_ex=None, data=None, data_mod=None):
         #Info Stuff
+        self.id = id
+        if self.id == '':
+            self.id = str(uuid.uuid4())
+        self.number = number
         self.name = name
+        if self.name=='':
+            self.name = 'Pass ' + str(self.number)
         self.ground_speed = ground_speed
         self.ground_speed_units =  ground_speed_units
         self.spray_height = spray_height
@@ -47,7 +53,7 @@ class Pass:
         self.data_mod = data_mod #Holds data with all requested modifications
         self.data_ex = data_ex #Holds Excitation Data
         #Cards
-        self.spray_cards = spray_cards
+        self.spray_cards = []
 
     def modifyData(self, isCenter=True, isSmooth=True):
         if not isinstance(self.data, pd.DataFrame): return

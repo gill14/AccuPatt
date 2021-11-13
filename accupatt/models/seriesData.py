@@ -1,3 +1,4 @@
+import uuid
 import pandas as pd
 import numpy as np
 
@@ -10,28 +11,39 @@ from accupatt.models.passData import Pass
 class SeriesData:
     """A Container class for storing all Series info"""
 
-    def __init__(self):
+    def __init__(self, id = ''):
+        self.id = id
+        if self.id == '':
+            self.id = str(uuid.uuid4())
         self.filePath = ''
         self.info = AppInfo()
         self.passes = {}
+        #String Options
+        self.string_smooth_individual = True
+        self.string_smooth_average = True
+        self.string_equalize_integrals = True
+        self.string_center = True
+        self.string_simulated_adjascent_passes = 2
+        
+        #Convenience Runtime Placeholders
         self.patternAverage = Pass(name='Average')
         self.patternAverageInverted = Pass(name='AverageInverted')
 
-    def modifyPatterns(self, isCenter, isSmoothIndividual, isEqualize, isSmoothAverage):
+    def modifyPatterns(self):
         #apply individual pattern modifications
-        for key, value in self.passes.items():
-            if not isinstance(value.data, pd.DataFrame): continue
-            value.modifyData(isCenter=isCenter, isSmooth=isSmoothIndividual)
+        for p in self.passes.values():
+            if not isinstance(p.data, pd.DataFrame): continue
+            p.modifyData(isCenter=self.string_center, isSmooth=self.string_smooth_individual)
         #apply cross-pattern modifications
-        if isEqualize:
-            self.equalizePatterns()
+        if self.string_equalize_integrals:
+            self._equalizePatterns()
         #Generate Average Pattern
-        self.averagePattern()
+        self._averagePattern()
         #Apply avearge pattern modifications
-        self.patternAverage.modifyData(isCenter=isCenter, isSmooth=isSmoothAverage)
-        self.patternAverageInverted.modifyData(isCenter=isCenter, isSmooth=isSmoothAverage)
+        self.patternAverage.modifyData(isCenter=self.string_center, isSmooth=self.string_smooth_average)
+        self.patternAverageInverted.modifyData(isCenter=self.string_center, isSmooth=self.string_smooth_average)
 
-    def equalizePatterns(self):
+    def _equalizePatterns(self):
         areas = {}
         areasa = []
         for key, value in self.passes.items():
@@ -48,7 +60,7 @@ class SeriesData:
             p = self.passes[key]
             p.data_mod[key] = p.data_mod[key].multiply(scalers[key])
 
-    def averagePattern(self):
+    def _averagePattern(self):
         #df placeholder
         average = pd.DataFrame()
         #temp df to average accross columns
@@ -111,6 +123,12 @@ class SeriesData:
             m.append(self.passes[key].humidity)
         return int(np.mean(m))
 
+    #Convience Accessor so that the model is only run once  
+    def calc_droplet_stats(self):
+        model = self._populate_model()
+        return model.dv01(), model.dv05(), model.dv09(), model.p_lt_100(), model.p_lt_100(), model.dsc(), model.rs()
+
+    #Individual accessors, model re-runs each time.
     def calc_dv01(self):
         model = self._populate_model()
         return model.dv01()

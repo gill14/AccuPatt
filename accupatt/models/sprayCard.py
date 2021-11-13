@@ -1,38 +1,47 @@
 import os, math
 from PyQt5.QtCore import QSettings
 import numpy as np
-import cv2
 import json
+import uuid
 
 import accupatt.config as cfg
+from accupatt.helpers.dBReadWriteImage import DBReadWriteImage
 from accupatt.helpers.sprayCardImageProcessor import SprayCardImageProcessor
 class SprayCard:
 
-    def __init__(self, name = '', filepath = None, dpi=600):
-
+    def __init__(self, id = '', name = '', filepath = None, dpi=600):
+        self.id = id
+        if self.id == '':
+            self.id = str(uuid.uuid4())
         self.filepath = filepath
         self.name = name
-        self.threshold_type = None
-        self.threshold_method_color = None
-        self.threshold_method_grayscale = None
-        self.threshold_grayscale = None
-        self.threshold_color_hue = None
-        self.threshold_color_saturation = None
-        self.threshold_color_brightness = None
+        self.location = None
+        self.include_in_composite = cfg.INCLUDE_IN_COMPOSITE_NO
+
+        self.threshold_type = cfg.THRESHOLD_TYPE__DEFAULT
+        self.threshold_method_color = cfg.THRESHOLD_METHOD_COLOR__DEFAULT
+        self.threshold_method_grayscale = cfg.THRESHOLD_METHOD_GRAYSCALE__DEFAULT
+        self.threshold_grayscale = cfg.THRESHOLD_GRAYSCALE__DEFAULT
+        self.threshold_color_hue = cfg.THRESHOLD_COLOR_HUE__DEFAULT
+        self.threshold_color_saturation = cfg.THRESHOLD_COLOR_SATURATION__DEFAULT
+        self.threshold_color_brightness = cfg.THRESHOLD_COLOR_BRIGHTNESS__DEFAULT
         self.dpi = dpi
         self.area_px2 = 0.0
         self.stain_areas_all_px2 = []
         self.stain_areas_valid_px2 = []
-        self.spread_method = None
-        self.spread_factor_a = None
-        self.spread_factor_b = None
-        self.spread_factor_c = None
+        self.spread_method = cfg.SPREAD_METHOD__DEFAULT
+        self.spread_factor_a = cfg.SPREAD_FACTOR_A__DEFAULT
+        self.spread_factor_b = cfg.SPREAD_FACTOR_B__DEFAULT
+        self.spread_factor_c = cfg.SPREAD_FACTOR_C__DEFAULT
 
         self._load_defaults()
     
+    def has_image(self):
+        return isinstance(DBReadWriteImage.read_image_from_db(self.filepath, self.id), type(None))
+    
     def image_original(self):
-        img = cv2.imread(self.filepath)
-        return img
+        #img = cv2.imread(self.read_image_from_db(self.filepath, self.id))
+        return DBReadWriteImage.read_image_from_db(self.filepath, self.id)
 
     def image_processed(self, fillShapes):
         scp = SprayCardImageProcessor(self)

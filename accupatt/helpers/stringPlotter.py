@@ -103,7 +103,7 @@ class StringPlotter:
         mplCanvas.fig.set_tight_layout(True)
         mplCanvas.draw()
 
-    def drawSimulations(mplCanvasRacetrack, mplCanvasBackAndForth, series, numAdjascentPassesPerSide):
+    def drawSimulations(mplCanvasRacetrack, mplCanvasBackAndForth, series):
         #Get adjusted swath from series object
         swathWidth = series.info.swath_adjusted
         #Find number of points per swathwidth for shifting
@@ -129,7 +129,7 @@ class StringPlotter:
             f = ax.fill_between(loc, 0, a, label='Center')
 
             sum = a.copy()
-            for i in range(numAdjascentPassesPerSide):
+            for i in range(series.string_simulated_adjascent_passes):
                 aa = a.copy()
                 #When B&F and odd pass, use inverted average
                 if (ax == mplCanvasBackAndForth.ax) & ((i%2)==0):
@@ -158,7 +158,7 @@ class StringPlotter:
         mplCanvasBackAndForth.fig.set_tight_layout(True)
         mplCanvasBackAndForth.draw()
 
-    def showCVTable(tableView, series, numAdjascentPassesPerSide):
+    def showCVTable(tableView, series):
         swath = series.info.swath_adjusted
         swath_units = series.info.swath_units
         tv = tableView
@@ -167,10 +167,10 @@ class StringPlotter:
             sw = swath - (tv.rowCount()-1) + (2*row)
             tv.item(row, 0).setText(f"{sw} {swath_units}")
             #Print RT CV
-            rt_cv = StringPlotter.calcCV(series, numAdjascentPassesPerSide, sw, False)
+            rt_cv = StringPlotter.calcCV(series, series.string_simulated_adjascent_passes, sw, False)
             tv.item(row, 1).setText(f"{rt_cv} %")
             #Print BF CV
-            bf_cv = StringPlotter.calcCV(series, numAdjascentPassesPerSide, sw, True)
+            bf_cv = StringPlotter.calcCV(series, series.string_simulated_adjascent_passes, sw, True)
             tv.item(row, 2).setText(f"{bf_cv} %")
 
     def calcCV(series, numAdjascentPassesPerSide, swathWidth, isBackAndForth):

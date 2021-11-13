@@ -1,12 +1,14 @@
 from posixpath import dirname
+from pathlib import Path
 import sys, os
 from PyQt5.QtWidgets import QApplication, QFileDialog, QListWidgetItem, QMessageBox
 from PyQt5.QtCore import Qt, QSettings, QSignalBlocker
 from PyQt5 import uic
+from accupatt.helpers.dBReadWrite import DBReadWrite
+from accupatt.helpers.dataFileImporter import DataFileImporter
 
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
-from accupatt.helpers.fileTools import FileTools
 from accupatt.helpers.stringPlotter import StringPlotter
 from accupatt.helpers.reportMaker import ReportMaker
 
@@ -81,31 +83,28 @@ class MainWindow(baseclass):
 
     def importAccuPatt(self):
         #Get the file
-        fname, filter_ = QFileDialog.getOpenFileName(self, 'Open file', '/Users/gill14/OneDrive/Matt Scott Share/Fly in data/2018 Reed Fly-In', "AccuPatt files (*.xlsx)")
+        #fname, filter_ = QFileDialog.getOpenFileName(self, 'Open file', '/Users/gill14/OneDrive/Matt Scott Share/Fly in data/2018 Reed Fly-In', "AccuPatt files (*.xlsx)")
         #dA = dataAccuPatt(fname)
-        #fname = "/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt/Testing/N502LY 02.xlsx"
-
+        file = "/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt/testing/N802ET 03.xlsx"
+        
+        self.currentFile = file
         #Load in the values
-        self.seriesData = FileTools.load_from_accupatt_1_file(file=fname)
-
+        #self.seriesData = FileTools.load_from_accupatt_1_file(file=file)
+        self.seriesData = DataFileImporter.convert_xlsx_to_db(file=file)
         self.update_all_ui()
 
         #Update StatusBar
-        self.ui.statusbar.showMessage(f'Current File: {fname}')
+        self.ui.statusbar.showMessage(f'Current File: {file}')
 
     def saveFile(self):
-        FileTools.writeToJSONFile(
-            path=self.currentDirectory,
-            fileName=self.seriesData.info.regnum+' S'+self.seriesData.info.series,
-            seriesData=self.seriesData
-        )
+        DBReadWrite.write_to_db(filePath=self.currentFile, seriesData=self.seriesData)
 
     def openFile(self):
-        #directory = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder')
-        #Testing only
-        directory = '/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt/testing/N802ET S3'
-        self.currentDirectory = dirname(directory)
-        self.seriesData = FileTools.load_from_accupatt_2_file(directory=directory)
+        try:
+            self.currentDirectory
+        except NameError:
+            self.currentDirectory = Path.home()
+        self.currentFile, self.seriesData = DBReadWrite.read_from_db(self, self.currentDirectory)
         self.update_all_ui()
 
     def update_all_ui(self):
@@ -306,11 +305,14 @@ class MainWindow(baseclass):
         self.updatePlots()
 
     def updatePlots(self):
-        self.seriesData.modifyPatterns(
-            isCenter=self.ui.checkBoxAlignCentroid.checkState() == Qt.Checked,
-            isSmoothIndividual=self.ui.checkBoxSmoothIndividual.checkState() == Qt.Checked,
-            isEqualize=self.ui.checkBoxEqualizeArea.checkState() == Qt.Checked,
-            isSmoothAverage=self.ui.checkBoxSmoothAverage.checkState() == Qt.Checked)
+        #Apply checkbox settings to SeriesData object
+        self.seriesData.string_center = self.ui.checkBoxAlignCentroid.checkState() == Qt.Checked
+        self.seriesData.string_smooth_individual = self.ui.checkBoxSmoothIndividual.checkState() == Qt.Checked
+        self.seriesData.string_equalize_integrals = self.ui.checkBoxEqualizeArea.checkState() == Qt.Checked
+        self.seriesData.string_smooth_average = self.ui.checkBoxSmoothAverage.checkState() == Qt.Checked
+        #Recalculate individual and average patterns
+        self.seriesData.modifyPatterns()
+        #Replot each visible canvas
         if self.ui.listWidgetPassSelection.currentItem() != None:
             StringPlotter.drawIndividual(
                 mplCanvas=self.ui.plotWidgetIndividual.canvas,
@@ -321,15 +323,14 @@ class MainWindow(baseclass):
         self.updateSimulations()
 
     def updateSimulations(self):
+        self.seriesData.string_simulated_adjascent_passes = self.ui.spinBoxSimulatedSwathPasses.value()
         StringPlotter.drawSimulations(
             mplCanvasRacetrack=self.ui.plotWidgetRacetrack.canvas,
             mplCanvasBackAndForth = self.ui.plotWidgetBackAndForth.canvas,
-            series=self.seriesData,
-            numAdjascentPassesPerSide=self.ui.spinBoxSimulatedSwathPasses.value())
+            series=self.seriesData)
         StringPlotter.showCVTable(
             tableView=self.ui.tableWidgetCV,
-            series=self.seriesData,
-            numAdjascentPassesPerSide=self.ui.spinBoxSimulatedSwathPasses.value())
+            series=self.seriesData)
 
     def updateSwathAdjusted(self, swath):
         self.seriesData.info.swath_adjusted = swath
@@ -337,11 +338,11 @@ class MainWindow(baseclass):
         self.updateSimulations()
 
     def sprayCardPassSelectionChanged(self, current, previous):
-        if current.text() not in self.seriesData.passes: return
-        p = self.seriesData.passes[current.text()]
-        if not p.spray_cards: return
         lwc = self.ui.listWidgetSprayCard
         lwc.clear()
+        if current.text() not in self.seriesData.passes.keys(): return
+        p = self.seriesData.passes[current.text()]
+        if not p.spray_cards: return
         for card in p.spray_cards:
             item = QListWidgetItem(card.name)
             lwc.addItem(item)
