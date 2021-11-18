@@ -15,7 +15,7 @@ class EditAircraft(baseclass):
 
     applied = pyqtSignal(AppInfo)
 
-    aircraftFile = Path(__file__).parent /"resources"/"AgAircraftData.xlsx"
+    aircraftFile = os.path.join(os.getcwd(), 'resources', 'AgAircraftData.xlsx')
 
     units = {'ft','m'}
 
