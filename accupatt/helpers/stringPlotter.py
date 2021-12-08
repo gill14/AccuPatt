@@ -1,63 +1,63 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import pyqtgraph
+from pyqtgraph.functions import mkPen
 import scipy.signal as sig
 from scipy.stats import variation
 
 class StringPlotter:
-
-    def drawIndividual(mplCanvas, pattern):
-        d = pattern.data
-        dm = pattern.data_mod
-
-        ax = mplCanvas.ax
-        ax.clear()
-        if not isinstance(d, pd.DataFrame): return
-        ax.plot(dm['loc'],dm[pattern.name])
-
-        mplCanvas.draw()
-
-    def drawIndividualTrims(mplCanvas1, mplCanvas2, pattern):
-        d = pattern.data.copy()
-        #find what will be min after L/R trim
-        dd = d.copy()
-        #Trim Left
-        dd.loc[:pattern.trim_l-1,[pattern.name]] = -1
-        #Trim Right
-        dd.loc[(dd[pattern.name].size-pattern.trim_r):,[pattern.name]] = -1
+        
+    def drawIndividuals(pyqtplotwidget1, pyqtplotwidget2, passData):
+        trim_left, trim_right, trim_vertical = StringPlotter.drawIndividual(pyqtplotwidget1, passData)
+        StringPlotter.drawIndividualTrim(pyqtplotwidget2, passData)
+        return trim_left, trim_right, trim_vertical
+        
+    def drawIndividual(pyqtplotwidget, passData):
+        d = passData.data
+        _,min = passData.trimLR(d.copy())
+        
+        pyqtgraph.setConfigOptions(antialias=True)
+        pyqtgraph.setConfigOption('background', 'k')
+        pyqtgraph.setConfigOption('foreground', 'w')
+        w = pyqtplotwidget
+        w.setWindowTitle(f'{passData.name} Raw Data')
+        w.clear()
+        p = w.addPlot(labels =  {'left':'Relative Dye Intensity', 'bottom':'Location'})
+        p.showGrid(x=True, y=True)
+        x = np.array(passData.data['loc'].values, dtype=float)
+        y = np.array(passData.data[passData.name].values, dtype=float)
+        
+        p.plot(name='Raw', pen='w').setData(x, y)
+       
+        #Trim Handles
+        trim_left = pyqtgraph.InfiniteLine(pos=x[0+passData.trim_l], movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Trim L = {value:0.2f}', labelOpts={'color': 'y','position': 0.9})
+        trim_right = pyqtgraph.InfiniteLine(pos=x[-1-passData.trim_r], movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Trim R = {value:0.2f}', labelOpts={'color': 'y','position': 0.9})
         #Find new min inside untrimmed area
-        min = dd[dd>-1].loc[:,[pattern.name]].min(skipna=True)
-        #Remove min from pattern to accurately show how trim_v will be applied later
-        d[pattern.name] = d.loc[:,[pattern.name]].sub(min, axis=1)
-        d[pattern.name] = d[[pattern.name]].clip(lower=0)
-
-        ax1 = mplCanvas1.ax
-        ax1.clear()
-        ax1.plot(d['loc'],d[pattern.name])
-
-        xL = pd.to_numeric(d.iloc[:pattern.trim_l,0])
-        xR = pd.to_numeric(d.iloc[d[pattern.name].size-pattern.trim_r:,0])
-        xC = pd.to_numeric(d.iloc[pattern.trim_l:d[pattern.name].size-pattern.trim_r,0])
-        y1 = d[pattern.name].min()
-        y2 = d[pattern.name].max()
-
-        #Trims
-        if len(xL) > 0:
-            ax1.fill_between(xL, y1, y2, facecolor='black', alpha=0.4)
-        if len(xR) > 0:
-            ax1.fill_between(xR, y1, y2, facecolor='black', alpha=0.4)
-        if pattern.trim_v > 0:
-            ax1.fill_between(xC, y1, pattern.trim_v, facecolor='black', alpha=0.4)
-        ax1.set_ylabel('Pre-Trim')
-        mplCanvas1.fig.set_tight_layout(True)
-        mplCanvas1.draw()
-
-        ax2 = mplCanvas2.ax
-        ax2.clear()
-        ax2.plot(pattern.data_mod['loc'], pattern.data_mod[pattern.name])
-        ax2.set_ylabel('Post-Trim')
-        mplCanvas2.fig.set_tight_layout(True)
-        mplCanvas2.draw()
+        #min = d.loc[d.index[0+passData.trim_l:-1-passData.trim_r],passData.name].min(skipna=True)
+        trim_vertical = pyqtgraph.InfiniteLine(pos=(min+passData.trim_v), angle=0, movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Floor = {value:0.2f}', labelOpts={'color': 'y','position': 0.5})
+        #trim_left.addMarker('<|>', position=0.2)
+        p.addItem(trim_left)
+        p.addItem(trim_right)
+        p.addItem(trim_vertical)
+        
+        return trim_left, trim_right, trim_vertical
+        
+    def drawIndividualTrim(pyqtplotwidget, passData):
+        if not isinstance(passData.data, pd.DataFrame): return
+        d,_ = passData.trimLR(passData.data.copy())
+        d = passData.trimV(d)
+        w = pyqtplotwidget
+        w.clear()
+        w.setWindowTitle(f'{passData.name} Raw Data')
+        p = w.addPlot(labels =  {'left':'Relative Dye Intensity', 'bottom':'Location'})
+        p.showGrid(x=True, y=True)
+        x = np.array(d['loc'].values, dtype=float)
+        y = np.array(d[passData.name].values, dtype=float)
+        passData.modifyData(isCenter=False, isSmooth=True)
+        y_smooth = np.array(passData.data_mod[passData.name].values, dtype=float)
+        p.plot(name='Emission', pen='w').setData(x, y)
+        p.plot(name='Smooth', pen=mkPen('y', width=3)).setData(x, y_smooth)
 
     def drawOverlay(mplCanvas, series):
         ax = mplCanvas.ax

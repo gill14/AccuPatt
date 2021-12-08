@@ -59,7 +59,8 @@ class Pass:
         if not isinstance(self.data, pd.DataFrame): return
         d = self.data.copy()
         #Trim it
-        d = self.trimLRV(d)
+        d,_ = self.trimLR(d)
+        d = self.trimV(d)
         #Center it
         centerMethod = self.center_method_none
         if isCenter:
@@ -73,7 +74,8 @@ class Pass:
         #Set data_mod for plot use
         self.data_mod = d.copy()
 
-    def trimLRV(self, dataIntermediate):
+    def trimLR(self, dataIntermediate):
+        print(f'trim left = {self.trim_l}, trim right = {self.trim_r}')
         name = self.name
         d = dataIntermediate
         #Trim Left
@@ -86,9 +88,18 @@ class Pass:
         d[name] = d[name].sub(min)
         #clip all negative values (from trimmed areas) to 0
         d[name] = d[name].clip(lower=0)
+        #return the modified data
+        return d, min
+        
+    def trimV(self, dataIntermediate):
+        print(f'trim vert = {self.trim_v}')
+        name = self.name
+        d = dataIntermediate
         #Trim Vertical
         d[name] = d[name].sub(self.trim_v)
-        #Set modified data in pattern object
+        #clip all negative values (from trimmed areas) to 0
+        d[name] = d[name].clip(lower=0)
+        #return the modified data
         return d
 
     def centerify(self, dataIntermediate, centerMethod):
@@ -150,10 +161,13 @@ class Pass:
         pattern_ex = np.array([x_data, y_ex_data])
         self.data_ex = pd.DataFrame(data=pattern_ex, columns=['loc', self.name])
 
-    def setTrims(self, trim_l, trim_r, trim_v):
-        self.trim_l = trim_l
-        self.trim_r = trim_r
-        self.trim_v = trim_v
+    def setTrims(self, trim_l = None, trim_r = None, trim_v = None):
+        if trim_l is not None:
+            self.trim_l = trim_l
+        if trim_r is not None:
+            self.trim_r = trim_r
+        if trim_v is not None:
+            self.trim_v = trim_v
 
     '''
     The methods below are used to convert and calculate info values as needed

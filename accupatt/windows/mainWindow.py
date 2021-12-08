@@ -16,7 +16,6 @@ from accupatt.windows.editFlyin import EditFlyin
 from accupatt.windows.editApplicatorInfo import EditApplicatorInfo
 from accupatt.windows.editAircraft import EditAircraft
 from accupatt.windows.editSpraySystem import EditSpraySystem
-from accupatt.windows.editTrims import EditTrims
 from accupatt.windows.editCardList import EditCardList
 from accupatt.windows.editThreshold import EditThreshold
 from accupatt.windows.editSpreadFactors import EditSpreadFactors
@@ -55,7 +54,6 @@ class MainWindow(baseclass):
         #Setup Individual Passes Tab
         self.ui.listWidgetPassSelection.currentItemChanged[QListWidgetItem,QListWidgetItem].connect(self.passSelectionChanged)
         self.ui.buttonReadString.clicked.connect(self.readString)
-        self.ui.buttonEditTrims.clicked.connect(self.editTrims)
 
         #Setup Composite Tab
         self.ui.listWidgetIncludePasses.itemClicked[QListWidgetItem].connect(self.includePassesChanged)
@@ -250,16 +248,54 @@ class MainWindow(baseclass):
         self.passSelectionChanged(self.ui.listWidgetPassSelection.currentItem(), None)
 
     def passSelectionChanged(self, current, previous):
+        if current == None:
+            return
         self.ui.listWidgetPassSelection.setCurrentItem(current)
         p = self.seriesData.passes[current.text()]
-        p.modifyData(
-            isCenter=(self.ui.checkBoxAlignCentroid.checkState()==Qt.Checked),
-            isSmooth=(self.ui.checkBoxSmoothIndividual.checkState()==Qt.Checked))
-        StringPlotter.drawIndividual(mplCanvas=self.ui.plotWidgetIndividual.canvas, pattern=p)
+        line_left, line_right, line_vertical = StringPlotter.drawIndividuals(
+                pyqtplotwidget1=self.ui.plotWidgetIndividual,
+                pyqtplotwidget2=self.ui.plotWidgetIndividualTrim,
+                passData=p
+            )
+        line_left.sigPositionChangeFinished.connect(self.updateTrimL)
+        line_right.sigPositionChangeFinished.connect(self.updateTrimR)
+        line_vertical.sigPositionChangeFinished.connect(self.updateTrimFloor)
         #Update the info labels on the individual pass tab
         self.ui.labelAirspeed.setText(f'Airspeed: {str(p.calc_airspeed(units=p.ground_speed_units))} {p.ground_speed_units}')
         self.ui.labelHeight.setText(f'Height: {str(p.spray_height)} {p.spray_height_units}')
         self.ui.labelCrosswind.setText(f'X-Wind: {"{:.1f}".format(p.calc_crosswind(units=p.wind_speed_units))} {p.wind_speed_units}')
+        
+    def updateTrimL(self, value):
+        self.updateTrim(trim_left=value.value())
+    
+    def updateTrimR(self, value):
+        self.updateTrim(trim_right=value.value())
+        
+    def updateTrimFloor(self, value):
+        self.updateTrim(floor=value.value())
+        
+    def updateTrim(self, trim_left = None, trim_right = None, floor = None):
+        #Null Checks
+        passItem = self.ui.listWidgetPassSelection.currentItem()
+        if passItem == None: return
+        passData = self.seriesData.passes[self.ui.listWidgetPassSelection.currentItem().text()]
+        if passData == None or not isinstance(passData, Pass): return
+        # Convert to Indices
+        if trim_left is not None:
+            trim_left = abs(passData.data['loc'] - trim_left).idxmin()
+        if trim_right is not None:
+            trim_right = passData.data['loc'].shape[0] -  abs(passData.data['loc'] - trim_right).idxmin()
+        trim_vertical = None
+        if floor is not None:
+            #Check if requested floor is higher than lowest point between L/R Trims
+            _,min = passData.trimLR(passData.data.copy())
+            if min < floor:
+                # Add the difference in vertical trim
+                trim_vertical = floor - min
+        passData.setTrims(trim_left, trim_right, trim_vertical)
+        self.passSelectionChanged(current=passItem, previous=None)
+        #ToDo - Slow...
+        self.updatePlots()
 
     def readString(self):
         if self.ui.listWidgetPassSelection.currentItem()==None:
@@ -285,18 +321,6 @@ class MainWindow(baseclass):
         #Start Loop
         e.exec_()
 
-    def editTrims(self):
-        #Create popup and send current series to popup
-        e = EditTrims(
-            pattern=self.seriesData.passes[self.ui.listWidgetPassSelection.currentItem().text()],
-            isAlignCentroid=(self.ui.checkBoxAlignCentroid.checkState()==Qt.Checked),
-            isSmoothIndividual=(self.ui.checkBoxSmoothIndividual.checkState()==Qt.Checked),
-            parent=self)
-        #Connect Slot to retrieve Vals back from popup
-        e.applied.connect(self.updatePlots)
-        #Start Loop
-        e.exec_()
-
     def includePassesChanged(self, item):
         if item.text() not in self.seriesData.passes.keys():
             return
@@ -313,11 +337,12 @@ class MainWindow(baseclass):
         #Recalculate individual and average patterns
         self.seriesData.modifyPatterns()
         #Replot each visible canvas
-        if self.ui.listWidgetPassSelection.currentItem() != None:
-            StringPlotter.drawIndividual(
-                mplCanvas=self.ui.plotWidgetIndividual.canvas,
-                pattern=self.seriesData.passes[self.ui.listWidgetPassSelection.currentItem().text()]
-            )
+        #if self.ui.listWidgetPassSelection.currentItem() != None:
+        #    self.line_left, self.line_right, self.line_vertical = StringPlotter.drawIndividuals(
+        #        pyqtplotwidget1=self.ui.plotWidgetIndividual,
+        #        pyqtplotwidget2=self.ui.plotWidgetIndividualTrim,
+        #        passData=self.seriesData.passes[self.ui.listWidgetPassSelection.currentItem().text()]
+        #    )
         StringPlotter.drawOverlay(mplCanvas=self.ui.plotWidgetOverlay.canvas, series=self.seriesData)
         StringPlotter.drawAverage(mplCanvas=self.ui.plotWidgetAverage.canvas, series=self.seriesData)
         self.updateSimulations()
@@ -340,6 +365,7 @@ class MainWindow(baseclass):
     def sprayCardPassSelectionChanged(self, current, previous):
         lwc = self.ui.listWidgetSprayCard
         lwc.clear()
+        if current is None: return
         if current.text() not in self.seriesData.passes.keys(): return
         p = self.seriesData.passes[current.text()]
         if not p.spray_cards: return
@@ -432,6 +458,7 @@ class MainWindow(baseclass):
             self.ui.labelVMD.setText('')
             self.ui.labelDv09.setText('')
             self.ui.labelRS.setText('')
+            self.ui.labelDSC.setText('')
             return
         # Left Image (1)
         cvImg1 = sprayCard.image_processed(fillShapes=False)
@@ -439,13 +466,14 @@ class MainWindow(baseclass):
         cvImg2 = sprayCard.image_processed(fillShapes=True)
         self.ui.splitCardWidget.updateSprayCardView(cvImg1, cvImg2)
         #Stats
-        dv01, dv05, dv09, rs = sprayCard.volumetric_stats()
+        dv01, dv05, dv09, rs, dsc = sprayCard.volumetric_stats()
         self.ui.labelCoverage.setText(format(sprayCard.percent_coverage(),'0.2f')+'%')
         self.ui.labelStainsPerSqIn.setText(str(sprayCard.stains_per_in2()))
         self.ui.labelDv01.setText(str(dv01))
         self.ui.labelVMD.setText(str(dv05))
         self.ui.labelDv09.setText(str(dv09))
         self.ui.labelRS.setText(format(rs, '0.2f'))
+        self.ui.labelDSC.setText(dsc)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

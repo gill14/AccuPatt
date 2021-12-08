@@ -7,6 +7,7 @@ import uuid
 import accupatt.config as cfg
 from accupatt.helpers.dBReadWriteImage import DBReadWriteImage
 from accupatt.helpers.sprayCardImageProcessor import SprayCardImageProcessor
+from accupatt.helpers.atomizationModel import AtomizationModel
 class SprayCard:
 
     def __init__(self, id = '', name = '', filepath = None, dpi=600):
@@ -64,7 +65,7 @@ class SprayCard:
     def volumetric_stats(self):
         #P Protect agains empty array
         if len(self.stain_areas_valid_px2) == 0:
-            return 0, 0, 0, 0
+            return 0, 0, 0, 0, ''
         drop_dia_um = []
         drop_vol_um3 = []
         drop_vol_um3_cum = []
@@ -98,8 +99,10 @@ class SprayCard:
         dv09 = np.interp(dv09_vol, drop_vol_um3_cum, drop_dia_um)
         # Calculate Relative Span
         rs = (dv09 - dv01) / dv05
+        # Calculate the DSC
+        dsc = AtomizationModel(nozzle=None, orifice=None, airspeed=None, pressure=None, angle=None).dsc(dv01=dv01, dv05=dv05)
         # Return rounded representative vol frac diameters as ints, rel span as float
-        return round(dv01), round(dv05), round(dv09), rs
+        return round(dv01), round(dv05), round(dv09), rs, dsc
 
     def _px2_to_um2(self, area_px2):
         um_per_px = cfg.UM_PER_IN / self.dpi
