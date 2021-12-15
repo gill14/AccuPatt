@@ -4,6 +4,7 @@ import sys, os
 from PyQt5.QtWidgets import QApplication, QMessageBox
 from PyQt5.QtCore import QSettings, QTimer, pyqtSignal
 from PyQt5 import uic
+import pandas as pd
 
 from seabreeze.spectrometers import Spectrometer
 import serial
@@ -33,7 +34,7 @@ class ReadString(baseclass):
     reverse_start = "BD-\r"
     reverse_stop = "BD\r"
 
-    def __init__(self, passData):
+    def __init__(self, passData: Pass):
         super().__init__()
         # Your code will go here
         self.ui = Ui_Form()
@@ -44,21 +45,21 @@ class ReadString(baseclass):
         self.passData = passData
         #Pass Info fields
         self.ui.labelPass.setText(passData.name)
-        self.ui.lineEditGS.setText(str(passData.ground_speed))
+        self.ui.lineEditGS.setText(passData.strip_num(passData.ground_speed))
         self.ui.comboBoxUnitsGS.addItems(self.units_gs)
         self.ui.comboBoxUnitsGS.setCurrentText(passData.ground_speed_units)
-        self.ui.lineEditSH.setText(str(passData.spray_height))
+        self.ui.lineEditSH.setText(passData.strip_num(passData.spray_height))
         self.ui.comboBoxUnitsSH.addItems(self.units_sh)
         self.ui.comboBoxUnitsSH.setCurrentText(passData.spray_height_units)
-        self.ui.lineEditPH.setText(str(passData.pass_heading))
-        self.ui.lineEditWD.setText(str(passData.wind_direction))
-        self.ui.lineEditWS.setText(str(passData.wind_speed))
+        self.ui.lineEditPH.setText(passData.strip_num(passData.pass_heading))
+        self.ui.lineEditWD.setText(passData.strip_num(passData.wind_direction))
+        self.ui.lineEditWS.setText(passData.strip_num(passData.wind_speed))
         self.ui.comboBoxUnitsWS.addItems(self.units_ws)
         self.ui.comboBoxUnitsWS.setCurrentText(passData.wind_speed_units)
-        self.ui.lineEditT.setText(str(passData.temperature))
+        self.ui.lineEditT.setText(passData.strip_num(passData.temperature))
         self.ui.comboBoxUnitsT.addItems(self.units_t)
         self.ui.comboBoxUnitsT.setCurrentText(passData.temperature_units)
-        self.ui.lineEditH.setText(str(passData.humidity))
+        self.ui.lineEditH.setText(passData.strip_num(passData.humidity))
 
         self.spec = None
         self.spec_connected = False
@@ -92,7 +93,7 @@ class ReadString(baseclass):
         self.y = []
         self.y_ex = []
 
-        if not passData.data.empty:
+        if isinstance(passData.data, pd.DataFrame):
             self.x = np.array(passData.data['loc'].values, dtype=float)
             self.y = np.array(passData.data[passData.name].values, dtype=float)
             self.y_ex = np.array(passData.data_ex[passData.name].values, dtype=float)
@@ -277,7 +278,8 @@ class ReadString(baseclass):
                 'Entered GROUND SPEED cannot be converted to an number')
             return
         #Pattern
-        p.setData(self.x, self.y, self.y_ex)
+        if len(self.x) > 0:
+            p.setData(self.x, self.y, self.y_ex)
 
         #All Valid, go ahead and accept and let main know to update vals in UI
         self.applied.emit(p)
@@ -309,6 +311,8 @@ class ReadString(baseclass):
         self.p.clear()
 
     def strip_num(self, x) -> str:
+        if x is None:
+            return ''
         if type(x) is str:
             if x == '':
                 x = 0

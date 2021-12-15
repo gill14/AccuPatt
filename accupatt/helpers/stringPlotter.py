@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import copy
 import matplotlib.pyplot as plt
 import pyqtgraph
 from pyqtgraph.functions import mkPen
@@ -9,54 +10,57 @@ from scipy.stats import variation
 class StringPlotter:
         
     def drawIndividuals(pyqtplotwidget1, pyqtplotwidget2, passData):
-        trim_left, trim_right, trim_vertical = StringPlotter.drawIndividual(pyqtplotwidget1, passData)
-        StringPlotter.drawIndividualTrim(pyqtplotwidget2, passData)
-        return trim_left, trim_right, trim_vertical
-        
-    def drawIndividual(pyqtplotwidget, passData):
-        d = passData.data
-        _,min = passData.trimLR(d.copy())
-        
+        #Setup Plot Prefs
         pyqtgraph.setConfigOptions(antialias=True)
         pyqtgraph.setConfigOption('background', 'k')
         pyqtgraph.setConfigOption('foreground', 'w')
-        w = pyqtplotwidget
-        w.setWindowTitle(f'{passData.name} Raw Data')
-        w.clear()
-        p = w.addPlot(labels =  {'left':'Relative Dye Intensity', 'bottom':'Location'})
+        pyqtplotwidget1.clear()
+        pyqtplotwidget2.clear()
+        #Plot Individual (upper)
+        trim_left, trim_right, trim_vertical = StringPlotter.drawIndividual(pyqtplotwidget1, passData)
+        #Plot Individual Trimmed (lower)
+        StringPlotter.drawIndividualTrim(pyqtplotwidget2, passData)
+        #Return trim handles to parent
+        return trim_left, trim_right, trim_vertical
+        
+    def drawIndividual(pyqtplotwidget, passData):
+        #Setup Plotter
+        p = pyqtplotwidget.addPlot(labels =  {'left':'Relative Dye Intensity', 'bottom':'Location'})
         p.showGrid(x=True, y=True)
+        #Check if data exists
+        if not isinstance(passData.data, pd.DataFrame): return None, None, None
+        #Plot data
+        d = passData.data
+        _,min = passData.trimLR(d.copy())
         x = np.array(passData.data['loc'].values, dtype=float)
         y = np.array(passData.data[passData.name].values, dtype=float)
-        
         p.plot(name='Raw', pen='w').setData(x, y)
-       
-        #Trim Handles
+        #Create L, R and V Trim Handles
         trim_left = pyqtgraph.InfiniteLine(pos=x[0+passData.trim_l], movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Trim L = {value:0.2f}', labelOpts={'color': 'y','position': 0.9})
         trim_right = pyqtgraph.InfiniteLine(pos=x[-1-passData.trim_r], movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Trim R = {value:0.2f}', labelOpts={'color': 'y','position': 0.9})
-        #Find new min inside untrimmed area
-        #min = d.loc[d.index[0+passData.trim_l:-1-passData.trim_r],passData.name].min(skipna=True)
         trim_vertical = pyqtgraph.InfiniteLine(pos=(min+passData.trim_v), angle=0, movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Floor = {value:0.2f}', labelOpts={'color': 'y','position': 0.5})
-        #trim_left.addMarker('<|>', position=0.2)
+        #Add Trim Handles
         p.addItem(trim_left)
         p.addItem(trim_right)
         p.addItem(trim_vertical)
-        
+        #Return Trim Handles to parent
         return trim_left, trim_right, trim_vertical
         
     def drawIndividualTrim(pyqtplotwidget, passData):
-        if not isinstance(passData.data, pd.DataFrame): return
-        d,_ = passData.trimLR(passData.data.copy())
-        d = passData.trimV(d)
-        w = pyqtplotwidget
-        w.clear()
-        w.setWindowTitle(f'{passData.name} Raw Data')
-        p = w.addPlot(labels =  {'left':'Relative Dye Intensity', 'bottom':'Location'})
+        #Setup Plotter
+        p = pyqtplotwidget.addPlot(labels =  {'left':'Relative Dye Intensity', 'bottom':'Location'})
         p.showGrid(x=True, y=True)
-        x = np.array(d['loc'].values, dtype=float)
-        y = np.array(d[passData.name].values, dtype=float)
-        passData.modifyData(isCenter=False, isSmooth=True)
-        y_smooth = np.array(passData.data_mod[passData.name].values, dtype=float)
+        #Check if data exists
+        if not isinstance(passData.data, pd.DataFrame): return
+        #Plot raw data
+        d = copy.copy(passData)
+        d.modifyData(isCenter=False, isSmooth=False)
+        x = np.array(d.data['loc'].values, dtype=float)
+        y = np.array(d.data_mod[d.name].values, dtype=float)
         p.plot(name='Emission', pen='w').setData(x, y)
+        #Plot smooth data on top of raw data
+        d.modifyData(isCenter=False, isSmooth=True)
+        y_smooth = np.array(d.data_mod[d.name].values, dtype=float)
         p.plot(name='Smooth', pen=mkPen('y', width=3)).setData(x, y_smooth)
 
     def drawOverlay(mplCanvas, series):
@@ -65,11 +69,10 @@ class StringPlotter:
 
         ax.set_yticks([])
         ax.set_xlabel(f'Location ({series.info.swath_units})')
-        for key in series.passes.keys():
-            p = series.passes[key]
+        for p in series.passes:
             if not isinstance(p.data, pd.DataFrame): continue
             if p.include_in_composite:
-                l, = ax.plot(p.data_mod['loc'], p.data_mod[key])
+                l, = ax.plot(p.data_mod['loc'], p.data_mod[p.name])
                 l.set_label(p.name)
         ax.set_ylim(ymin=0)
         h,l = ax.get_legend_handles_labels()

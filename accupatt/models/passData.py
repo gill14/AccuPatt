@@ -5,6 +5,8 @@ import scipy.signal as sig
 
 class Pass:
 
+    degree_sign= u'\N{DEGREE SIGN}'
+
     c = {'kph_mph': 0.621371,
         'kn_mph': 1.15078}
 
@@ -75,7 +77,7 @@ class Pass:
         self.data_mod = d.copy()
 
     def trimLR(self, dataIntermediate):
-        print(f'trim left = {self.trim_l}, trim right = {self.trim_r}')
+        #print(f'trim left = {self.trim_l}, trim right = {self.trim_r}')
         name = self.name
         d = dataIntermediate
         #Trim Left
@@ -92,7 +94,7 @@ class Pass:
         return d, min
         
     def trimV(self, dataIntermediate):
-        print(f'trim vert = {self.trim_v}')
+        #print(f'trim vert = {self.trim_v}')
         name = self.name
         d = dataIntermediate
         #Trim Vertical
@@ -195,6 +197,18 @@ class Pass:
             airspeed = airspeed / self.c[f'{units}_mph']
         #Return value as int
         return int(round(airspeed))
+    
+    def str_airspeed(self, units=None) -> str:
+        try:
+            float(self.ground_speed)
+            float(self.wind_speed)
+            float(self.wind_direction)
+            float(self.pass_heading)
+        except (TypeError, ValueError):
+            return ''
+        if units==None:
+            units=self.ground_speed_units
+        return str(f'{self.calc_airspeed(units=units)} {units}')
 
     def calc_crosswind(self, units='mph') -> float:
         ws = float(self.wind_speed)
@@ -213,6 +227,81 @@ class Pass:
             crosswind = crosswind / self.c[f'{units}_mph']
         #Return value as int
         return float(crosswind)
+    
+    def str_crosswind(self, units=None) -> str:
+        try:
+            float(self.wind_speed)
+            float(self.wind_direction)
+            float(self.pass_heading)
+        except (TypeError, ValueError):
+            return ''
+        if units==None:
+            units=self.wind_speed_units
+        return str(f'{self.strip_num(self.calc_crosswind(units=units))} {units}')
+    
+    def str_ground_speed(self):
+        try:
+            float(self.ground_speed)
+        except (TypeError, ValueError):
+            return ''
+        return str(f'{self.strip_num(self.ground_speed)} {self.ground_speed_units}')
+        
+    def str_spray_height(self):
+        try:
+            float(self.spray_height)
+        except (TypeError, ValueError):
+            return ''
+        return str(f'{self.strip_num(self.spray_height)} {self.spray_height_units}')
+        
+    def str_pass_heading(self):
+        try:
+            float(self.pass_heading)
+        except (TypeError, ValueError):
+            return ''
+        return str(f'{self.strip_num(self.pass_heading)} {self.degree_sign}')
+        
+    def str_wind_direction(self):
+        try:
+            float(self.wind_direction)
+        except (TypeError, ValueError):
+            return ''
+        return str(f'{self.strip_num(self.wind_direction)} {self.degree_sign}')
+        
+    def str_wind_speed(self):
+        try:
+            float(self.wind_speed)
+        except (TypeError, ValueError):
+            return ''
+        return str(f'{self.strip_num(self.wind_speed)} {self.wind_speed_units}')
+        
+    def str_temperature(self):
+        try:
+            float(self.temperature)
+        except (TypeError, ValueError):
+            return ''
+        return str(f'{self.strip_num(self.temperature)} {self.temperature_units}')     
+        
+    def str_humidity(self):
+        try:
+            float(self.humidity)
+        except (TypeError, ValueError):
+            return ''
+        return str(f'{self.strip_num(self.humidity)}%')     
+
+    def strip_num(self, x) -> str:
+        if x is None:
+            return ''
+        if type(x) is str:
+            if x == '':
+                x = 0
+        if float(x).is_integer():
+            return str(int(float(x)))
+        else:
+            return f'{round(float(x), 2):.2f}'
+
+    '''
+    The methods below are used to set values as needed
+    '''
 
     def set_ground_speed(self, val, units=None) -> bool:
         try:

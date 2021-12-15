@@ -17,7 +17,7 @@ class SeriesData:
             self.id = str(uuid.uuid4())
         self.filePath = ''
         self.info = AppInfo()
-        self.passes = {}
+        self.passes = []
         #String Options
         self.string_smooth_individual = True
         self.string_smooth_average = True
@@ -31,7 +31,7 @@ class SeriesData:
 
     def modifyPatterns(self):
         #apply individual pattern modifications
-        for p in self.passes.values():
+        for p in self.passes:
             if not isinstance(p.data, pd.DataFrame): continue
             p.modifyData(isCenter=self.string_center, isSmooth=self.string_smooth_individual)
         #apply cross-pattern modifications
@@ -44,39 +44,38 @@ class SeriesData:
         self.patternAverageInverted.modifyData(isCenter=self.string_center, isSmooth=self.string_smooth_average)
 
     def _equalizePatterns(self):
-        areas = {}
-        areasa = []
-        for key, value in self.passes.items():
-            if not isinstance(value.data, pd.DataFrame): continue
-            v = np.trapz(y=value.data_mod[key], x=value.data_mod['loc'], axis=0)
-            areas[key] = v
-            areasa.append(v)
-        scalers = {}
-        maxx = max(areasa)
-        for k in areas.keys():
-            scalers[k] = maxx/areas[k]
-        for key, value in self.passes.items():
-            if not isinstance(value.data, pd.DataFrame): continue
-            p = self.passes[key]
-            p.data_mod[key] = p.data_mod[key].multiply(scalers[key])
+        areas = []
+        #Integrate each pattern to find area under the curve
+        for p in self.passes:
+            if not isinstance(p.data, pd.DataFrame): continue
+            v = np.trapz(y=p.data_mod[p.name], x=p.data_mod['loc'], axis=0)
+            areas.append(v)
+        #Find the pass with the largest integral
+        maxx = max(areas)
+        #Scale each pass to equalize areas to the maxx above
+        for i in range(len(self.passes)):
+            p = self.passes[i]
+            if not isinstance(p.data, pd.DataFrame): continue
+            #Calculate scaler and apply to data_mod pattern
+            p.data_mod[p.name] = p.data_mod[p.name].multiply(maxx/areas[i])
 
     def _averagePattern(self):
         #df placeholder
         average = pd.DataFrame()
         #temp df to average accross columns
         d = pd.DataFrame()
-        for key, value in self.passes.items():
-            if not isinstance(value.data, pd.DataFrame): continue
+        for p in self.passes:
+            if not isinstance(p.data, pd.DataFrame): continue
             #Only include passes checked from listview
-            if value.include_in_composite:
+            if p.include_in_composite:
                 #add loc column to placeholder, will be overwritten each time with identical values
-                average['loc'] = value.data_mod['loc']
+                average['loc'] = p.data_mod['loc']
                 #add each modified pattern data to temp df
-                d[key] = value.data_mod[key]
+                d[p.name] = p.data_mod[p.name]
         if not average.empty:
             #take the column-wise average and add that series to the placeholder
             average['Average'] = d.mean(axis='columns')
-            #copy the placeholder and assign it to thie object's previously declared patternAverage object
+            #copy the placeholder and assign it to the object's previously declared patternAverage object
             self.patternAverage.data = average.copy()
             #make an inverted copy for simulated overlap
             averageInverted = pd.DataFrame()
@@ -89,38 +88,38 @@ class SeriesData:
     '''
     def calc_airspeed_mean(self):
         m = []
-        for key in self.passes.keys():
-            m.append(self.passes[key].calc_airspeed())
+        for p in self.passes:
+            m.append(p.calc_airspeed())
         return int(np.mean(m))
 
     def calc_spray_height_mean(self):
         m = []
-        for key in self.passes.keys():
-            m.append(self.passes[key].spray_height)
+        for p in self.passes:
+            m.append(p.spray_height)
         return float(np.mean(m))
 
     def calc_wind_speed_mean(self):
         m = []
-        for key in self.passes.keys():
-            m.append(self.passes[key].wind_speed)
+        for p in self.passes:
+            m.append(p.wind_speed)
         return float(np.mean(m))
 
     def calc_crosswind_mean(self):
         m = []
-        for key in self.passes.keys():
-            m.append(self.passes[key].calc_crosswind())
+        for p in self.passes:
+            m.append(p.calc_crosswind())
         return float(np.mean(m))
 
     def calc_temperature_mean(self):
         m = []
-        for key in self.passes.keys():
-            m.append(self.passes[key].temperature)
+        for p in self.passes:
+            m.append(p.temperature)
         return int(np.mean(m))
 
     def calc_humidity_mean(self):
         m = []
-        for key in self.passes.keys():
-            m.append(self.passes[key].humidity)
+        for p in self.passes:
+            m.append(p.humidity)
         return int(np.mean(m))
 
     #Convience Accessor so that the model is only run once  

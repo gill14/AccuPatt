@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1284</width>
-    <height>723</height>
+    <width>1098</width>
+    <height>624</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -48,7 +48,7 @@
        <enum>QTabWidget::North</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>4</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideRight</enum>
@@ -2100,118 +2100,29 @@
               <height>16777215</height>
              </size>
             </property>
-            <item>
-             <property name="text">
-              <string>Pass 1</string>
-             </property>
-             <property name="checkState">
-              <enum>Unchecked</enum>
-             </property>
-             <property name="flags">
-              <set>NoItemFlags</set>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Pass 2</string>
-             </property>
-             <property name="checkState">
-              <enum>Unchecked</enum>
-             </property>
-             <property name="flags">
-              <set>NoItemFlags</set>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Pass 3</string>
-             </property>
-             <property name="checkState">
-              <enum>Unchecked</enum>
-             </property>
-             <property name="flags">
-              <set>NoItemFlags</set>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Pass 4</string>
-             </property>
-             <property name="checkState">
-              <enum>Unchecked</enum>
-             </property>
-             <property name="flags">
-              <set>NoItemFlags</set>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Pass 5</string>
-             </property>
-             <property name="checkState">
-              <enum>Unchecked</enum>
-             </property>
-             <property name="flags">
-              <set>NoItemFlags</set>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Pass 6</string>
-             </property>
-             <property name="checkState">
-              <enum>Unchecked</enum>
-             </property>
-             <property name="flags">
-              <set>NoItemFlags</set>
-             </property>
-            </item>
            </widget>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_3">
-            <item>
-             <widget class="QPushButton" name="buttonRemovePass">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>50</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>-</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="buttonAddPass">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>50</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>+</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <widget class="QPushButton" name="buttonReadString">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>120</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Capture Pass</string>
+            </property>
+           </widget>
           </item>
           <item>
-           <widget class="Line" name="line_3">
+           <widget class="Line" name="line_5">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -2292,63 +2203,6 @@
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="Line" name="line_5">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>120</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="buttonReadString">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>120</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Capture Pass</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="buttonEditTrims">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>120</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Trim Pass</string>
             </property>
            </widget>
           </item>
@@ -2461,72 +2315,6 @@
             <property name="viewMode">
              <enum>QListView::ListMode</enum>
             </property>
-            <item>
-             <property name="text">
-              <string>Pass 1</string>
-             </property>
-             <property name="checkState">
-              <enum>Unchecked</enum>
-             </property>
-             <property name="flags">
-              <set>ItemIsUserCheckable</set>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Pass 2</string>
-             </property>
-             <property name="checkState">
-              <enum>Unchecked</enum>
-             </property>
-             <property name="flags">
-              <set>ItemIsUserCheckable</set>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Pass 3</string>
-             </property>
-             <property name="checkState">
-              <enum>Unchecked</enum>
-             </property>
-             <property name="flags">
-              <set>ItemIsUserCheckable</set>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Pass 4</string>
-             </property>
-             <property name="checkState">
-              <enum>Unchecked</enum>
-             </property>
-             <property name="flags">
-              <set>NoItemFlags</set>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Pass 5</string>
-             </property>
-             <property name="checkState">
-              <enum>Unchecked</enum>
-             </property>
-             <property name="flags">
-              <set>NoItemFlags</set>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Pass 6</string>
-             </property>
-             <property name="checkState">
-              <enum>Unchecked</enum>
-             </property>
-             <property name="flags">
-              <set>NoItemFlags</set>
-             </property>
-            </item>
            </widget>
           </item>
           <item>
@@ -3350,75 +3138,9 @@
             <property name="maximumSize">
              <size>
               <width>150</width>
-              <height>16777215</height>
+              <height>100</height>
              </size>
             </property>
-            <item>
-             <property name="text">
-              <string>Pass 1</string>
-             </property>
-             <property name="checkState">
-              <enum>Unchecked</enum>
-             </property>
-             <property name="flags">
-              <set>ItemIsSelectable|ItemIsDragEnabled|ItemIsEnabled</set>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Pass 2</string>
-             </property>
-             <property name="checkState">
-              <enum>Unchecked</enum>
-             </property>
-             <property name="flags">
-              <set>ItemIsSelectable|ItemIsDragEnabled|ItemIsEnabled</set>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Pass 3</string>
-             </property>
-             <property name="checkState">
-              <enum>Unchecked</enum>
-             </property>
-             <property name="flags">
-              <set>ItemIsSelectable|ItemIsDragEnabled|ItemIsEnabled</set>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Pass 4</string>
-             </property>
-             <property name="checkState">
-              <enum>Unchecked</enum>
-             </property>
-             <property name="flags">
-              <set>ItemIsSelectable|ItemIsDragEnabled|ItemIsEnabled</set>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Pass 5</string>
-             </property>
-             <property name="checkState">
-              <enum>Unchecked</enum>
-             </property>
-             <property name="flags">
-              <set>ItemIsSelectable|ItemIsDragEnabled|ItemIsEnabled</set>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Pass 6</string>
-             </property>
-             <property name="checkState">
-              <enum>Unchecked</enum>
-             </property>
-             <property name="flags">
-              <set>ItemIsSelectable|ItemIsDragEnabled|ItemIsEnabled</set>
-             </property>
-            </item>
            </widget>
           </item>
           <item>
@@ -3552,6 +3274,33 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="Line" name="line_3">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="buttonEditThreshold">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Edit Threshold</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="buttonEditSpreadFactors">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Edit Spread Factors</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
         <item>
@@ -3565,56 +3314,6 @@
              </sizepolicy>
             </property>
            </widget>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_40">
-            <item>
-             <spacer name="horizontalSpacer_10">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <widget class="QPushButton" name="buttonEditThreshold">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="text">
-               <string>Edit Threshold</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="buttonEditSpreadFactors">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="text">
-               <string>Edit Spread Factors</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_7">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_37">
@@ -3885,7 +3584,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1284</width>
+     <width>1098</width>
      <height>24</height>
     </rect>
    </property>
@@ -3895,20 +3594,29 @@
    <property name="nativeMenuBar">
     <bool>false</bool>
    </property>
-   <widget class="QMenu" name="menuImport">
+   <widget class="QMenu" name="menu_file">
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionImportAccuPattFile"/>
-    <addaction name="actionSave"/>
-    <addaction name="actionOpen"/>
+    <widget class="QMenu" name="menu_new_series">
+     <property name="title">
+      <string>Create New Series</string>
+     </property>
+     <addaction name="action_new_series_new_aircraft"/>
+     <addaction name="action_new_series_file_aircraft"/>
+    </widget>
+    <addaction name="menu_new_series"/>
+    <addaction name="separator"/>
+    <addaction name="action_save"/>
+    <addaction name="action_open"/>
+    <addaction name="separator"/>
+    <addaction name="action_import_accupatt_legacy"/>
    </widget>
-   <widget class="QMenu" name="menuNew_Series">
+   <widget class="QMenu" name="menu_options">
     <property name="title">
-     <string>New Series</string>
+     <string>Options</string>
     </property>
-    <addaction name="actionNew_Aircraft"/>
-    <addaction name="actionFile_Aircraft"/>
+    <addaction name="action_pass_manager"/>
    </widget>
    <widget class="QMenu" name="menuReport">
     <property name="title">
@@ -3919,8 +3627,8 @@
     <addaction name="actionEdit_Headers"/>
     <addaction name="actionEdit_Logo"/>
    </widget>
-   <addaction name="menuImport"/>
-   <addaction name="menuNew_Series"/>
+   <addaction name="menu_file"/>
+   <addaction name="menu_options"/>
    <addaction name="menuReport"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -3934,7 +3642,7 @@
     <string>File Aircraft</string>
    </property>
   </action>
-  <action name="actionImportAccuPattFile">
+  <action name="action_import_accupatt_legacy">
    <property name="text">
     <string>Import AccuPatt File</string>
    </property>
@@ -3954,14 +3662,49 @@
     <string>Edit Logo</string>
    </property>
   </action>
-  <action name="actionSave">
+  <action name="action_save">
    <property name="text">
     <string>Save</string>
    </property>
   </action>
-  <action name="actionOpen">
+  <action name="action_open">
    <property name="text">
     <string>Open</string>
+   </property>
+  </action>
+  <action name="actionNew_Aircraft_2">
+   <property name="text">
+    <string>New Aircraft</string>
+   </property>
+  </action>
+  <action name="actionFile_Aircraft_2">
+   <property name="text">
+    <string>File Aircraft</string>
+   </property>
+  </action>
+  <action name="actionNew_Aircraft_3">
+   <property name="text">
+    <string>New Aircraft</string>
+   </property>
+  </action>
+  <action name="action_new_series_new_aircraft">
+   <property name="text">
+    <string>New Aircraft</string>
+   </property>
+  </action>
+  <action name="actionFile_Aircraft_3">
+   <property name="text">
+    <string>File Aircraft</string>
+   </property>
+  </action>
+  <action name="action_new_series_file_aircraft">
+   <property name="text">
+    <string>File Aircraft</string>
+   </property>
+  </action>
+  <action name="action_pass_manager">
+   <property name="text">
+    <string>Pass Manager</string>
    </property>
   </action>
  </widget>

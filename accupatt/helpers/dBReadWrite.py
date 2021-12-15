@@ -131,7 +131,7 @@ class DBReadWrite:
                     c.spread_factor_b = row[17]
                     c.spread_factor_c = row[18]
                     p.spray_cards.append(c)
-                s.passes[p.name] = p
+                s.passes.append(p)
         # Catch the exception
         except Exception as e:
             # Roll back any change if something goes wrong
@@ -187,7 +187,7 @@ class DBReadWrite:
                          swath = excluded.swath, swath_adjusted = excluded.swath_adjusted, swath_units = excluded.swath_units, rate = excluded.rate, rate_units = excluded.rate_units, pressure = excluded.pressure, pressure_units = excluded.pressure_units, nozzle_type_1 = excluded.nozzle_type_1, nozzle_size_1 = excluded.nozzle_size_1, nozzle_deflection_1 = excluded.nozzle_deflection_1, nozzle_quantity_1 = excluded.nozzle_quantity_1, nozzle_type_2 = excluded.nozzle_type_2, nozzle_size_2 = excluded.nozzle_size_2, nozzle_deflection_2 = excluded.nozzle_deflection_2, nozzle_quantity_2 = excluded.nozzle_quantity_2, boom_width = excluded.boom_width, boom_width_units = excluded.boom_width_units, boom_drop = excluded.boom_drop, boom_drop_units = excluded.boom_drop_units, nozzle_spacing = excluded.nozzle_spacing, nozzle_spacing_units = excluded.nozzle_spacing_units''',
                          (seriesData.id, info.swath, info.swath_adjusted, info.swath_units, info.rate, info.rate_units, info.pressure, info.pressure_units, info.nozzle_type_1, info.nozzle_size_1, info.nozzle_deflection_1, info.nozzle_quantity_1, info.nozzle_type_2, info.nozzle_size_2, info.nozzle_deflection_2, info.nozzle_quantity_2, info.boom_width, info.boom_width_units, info.boom_drop, info.boom_drop_units, info.nozzle_spacing, info.nozzle_spacing_units))
 
-            for _, p in seriesData.passes.items():
+            for p in seriesData.passes:
                 assert isinstance(p, Pass)
                 conn.execute('''INSERT INTO passes (id, series_id, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity, include_in_composite, excitation_wav, emission_wav, trim_left, trim_right, trim_vertical, excitation_data, emission_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                             ON CONFLICT(id) DO UPDATE SET
