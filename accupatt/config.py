@@ -1,6 +1,29 @@
+#Unit Labels
+UNIT_MPH = 'mph'
+UNIT_KPH = 'kph'
+UNIT_FT = 'ft'
+UNIT_M = 'm'
+UNIT_DEG_F = '°F'
+UNIT_DEG_C = '°C'
+
+#Unit Option Lists
+UNITS_LENGTH_LARGE = [UNIT_FT, UNIT_M]
+UNITS_GS = [UNIT_MPH, UNIT_KPH]
+UNITS_SH = [UNIT_FT, UNIT_M]
+UNITS_WS = [UNIT_MPH, UNIT_KPH]
+UNITS_T = [UNIT_DEG_F, UNIT_DEG_C]
+
 # Math Conversion Constants
 UM_PER_IN = 25400.0
 FT_PER_M = 3.28084
+MPH_PER_KPH = 0.621371
+MPH_PER_KN = 1.15078
+
+# String Drive Commands
+STRING_DRIVE_FWD_START = 'AD+\r'
+STRING_DRIVE_FWD_STOP = 'AD\r'
+STRING_DRIVE_REV_START = 'BD-\r'
+STRING_DRIVE_REV_STOP = 'BD\r'
 
 # SprayCard Inclusion Constants
 HAS_IMAGE_NO = 0

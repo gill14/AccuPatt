@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>394</width>
-    <height>301</height>
+    <width>470</width>
+    <height>318</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -64,8 +64,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normalon>resources/refresh.png</normalon>
-        </iconset>
+         <normaloff>../../../resources/refresh.png</normaloff>../../../resources/refresh.png</iconset>
        </property>
       </widget>
      </item>

@@ -89,7 +89,8 @@ CREATE TABLE IF NOT EXISTS passes (
     trim_right              INTEGER,
     trim_vertical           INTEGER,
     excitation_data         TEXT,
-    emission_data           TEXT
+    emission_data           TEXT,
+    data_loc_units          TEXT
 );
 --Spray Cards Table
 CREATE TABLE IF NOT EXISTS spray_cards (

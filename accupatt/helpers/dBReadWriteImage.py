@@ -4,6 +4,8 @@ import numpy as np
 class DBReadWriteImage:
     
     def read_image_from_db(file, card_id):
+        if file == None: return
+        img = None
         try:
             # Opens a file called mydb with a SQLite3 DB
             conn = sqlite3.connect(file)
@@ -16,7 +18,6 @@ class DBReadWriteImage:
             image = np.asarray(bytearray(data[0]), dtype="uint8")
             # Decode the image to a cv2 image
             img = cv2.imdecode(image, cv2.IMREAD_COLOR)
-            return img
         # Catch the exception
         except Exception as e:
             # Roll back any change if something goes wrong
@@ -25,6 +26,7 @@ class DBReadWriteImage:
         finally:
             # Close the db connection
             conn.close()
+        return img
     
     def write_image_to_db(filePath, sprayCard, image):
         try:

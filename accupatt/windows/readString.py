@@ -2,7 +2,7 @@ import numpy as np
 import sys, os
 
 from PyQt5.QtWidgets import QApplication, QMessageBox
-from PyQt5.QtCore import QSettings, QTimer, pyqtSignal
+from PyQt5.QtCore import QSettings, QTimer, pyqtSignal, pyqtSlot
 from PyQt5 import uic
 import pandas as pd
 
@@ -12,6 +12,7 @@ import pyqtgraph
 
 #from accupatt.helpers.stringPlotter import StringPlotter
 #from accupatt.widgets.pyqtplotwidget import PyQtPlotWidget
+import accupatt.config as cfg 
 from accupatt.models.passData import Pass
 
 from accupatt.windows.editStringDrive import EditStringDrive
@@ -20,19 +21,9 @@ from accupatt.windows.editSpectrometer import EditSpectrometer
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'readString.ui'))
 
 class ReadString(baseclass):
-    """ A Container for communicating with the Spectrometer and String Drive"""
+    """ A Container for communicating with the Spectrometer and String Drive """
 
     applied = pyqtSignal(Pass)
-
-    units_gs = {'mph','kph'}
-    units_sh = {'ft','m'}
-    units_ws = {'mph','kph'}
-    units_t = {'°F','°C'}
-
-    forward_start = "AD+\r"
-    forward_stop = "AD\r"
-    reverse_start = "BD-\r"
-    reverse_stop = "BD\r"
 
     def __init__(self, passData: Pass):
         super().__init__()
@@ -43,56 +34,61 @@ class ReadString(baseclass):
         self.settings = QSettings('BG Application Consulting','AccuPatt')
         #Make ref to seriesData/passData for later updating in on_applied
         self.passData = passData
-        #Pass Info fields
+        
+        #Populate Pass Info fields
         self.ui.labelPass.setText(passData.name)
         self.ui.lineEditGS.setText(passData.strip_num(passData.ground_speed))
-        self.ui.comboBoxUnitsGS.addItems(self.units_gs)
+        self.ui.comboBoxUnitsGS.addItems(cfg.UNITS_GS)
         self.ui.comboBoxUnitsGS.setCurrentText(passData.ground_speed_units)
         self.ui.lineEditSH.setText(passData.strip_num(passData.spray_height))
-        self.ui.comboBoxUnitsSH.addItems(self.units_sh)
+        self.ui.comboBoxUnitsSH.addItems(cfg.UNITS_SH)
         self.ui.comboBoxUnitsSH.setCurrentText(passData.spray_height_units)
         self.ui.lineEditPH.setText(passData.strip_num(passData.pass_heading))
         self.ui.lineEditWD.setText(passData.strip_num(passData.wind_direction))
         self.ui.lineEditWS.setText(passData.strip_num(passData.wind_speed))
-        self.ui.comboBoxUnitsWS.addItems(self.units_ws)
+        self.ui.comboBoxUnitsWS.addItems(cfg.UNITS_WS)
         self.ui.comboBoxUnitsWS.setCurrentText(passData.wind_speed_units)
         self.ui.lineEditT.setText(passData.strip_num(passData.temperature))
-        self.ui.comboBoxUnitsT.addItems(self.units_t)
+        self.ui.comboBoxUnitsT.addItems(cfg.UNITS_T)
         self.ui.comboBoxUnitsT.setCurrentText(passData.temperature_units)
         self.ui.lineEditH.setText(passData.strip_num(passData.humidity))
 
+        #Setup Spectrometer
         self.spec = None
         self.spec_connected = False
         self.ser_connected = False
-
-        #Setup Spectrometer
         self.setupSpectrometer()
 
         #Setup String Drive serial port
         self.setupStringDrive()
+        
+        #Enable/Disable Start and Abort buttons as applicable
+        self.checkReady()
 
         #Setup signal slots
-        self.ui.buttonManualReverse.clicked.connect(self.reverse)
-        self.ui.buttonManualForward.clicked.connect(self.forward)
+        self.ui.buttonManualReverse.clicked.connect(self.string_drive_manual_reverse)
+        self.ui.buttonManualForward.clicked.connect(self.string_drive_manual_forward)
         self.ui.buttonEditSpectrometer.clicked.connect(self.editSpectrometer)
         self.ui.buttonEditStringDrive.clicked.connect(self.editStringDrive)
-        self.ui.buttonStart.clicked.connect(self.startAnimation)
-        self.ui.buttonClear.clicked.connect(self.clear)
+        self.ui.buttonStart.clicked.connect(self.click_start)
+        self.ui.buttonAbort.clicked.connect(self.click_abort)
+        self.ui.buttonClear.clicked.connect(self.click_clear)
 
         #Setup plot
+        self.marked = False
         self.traces = dict()
         pyqtgraph.setConfigOptions(antialias=True)
         pyqtgraph.setConfigOption('background', 'k')
         pyqtgraph.setConfigOption('foreground', 'w')
         self.w = self.ui.plotWidget
         self.w.setWindowTitle(f'{passData.name} Raw Data')
-        self.p = self.w.addPlot(labels =  {'left':'Intensity', 'bottom':'Location'})
+        x_units = self.settings.value('flightline_length_units', defaultValue='ft', type=str)
+        self.p = self.w.addPlot(labels =  {'left':'Intensity', 'bottom':f'Location ({x_units})'})
         self.p.showGrid(x=True, y=True)
 
-        self.x = []
-        self.y = []
-        self.y_ex = []
+        self.clear(showPopup=False)
 
+        #Load in pattern data from pass object if available
         if isinstance(passData.data, pd.DataFrame):
             self.x = np.array(passData.data['loc'].values, dtype=float)
             self.y = np.array(passData.data[passData.name].values, dtype=float)
@@ -109,76 +105,6 @@ class ReadString(baseclass):
         self.show()
         self.raise_()
         self.activateWindow()
-
-    def setupSpectrometer(self):
-        if self.spec == None:
-            try:
-                self.spec = Spectrometer.from_first_available()
-                self.spec_connected = True
-            except:
-                self.ui.labelSpec.setText('Spectrometer: DISCONNECTED')
-                self.spec_connected = False
-                return
-        #Inform spectrometer of new int time
-        self.spec.integration_time_micros(self.settings.value(
-            'integration_time_ms', defaultValue=100, type=int) * 1000)
-
-        #Populate Spectrometer labels
-        self.ui.labelSpec.setText(f"Spectrometer: {self.spec.model}")
-        self.ui.labelExcitation.setText(
-            f"Excitation: {self.settings.value('target_excitation_wavelength', defaultValue=525, type=int)} nm")
-        self.ui.labelEmission.setText(
-            f"Emission: {self.settings.value('target_emission_wavelength', defaultValue=575, type=int)} nm")
-        self.ui.labelIntegrationTime.setText(
-            f"Integration Time: {self.settings.value('integration_time_ms', defaultValue=100, type=int)} ms")
-        self.checkReady()
-
-
-    def editSpectrometer(self):
-        #Create popup
-        e = EditSpectrometer(self.spec)
-        #Connect Slot to retrieve Vals back from popup
-        e.applied.connect(self.setupSpectrometer)
-        #Start Loop
-        e.exec_()
-
-    def setupStringDrive(self):
-        try:
-            self.ser = serial.Serial(self.settings.value('serial_port_device', defaultValue='', type=str),
-                baudrate=9600, timeout=1)
-            self.ser_connected = True
-        except:
-            self.ui.labelStringDrive.setText('String Drive: DISCONNECTED')
-            self.ser_connected = False
-            return
-        #Setup String Drive labels
-        self.ui.labelStringDrive.setText(f'String Drive Port: {self.ser.name}')
-        print(self.ser.name)
-        self.ui.labelStringLength.setText("String Length: "
-            f"{self.strip_num(self.settings.value('flightline_length', defaultValue=150, type=float))} "
-            f"{self.settings.value('flightline_length_units', defaultValue='ft', type=str)}")
-        self.ui.labelStringVelocity.setText(f"String Velocity: "
-            f"{self.strip_num(self.settings.value('advance_speed', defaultValue=1.70, type=float))} "
-            f"{self.settings.value('flightline_length_units', defaultValue = 'ft', type=str)}/sec")
-        #Enale/Disable manual drive buttons
-        self.ui.buttonManualReverse.setEnabled(self.ser_connected)
-        self.ui.buttonManualForward.setEnabled(self.ser_connected)
-        self.checkReady()
-
-    def editStringDrive(self):
-        #Create popup
-        e = EditStringDrive()
-        #Connect Slot to retrieve Vals back from popup
-        e.applied.connect(self.setupStringDrive)
-        #Start Loop
-        e.exec_()
-
-    def checkReady(self):
-        #Only enable buttons if ready
-        self.ready = (self.spec_connected and self.ser_connected)
-
-        self.ui.buttonStart.setEnabled(self.ready)
-        self.ui.buttonAbort.setEnabled(self.ready)
 
     def set_plotdata(self, name, data_x, data_y):
         if name in self.traces:
@@ -212,28 +138,64 @@ class ReadString(baseclass):
         else:
             #After recording entire fl, stop timer and and stop string drive
             self.timer.stop()
-            self.ser.write(self.forward_stop.encode())
+            self.ser.write(cfg.STRING_DRIVE_FWD_STOP.encode())
+            self.ui.buttonStart.setText('Start')
+            self.ui.buttonStart.setEnable(True)
+            self.ui.buttonAbort.setEnable(False)
+            self.ui.buttonClear.setEnable(True)
 
-    def startAnimation(self):
-        #clear plot and re-initialize np arrays
+    @pyqtSlot()
+    def click_start(self):
+        if not self.marked:
+            #clear plot and re-initialize np arrays
+            if not self.clear(showPopup=True): return
+            #Initialize needed values for plotting
+            self.fl = self.settings.value('flightline_length', defaultValue=150.0, type=float)
+            it_sec = self.settings.value('integration_time_ms', defaultValue=100.0, type=float) / 1000
+            len_per_sec = self.settings.value('advance_speed', defaultValue=1.70, type=float)
+            self.len_per_frame = it_sec * len_per_sec
+            self.emissionPix = np.abs(self.spec.wavelengths()-self.settings.value(
+                'target_emission_wavelength', defaultValue=575, type=int)).argmin()
+            self.excitationPix = np.abs(self.spec.wavelengths()-self.settings.value(
+                'target_excitation_wavelength', defaultValue=525, type=int)).argmin()
+            #Start String Drive (forward)
+            self.ser.write(cfg.STRING_DRIVE_FWD_START.encode())
+            self.ui.buttonStart.setText('Mark')
+        else:
+            #Initialize timer
+            self.timer = QTimer(self)
+            #Set the timeout action
+            self.timer.timeout.connect(self.plotFrame)
+            self.plotFrame()
+            self.timer.start(int(self.settings.value('integration_time_ms', defaultValue=100.0, type=float)))
+            self.ui.buttonStart.setEnable(False)
+        #Enable abort button
+        self.ui.buttonAbort.setEnable(True)
+        self.ui.buttonClear.setEnable(False)
+ 
+    @pyqtSlot()
+    def click_abort(self):
+        self.timer.stop()
+        self.ser.write(cfg.STRING_DRIVE_FWD_STOP.encode())
         self.clear()
-        #Initialize needed values for plotting
-        self.fl = self.settings.value('flightline_length', defaultValue=150.0, type=float)
-        it_sec = self.settings.value('integration_time_ms', defaultValue=100.0, type=float) / 1000
-        len_per_sec = self.settings.value('advance_speed', defaultValue=1.70, type=float)
-        self.len_per_frame = it_sec * len_per_sec
-        self.emissionPix = np.abs(self.spec.wavelengths()-self.settings.value(
-            'target_emission_wavelength', defaultValue=575, type=int)).argmin()
-        self.excitationPix = np.abs(self.spec.wavelengths()-self.settings.value(
-            'target_excitation_wavelength', defaultValue=525, type=int)).argmin()
-        #Start String Drive (forward)
-        self.ser.write(self.forward_start.encode())
-        #Initialize timer
-        self.timer = QTimer(self)
-        #Set the timeout action
-        self.timer.timeout.connect(self.plotFrame)
-        self.plotFrame()
-        self.timer.start(int(it_sec * 1000))
+        self.ui.buttonStart.setText('Start')
+        self.ui.buttonStart.setEnable(True)
+        self.ui.buttonAbort.setEnable(False)
+        self.ui.buttonClear.setEnable(True)
+        
+    @pyqtSlot()
+    def click_clear(self):
+        self.clear(showPopup=True)
+
+    def clear(self, showPopup=True):
+        if showPopup and not self.y == []:
+            if not self._are_you_sure(f'Clear Existing String Data for {self.passData.name}?'):
+                return False
+        self.x = []
+        self.y = []
+        self.y_ex = []
+        self.p.clear()
+        return True
 
     def on_applied(self):
         #Validate all and accept if valid
@@ -277,6 +239,8 @@ class ReadString(baseclass):
             self._show_validation_error(
                 'Entered GROUND SPEED cannot be converted to an number')
             return
+        #data_loc_units
+        p.data_loc_units = self.settings.value('flightline_length_units', defaultValue='ft', type=str)
         #Pattern
         if len(self.x) > 0:
             p.setData(self.x, self.y, self.y_ex)
@@ -286,29 +250,6 @@ class ReadString(baseclass):
 
         self.accept()
         self.close()
-
-    def reverse(self):
-        if not self.ui.buttonManualReverse.isChecked():
-            self.ser.write(self.reverse_stop.encode())
-            self.ui.buttonManualForward.setEnabled(True)
-        else:
-            self.ser.write(self.reverse_start.encode())
-            self.ui.buttonManualForward.setEnabled(False)
-
-    def forward(self):
-        if not self.ui.buttonManualForward.isChecked():
-            self.ser.write(self.forward_stop.encode())
-            self.ui.buttonManualReverse.setEnabled(True)
-        else:
-            self.ser.write(self.forward_start.encode())
-            self.ui.buttonManualReverse.setEnabled(False)
-
-    def clear(self):
-        #Need "Are you sure?" popup only if data in arrays
-        self.x = []
-        self.y = []
-        self.y_ex = []
-        self.p.clear()
 
     def strip_num(self, x) -> str:
         if x is None:
@@ -320,7 +261,102 @@ class ReadString(baseclass):
             return str(int(float(x)))
         else:
             return f'{round(float(x), 2):.2f}'
+    
+    #Only enable buttons if String Drive and Spectrometer Connected
+    def checkReady(self):
+        self.ready = (self.spec_connected and self.ser_connected)
+        self.ui.buttonStart.setEnabled(self.ready)
+        self.ui.buttonAbort.setEnabled(self.ready)
+    
+    '''
+    String Drive Hook-Ups
+    '''
+    #Open String Drive Editor
+    @pyqtSlot()
+    def editStringDrive(self):
+        e = EditStringDrive()
+        e.applied.connect(self.setupStringDrive)
+        e.exec_()
 
+    def setupStringDrive(self):
+        #Get a handle to the serial object, else return "Disconnected" status label
+        try:
+            self.ser = serial.Serial(self.settings.value('serial_port_device', defaultValue='', type=str),
+                baudrate=9600, timeout=1)
+            self.ser_connected = True
+        except:
+            self.ui.labelStringDrive.setText('String Drive: DISCONNECTED')
+            self.ser_connected = False
+            return
+        #Setup String Drive labels
+        self.ui.labelStringDrive.setText(f'String Drive Port: {self.ser.name}')
+        print(self.ser.name)
+        self.ui.labelStringLength.setText("String Length: "
+            f"{self.strip_num(self.settings.value('flightline_length', defaultValue=150, type=float))} "
+            f"{self.settings.value('flightline_length_units', defaultValue='ft', type=str)}")
+        self.ui.labelStringVelocity.setText(f"String Velocity: "
+            f"{self.strip_num(self.settings.value('advance_speed', defaultValue=1.70, type=float))} "
+            f"{self.settings.value('flightline_length_units', defaultValue = 'ft', type=str)}/sec")
+        #Enale/Disable manual drive buttons
+        self.ui.buttonManualReverse.setEnabled(self.ser_connected)
+        self.ui.buttonManualForward.setEnabled(self.ser_connected)
+        self.checkReady()
+        
+    @pyqtSlot()
+    def string_drive_manual_reverse(self):
+        if not self.ui.buttonManualReverse.isChecked():
+            self.ser.write(cfg.STRING_DRIVE_REV_STOP.encode())
+            self.ui.buttonManualForward.setEnabled(True)
+        else:
+            self.ser.write(cfg.STRING_DRIVE_REV_START.encode())
+            self.ui.buttonManualForward.setEnabled(False)
+   
+    @pyqtSlot()
+    def string_drive_manual_forward(self):
+        if not self.ui.buttonManualForward.isChecked():
+            self.ser.write(cfg.STRING_DRIVE_FWD_STOP.encode())
+            self.ui.buttonManualReverse.setEnabled(True)
+        else:
+            self.ser.write(cfg.STRING_DRIVE_FWD_START.encode())
+            self.ui.buttonManualReverse.setEnabled(False)
+    
+    '''
+    Spectrometer Hook-Ups
+    '''
+    #Open Spectrometer Editor
+    @pyqtSlot()
+    def editSpectrometer(self):
+        e = EditSpectrometer(self.spec)
+        e.applied.connect(self.setupSpectrometer)
+        e.exec_()
+        
+    def setupSpectrometer(self):
+        #Get a handle to the spec object, else return "Disconnected" status
+        if self.spec == None:
+            try:
+                self.spec = Spectrometer.from_first_available()
+                self.spec_connected = True
+            except:
+                self.ui.labelSpec.setText('Spectrometer: DISCONNECTED')
+                self.spec_connected = False
+                return
+        #Inform spectrometer of new int time
+        self.spec.integration_time_micros(self.settings.value(
+            'integration_time_ms', defaultValue=100, type=int) * 1000)
+        #Populate Spectrometer labels
+        self.ui.labelSpec.setText(f"Spectrometer: {self.spec.model}")
+        self.ui.labelExcitation.setText(
+            f"Excitation: {self.settings.value('target_excitation_wavelength', defaultValue=525, type=int)} nm")
+        self.ui.labelEmission.setText(
+            f"Emission: {self.settings.value('target_emission_wavelength', defaultValue=575, type=int)} nm")
+        self.ui.labelIntegrationTime.setText(
+            f"Integration Time: {self.settings.value('integration_time_ms', defaultValue=100, type=int)} ms")
+        self.checkReady()
+    
+    '''
+    Popup messages
+    '''
+    
     def _show_validation_error(self, message):
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Critical)
@@ -333,6 +369,17 @@ class ReadString(baseclass):
         if result == QMessageBox.Ok:
             self.raise_()
             self.activateWindow()
+            
+    def _are_you_sure(self, message):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Critical)
+        msg.setText("Are You Sure?")
+        msg.setInformativeText(message)
+        #msg.setWindowTitle("MessageBox demo")
+        #msg.setDetailedText("The details are as follows:")
+        msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        result = msg.exec()
+        return result == QMessageBox.Yes
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

@@ -2,18 +2,18 @@ import pandas as pd
 import numpy as np
 import copy
 import matplotlib.pyplot as plt
-import pyqtgraph
+from pyqtgraph import PlotWidget, setConfigOptions, InfiniteLine
 from pyqtgraph.functions import mkPen
 import scipy.signal as sig
 from scipy.stats import variation
 
+from accupatt.models.passData import Pass
+
 class StringPlotter:
         
-    def drawIndividuals(pyqtplotwidget1, pyqtplotwidget2, passData):
+    def drawIndividuals(pyqtplotwidget1: PlotWidget, pyqtplotwidget2: PlotWidget, passData: Pass):
         #Setup Plot Prefs
-        pyqtgraph.setConfigOptions(antialias=True)
-        pyqtgraph.setConfigOption('background', 'k')
-        pyqtgraph.setConfigOption('foreground', 'w')
+        setConfigOptions(antialias=True, background='k', foreground='w')
         pyqtplotwidget1.clear()
         pyqtplotwidget2.clear()
         #Plot Individual (upper)
@@ -23,9 +23,9 @@ class StringPlotter:
         #Return trim handles to parent
         return trim_left, trim_right, trim_vertical
         
-    def drawIndividual(pyqtplotwidget, passData):
+    def drawIndividual(pyqtplotwidget: PlotWidget, passData: Pass):
         #Setup Plotter
-        p = pyqtplotwidget.addPlot(labels =  {'left':'Relative Dye Intensity', 'bottom':'Location'})
+        p = pyqtplotwidget.addPlot(labels =  {'left':'Relative Dye Intensity', 'bottom':f'Location ({passData.data_loc_units})'})
         p.showGrid(x=True, y=True)
         #Check if data exists
         if not isinstance(passData.data, pd.DataFrame): return None, None, None
@@ -36,9 +36,9 @@ class StringPlotter:
         y = np.array(passData.data[passData.name].values, dtype=float)
         p.plot(name='Raw', pen='w').setData(x, y)
         #Create L, R and V Trim Handles
-        trim_left = pyqtgraph.InfiniteLine(pos=x[0+passData.trim_l], movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Trim L = {value:0.2f}', labelOpts={'color': 'y','position': 0.9})
-        trim_right = pyqtgraph.InfiniteLine(pos=x[-1-passData.trim_r], movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Trim R = {value:0.2f}', labelOpts={'color': 'y','position': 0.9})
-        trim_vertical = pyqtgraph.InfiniteLine(pos=(min+passData.trim_v), angle=0, movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Floor = {value:0.2f}', labelOpts={'color': 'y','position': 0.5})
+        trim_left = InfiniteLine(pos=x[0+passData.trim_l], movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Trim L = {value:0.2f}', labelOpts={'color': 'y','position': 0.9})
+        trim_right = InfiniteLine(pos=x[-1-passData.trim_r], movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Trim R = {value:0.2f}', labelOpts={'color': 'y','position': 0.9})
+        trim_vertical = InfiniteLine(pos=(min+passData.trim_v), angle=0, movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Floor = {value:0.2f}', labelOpts={'color': 'y','position': 0.5})
         #Add Trim Handles
         p.addItem(trim_left)
         p.addItem(trim_right)
@@ -46,9 +46,9 @@ class StringPlotter:
         #Return Trim Handles to parent
         return trim_left, trim_right, trim_vertical
         
-    def drawIndividualTrim(pyqtplotwidget, passData):
+    def drawIndividualTrim(pyqtplotwidget: PlotWidget, passData: Pass):
         #Setup Plotter
-        p = pyqtplotwidget.addPlot(labels =  {'left':'Relative Dye Intensity', 'bottom':'Location'})
+        p = pyqtplotwidget.addPlot(labels =  {'left':'Relative Dye Intensity', 'bottom':f'Location ({passData.data_loc_units})'})
         p.showGrid(x=True, y=True)
         #Check if data exists
         if not isinstance(passData.data, pd.DataFrame): return

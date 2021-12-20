@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1098</width>
-    <height>615</height>
+    <width>1163</width>
+    <height>575</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -91,8 +91,7 @@
          </property>
          <property name="icon">
           <iconset>
-           <normalon>../../../../Desktop/edit-alt-512.webp</normalon>
-          </iconset>
+           <normaloff>../../../resources/edit-alt-512.webp</normaloff>../../../resources/edit-alt-512.webp</iconset>
          </property>
          <property name="popupMode">
           <enum>QToolButton::DelayedPopup</enum>
@@ -164,7 +163,7 @@
          <item>
           <widget class="QPushButton" name="buttonManualReverse">
            <property name="text">
-            <string>&lt;-</string>
+            <string>&lt;- Reverse</string>
            </property>
            <property name="checkable">
             <bool>true</bool>
@@ -174,7 +173,7 @@
          <item>
           <widget class="QPushButton" name="buttonManualForward">
            <property name="text">
-            <string>-&gt;</string>
+            <string>Advance -&gt;</string>
            </property>
            <property name="checkable">
             <bool>true</bool>
@@ -212,8 +211,7 @@
          </property>
          <property name="icon">
           <iconset>
-           <normalon>../../../../Desktop/edit-alt-512.webp</normalon>
-          </iconset>
+           <normaloff>../../../resources/edit-alt-512.webp</normaloff>../../../resources/edit-alt-512.webp</iconset>
          </property>
          <property name="popupMode">
           <enum>QToolButton::DelayedPopup</enum>
@@ -741,7 +739,7 @@ QPushButton::hover{background-color: rgb(0, 10, 0);}</string>
          <item>
           <widget class="QPushButton" name="buttonAbort">
            <property name="enabled">
-            <bool>true</bool>
+            <bool>false</bool>
            </property>
            <property name="font">
             <font>
@@ -799,19 +797,19 @@ padding: 4px;</string>
          </property>
         </spacer>
        </item>
+       <item>
+        <widget class="QDialogButtonBox" name="buttonBox">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="standardButtons">
+          <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
+         </property>
+        </widget>
+       </item>
       </layout>
      </item>
     </layout>
-   </item>
-   <item>
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
-     </property>
-    </widget>
    </item>
   </layout>
  </widget>

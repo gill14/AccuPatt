@@ -4,15 +4,15 @@ from PyQt5.QtWidgets import QApplication, QMessageBox
 from PyQt5.QtCore import QSettings, pyqtSignal
 from PyQt5 import uic
 
-import serial
+from serial.tools import list_ports
+
+import accupatt.config as cfg
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editStringDrive.ui'))
 
 class EditStringDrive(baseclass):
 
     applied = pyqtSignal()
-
-    units_length = {'ft','m'}
 
     def __init__(self):
         super().__init__()
@@ -36,7 +36,7 @@ class EditStringDrive(baseclass):
         self.ui.lineEditFlightlineLength.setText(self.strip_num(
             self.settings.value('flightline_length', defaultValue=150.0, type=float)
         ))
-        self.ui.comboBoxFlightlineLengthUnits.addItems(self.units_length)
+        self.ui.comboBoxFlightlineLengthUnits.addItems(cfg.UNITS_LENGTH_LARGE)
         self.ui.comboBoxFlightlineLengthUnits.setCurrentText(
             self.settings.value('flightline_length_units', defaultValue='ft', type=str)
         )
@@ -55,7 +55,7 @@ class EditStringDrive(baseclass):
 
     def refresh_sp_list(self):
         self.ui.comboBoxSerialPort.clear()
-        list = serial.tools.list_ports.comports()
+        list = list_ports.comports()
         for item in list:
             self.ui.comboBoxSerialPort.addItems([item.device])
         #Check if saved port in box
@@ -65,7 +65,7 @@ class EditStringDrive(baseclass):
         self.ui.comboBoxSerialPort.setCurrentIndex(index)
 
     def on_sp_selected(self):
-        list = serial.tools.list_ports.comports()
+        list = list_ports.comports()
         for info in list:
             if info.device == self.ui.comboBoxSerialPort.currentText():
                 self.ui.labelSerialPort1.setText(f'Manufacturer: {info.manufacturer}, VID: {info.vid}')

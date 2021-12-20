@@ -1,4 +1,4 @@
-import os, math
+import os, math, cv2
 from PyQt5.QtCore import QSettings
 import numpy as np
 import json
@@ -38,7 +38,7 @@ class SprayCard:
         self._load_defaults()
     
     def has_image(self):
-        return isinstance(DBReadWriteImage.read_image_from_db(self.filepath, self.id), type(None))
+        return DBReadWriteImage.read_image_from_db(self.filepath, self.id) is not None
     
     def image_original(self):
         #img = cv2.imread(self.read_image_from_db(self.filepath, self.id))

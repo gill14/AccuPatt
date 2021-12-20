@@ -1,8 +1,9 @@
+from typing import List
 from accupatt.windows.loadCards import LoadCards
 import accupatt.config as cfg
 from accupatt.windows.editThreshold import EditThreshold
 from PyQt5.QtWidgets import QAbstractItemView, QApplication, QComboBox, QFileDialog, QItemDelegate, QListWidgetItem, QStyle, QStyleOptionComboBox
-from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QVariant, Qt, QSettings, pyqtSignal
+from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QVariant, Qt, QSettings, pyqtSignal, pyqtSlot
 from PyQt5 import uic
 
 import os, sys, copy
@@ -12,11 +13,98 @@ from accupatt.models.sprayCard import SprayCard
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editCardList.ui'))
 
 defined_sets = {
-    'standard_flyin': {
-        'name': 'Standard Fly-In',
-        'cards': ['L-32', 'L-24', 'L-16', 'L-8', 'Center', 'R-8', 'R-16', 'R-24', 'R-32']
+    'Standard Fly-In': {
+        'cards': ['L-32', 'L-24', 'L-16', 'L-8', 'Center', 'R-8', 'R-16', 'R-24', 'R-32'],
+        'locations': [-32, -24, -16, -8, 0, 8, 16, 24, 32]
     }
 }
+class EditCardList(baseclass):
+
+    applied = pyqtSignal()
+
+    def __init__(self, passData=None):
+        super().__init__()
+        self.ui = Ui_Form()
+        self.ui.setupUi(self)
+        # Your code will go here
+
+        self.passData_OG = passData
+        self.spray_cards = copy.copy(passData.spray_cards)
+
+        #Load in Settings
+        self.settings = QSettings('BG Application Consulting','AccuPatt')
+       
+       #Load in defined sets to combobox
+        for key in defined_sets.keys():
+           self.ui.comboBoxDefinedSet.addItem(key)
+
+        self.ui.buttonAddSet.clicked.connect(self.add_cards)
+        self.ui.buttonAddCard.clicked.connect(self.add_card)
+
+        self.ui.buttonUp.clicked.connect(self.shift_up)
+        self.ui.buttonDown.clicked.connect(self.shift_down)
+
+        #Testing TableView
+        self.tm = CardTable(self)
+        self.tm.loadCards(self.spray_cards)
+        self.ui.tableView.setModel(self.tm)
+        self.ui.tableView.setItemDelegateForColumn(3,ComboBoxDelegate(self, [cfg.INCLUDE_IN_COMPOSITE_NO_STRING, cfg.INCLUDE_IN_COMPOSITE_YES_STRING]))
+        self.ui.tableView.setItemDelegateForColumn(4,ComboBoxDelegate(self, [cfg.THRESHOLD_TYPE_GRAYSCALE_STRING,cfg.THRESHOLD_TYPE_COLOR_STRING]))
+        self.ui.tableView.setColumnWidth(4,100)
+        
+        #Right side menu
+        #self.ui.buttonSelectFile.clicked.connect(self.select_file)
+        #self.ui.buttonSetROIs.clicked.connect(self.editROIs)
+
+        #ButtonBox
+        self.ui.buttonBox.accepted.connect(self.on_applied)
+        self.ui.buttonBox.rejected.connect(self.reject)
+
+        
+
+        # Your code ends here
+        self.show()
+
+    def shift_up(self):
+        self.tm.shiftRows(self.ui.tableView.selectionModel().selectedRows(), moveUp=True)
+
+    def shift_down(self):
+        self.tm.shiftRows(self.ui.tableView.selectionModel().selectedRows(), moveUp=False)
+
+    @pyqtSlot()
+    def add_card(self):
+        self.tm.addCard()
+
+    @pyqtSlot()
+    def add_cards(self):
+        selectedSet = defined_sets[self.ui.comboBoxDefinedSet.currentText()]
+        newCards = []
+        for i in range(len(selectedSet['cards'])):
+            c = SprayCard(name=selectedSet['cards'][i])
+            c.location = selectedSet['locations'][i]
+            newCards.append(c)
+        self.tm.addCards(newCards)
+    '''
+    def select_file(self):
+        fname, filter_ = QFileDialog.getOpenFileName(self, 'Open file', 'home', "Image files (*.png)")
+        self.ui.labelFile.setText(fname)
+        
+    def editROIs(self):
+        #Create popup and send current appInfo vals to popup
+        e = LoadCards(self.ui.labelFile.text(), self.ui.tableView.selectionModel().selectedRows())
+        #Connect Slot to retrieve Vals back from popup
+        e.applied.connect()
+        #Start Loop
+        e.exec_()
+    '''
+    def on_applied(self):
+        self.passData_OG.spray_cards = self.spray_cards
+        #Notify requestor
+        self.applied.emit()
+        self.accept
+
+    def on_rejected(self):
+        self.reject
 
 class ComboBoxDelegate(QItemDelegate):
     def __init__(self, owner, itemList):
@@ -44,10 +132,10 @@ class CardTable(QAbstractTableModel):
     def loadCards(self, card_list):
         self.card_list = card_list
 
-    def rowCount(self, parent: QModelIndex()) -> int:
+    def rowCount(self, parent = QModelIndex()) -> int:
         return len(self.card_list)
 
-    def columnCount(self, parent: QModelIndex()) -> int:
+    def columnCount(self, parent = QModelIndex()) -> int:
         return 5
 
     def headerData(self, column, orientation, role=Qt.DisplayRole):
@@ -88,13 +176,10 @@ class CardTable(QAbstractTableModel):
             elif j == 2:
                 # Has Image?
                 if role == Qt.DisplayRole:
-                    if self.card_list[i].has_image == cfg.HAS_IMAGE_NO:
+                    if self.card_list[i].has_image() == cfg.HAS_IMAGE_NO:
                         return cfg.HAS_IMAGE_NO_STRING
-                    elif self.card_list[i].has_image == cfg.HAS_IMAGE_YES:
+                    elif self.card_list[i].has_image() == cfg.HAS_IMAGE_YES:
                         return cfg.HAS_IMAGE_YES_STRING
-                elif role == Qt.EditRole:
-                    return self.card_list[i].has_image
-                #return self.card_list[i].has_image
             elif j == 3:
                 # Include in Composite?
                 if role == Qt.DisplayRole:
@@ -137,8 +222,9 @@ class CardTable(QAbstractTableModel):
             return True 
         elif j == 2:
             # Has Image
-            self.card_list[i].has_image = value
-            self.dataChanged.emit(index,index)
+            #self.card_list[i].has_image = value
+            #self.dataChanged.emit(index,index)
+            pass
         elif j == 3:
             # Include In Composite
             self.card_list[i].include_in_composite = value
@@ -169,6 +255,17 @@ class CardTable(QAbstractTableModel):
             self.card_list.insert(row+shift,self.card_list.pop(row))
         self.endMoveRows()
 
+    def addCard(self):
+        self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
+        self.card_list.append(SprayCard(name=f'Card {self.rowCount()}'))
+        self.endInsertRows()
+    
+    def addCards(self, new_cards: List[SprayCard]):
+        self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount()+len(new_cards)-1)
+        for card in new_cards:
+            self.card_list.append(card)
+        self.endInsertRows()
+
     def flags(self, index):
         if not index.isValid():
             return None
@@ -176,86 +273,6 @@ class CardTable(QAbstractTableModel):
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable
         else:
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
-
-class EditCardList(baseclass):
-
-    applied = pyqtSignal()
-
-    def __init__(self, passData=None):
-        super().__init__()
-        self.ui = Ui_Form()
-        self.ui.setupUi(self)
-        # Your code will go here
-
-        self.passData_OG = passData
-        self.spray_cards = copy.copy(passData.spray_cards)
-
-        #Load in Settings
-        self.settings = QSettings('BG Application Consulting','AccuPatt')
-       
-       #Load in defined sets to combobox
-        for key,value in defined_sets.items():
-           self.ui.comboBox.addItem(value['name'])
-
-        self.ui.buttonAddSet.clicked.connect(self.add_cards)
-        self.ui.buttonAddCard.clicked.connect(self.add_card)
-
-        self.ui.buttonUp.clicked.connect(self.shift_up)
-        self.ui.buttonDown.clicked.connect(self.shift_down)
-
-        #Testing TableView
-        self.tm = CardTable(self)
-        self.tm.loadCards(self.spray_cards)
-        self.ui.tableView.setModel(self.tm)
-        self.ui.tableView.setItemDelegateForColumn(3,ComboBoxDelegate(self, [cfg.INCLUDE_IN_COMPOSITE_NO_STRING, cfg.INCLUDE_IN_COMPOSITE_YES_STRING]))
-        self.ui.tableView.setItemDelegateForColumn(4,ComboBoxDelegate(self, [cfg.THRESHOLD_TYPE_GRAYSCALE_STRING,cfg.THRESHOLD_TYPE_COLOR_STRING]))
-        self.ui.tableView.setColumnWidth(4,100)
-        
-        #Right side menu
-        self.ui.buttonSelectFile.clicked.connect(self.select_file)
-        self.ui.buttonSetROIs.clicked.connect(self.editROIs)
-
-        #ButtonBox
-        self.ui.buttonBox.accepted.connect(self.on_applied)
-        self.ui.buttonBox.rejected.connect(self.reject)
-
-        
-
-        # Your code ends here
-        self.show()
-
-    def shift_up(self):
-        self.tm.shiftRows(self.ui.tableView.selectionModel().selectedRows(), moveUp=True)
-
-    def shift_down(self):
-        self.tm.shiftRows(self.ui.tableView.selectionModel().selectedRows(), moveUp=False)
-
-    def add_card(self, addSet=False):
-        pass
-
-    def add_cards(self):
-        pass
-    
-    def select_file(self):
-        fname, filter_ = QFileDialog.getOpenFileName(self, 'Open file', 'home', "Image files (*.png)")
-        self.ui.labelFile.setText(fname)
-        
-    def editROIs(self):
-        #Create popup and send current appInfo vals to popup
-        e = LoadCards(self.ui.labelFile.text(), self.ui.tableView.selectionModel().selectedRows())
-        #Connect Slot to retrieve Vals back from popup
-        e.applied.connect()
-        #Start Loop
-        e.exec_()
-
-    def on_applied(self):
-        self.passData_OG.spray_cards = self.spray_cards
-        #Notify requestor
-        self.applied.emit()
-        self.accept
-
-    def on_rejected(self):
-        self.reject
 
 
 if __name__ == '__main__':

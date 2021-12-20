@@ -55,7 +55,7 @@ class MainWindow(baseclass):
         self.ui.buttonEditSpraySystem.clicked.connect(self.editSpraySystem)
 
         #Setup Individual Passes Tab
-        self.ui.listWidgetPassSelection.currentRowChanged[int].connect(self.passSelectionChanged)
+        self.ui.listWidgetPassSelection.currentRowChanged.connect(self.drawIndividuals)
         self.ui.buttonReadString.clicked.connect(self.readString)
 
         #Setup Composite Tab
@@ -67,14 +67,13 @@ class MainWindow(baseclass):
 
         #Setup Simulations Tab
         self.ui.horizontalSliderSimulatedSwath.valueChanged[int].connect(self.updateSwathAdjusted)
-        #self.ui.horizontalSliderSimulatedSwath.sliderReleased.connect(self.updateSimulations)
-        self.ui.spinBoxSimulatedSwathPasses.valueChanged.connect(self.updateSimulations)
+        #self.ui.horizontalSliderSimulatedSwath.sliderReleased.connect(self.drawSimulations)
+        self.ui.spinBoxSimulatedSwathPasses.valueChanged.connect(self.drawSimulations)
 
         #Setup SprayCards Tab
         self.ui.listWidgetSprayCardPass.currentRowChanged[int].connect(self.sprayCardPassSelectionChanged)
         self.ui.listWidgetSprayCard.currentRowChanged[int].connect(self.sprayCardSelectionChanged)
         self.ui.buttonEditCards.clicked.connect(self.editSprayCardList)
-        self.ui.buttonLoadCards.clicked.connect(self.loadCards)
         self.ui.buttonEditThreshold.clicked.connect(self.editThreshold)
         self.ui.buttonEditSpreadFactors.clicked.connect(self.editSpreadFactors)
         #For Testing Expedience
@@ -109,9 +108,7 @@ class MainWindow(baseclass):
         self.update_all_ui()
 
     def update_all_ui(self):
-        #indicator as to whether to call update plots at end of this method
-        shouldUpdatePlots = False
-
+    
         #Populate AppInfo tab
         self.updateFlyinUI()
         self.updateApplicatorInfo(self.seriesData.info)
@@ -129,13 +126,15 @@ class MainWindow(baseclass):
                 item = QListWidgetItem(p.name, lv)
                 item.setFlags(Qt.ItemIsEnabled|Qt.ItemIsSelectable)
                 item.setCheckState(Qt.CheckState.Unchecked)
-                lv.addItem(item)
-                #Make the include passes lv user checkable
-                if lv==lvs[1]: item.setFlags(Qt.ItemIsEnabled|Qt.ItemIsUserCheckable)
-                #Set CheckState
-                if (lv==lvs[0] and p.data is not None) or (lv==lvs[1] and p.include_in_composite) or (lv==lvs[2] and p.spray_cards):
-                    item.setCheckState(Qt.Checked)    
-                shouldUpdatePlots = True
+                with QSignalBlocker(lv):
+                    lv.addItem(item)
+                    #Make the include passes lv user checkable
+                    if lv==lvs[1]: item.setFlags(Qt.ItemIsEnabled|Qt.ItemIsUserCheckable)
+                    #Set CheckState
+                    if (lv==lvs[0] and p.data is not None) or (lv==lvs[1] and p.include_in_composite) or (lv==lvs[2] and p.spray_cards):
+                        item.setCheckState(Qt.Checked)   
+                    lv.setCurrentItem(item) 
+        
         self.sprayCardPassSelectionChanged()
 
         #Update the swath adjustment slider
@@ -146,9 +145,8 @@ class MainWindow(baseclass):
             self.ui.horizontalSliderSimulatedSwath.setValue(self.seriesData.info.swath_adjusted)
             self.ui.horizontalSliderSimulatedSwath.setMinimum(round(minn))
             self.ui.horizontalSliderSimulatedSwath.setMaximum(round(maxx))
-
-        #Test new plot methods
-        if shouldUpdatePlots: self.updatePlots()
+            
+        self.updatePlots()
 
     def openPassManager(self):
         #Create popup and send current appInfo vals to popup
@@ -257,31 +255,9 @@ class MainWindow(baseclass):
         self.ui.labelNotes.setText(appInfo.notes)
         
     def updatePass(self, passData):
-        #If pass already exists in seriesData.passes dict, update it
-        #If pass not yet in seriesData.passes dict, add it
-        #self.seriesData.passes[passData.name] = passData
+        #Get a handle to original pass data
         self.passSelectionChanged(self.ui.listWidgetPassSelection.currentRow())
-
-    def passSelectionChanged(self, newIndex):
-        p = self.seriesData.passes[newIndex]
-        self.ui.plotWidgetIndividual.clear()
-        self.ui.plotWidgetIndividualTrim.clear()
-        line_left, line_right, line_vertical = StringPlotter.drawIndividuals(
-                    pyqtplotwidget1=self.ui.plotWidgetIndividual,
-                    pyqtplotwidget2=self.ui.plotWidgetIndividualTrim,
-                    passData=p
-                )
-        if line_left is not None:
-            line_left.sigPositionChangeFinished.connect(self.updateTrimL)
-        if line_right is not None:
-            line_right.sigPositionChangeFinished.connect(self.updateTrimR)
-        if line_vertical is not None:
-            line_vertical.sigPositionChangeFinished.connect(self.updateTrimFloor)
-        #Update the info labels on the individual pass tab
-        self.ui.labelAirspeed.setText(f'Airspeed: {p.str_airspeed()}')
-        self.ui.labelHeight.setText(f'Height: {p.str_spray_height()}')
-        self.ui.labelCrosswind.setText(f'X-Wind: {p.str_crosswind()}')
-        
+  
     def updateTrimL(self, value):
         self.updateTrim(trim_left=value.value())
     
@@ -345,20 +321,39 @@ class MainWindow(baseclass):
         #Recalculate individual and average patterns
         self.seriesData.modifyPatterns()
         #Replot Individual Plots
+        self.drawIndividuals()
+        #Replot Composites
+        self.drawComposites()
+        self.drawSimulations()
+
+    def drawIndividuals(self):
         passIndex = self.ui.listWidgetPassSelection.currentRow()
-        line_left, line_right, line_vertical = StringPlotter.drawIndividuals(pyqtplotwidget1=self.ui.plotWidgetIndividual, pyqtplotwidget2=self.ui.plotWidgetIndividualTrim, passData=self.seriesData.passes[passIndex])
+        p = self.seriesData.passes[passIndex]
+        line_left, line_right, line_vertical = StringPlotter.drawIndividuals(
+                    pyqtplotwidget1=self.ui.plotWidgetIndividual,
+                    pyqtplotwidget2=self.ui.plotWidgetIndividualTrim,
+                    passData=p
+                )
         if line_left is not None:
             line_left.sigPositionChangeFinished.connect(self.updateTrimL)
         if line_right is not None:
             line_right.sigPositionChangeFinished.connect(self.updateTrimR)
         if line_vertical is not None:
             line_vertical.sigPositionChangeFinished.connect(self.updateTrimFloor)
-        #Replot Composites
+        #Update the info labels on the individual pass tab
+        if isinstance(p.data, pd.DataFrame):
+            self.ui.buttonReadString.setText(f'Edit {p.name}')
+        else:
+            self.ui.buttonReadString.setText(f'Capture {p.name}')
+        self.ui.labelAirspeed.setText(f'Airspeed: {p.str_airspeed()}')
+        self.ui.labelHeight.setText(f'Height: {p.str_spray_height()}')
+        self.ui.labelCrosswind.setText(f'X-Wind: {p.str_crosswind()}')
+
+    def drawComposites(self):
         StringPlotter.drawOverlay(mplCanvas=self.ui.plotWidgetOverlay.canvas, series=self.seriesData)
         StringPlotter.drawAverage(mplCanvas=self.ui.plotWidgetAverage.canvas, series=self.seriesData)
-        self.updateSimulations()
 
-    def updateSimulations(self):
+    def drawSimulations(self):
         self.seriesData.string_simulated_adjascent_passes = self.ui.spinBoxSimulatedSwathPasses.value()
         StringPlotter.drawSimulations(
             mplCanvasRacetrack=self.ui.plotWidgetRacetrack.canvas,
@@ -371,26 +366,25 @@ class MainWindow(baseclass):
     def updateSwathAdjusted(self, swath):
         self.seriesData.info.swath_adjusted = swath
         self.ui.labelSimulatedSwath.setText(str(swath)+ ' ' + self.seriesData.info.swath_units)
-        self.updateSimulations()
+        self.drawSimulations()
 
     def sprayCardPassSelectionChanged(self, newIndex=None):
         #Default Index
         if newIndex is None:
             newIndex = self.ui.listWidgetSprayCardPass.currentRow()
         #Clear Spray Card List
-        lwc = self.ui.listWidgetSprayCard
-        lwc.clear()
+        self.ui.listWidgetSprayCard.clear()
         #Repopulate Spray Card List
         p = self.seriesData.passes[newIndex]
-        if not p.spray_cards: return
         for card in p.spray_cards:
             item = QListWidgetItem(card.name)
-            lwc.addItem(item)
+            self.ui.listWidgetSprayCard.addItem(item)
             if card.filepath != None: 
                 item.setCheckState(Qt.Checked)
             else:
                 item.setCheckState(Qt.Unchecked)
             item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+        self.updateSprayCardView()
 
     def sprayCardSelectionChanged(self, newIndex=None):
         #Default Index
@@ -398,6 +392,7 @@ class MainWindow(baseclass):
             newIndex = self.ui.listWidgetSprayCard.currentRow()
         #Get a handle on the currently selected pass
         p = self.seriesData.passes[self.ui.listWidgetSprayCardPass.currentRow()]
+        if len(p.spray_cards) == 0: return
         #Get a handle on the currently selected card
         c = p.spray_cards[newIndex]
         self.showSprayCardButtons(c.filepath != None)
@@ -416,16 +411,6 @@ class MainWindow(baseclass):
     def updateSprayCardList(self):
         self.saveFile()
         self.sprayCardPassSelectionChanged()
-
-    def loadCards(self):
-        #Get a handle on the card in question
-        p = self.seriesData.passes[self.ui.listWidgetSprayCardPass.currentRow()]
-        #Open the Edit Threshold window for currently selected card
-        e = LoadCards(seriesData=self.seriesData, passData=p)
-        #Connect Slot to retrieve Vals back from popup
-        e.applied.connect(self.updateSprayCardList)
-        #Start Loop
-        e.exec_()
 
     def editThreshold(self):
         #Abort if no card image
@@ -464,8 +449,11 @@ class MainWindow(baseclass):
     def updateSprayCardView(self, sprayCard=None):
         if sprayCard == None:
             p = self.seriesData.passes[self.ui.listWidgetSprayCardPass.currentRow()]
-            if self.ui.listWidgetSprayCard.currentItem().checkState() == Qt.Checked:
-                sprayCard = p.spray_cards[self.ui.listWidgetSprayCard.currentRow()]
+            if self.ui.listWidgetSprayCard.count() != 0: 
+                if self.ui.listWidgetSprayCard.currentItem() is None:
+                    self.ui.listWidgetSprayCard.setCurrentRow(0)
+                if self.ui.listWidgetSprayCard.currentItem().checkState() == Qt.Checked:
+                    sprayCard = p.spray_cards[self.ui.listWidgetSprayCard.currentRow()]
         if sprayCard == None or sprayCard.filepath == None:
             self.ui.splitCardWidget.clearSprayCardView()
             self.ui.labelCoverage.setText('')

@@ -27,7 +27,7 @@ class DataFileImporter:
         sh = wb['Card Data']
         on_pass = sh['B2'].value
         #Card Pass
-        for _, p in s.passes.items():
+        for p in s.passes:
             assert isinstance(p, Pass)
             if p.number == on_pass:
                 for col in range(5,14):
@@ -127,7 +127,7 @@ class DataFileImporter:
         df = df_map['Series Data'].fillna('')
         df.columns = df.iloc[0]
         #Clear any stored individual passes
-        s.passes.clear()
+        s.passes = []
         #Search for any active passes and create entries in seriesData.passes dict
         for column in df.columns[1:]:
             if not str(df.at[1,column]) == '':
@@ -140,14 +140,11 @@ class DataFileImporter:
                 p.set_temperature(str(df.at[6,'Pass 1']))
                 p.set_humidity(str(df.at[7,'Pass 1']))
                 p.temperature_units = '°C' if isMetric else '°F'
-                '''if column == 'Pass 1':
-                    s.info.set_temperature(str(df.at[6,column]))
-                    s.info.set_humidity(str(df.at[7,column]))
-                    s.info.temperature_units = '°C' if isMetric else '°F' '''
                 p.ground_speed_units = 'kph' if isMetric else 'mph'
                 p.spray_height_units = 'm' if isMetric else 'ft'
                 p.wind_speed_units = 'kph' if isMetric else 'mph'
-                s.passes[column] = p
+                p.data_loc_units = 'm' if isMetric else 'ft'
+                s.passes.append(p)
 
         #Pull data from Pattern Data tab
         df = df_map['Pattern Data'].fillna('')
@@ -177,14 +174,14 @@ class DataFileImporter:
         #Pull patterns and place them into seriesData.passes dicts by name (created above)
         for column in df_info:
             if not str(df_info.at[3,column]) == '':
-                if column in s.passes.keys():
-                    p = s.passes[column]
-                    p.trim_l = 0 if df_info.at[0,column] == '' else int(df_info.at[0,column])
-                    p.trim_r = 0 if df_info.at[1,column] == '' else int(df_info.at[1,column])
-                    p.trim_v = 0 if df_info.at[2,column] == '' else df_info.at[2,column]
-                    p.data = df_emission[['loc',column]]
-                    p.data_ex = df_excitation[['loc',column]]
-                    s.passes[column] = p
+                p = s.passes[df_info.columns.get_loc(column)]
+                p.trim_l = 0 if df_info.at[0,column] == '' else int(df_info.at[0,column])
+                p.trim_r = 0 if df_info.at[1,column] == '' else int(df_info.at[1,column])
+                p.trim_v = 0 if df_info.at[2,column] == '' else df_info.at[2,column]
+                p.data = df_emission[['loc',column]]
+                p.data_ex = df_excitation[['loc',column]]
+                s.passes[df_info.columns.get_loc(column)] = p
+                    
 
         #Create SprayCards if applicable
         wb = openpyxl.load_workbook(file, read_only=True)
@@ -203,7 +200,7 @@ class DataFileImporter:
         spread_b = sh['B5'].value
         spread_c = sh['B6'].value
         #Card Pass
-        for _, p in s.passes.items():
+        for p in s.passes:
             assert isinstance(p, Pass)
             if p.number == int(on_pass):
                 for col in range(5,14):

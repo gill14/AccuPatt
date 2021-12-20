@@ -3,12 +3,13 @@ import pandas as pd
 import numpy as np
 import scipy.signal as sig
 
+import accupatt.config as cfg
 class Pass:
 
     degree_sign= u'\N{DEGREE SIGN}'
 
-    c = {'kph_mph': 0.621371,
-        'kn_mph': 1.15078}
+    c = {'kph_mph': cfg.MPH_PER_KPH,
+        'kn_mph': cfg.MPH_PER_KN}
 
     center_method_none = -1
     center_method_centroid = 0
@@ -23,7 +24,8 @@ class Pass:
             humidity=None, include_in_composite=True,
             excitation_wav=None, emission_wav=None,
             trim_l=0, trim_r=0, trim_v=0,
-            data_ex=None, data=None, data_mod=None):
+            data_ex=None, data=None, data_mod=None,
+            data_loc_units='ft'):
         #Info Stuff
         self.id = id
         if self.id == '':
@@ -54,6 +56,7 @@ class Pass:
         self.data = data #Holds original Data
         self.data_mod = data_mod #Holds data with all requested modifications
         self.data_ex = data_ex #Holds Excitation Data
+        self.data_loc_units = data_loc_units
         #Cards
         self.spray_cards = []
 
