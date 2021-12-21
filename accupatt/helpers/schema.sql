@@ -114,5 +114,6 @@ CREATE TABLE IF NOT EXISTS spray_cards (
     spread_factor_a                 REAL,
     spread_factor_b                 REAL,
     spread_factor_c                 REAL,
+    has_image                       INTEGER,
     image                           BLOB
 );

@@ -1,8 +1,9 @@
 from typing import List
+from accupatt.helpers.dBReadWriteImage import DBReadWriteImage
 from accupatt.windows.loadCards import LoadCards
 import accupatt.config as cfg
 from accupatt.windows.editThreshold import EditThreshold
-from PyQt5.QtWidgets import QAbstractItemView, QApplication, QComboBox, QFileDialog, QItemDelegate, QListWidgetItem, QStyle, QStyleOptionComboBox
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QComboBox, QFileDialog, QItemDelegate, QListView, QListWidgetItem, QMessageBox, QStyle, QStyleOptionComboBox
 from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QVariant, Qt, QSettings, pyqtSignal, pyqtSlot
 from PyQt5 import uic
 
@@ -18,21 +19,24 @@ defined_sets = {
         'locations': [-32, -24, -16, -8, 0, 8, 16, 24, 32]
     }
 }
+
+load_image_options = ['One File Per Card','One File, Multiple Cards']
+
 class EditCardList(baseclass):
 
     applied = pyqtSignal()
 
-    def __init__(self, passData=None):
+    def __init__(self, passData=None, filepath=None):
         super().__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         # Your code will go here
 
-        self.passData_OG = passData
-        self.spray_cards = copy.copy(passData.spray_cards)
-
         #Load in Settings
         self.settings = QSettings('BG Application Consulting','AccuPatt')
+       
+        # File path for creating new cards
+        self.filepath = filepath
        
        #Load in defined sets to combobox
         for key in defined_sets.keys():
@@ -40,13 +44,18 @@ class EditCardList(baseclass):
 
         self.ui.buttonAddSet.clicked.connect(self.add_cards)
         self.ui.buttonAddCard.clicked.connect(self.add_card)
+        self.ui.buttonRemoveCard.clicked.connect(self.remove_cards)
 
         self.ui.buttonUp.clicked.connect(self.shift_up)
         self.ui.buttonDown.clicked.connect(self.shift_down)
-
-        #Testing TableView
+        
+        self.ui.comboBoxLoadMethod.addItems(load_image_options)
+        self.ui.buttonLoad.clicked.connect(self.load_cards)
+        self.ui.buttonLoad.setEnabled(False)
+        
+        #Populate TableView
         self.tm = CardTable(self)
-        self.tm.loadCards(self.spray_cards)
+        self.tm.loadCards(passData.spray_cards)
         self.ui.tableView.setModel(self.tm)
         self.ui.tableView.setItemDelegateForColumn(3,ComboBoxDelegate(self, [cfg.INCLUDE_IN_COMPOSITE_NO_STRING, cfg.INCLUDE_IN_COMPOSITE_YES_STRING]))
         self.ui.tableView.setItemDelegateForColumn(4,ComboBoxDelegate(self, [cfg.THRESHOLD_TYPE_GRAYSCALE_STRING,cfg.THRESHOLD_TYPE_COLOR_STRING]))
@@ -64,26 +73,66 @@ class EditCardList(baseclass):
 
         # Your code ends here
         self.show()
+        
+        self.ui.tableView.selectionModel().selectionChanged.connect(self.selection_changed)
 
+    @pyqtSlot()
+    def selection_changed(self):
+        self.ui.buttonLoad.setEnabled(bool(self.ui.tableView.selectionModel().selectedRows()))
+
+    @pyqtSlot()
     def shift_up(self):
         self.tm.shiftRows(self.ui.tableView.selectionModel().selectedRows(), moveUp=True)
 
+    @pyqtSlot()
     def shift_down(self):
         self.tm.shiftRows(self.ui.tableView.selectionModel().selectedRows(), moveUp=False)
 
     @pyqtSlot()
     def add_card(self):
-        self.tm.addCard()
+        self.tm.addCard(filepath = self.filepath)
 
     @pyqtSlot()
     def add_cards(self):
         selectedSet = defined_sets[self.ui.comboBoxDefinedSet.currentText()]
         newCards = []
         for i in range(len(selectedSet['cards'])):
-            c = SprayCard(name=selectedSet['cards'][i])
+            c = SprayCard(name=selectedSet['cards'][i], filepath=self.filepath)
             c.location = selectedSet['locations'][i]
             newCards.append(c)
         self.tm.addCards(newCards)
+        
+    @pyqtSlot()
+    def remove_cards(self):
+        sel = self.ui.tableView.selectionModel().selectedRows()
+        for index in sel:
+            if self.tm.card_list[index.row()].has_image:
+                if not self._are_you_sure('One or more selected cards have image data which will be erased. Continue?'): 
+                    return
+                else:
+                    continue
+        self.tm.removeCards(sel)
+    
+    @pyqtSlot()
+    def load_cards(self):
+        method = self.ui.comboBoxLoadMethod.currentText()
+        selection = self.ui.tableView.selectionModel().selectedRows()
+        if method == load_image_options[0]:
+            #Single Image, Single Card
+            card = self.tm.card_list[selection[0].row()]
+            if card.has_image:
+                if not self._are_you_sure(f'{card.name} already has image data, overwrite?'):
+                    return
+            fname, _ = QFileDialog.getOpenFileName(self, 'Open file', 'home', "Image files (*.png)")
+            with open(fname, 'rb') as file:
+                binary_data = file.read()  
+            DBReadWriteImage.write_image_to_db(self.filepath, card, binary_data)
+            card.has_image = True
+            card.include_in_composite = True
+        else:
+            #Single Image, Multiple Cards
+            pass
+    
     '''
     def select_file(self):
         fname, filter_ = QFileDialog.getOpenFileName(self, 'Open file', 'home', "Image files (*.png)")
@@ -97,14 +146,26 @@ class EditCardList(baseclass):
         #Start Loop
         e.exec_()
     '''
+    
+    def _are_you_sure(self, message):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Critical)
+        msg.setText("Are You Sure?")
+        msg.setInformativeText(message)
+        #msg.setWindowTitle("MessageBox demo")
+        #msg.setDetailedText("The details are as follows:")
+        msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        result = msg.exec()
+        return result == QMessageBox.Yes
+    
     def on_applied(self):
-        self.passData_OG.spray_cards = self.spray_cards
         #Notify requestor
         self.applied.emit()
-        self.accept
+        self.accept()
+        self.close()
 
     def on_rejected(self):
-        self.reject
+        self.reject()
 
 class ComboBoxDelegate(QItemDelegate):
     def __init__(self, owner, itemList):
@@ -157,11 +218,17 @@ class CardTable(QAbstractTableModel):
     def data(self, index, role: Qt.DisplayRole):
         i = index.row()
         j = index.column()
+        card: SprayCard = self.card_list[i]
         if role == Qt.TextAlignmentRole:
             return Qt.AlignCenter
-        elif role is Qt.CheckStateRole:
+        elif role == Qt.CheckStateRole:
             if j == 2:
-                if self.card_list[i].filepath != '':
+                if card.has_image == 1:
+                    return Qt.Checked
+                else:
+                    return Qt.Unchecked
+            elif j == 3:
+                if card.include_in_composite == 1:
                     return Qt.Checked
                 else:
                     return Qt.Unchecked
@@ -169,35 +236,34 @@ class CardTable(QAbstractTableModel):
         elif role == Qt.DisplayRole or role == Qt.EditRole:
             if j == 0:
                 # Name
-                return self.card_list[i].name
+                return card.name
             elif j == 1:
                 # Location
-                return self.card_list[i].location
+                return card.location
             elif j == 2:
                 # Has Image?
-                if role == Qt.DisplayRole:
-                    if self.card_list[i].has_image() == cfg.HAS_IMAGE_NO:
-                        return cfg.HAS_IMAGE_NO_STRING
-                    elif self.card_list[i].has_image() == cfg.HAS_IMAGE_YES:
-                        return cfg.HAS_IMAGE_YES_STRING
+                if card.has_image:
+                    return cfg.HAS_IMAGE_YES_STRING
+                else:
+                    return cfg.HAS_IMAGE_NO_STRING
             elif j == 3:
                 # Include in Composite?
                 if role == Qt.DisplayRole:
-                    if self.card_list[i].include_in_composite == cfg.INCLUDE_IN_COMPOSITE_NO:
-                        return cfg.INCLUDE_IN_COMPOSITE_NO_STRING
-                    elif self.card_list[i].include_in_composite == cfg.INCLUDE_IN_COMPOSITE_YES:
+                    if card.include_in_composite:
                         return cfg.INCLUDE_IN_COMPOSITE_YES_STRING
+                    else:
+                        return cfg.INCLUDE_IN_COMPOSITE_NO_STRING
                 elif role == Qt.EditRole:
-                    return self.card_list[i].include_in_composite
+                    return card.include_in_composite
             elif j == 4:
                 # Thresh Type
                 if role == Qt.DisplayRole:
-                    if self.card_list[i].threshold_type == cfg.THRESHOLD_TYPE_GRAYSCALE:
+                    if card.threshold_type == cfg.THRESHOLD_TYPE_GRAYSCALE:
                         return cfg.THRESHOLD_TYPE_GRAYSCALE_STRING
-                    elif self.card_list[i].threshold_type == cfg.THRESHOLD_TYPE_COLOR:
+                    elif card.threshold_type == cfg.THRESHOLD_TYPE_COLOR:
                         return cfg.THRESHOLD_TYPE_COLOR_STRING
                 elif role == Qt.EditRole:
-                    return self.card_list[i].threshold_type 
+                    return card.threshold_type 
         else: return QVariant()
     
     def setData(self, index, value, role = Qt.EditRole) -> bool:
@@ -221,10 +287,7 @@ class CardTable(QAbstractTableModel):
             self.dataChanged.emit(index,index)
             return True 
         elif j == 2:
-            # Has Image
-            #self.card_list[i].has_image = value
-            #self.dataChanged.emit(index,index)
-            pass
+            return True
         elif j == 3:
             # Include In Composite
             self.card_list[i].include_in_composite = value
@@ -255,9 +318,9 @@ class CardTable(QAbstractTableModel):
             self.card_list.insert(row+shift,self.card_list.pop(row))
         self.endMoveRows()
 
-    def addCard(self):
+    def addCard(self, filepath):
         self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
-        self.card_list.append(SprayCard(name=f'Card {self.rowCount()}'))
+        self.card_list.append(SprayCard(name=f'Card {self.rowCount()}', filepath = filepath))
         self.endInsertRows()
     
     def addCards(self, new_cards: List[SprayCard]):
@@ -265,6 +328,17 @@ class CardTable(QAbstractTableModel):
         for card in new_cards:
             self.card_list.append(card)
         self.endInsertRows()
+        
+    def removeCards(self, selection: List[QModelIndex]):
+        '''rows = []
+        for index in selection:
+            rows.append(index.row())'''
+        for index in reversed(selection):
+            row = index.row()
+            print(row)
+            self.beginRemoveRows(QModelIndex(), row, row)
+            self.card_list.pop(row)
+            self.endRemoveRows()
 
     def flags(self, index):
         if not index.isValid():

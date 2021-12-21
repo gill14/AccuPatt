@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>756</width>
-    <height>668</height>
+    <width>1098</width>
+    <height>652</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,7 +27,7 @@
       </widget>
      </item>
      <item>
-      <widget class="SingleCVImageWidget" name="imageWidget" native="true"/>
+      <widget class="PlotWidget" name="imageWidget"/>
      </item>
     </layout>
    </item>
@@ -45,10 +45,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>SingleCVImageWidget</class>
-   <extends>QWidget</extends>
-   <header>accupatt/windows/widgets/singleCVImageWidget.h</header>
-   <container>1</container>
+   <class>PlotWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>pyqtgraph</header>
   </customwidget>
  </customwidgets>
  <resources/>

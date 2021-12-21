@@ -379,7 +379,7 @@ class MainWindow(baseclass):
         for card in p.spray_cards:
             item = QListWidgetItem(card.name)
             self.ui.listWidgetSprayCard.addItem(item)
-            if card.filepath != None: 
+            if card.has_image: 
                 item.setCheckState(Qt.Checked)
             else:
                 item.setCheckState(Qt.Unchecked)
@@ -402,7 +402,7 @@ class MainWindow(baseclass):
         #Get a handle on the currently selected pass
         p = self.seriesData.passes[self.ui.listWidgetSprayCardPass.currentRow()]
         #Open the Edit Card List window for currently selected pass
-        e = EditCardList(passData=p)
+        e = EditCardList(passData=p, filepath=self.currentFile)
         #Connect Slot to retrieve Vals back from popup
         e.applied.connect(self.updateSprayCardList)
         #Start Loop
@@ -454,7 +454,7 @@ class MainWindow(baseclass):
                     self.ui.listWidgetSprayCard.setCurrentRow(0)
                 if self.ui.listWidgetSprayCard.currentItem().checkState() == Qt.Checked:
                     sprayCard = p.spray_cards[self.ui.listWidgetSprayCard.currentRow()]
-        if sprayCard == None or sprayCard.filepath == None:
+        if sprayCard == None or not sprayCard.has_image:
             self.ui.splitCardWidget.clearSprayCardView()
             self.ui.labelCoverage.setText('')
             self.ui.labelStainsPerSqIn.setText('')

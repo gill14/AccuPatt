@@ -144,11 +144,11 @@ class EditSpreadFactors(baseclass):
                 return
         
         #Cycle through passes
-        for pass_key,pass_value in self.seriesData.passes.items():
+        for p in self.seriesData.passes:
             #Check if should apply to pass
-            if pass_key == self.passData.name or self.ui.checkBoxApplyToAllSeries.checkState() == Qt.Checked:
+            if p.name == self.passData.name or self.ui.checkBoxApplyToAllSeries.checkState() == Qt.Checked:
                 #Cycle through cards in pass
-                for card in pass_value.spray_cards:
+                for card in p.spray_cards:
                     if card.name == self.sprayCard.name or self.ui.checkBoxApplyToAllPass.checkState() == Qt.Checked:
                         #Apply
                         # Spread Method

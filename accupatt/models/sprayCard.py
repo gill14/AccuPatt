@@ -17,6 +17,7 @@ class SprayCard:
         self.filepath = filepath
         self.name = name
         self.location = None
+        self.has_image = False
         self.include_in_composite = cfg.INCLUDE_IN_COMPOSITE_NO
 
         self.threshold_type = cfg.THRESHOLD_TYPE__DEFAULT
@@ -36,9 +37,6 @@ class SprayCard:
         self.spread_factor_c = cfg.SPREAD_FACTOR_C__DEFAULT
 
         self._load_defaults()
-    
-    def has_image(self):
-        return DBReadWriteImage.read_image_from_db(self.filepath, self.id) is not None
     
     def image_original(self):
         #img = cv2.imread(self.read_image_from_db(self.filepath, self.id))

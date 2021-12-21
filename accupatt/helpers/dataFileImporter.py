@@ -210,6 +210,7 @@ class DataFileImporter:
                     c.location = (col-9)*spacing
                     if not sh.cell(row=2, column=col).value:
                         continue
+                    c.has_image = 1 if sh.cell(row=2,column=col).value else 0
                     c.include_in_composite = 1 if sh.cell(row=3,column=col).value else 0
                     c.threshold_type = cfg.THRESHOLD_TYPE_GRAYSCALE
                     c.threshold_grayscale = sh.cell(row=4,column=col).value
