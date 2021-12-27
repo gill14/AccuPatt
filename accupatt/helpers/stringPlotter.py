@@ -25,8 +25,9 @@ class StringPlotter:
         
     def drawIndividual(pyqtplotwidget: PlotWidget, passData: Pass):
         #Setup Plotter
-        p = pyqtplotwidget.addPlot(labels =  {'left':'Relative Dye Intensity', 'bottom':f'Location ({passData.data_loc_units})'})
-        p.showGrid(x=True, y=True)
+        pyqtplotwidget.setLabel(axis='bottom',text='Location', units=passData.data_loc_units)
+        pyqtplotwidget.setLabel(axis='left', text = 'Relative Dye Intensity')
+        pyqtplotwidget.showGrid(x=True, y=True)
         #Check if data exists
         if not isinstance(passData.data, pd.DataFrame): return None, None, None
         #Plot data
@@ -34,22 +35,23 @@ class StringPlotter:
         _,min = passData.trimLR(d.copy())
         x = np.array(passData.data['loc'].values, dtype=float)
         y = np.array(passData.data[passData.name].values, dtype=float)
-        p.plot(name='Raw', pen='w').setData(x, y)
+        pyqtplotwidget.plot(name='Raw', pen='w').setData(x, y)
         #Create L, R and V Trim Handles
         trim_left = InfiniteLine(pos=x[0+passData.trim_l], movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Trim L = {value:0.2f}', labelOpts={'color': 'y','position': 0.9})
         trim_right = InfiniteLine(pos=x[-1-passData.trim_r], movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Trim R = {value:0.2f}', labelOpts={'color': 'y','position': 0.9})
         trim_vertical = InfiniteLine(pos=(min+passData.trim_v), angle=0, movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Floor = {value:0.2f}', labelOpts={'color': 'y','position': 0.5})
         #Add Trim Handles
-        p.addItem(trim_left)
-        p.addItem(trim_right)
-        p.addItem(trim_vertical)
+        pyqtplotwidget.addItem(trim_left)
+        pyqtplotwidget.addItem(trim_right)
+        pyqtplotwidget.addItem(trim_vertical)
         #Return Trim Handles to parent
         return trim_left, trim_right, trim_vertical
         
     def drawIndividualTrim(pyqtplotwidget: PlotWidget, passData: Pass):
         #Setup Plotter
-        p = pyqtplotwidget.addPlot(labels =  {'left':'Relative Dye Intensity', 'bottom':f'Location ({passData.data_loc_units})'})
-        p.showGrid(x=True, y=True)
+        pyqtplotwidget.setLabel(axis='bottom',text='Location', units=passData.data_loc_units)
+        pyqtplotwidget.setLabel(axis='left', text = 'Relative Dye Intensity')
+        pyqtplotwidget.showGrid(x=True, y=True)
         #Check if data exists
         if not isinstance(passData.data, pd.DataFrame): return
         #Plot raw data
@@ -57,11 +59,11 @@ class StringPlotter:
         d.modifyData(isCenter=False, isSmooth=False)
         x = np.array(d.data['loc'].values, dtype=float)
         y = np.array(d.data_mod[d.name].values, dtype=float)
-        p.plot(name='Emission', pen='w').setData(x, y)
+        pyqtplotwidget.plot(name='Emission', pen='w').setData(x, y)
         #Plot smooth data on top of raw data
         d.modifyData(isCenter=False, isSmooth=True)
         y_smooth = np.array(d.data_mod[d.name].values, dtype=float)
-        p.plot(name='Smooth', pen=mkPen('y', width=3)).setData(x, y_smooth)
+        pyqtplotwidget.plot(name='Smooth', pen=mkPen('y', width=3)).setData(x, y_smooth)
 
     def drawOverlay(mplCanvas, series):
         ax = mplCanvas.ax

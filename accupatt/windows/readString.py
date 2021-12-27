@@ -80,10 +80,10 @@ class ReadString(baseclass):
         pyqtgraph.setConfigOptions(antialias=True)
         pyqtgraph.setConfigOption('background', 'k')
         pyqtgraph.setConfigOption('foreground', 'w')
-        self.w = self.ui.plotWidget
-        self.w.setWindowTitle(f'{passData.name} Raw Data')
+        self.p = self.ui.plotWidget
         x_units = self.settings.value('flightline_length_units', defaultValue='ft', type=str)
-        self.p = self.w.addPlot(labels =  {'left':'Intensity', 'bottom':f'Location ({x_units})'})
+        self.p.setLabel(axis='bottom',text='Location', units=x_units)
+        self.p.setLabel(axis='left', text = 'Relative Dye Intensity')
         self.p.showGrid(x=True, y=True)
 
         self.clear(showPopup=False)

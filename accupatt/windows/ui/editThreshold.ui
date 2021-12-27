@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1098</width>
-    <height>596</height>
+    <width>1263</width>
+    <height>593</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -534,6 +534,12 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>SplitCardWidget</class>
+   <extends>QWidget</extends>
+   <header>accupatt/windows/widgets/splitcardwidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
    <class>QLabeledRangeSlider</class>
    <extends>QSlider</extends>
    <header>superqt</header>
@@ -542,12 +548,6 @@
    <class>QLabeledSlider</class>
    <extends>QSlider</extends>
    <header>superqt</header>
-  </customwidget>
-  <customwidget>
-   <class>SplitCardWidget</class>
-   <extends>QWidget</extends>
-   <header>accupatt/windows/widgets/splitcardwidget.h</header>
-   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

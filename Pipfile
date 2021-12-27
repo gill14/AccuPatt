@@ -16,9 +16,9 @@ pandas = "*"
 numpy = "*"
 openpyxl = "*"
 qtrangeslider = "*"
-scikit-image = "*"
-imutils = "*"
+opencv-python = "*"
 openpyxl-image-loader = "*"
+superqt = "*"
 
 [dev-packages]
 autopep8 = "*"

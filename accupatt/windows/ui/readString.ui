@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1163</width>
-    <height>575</height>
+    <width>1263</width>
+    <height>534</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,14 +18,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
    <item>
-    <widget class="PyQtPlotWidget" name="plotWidget" native="true">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>300</height>
-      </size>
-     </property>
-    </widget>
+    <widget class="PlotWidget" name="plotWidget"/>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -815,10 +808,9 @@ padding: 4px;</string>
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PyQtPlotWidget</class>
-   <extends>QWidget</extends>
-   <header>accupatt/windows/widgets/pyqtplotwidget.h</header>
-   <container>1</container>
+   <class>PlotWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>pyqtgraph</header>
   </customwidget>
  </customwidgets>
  <resources/>

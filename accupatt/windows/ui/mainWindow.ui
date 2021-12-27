@@ -48,7 +48,7 @@
        <enum>QTabWidget::North</enum>
       </property>
       <property name="currentIndex">
-       <number>4</number>
+       <number>1</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideRight</enum>
@@ -2008,36 +2008,10 @@
            <enum>QLayout::SetDefaultConstraint</enum>
           </property>
           <item>
-           <widget class="PyQtPlotWidget" name="plotWidgetIndividual" native="true">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>900</width>
-              <height>0</height>
-             </size>
-            </property>
-           </widget>
+           <widget class="PlotWidget" name="plotWidgetIndividual"/>
           </item>
           <item>
-           <widget class="PyQtPlotWidget" name="plotWidgetIndividualTrim" native="true">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>900</width>
-              <height>0</height>
-             </size>
-            </property>
-           </widget>
+           <widget class="PlotWidget" name="plotWidgetIndividualTrim"/>
           </item>
          </layout>
         </item>
@@ -3668,10 +3642,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>PyQtPlotWidget</class>
-   <extends>QWidget</extends>
-   <header>accupatt/windows/widgets/pyqtplotwidget.h</header>
-   <container>1</container>
+   <class>PlotWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>pyqtgraph</header>
   </customwidget>
  </customwidgets>
  <resources/>
