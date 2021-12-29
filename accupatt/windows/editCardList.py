@@ -1,5 +1,4 @@
 from typing import List
-from accupatt.helpers.dBReadWriteImage import DBReadWriteImage
 from accupatt.windows.loadCards import LoadCards
 import accupatt.config as cfg
 from accupatt.windows.editThreshold import EditThreshold
@@ -51,25 +50,20 @@ class EditCardList(baseclass):
         
         self.ui.comboBoxLoadMethod.addItems(load_image_options)
         self.ui.buttonLoad.clicked.connect(self.load_cards)
-        self.ui.buttonLoad.setEnabled(False)
+        
+        self.ui.buttonBox.accepted.connect(self.on_applied)
         
         #Populate TableView
         self.tm = CardTable(self)
         self.tm.loadCards(passData.spray_cards)
-        self.ui.tableView.setModel(self.tm)
-        self.ui.tableView.setItemDelegateForColumn(3,ComboBoxDelegate(self, [cfg.INCLUDE_IN_COMPOSITE_NO_STRING, cfg.INCLUDE_IN_COMPOSITE_YES_STRING]))
-        self.ui.tableView.setItemDelegateForColumn(4,ComboBoxDelegate(self, [cfg.THRESHOLD_TYPE_GRAYSCALE_STRING,cfg.THRESHOLD_TYPE_COLOR_STRING]))
-        self.ui.tableView.setColumnWidth(4,100)
-        
-        #Right side menu
-        #self.ui.buttonSelectFile.clicked.connect(self.select_file)
-        #self.ui.buttonSetROIs.clicked.connect(self.editROIs)
+        self.tv = self.ui.tableView
+        self.tv.setModel(self.tm)
+        self.tv.setItemDelegateForColumn(3,ComboBoxDelegate(self, [cfg.INCLUDE_IN_COMPOSITE_NO_STRING, cfg.INCLUDE_IN_COMPOSITE_YES_STRING]))
+        self.tv.setItemDelegateForColumn(4, ComboBoxDelegate(self, cfg.DPI_OPTIONS))
+        self.tv.setItemDelegateForColumn(5,ComboBoxDelegate(self, [cfg.THRESHOLD_TYPE_GRAYSCALE_STRING,cfg.THRESHOLD_TYPE_COLOR_STRING]))
+        self.tv.setColumnWidth(5,100)
 
-        #ButtonBox
-        self.ui.buttonBox.accepted.connect(self.on_applied)
-        self.ui.buttonBox.rejected.connect(self.reject)
-
-        
+        self.selection_changed()
 
         # Your code ends here
         self.show()
@@ -78,7 +72,12 @@ class EditCardList(baseclass):
 
     @pyqtSlot()
     def selection_changed(self):
-        self.ui.buttonLoad.setEnabled(bool(self.ui.tableView.selectionModel().selectedRows()))
+        hasSelection = bool(self.ui.tableView.selectionModel().selectedRows())
+        self.ui.buttonLoad.setEnabled(hasSelection)
+        self.ui.buttonRemoveCard.setEnabled(hasSelection)
+        self.ui.buttonUp.setEnabled(hasSelection)
+        self.ui.buttonDown.setEnabled(hasSelection)
+        self.ui.comboBoxLoadMethod.setEnabled(hasSelection)
 
     @pyqtSlot()
     def shift_up(self):
@@ -114,24 +113,54 @@ class EditCardList(baseclass):
         self.tm.removeCards(sel)
     
     @pyqtSlot()
+    def update_table(self):
+        pass
+    
+    @pyqtSlot()
     def load_cards(self):
-        method = self.ui.comboBoxLoadMethod.currentText()
+        #Check if any selected cards have images
         selection = self.ui.tableView.selectionModel().selectedRows()
-        if method == load_image_options[0]:
-            #Single Image, Single Card
-            card = self.tm.card_list[selection[0].row()]
+        for row in selection:
+            card: SprayCard = self.tm.card_list[row.row()]
             if card.has_image:
                 if not self._are_you_sure(f'{card.name} already has image data, overwrite?'):
                     return
-            fname, _ = QFileDialog.getOpenFileName(self, 'Open file', 'home', "Image files (*.png)")
-            with open(fname, 'rb') as file:
-                binary_data = file.read()  
-            DBReadWriteImage.write_image_to_db(self.filepath, card, binary_data)
-            card.has_image = True
-            card.include_in_composite = True
+                else:
+                    break
+        # Use chosen load method
+        method = self.ui.comboBoxLoadMethod.currentText()
+        if method == load_image_options[0]:
+            #Single Images, Single Cards
+            self._load_cards_singles(selection)
         else:
             #Single Image, Multiple Cards
-            pass
+            self._load_cards_multi(selection)
+    
+    def _load_cards_singles(self, selection):
+        # TODO: migrate to singles batch method
+        card: SprayCard = self.tm.card_list[selection[0].row()]
+        if card.has_image:
+            if not self._are_you_sure(f'{card.name} already has image data, overwrite?'):
+                return
+        fname, _ = QFileDialog.getOpenFileName(self, 'Open file', 'home', "Image files (*.png)")
+        with open(fname, 'rb') as file:
+            binary_data = file.read()  
+        card.save_image_to_db(image=binary_data)
+        card.has_image = True
+        card.include_in_composite = True
+    
+    def _load_cards_multi(self, selection):
+        fname, _ = QFileDialog.getOpenFileName(self, 'Open file', 'home', "Image files (*.png)")
+        if fname == '': return
+        card_list = []
+        for row in selection:
+            card_list.append(self.tm.card_list[row.row()])
+        #Create popup and send current appInfo vals to popup
+        e = LoadCards(image_file=fname, card_list=card_list)
+        #Connect Slot to retrieve Vals back from popup
+        e.applied.connect(self.update_table)
+        #Start Loop
+        e.exec_()
     
     '''
     def select_file(self):
@@ -139,13 +168,13 @@ class EditCardList(baseclass):
         self.ui.labelFile.setText(fname)
         
     def editROIs(self):
-        #Create popup and send current appInfo vals to popup
-        e = LoadCards(self.ui.labelFile.text(), self.ui.tableView.selectionModel().selectedRows())
-        #Connect Slot to retrieve Vals back from popup
-        e.applied.connect()
-        #Start Loop
-        e.exec_()
+        
     '''
+    
+    def on_applied(self):
+        self.applied.emit()
+        self.accept()
+        self.close()
     
     def _are_you_sure(self, message):
         msg = QMessageBox()
@@ -157,15 +186,6 @@ class EditCardList(baseclass):
         msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         result = msg.exec()
         return result == QMessageBox.Yes
-    
-    def on_applied(self):
-        #Notify requestor
-        self.applied.emit()
-        self.accept()
-        self.close()
-
-    def on_rejected(self):
-        self.reject()
 
 class ComboBoxDelegate(QItemDelegate):
     def __init__(self, owner, itemList):
@@ -197,7 +217,7 @@ class CardTable(QAbstractTableModel):
         return len(self.card_list)
 
     def columnCount(self, parent = QModelIndex()) -> int:
-        return 5
+        return 6
 
     def headerData(self, column, orientation, role=Qt.DisplayRole):
         if role!=Qt.DisplayRole:
@@ -212,6 +232,8 @@ class CardTable(QAbstractTableModel):
             elif column == 3:
                 return QVariant('In Composite')
             elif column == 4:
+                return QVariant('Px Per In')
+            elif column == 5:
                 return QVariant('Thresh. Method')
             return QVariant()
 
@@ -256,6 +278,12 @@ class CardTable(QAbstractTableModel):
                 elif role == Qt.EditRole:
                     return card.include_in_composite
             elif j == 4:
+                # PPI
+                if role == Qt.DisplayRole:
+                    return str(card.dpi)
+                elif role == Qt.EditRole:
+                    return cfg.DPI_OPTIONS.index(str(card.dpi))
+            elif j == 5:
                 # Thresh Type
                 if role == Qt.DisplayRole:
                     if card.threshold_type == cfg.THRESHOLD_TYPE_GRAYSCALE:
@@ -271,9 +299,10 @@ class CardTable(QAbstractTableModel):
         j = index.column()
         if value is None or not role == Qt.EditRole:
             return False
+        card = self.card_list[i]
         if j == 0:
             #Name
-            self.card_list[i].name = value
+            card.name = value
             self.dataChanged.emit(index,index)
             return True
         elif j == 1:
@@ -283,19 +312,26 @@ class CardTable(QAbstractTableModel):
             except ValueError:
                 print('Attempt to set a non-numeric card location')
                 return False
-            self.card_list[i].location = value
+            card.location = value
             self.dataChanged.emit(index,index)
             return True 
         elif j == 2:
             return True
         elif j == 3:
             # Include In Composite
-            self.card_list[i].include_in_composite = value
+            card.include_in_composite = value
             self.dataChanged.emit(index,index)
+            return True
         elif j == 4:
-            # Threshold Type
-            self.card_list[i].threshold_type = value
+            # PPI
+            card.dpi = int(cfg.DPI_OPTIONS[value])
             self.dataChanged.emit(index,index)
+            return True
+        elif j == 5:
+            # Threshold Type
+            card.threshold_type = value
+            self.dataChanged.emit(index,index)
+            return True
         return False
 
     def shiftRows(self, selectedRows, moveUp):

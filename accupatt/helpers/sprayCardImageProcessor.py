@@ -1,4 +1,3 @@
-import os
 import numpy as np
 import cv2
 
@@ -20,11 +19,19 @@ class SprayCardImageProcessor:
         img_gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
         if self.sprayCard.threshold_method_grayscale == cfg.THRESHOLD_METHOD_AUTOMATIC:
             #Run Otsu Threshold, if threshold value is within ui-specified range, return it
-            thresh_val,_img_thresh = cv2.threshold(img_gray,0,255,cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+            thresh_val,_img_thresh = cv2.threshold(
+                src = img_gray,
+                thresh = 0, # This val isn't used when Otsu's method is employed
+                maxval = 255,
+                type = cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
             if thresh_val <= self.sprayCard.threshold_grayscale:
                 return _img_thresh
         #If manually thresholding, or auto returned threshold value outside ui-specified range, run manual thresh and return it
-        thresh_val,img_thresh = cv2.threshold(img_gray,self.sprayCard.threshold_grayscale,255,cv2.THRESH_BINARY_INV)
+        _, img_thresh = cv2.threshold(
+            src = img_gray,
+            thresh = self.sprayCard.threshold_grayscale,
+            maxval = 255,
+            type = cv2.THRESH_BINARY_INV)
         return img_thresh
 
     def _image_threshold_color(self, img):
@@ -63,14 +70,14 @@ class SprayCardImageProcessor:
         markers[unknown==255] = 0
         markers = cv2.watershed(img_src,markers)
         return markers
-
+    
     def image_contour(self, fillShapes=False):
         img_src = self.sprayCard.image_original()
         img_thresh = self._image_threshold(img=img_src)
         #Apply Watershed
-        markers = self._image_watershed(img_src, img_thresh)
+        #markers = self._image_watershed(img_src, img_thresh)
         #Re-thresh
-        _, img_thresh = cv2.threshold(markers.astype(np.uint8), 0, 255, cv2.THRESH_BINARY|cv2.THRESH_OTSU)
+        #_, img_thresh = cv2.threshold(markers.astype(np.uint8), 0, 255, cv2.THRESH_BINARY|cv2.THRESH_OTSU)
         #If fillshapes, use blank white image as src
         if fillShapes:
             img_src = np.zeros((img_src.shape[0], img_src.shape[1], 3), np.uint8)
@@ -78,11 +85,13 @@ class SprayCardImageProcessor:
         return self._image_contour(img_src, img_thresh, fillShapes)
 
     def _image_contour(self, img_src, img_thresh, fillShapes=False):
-        # Place Holders for stains
-        stains_all = []
-        stains_validated = []
+        # Card Size
+        self.sprayCard.area_px2 = img_src.shape[0] * img_src.shape[1]
+        # Clear stain lists
+        self.sprayCard.stain_areas_all_px2 = []
+        self.sprayCard.stain_areas_valid_px2 = []
         # Use img_thresh to find contours
-        contours, _ = cv2.findContours(img_thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(img_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         # When !fillShapes(default), set thickness will outline contours on img_src using these colors
         color_stain_counted = cfg.COLOR_STAIN_OUTLINE
         color_stain_not_counted = cfg.COLOR_STAIN_OUTLINE
@@ -92,37 +101,29 @@ class SprayCardImageProcessor:
             thickness = -1
             color_stain_not_counted = cfg.COLOR_STAIN_FILL_ALL
             color_stain_counted = cfg.COLOR_STAIN_FILL_VALID
-        # Iterate thorugh each contour
-        for i, c in enumerate(contours):
-            # Check if in bounds
+        # Iterate thorugh each contour to find includables
+        contours_include = []
+        for i, c in enumerate(contours):  
+            # If contour is below the min pixel size, don't count it anywhere
+            if cv2.contourArea(c) < 4:
+                continue
+            # If contour above min area size, count it for coverage only
+            self.sprayCard.stain_areas_all_px2.append(self._calc_contour_area(c))
+            # If contour touches edge, count it for coverage only
             x, y, w, h = cv2.boundingRect(c)
-            # If contour is below the min pixel size, fail
-            if c.shape[0] < 1:
-                continue
-            # Check if contour is entire image
-            if w >=img_src.shape[1]-1 and h >= img_src.shape[0]-1:
-                # Set area of image in stats
-                self.sprayCard.area_px2 = cv2.contourArea(c)
-                continue
-            # If not below size threshold or entire image, show contour
-            cv2.drawContours(img_src, contours, i, color_stain_not_counted, thickness=thickness)
-            # Add contour area to list
-            stains_all.append(self._calc_contour_area(c))
-            # If contour touches edge, fail
             if x <= 0 or y <= 0 or (x+w) >= img_src.shape[1]-1 or (y+h) >= img_src.shape[0]-1:
                 continue
-            # Draw record-worthy contour (over previously drawn contour, just new color)
-            cv2.drawContours(img_src, contours, i, color_stain_counted, thickness=thickness)
-            # Add validated contour area to list
-            stains_validated.append(self._calc_contour_area(c))
+            # Passes all checks, include in droplet analysis
+            contours_include.append(c)
+            self.sprayCard.stain_areas_valid_px2.append(self._calc_contour_area(c))
             # If fillShapes, draw white borders on contours to show watershed seperation
-            if fillShapes:
-                cv2.drawContours(img_src, contours, i, (255,255,255), thickness=1)
-
-        # Update SprayCard model object with area lists
-        self.sprayCard.stain_areas_all_px2 = stains_all
-        self.sprayCard.stain_areas_valid_px2 = stains_validated
-
+            #if fillShapes:
+            #    cv2.drawContours(img_src, contours, i, (255,255,255), thickness=1)
+        # Draw all contours
+        cv2.drawContours(img_src, contours, -1, color_stain_not_counted, thickness=thickness)
+        # Draw record-worthy contour (over previously drawn contour, just new color)
+        cv2.drawContours(img_src, contours_include, -1, color_stain_counted, thickness=thickness)
+        
         return img_src
 
     def _calc_contour_area(self, contour):

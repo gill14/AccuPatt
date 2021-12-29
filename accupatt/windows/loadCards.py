@@ -1,15 +1,19 @@
-from PyQt5.QtWidgets import QApplication, QGraphicsView, QListWidgetItem, QFileDialog, QAbstractItemView
-from PyQt5.QtCore import Qt, QSettings, pyqtSignal
+from PyQt5.QtWidgets import QApplication, QGraphicsPixmapItem
+from PyQt5.QtCore import Qt, QSettings, pyqtSignal, pyqtSlot
 from PyQt5 import uic
 
+import operator
 import os, sys
 import cv2
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.functions import mkPen
-from pyqtgraph.graphicsItems.ImageItem import ImageItem
 
-dpi_options = ['300','600','1200','2400']
+import accupatt.config as cfg
+
+orientation_options = ['Horizontal','Vertical']
+order_options = ['Increasing','Decreasing']
+scale_options = ['10%','20%','30%','40%','50%','60%','70%','80%','90%','100%']
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'loadCards.ui'))
 
@@ -17,71 +21,201 @@ class LoadCards(baseclass):
 
     applied = pyqtSignal()
 
-    def __init__(self, file, card_names):
+    def __init__(self, image_file, card_list):
         super().__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
-        # Your code will go here
         
-        # setting configuration options
-        pg.setConfigOptions(antialias=True)
- 
-        # creating image view view object
-        imv = self.ui.imageWidget
- 
-        img: ImageItem = pg.QtGui.QGraphicsPixmapItem(pg.QtGui.QPixmap(file))
-        imv.addItem(img)
-
-        # depending on your preference, you probably want to invert the image:
-        img.scale(1, -1)
-        rois = self.find_rois(file)
-        for roi in rois:
-            print('count')
-            pg.LabelItem(text='test',parent=roi, size='200pt', color='m')
-            roi.setParentItem(img)
-        # OR invert the entire view:
-        #imv.invertY(True)  # make sure ROI is drawn above image
-
-
+        #Import Settings
+        self.settings = QSettings('BG Application Consulting','AccuPatt')
+        self.dpi = self.settings.value('image_dpi', defaultValue='600', type=str)
+        self.orientation = self.settings.value('roi_acquisition_orientation', defaultValue=orientation_options[0], type=str)
+        self.order = self.settings.value('roi_acquisition_order', defaultValue=order_options[0], type=str)
+        self.scale = self.settings.value('roi_scale', defaultValue='70%', type=str)
+        
+        # Populate controls with static options, selections from settings
+        self.ui.comboBoxDPI.addItems(cfg.DPI_OPTIONS)
+        self.ui.comboBoxDPI.setCurrentIndex(cfg.DPI_OPTIONS.index(self.dpi))
+        self.ui.comboBoxOrientation.addItems(orientation_options)
+        self.ui.comboBoxOrientation.setCurrentIndex(orientation_options.index(self.orientation))
+        self.ui.comboBoxOrder.addItems(order_options)
+        self.ui.comboBoxOrder.setCurrentIndex(order_options.index(self.order))
+        self.ui.comboBoxScale.addItems(scale_options)
+        self.ui.comboBoxScale.setCurrentIndex(scale_options.index(self.scale))
+        
+        #List of cards
+        self.card_list = card_list
+        for card in self.card_list:
+            self.ui.listWidget.addItem(card.name)
+        
+        # Slots for controls
+        self.ui.comboBoxDPI.currentIndexChanged[int].connect(self.dpi_changed)
+        self.ui.comboBoxOrientation.currentIndexChanged[int].connect(self.orientation_changed)
+        self.ui.comboBoxOrder.currentIndexChanged[int].connect(self.order_changed)
+        self.ui.comboBoxScale.currentIndexChanged[int].connect(self.scale_changed)
         self.ui.buttonBox.accepted.connect(self.on_applied)
-        self.ui.buttonBox.rejected.connect(self.reject)
+        self.ui.buttonBox.rejected.connect(self.on_rejected)
+        
+        # Set pyqtgraph global options
+        pg.setConfigOptions(antialias=True)
+        
+        # Lock pixels as square in image view to prevent distortion
+        self.ui.plotWidget.getViewBox().setAspectLocked()
+        
+        # Load Image from File, invert vertically, add it to plotWidget
+        self.img: QGraphicsPixmapItem = pg.QtGui.QGraphicsPixmapItem(pg.QtGui.QPixmap(image_file))
+        #self.img: ImageItem = pg.ImageItem(image=pg.QtGui.QGraphicsPixmapItem(pg.QtGui.QPixmap(image_file)))
+        self.img.scale(1, -1)
+        self.ui.plotWidget.addItem(self.img)
+       
+        # Only search image for ROIs once
+        self.roi_rectangles = self._find_rois(image_file)
+        # Run initial drawing of ROIs
+        self.rois = []
+        self.draw_rois()
+        
 
         # Your code ends here
         self.show()
+        self.show_image_characteristics()
+        
+    def show_image_characteristics(self):
+        dpi = int(self.dpi)
+        h_px = self.img.pixmap().height()
+        w_px = self.img.pixmap().width()
+        self.ui.label_size.setText(f'{(w_px/dpi):.1f}"x{(h_px/dpi):.1f}"')
+        self.ui.label_pixel_area.setText(f'{int(25400 / dpi)} microns')
     
-    def find_rois(self, image_file):
+    def draw_rois(self):
+        # Order card rectangles based on selected options
+        new_rois = self._sort_rois(self.roi_rectangles, self.orientation, self.order)
+        # Scale rois
+        #new_rois = self._scale_rois(new_rois, self.scale)
+        # Clear any previous rois from ViewBox
+        for r in self.rois:
+            self.ui.plotWidget.getViewBox().removeItem(r)
+        # Add rois to image with labels
+        self.rois = []
+        for i, r in enumerate(new_rois):
+            # Only draw the ROI if supplied list supports it
+            if i < self.ui.listWidget.count():
+                x, y, w, h = r
+                roi = pg.RectROI([x, y],[w, h],
+                            pen=mkPen('m',width=3),
+                            hoverPen=mkPen('r',width=5),
+                            handlePen=mkPen('r',width=3),
+                            handleHoverPen=mkPen('r',width=5),
+                            removable=True, centered=True, sideScalers=True)
+                roi.scale(s=float(self.scale[0:len(self.scale)-1])/100,center=[0.5,0.5])
+                text = self.card_list[i].name
+                label = pg.TextItem(text=text, color='m')
+                label.setParentItem(roi)
+                roi.setParentItem(self.img)
+                self.rois.append(roi)
+         
+    @pyqtSlot(int)
+    def dpi_changed(self, newIndex):
+        self.dpi = cfg.DPI_OPTIONS[newIndex]
+        self.show_image_characteristics()
+            
+    @pyqtSlot(int)
+    def orientation_changed(self, newIndex):
+        self.orientation = orientation_options[newIndex]
+        self.draw_rois()
+       
+    @pyqtSlot(int)
+    def order_changed(self, newIndex):
+        self.order = order_options[newIndex]
+        self.draw_rois()
+        
+    @pyqtSlot(int)
+    def scale_changed(self, newIndex):
+        self.scale = scale_options[newIndex]
+        self.draw_rois()
+        
+    @pyqtSlot()
+    def on_applied(self):
+        self.settings.setValue('roi_acquisition_orientation', self.ui.comboBoxOrientation.currentText())
+        self.settings.setValue('roi_acquisition_order', self.ui.comboBoxOrder.currentText())
+        
+        self.applied.emit()
+        self.accept()
+        self.close()
+     
+    @pyqtSlot()    
+    def on_rejected(self):
+        self.reject()
+        self.close()
+    
+    def _sort_rois(self, rois, orientation, order):
+        rois_original = rois.copy()
+        rois_sorted = []
+        # Loop through all rois, removing from old list as added to new sorted list
+        while len(rois_sorted) < len(rois):
+            # Compute distance from origin for each
+            dists_from_origin = []
+            for r in rois_original:
+                x, y, w, h = r
+                dists_from_origin.append(np.sqrt(x**2+y**2))
+            # Sort rois by dist to origin, grab one nearest origin
+            x1, y1, w1, h1 = [r for _,r in sorted(zip(dists_from_origin,rois_original))][0]
+            # Create intermediate list for current row/column of first_roi
+            current = []
+            for r in rois_original:
+                x, y, w, h = r
+                # Check if in same row/col as first_roi, if so add to list
+                if orientation == 'Horizontal':
+                    y_c = y + h/2
+                    if y_c >= y1 and y_c <= y1+h1:
+                        current.append(r)
+                else:
+                    x_c = x + w/2
+                    if x_c >= x1 and x_c <= x1+w1:
+                        current.append(r)
+            # Sort current row/col list
+            current = sorted(current, key=operator.itemgetter(0 if orientation == 'Horizontal' else 1), reverse=(order=='Decreasing'))
+            # Add sorted row/column to either beginning or end of new list
+            if order == 'Decreasing':
+                rois_sorted[0:0] = current
+            else:
+                rois_sorted.extend(current)
+            # Remove current row/col rois from original list
+            rois_original = [r for r in rois_original if r not in current]
+        # Once rois_sorted contains all original rois, return it
+        return rois_sorted      
+    
+    def _scale_rois(self, rois, scale):
+        rois_scaled = []
+        percent = float(scale[0:len(scale)-1])/100
+        print(percent)
+        for r in rois:
+            x, y, w, h = r
+            w_scaled = int(w*percent)
+            h_scaled = int(h*percent)
+            rois_scaled.append((int(x+w_scaled/4),int(y+h_scaled/4),w_scaled,h_scaled))
+        return rois_scaled
+    
+    def _find_rois(self, image_file):
         img = cv2.imread(image_file)
+        
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         _,img_thresh = cv2.threshold(img_gray,0,255,cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
         #cv2.imshow('thresh',img_thresh)
         # Use img_thresh to find contours
         contours, _ = cv2.findContours(img_thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         
-        rois = []
-        for i, c in enumerate(contours):
+        roi_rectangles = []
+        for c in contours:
             # Check if in bounds
             x, y, w, h = cv2.boundingRect(c)
             # If contour is below the min pixel size, fail
             if cv2.contourArea(c) < 5000:
                 continue
-            # Check if contour is entire image
-            if w >=img.shape[1]-1 and h >= img.shape[0]-1:
-                continue
             # If contour touches edge, fail
             if x <= 0 or y <= 0 or (x+w) >= img.shape[1]-1 or (y+h) >= img.shape[0]-1:
                 continue
-            rois.append(pg.RectROI([x,y],[w,h],pen=mkPen('m',width=3),hoverPen=mkPen('r',width=5),handlePen=mkPen('m',width=3),removable=True, centered=True, sideScalers=True))
-            
-        return rois
-
-    def on_applied(self):
-        
-        #Notify requestor
-        self.applied.emit()
-        self.accept
-
-    def on_rejected(self):
-        self.reject
+            roi_rectangles.append((x, y, w, h)) 
+        return roi_rectangles
 
 
 if __name__ == '__main__':

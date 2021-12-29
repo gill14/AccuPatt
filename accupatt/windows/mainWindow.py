@@ -404,13 +404,9 @@ class MainWindow(baseclass):
         #Open the Edit Card List window for currently selected pass
         e = EditCardList(passData=p, filepath=self.currentFile)
         #Connect Slot to retrieve Vals back from popup
-        e.applied.connect(self.updateSprayCardList)
+        e.applied.connect(self.sprayCardPassSelectionChanged)
         #Start Loop
         e.exec_()
-
-    def updateSprayCardList(self):
-        self.saveFile()
-        self.sprayCardPassSelectionChanged()
 
     def editThreshold(self):
         #Abort if no card image

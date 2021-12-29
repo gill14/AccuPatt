@@ -25,6 +25,9 @@ STRING_DRIVE_FWD_STOP = 'AD\r'
 STRING_DRIVE_REV_START = 'BD-\r'
 STRING_DRIVE_REV_STOP = 'BD\r'
 
+# SprayCard DPI
+DPI_OPTIONS = ['300','600','1200','2400']
+
 # SprayCard Inclusion Constants
 HAS_IMAGE_NO = 0
 HAS_IMAGE_NO_STRING = 'No'
