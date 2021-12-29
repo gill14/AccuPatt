@@ -1,11 +1,10 @@
-import os, math, cv2
+import math, cv2
+import sqlite3
 from PyQt5.QtCore import QSettings
 import numpy as np
-import json
 import uuid
 
 import accupatt.config as cfg
-from accupatt.helpers.dBReadWriteImage import DBReadWriteImage
 from accupatt.helpers.sprayCardImageProcessor import SprayCardImageProcessor
 from accupatt.helpers.atomizationModel import AtomizationModel
 class SprayCard:
@@ -20,32 +19,20 @@ class SprayCard:
         self.has_image = False
         self.include_in_composite = cfg.INCLUDE_IN_COMPOSITE_NO
 
-        self.threshold_type = cfg.THRESHOLD_TYPE__DEFAULT
-        self.threshold_method_color = cfg.THRESHOLD_METHOD_COLOR__DEFAULT
-        self.threshold_method_grayscale = cfg.THRESHOLD_METHOD_GRAYSCALE__DEFAULT
-        self.threshold_grayscale = cfg.THRESHOLD_GRAYSCALE__DEFAULT
-        self.threshold_color_hue = cfg.THRESHOLD_COLOR_HUE__DEFAULT
-        self.threshold_color_saturation = cfg.THRESHOLD_COLOR_SATURATION__DEFAULT
-        self.threshold_color_brightness = cfg.THRESHOLD_COLOR_BRIGHTNESS__DEFAULT
         self.dpi = dpi
         self.area_px2 = 0.0
         self.stain_areas_all_px2 = []
         self.stain_areas_valid_px2 = []
-        self.spread_method = cfg.SPREAD_METHOD__DEFAULT
-        self.spread_factor_a = cfg.SPREAD_FACTOR_A__DEFAULT
-        self.spread_factor_b = cfg.SPREAD_FACTOR_B__DEFAULT
-        self.spread_factor_c = cfg.SPREAD_FACTOR_C__DEFAULT
 
         self._load_defaults()
     
     def image_original(self):
-        #img = cv2.imread(self.read_image_from_db(self.filepath, self.id))
-        return DBReadWriteImage.read_image_from_db(self.filepath, self.id)
+        return self._read_image_from_db()
 
     def image_processed(self, fillShapes):
-        scp = SprayCardImageProcessor(self)
-        # Returns processed image AND POPULATES STAIN AREA ARRAYS
-        return SprayCardImageProcessor.image_contour(scp, fillShapes)
+        # Returns processed image
+        # And Populates Stain Area Lists
+        return SprayCardImageProcessor(sprayCard=self).image_contour(fillShapes)
 
     def percent_coverage(self):
         #Protect from div/0 error or empty stain array
@@ -58,6 +45,8 @@ class SprayCard:
 
     def stains_per_in2(self):
         # Return a rounded int value
+        if self.area_px2 == 0:
+            return 0
         return round(len(self.stain_areas_all_px2) / self._px2_to_in2(self.area_px2)) 
 
     def volumetric_stats(self):
@@ -120,6 +109,17 @@ class SprayCard:
         return stain_dia
 
     def _load_defaults(self):
+        self.threshold_type = cfg.THRESHOLD_TYPE__DEFAULT
+        self.threshold_method_color = cfg.THRESHOLD_METHOD_COLOR__DEFAULT
+        self.threshold_method_grayscale = cfg.THRESHOLD_METHOD_GRAYSCALE__DEFAULT
+        self.threshold_grayscale = cfg.THRESHOLD_GRAYSCALE__DEFAULT
+        self.threshold_color_hue = cfg.THRESHOLD_COLOR_HUE__DEFAULT
+        self.threshold_color_saturation = cfg.THRESHOLD_COLOR_SATURATION__DEFAULT
+        self.threshold_color_brightness = cfg.THRESHOLD_COLOR_BRIGHTNESS__DEFAULT
+        self.spread_method = cfg.SPREAD_METHOD__DEFAULT
+        self.spread_factor_a = cfg.SPREAD_FACTOR_A__DEFAULT
+        self.spread_factor_b = cfg.SPREAD_FACTOR_B__DEFAULT
+        self.spread_factor_c = cfg.SPREAD_FACTOR_C__DEFAULT
         # Load in Settings
         self.settings = QSettings('BG Application Consulting','AccuPatt')
         if self.spread_method == None:
@@ -130,6 +130,51 @@ class SprayCard:
             self.spread_factor_b = self.settings.value('spread_factor_b', defaultValue=0.0009, type=float)
         if self.spread_factor_c == None:
             self.spread_factor_c = self.settings.value('spread_factor_c', defaultValue=1.6333, type=float)
+
+    def _read_image_from_db(self):
+        if self.filepath == None: return
+        img = None
+        try:
+            # Opens a file connection to the db
+            conn = sqlite3.connect(self.filepath)
+            # Get a cursor object
+            c = conn.cursor()
+            # SprayCard Table
+            c.execute('''SELECT image FROM spray_cards WHERE id = ?''',(self.id,))
+            # Convert the image to a numpy array
+            image = np.asarray(bytearray(c.fetchone()[0]), dtype="uint8")
+            # Decode the image to a cv2 image
+            img = cv2.imdecode(image, cv2.IMREAD_COLOR)
+        # Catch the exception
+        except Exception as e:
+            # Roll back any change if something goes wrong
+            conn.rollback()
+            raise e
+        finally:
+            # Close the db connection
+            conn.close()
+        return img
+    
+    def _write_image_to_db(self, image):
+        try:
+            # Opens a file connection to the db
+            db = sqlite3.connect(self.filepath)
+            # Request update of card record in table spray_cards by sprayCard.id
+            db.cursor().execute('''UPDATE spray_cards SET image = ? WHERE id = ?''',
+                                (sqlite3.Binary(image), self.id))
+            # Commit the change
+            db.commit()
+        # Catch the exception
+        except Exception as e:
+            # Roll back any change if something goes wrong
+            db.rollback()
+            raise e
+        finally:
+            # Close the db connection
+            db.close()
+    
+    def save_image_to_db(self, image):
+        self._write_image_to_db(image=image)
 
     def set_threshold_type(self, type=cfg.THRESHOLD_TYPE_GRAYSCALE):
         self.threshold_type = type
@@ -151,30 +196,4 @@ class SprayCard:
 
     def set_threshold_color_brightness(self, min: 0, max: 255):
         self.threshold_color_brightness = [min,max]
-
-    def to_json(self):
-        '''
-        convert the instance of this class to json
-        '''
-        return json.dumps(self, indent = 4, default=lambda o: o.__dict__)
-
-    def load_from_json(json_dict, folder):
-        sc = SprayCard()
-        sc.name = json_dict['name']
-        filepath = os.path.join(folder, sc.name+'.png')
-        if os.path.exists(filepath): sc.filepath = filepath
-        sc.dpi = json_dict['dpi']
-        sc.threshold_type = json_dict['threshold_type']
-        sc.threshold_method_color = json_dict['threshold_method_color']
-        sc.threshold_method_grayscale = json_dict['threshold_method_grayscale']
-        sc.threshold_grayscale = json_dict['threshold_grayscale']
-        sc.threshold_color_hue = json_dict['threshold_color_hue']
-        sc.threshold_color_saturation = json_dict['threshold_color_saturation']
-        sc.threshold_color_brightness = json_dict['threshold_color_brightness']
-        sc.spread_method = json_dict['spread_method']
-        sc.spread_factor_a = json_dict['spread_factor_a']
-        sc.spread_factor_b = json_dict['spread_factor_b']
-        sc.spread_factor_c = json_dict['spread_factor_c']
-        return sc
-
     

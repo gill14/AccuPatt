@@ -17,7 +17,7 @@ class DBReadWrite:
         file = '/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt/testing/N802ET 03.db'
         
         try:
-            # Opens a file called mydb with a SQLite3 DB
+            # Opens a file connection to the db
             conn = sqlite3.connect(file)
             # Get a cursor object
             c = conn.cursor()

@@ -6,7 +6,6 @@ from shutil import copy2
 
 import accupatt.config as cfg
 from accupatt.helpers.dBReadWrite import DBReadWrite
-from accupatt.helpers.dBReadWriteImage import DBReadWriteImage
 from accupatt.models.seriesData import SeriesData
 from accupatt.models.appInfo import AppInfo
 from accupatt.models.passData import Pass
@@ -25,27 +24,24 @@ class DataFileImporter:
         if not 'Card Data' in wb.sheetnames:
             return s
         sh = wb['Card Data']
-        on_pass = sh['B2'].value
-        #Card Pass
-        for p in s.passes:
-            assert isinstance(p, Pass)
-            if p.number == on_pass:
-                for col in range(5,14):
-                    name = sh.cell(row=1,column=col).value
-                    for c in p.spray_cards:
-                        if c.name != name:
-                            continue
-                        if not sh.cell(row=2,column=col).value:
-                            continue
-                        #Add image to db
-                        sh_image = wb[name]
-                        image_loader = SheetImageLoader(sh_image)
-                        #get the image
-                        image = image_loader.get('A1')
-                        stream = io.BytesIO()
-                        image.save(stream, format="PNG")
-                        imagebytes = stream.getvalue()
-                        DBReadWriteImage.write_image_to_db(file_db, c, imagebytes)
+        on_pass = int(sh['B2'].value)
+        # Loop over declard cards and save images to db if has_image
+        p: Pass = s.passes[on_pass-1]
+        c: SprayCard
+        for c in p.spray_cards:
+            c.filepath = file_db
+            if c.has_image:
+                # Get the image from applicable sheet
+                image_loader = SheetImageLoader(wb[c.name])
+                image = image_loader.get('A1')
+                # Conver to bytestream
+                stream = io.BytesIO()
+                image.save(stream, format="PNG")
+                # Save it to the database
+                c.save_image_to_db(stream.getvalue())
+                # Reclaim resources
+                stream.close()
+                
         return s
     
     def load_from_accupatt_1_file(file):
@@ -172,16 +168,13 @@ class DataFileImporter:
         df_excitation = df_excitation.append(dd, ignore_index=True)
 
         #Pull patterns and place them into seriesData.passes dicts by name (created above)
-        for column in df_info:
-            if not str(df_info.at[3,column]) == '':
-                p = s.passes[df_info.columns.get_loc(column)]
-                p.trim_l = 0 if df_info.at[0,column] == '' else int(df_info.at[0,column])
-                p.trim_r = 0 if df_info.at[1,column] == '' else int(df_info.at[1,column])
-                p.trim_v = 0 if df_info.at[2,column] == '' else df_info.at[2,column]
-                p.data = df_emission[['loc',column]]
-                p.data_ex = df_excitation[['loc',column]]
-                s.passes[df_info.columns.get_loc(column)] = p
-                    
+        p: Pass
+        for p in s.passes:
+            p.trim_l = 0 if df_info.at[0,p.name] == '' else int(df_info.at[0,p.name])
+            p.trim_r = 0 if df_info.at[1,p.name] == '' else int(df_info.at[1,p.name])
+            p.trim_v = 0 if df_info.at[2,p.name] == '' else df_info.at[2,p.name]
+            p.data = df_emission[['loc',p.name]]
+            p.data_ex = df_excitation[['loc',p.name]]                
 
         #Create SprayCards if applicable
         wb = openpyxl.load_workbook(file, read_only=True)
@@ -189,7 +182,7 @@ class DataFileImporter:
             return s
         sh = wb['Card Data']
         spacing = sh['B1'].value
-        on_pass = sh['B2'].value
+        on_pass = int(sh['B2'].value)
         spread_method_text = sh['B3'].value
         spread_method = cfg.SPREAD_METHOD_ADAPTIVE
         if spread_method_text == cfg.SPREAD_METHOD_DIRECT_STRING:
@@ -200,25 +193,23 @@ class DataFileImporter:
         spread_b = sh['B5'].value
         spread_c = sh['B6'].value
         #Card Pass
-        for p in s.passes:
-            assert isinstance(p, Pass)
-            if p.number == int(on_pass):
-                for col in range(5,14):
-                    if not sh.cell(row=1,column=col).value:
-                        continue
-                    c = SprayCard(name=sh.cell(row=1,column=col).value)
-                    c.location = (col-9)*spacing
-                    if not sh.cell(row=2, column=col).value:
-                        continue
-                    c.has_image = 1 if sh.cell(row=2,column=col).value else 0
-                    c.include_in_composite = 1 if sh.cell(row=3,column=col).value else 0
-                    c.threshold_type = cfg.THRESHOLD_TYPE_GRAYSCALE
-                    c.threshold_grayscale = sh.cell(row=4,column=col).value
-                    c.spread_method = spread_method
-                    c.spread_factor_a = spread_a
-                    c.spread_factor_b = spread_b
-                    c.spread_factor_c = spread_c
-                    p.spray_cards.append(c)
+        p: Pass = s.passes[on_pass-1]
+        for col in range(5,14):
+            if not sh.cell(row=1,column=col).value:
+                continue
+            c = SprayCard(name=sh.cell(row=1,column=col).value)
+            c.location = (col-9)*spacing
+            c.has_image = 1 if sh.cell(row=2,column=col).value else 0
+            c.include_in_composite = 1 if sh.cell(row=3,column=col).value else 0
+            if c.has_image:
+                c.threshold_grayscale = sh.cell(row=4,column=col).value
+            c.threshold_type = cfg.THRESHOLD_TYPE_GRAYSCALE
+            c.spread_method = spread_method
+            c.spread_factor_a = spread_a
+            c.spread_factor_b = spread_b
+            c.spread_factor_c = spread_c
+            p.spray_cards.append(c)
+                
         return s
     
     #Below methods were for intermediate testing, no long term need to keep
