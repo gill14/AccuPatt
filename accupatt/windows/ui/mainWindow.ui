@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1263</width>
-    <height>659</height>
+    <width>1084</width>
+    <height>624</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -48,7 +48,7 @@
        <enum>QTabWidget::North</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideRight</enum>
@@ -3504,7 +3504,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1263</width>
+     <width>1084</width>
      <height>24</height>
     </rect>
    </property>

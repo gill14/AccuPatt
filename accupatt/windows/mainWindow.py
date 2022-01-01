@@ -460,10 +460,8 @@ class MainWindow(baseclass):
             self.ui.labelRS.setText('')
             self.ui.labelDSC.setText('')
             return
-        # Left Image (1)
-        cvImg1 = sprayCard.image_processed(fillShapes=False)
-        # Right Image (2)
-        cvImg2 = sprayCard.image_processed(fillShapes=True)
+        #Left Image (1) Right Image (2)
+        cvImg1, cvImg2 = sprayCard.images_processed()
         self.ui.splitCardWidget.updateSprayCardView(cvImg1, cvImg2)
         #Stats
         dv01, dv05, dv09, rs, dsc = sprayCard.volumetric_stats()
