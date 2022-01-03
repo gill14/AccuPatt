@@ -405,6 +405,7 @@ class MainWindow(baseclass):
         e = EditCardList(passData=p, filepath=self.currentFile)
         #Connect Slot to retrieve Vals back from popup
         e.applied.connect(self.sprayCardPassSelectionChanged)
+        e.passDataChanged.connect(self.saveFile)
         #Start Loop
         e.exec_()
 

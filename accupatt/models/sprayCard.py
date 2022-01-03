@@ -28,10 +28,10 @@ class SprayCard:
         self._load_defaults()
     
     def image_original(self):
-        return self._read_image_from_db()
+        return sprayCardImageFileHandler.read_image_from_file(self)
 
     def images_processed(self):
-        # Returns processed images (overlay on og, binary mask)
+        # Returns processed images as tuple (overlay on og, binary mask)
         # And Populates Stain Area Lists
         return SprayCardImageProcessor(sprayCard=self).draw_and_log_stains()
 
@@ -97,7 +97,7 @@ class SprayCard:
         return area_px2 * um_per_px * um_per_px
     
     def _px2_to_in2(self, area_px2):
-        return area_px2 / (self.dpi * self.dpi)
+        return area_px2 / (self.dpi ** 2)
 
     def _stain_dia_to_drop_dia(self, stain_dia):
         if self.spread_method == cfg.SPREAD_METHOD_DIRECT:
@@ -131,51 +131,9 @@ class SprayCard:
             self.spread_factor_b = self.settings.value('spread_factor_b', defaultValue=0.0009, type=float)
         if self.spread_factor_c == None:
             self.spread_factor_c = self.settings.value('spread_factor_c', defaultValue=1.6333, type=float)
-
-    def _read_image_from_db(self):
-        if self.filepath == None: return
-        img = None
-        try:
-            # Opens a file connection to the db
-            conn = sqlite3.connect(self.filepath)
-            # Get a cursor object
-            c = conn.cursor()
-            # SprayCard Table
-            c.execute('''SELECT image FROM spray_cards WHERE id = ?''',(self.id,))
-            # Convert the image to a numpy array
-            image = np.asarray(bytearray(c.fetchone()[0]), dtype="uint8")
-            # Decode the image to a cv2 image
-            img = cv2.imdecode(image, cv2.IMREAD_COLOR)
-        # Catch the exception
-        except Exception as e:
-            # Roll back any change if something goes wrong
-            conn.rollback()
-            raise e
-        finally:
-            # Close the db connection
-            conn.close()
-        return img
     
-    def _write_image_to_db(self, image):
-        try:
-            # Opens a file connection to the db
-            db = sqlite3.connect(self.filepath)
-            # Request update of card record in table spray_cards by sprayCard.id
-            db.cursor().execute('''UPDATE spray_cards SET image = ? WHERE id = ?''',
-                                (sqlite3.Binary(image), self.id))
-            # Commit the change
-            db.commit()
-        # Catch the exception
-        except Exception as e:
-            # Roll back any change if something goes wrong
-            db.rollback()
-            raise e
-        finally:
-            # Close the db connection
-            db.close()
-    
-    def save_image_to_db(self, image):
-        self._write_image_to_db(image=image)
+    def save_image_to_file(self, image):
+        return sprayCardImageFileHandler.save_image_to_file(self, image)
 
     def set_threshold_type(self, type=cfg.THRESHOLD_TYPE_GRAYSCALE):
         self.threshold_type = type
@@ -197,7 +155,70 @@ class SprayCard:
 
     def set_threshold_color_brightness(self, min: 0, max: 255):
         self.threshold_color_brightness = [min,max]
-        
+      
+class sprayCardImageFileHandler:
+    
+    def read_image_from_file(sprayCard: SprayCard):
+        if sprayCard.filepath == None: return
+        if sprayCard.filepath[-1] == 'x':
+            return sprayCardImageFileHandler._read_image_from_xlsx(sprayCard=sprayCard)
+        elif sprayCard.filepath[-1] == 'b':
+            return sprayCardImageFileHandler._read_image_from_db(sprayCard=sprayCard)
+        return
+    
+    def save_image_to_file(sprayCard: SprayCard, image):
+        if sprayCard.filepath == None: return
+        if sprayCard.filepath[-1] == 'b':
+            return sprayCardImageFileHandler._write_image_to_db(sprayCard=sprayCard, image=image)
+    
+    def _read_image_from_xlsx(sprayCard: SprayCard):
+        pass
+    
+    def _read_image_from_db(sprayCard: SprayCard):
+        if sprayCard.filepath == None: return
+        img = None
+        try:
+            # Opens a file connection to the db
+            conn = sqlite3.connect(sprayCard.filepath)
+            # Get a cursor object
+            c = conn.cursor()
+            # SprayCard Table
+            c.execute('''SELECT image FROM spray_cards WHERE id = ?''',(sprayCard.id,))
+            # Convert the image to a numpy array
+            image = np.asarray(bytearray(c.fetchone()[0]), dtype="uint8")
+            # Decode the image to a cv2 image
+            img = cv2.imdecode(image, cv2.IMREAD_COLOR)
+        # Catch the exception
+        except Exception as e:
+            # Roll back any change if something goes wrong
+            conn.rollback()
+            raise e
+        finally:
+            # Close the db connection
+            conn.close()
+        return img
+    
+    def _write_image_to_db(sprayCard: SprayCard, image):
+        success = False
+        try:
+            # Opens a file connection to the db
+            db = sqlite3.connect(sprayCard.filepath)
+            # Request update of card record in table spray_cards by sprayCard.id
+            db.cursor().execute('''UPDATE spray_cards SET image = ? WHERE id = ?''',
+                                (sqlite3.Binary(image), sprayCard.id))
+            # Commit the change
+            db.commit()
+            sprayCard.has_image = True
+            success = True
+        # Catch the exception
+        except Exception as e:
+            # Roll back any change if something goes wrong
+            db.rollback()
+            raise e
+        finally:
+            # Close the db connection
+            db.close()
+        return success
 class SprayCardImageProcessor:
 
     def __init__(self, sprayCard):

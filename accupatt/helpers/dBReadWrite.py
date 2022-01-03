@@ -116,23 +116,23 @@ class DBReadWrite:
                 c.execute('''SELECT id, name, location, include_in_composite, threshold_type, threshold_method_color, threshold_method_grayscale, threshold_grayscale, threshold_color_hue_min, threshold_color_hue_max, threshold_color_saturation_min, threshold_color_saturation_max, threshold_color_brightness_min, threshold_color_brightness_max, dpi, spread_method, spread_factor_a, spread_factor_b, spread_factor_c, has_image FROM spray_cards WHERE pass_id = ?''',(p.id,))
                 cards = c.fetchall()
                 for row in cards:
-                    c = SprayCard(id=row[0], name=row[1], filepath=str(file))
-                    c.location = row[2]
-                    c.include_in_composite = row[3]
-                    c.threshold_type = row[4]
-                    c.threshold_method_color = row[5]
-                    c.threshold_method_grayscale = row[6]
-                    c.threshold_grayscale = row[7]
-                    c.threshold_color_hue = [row[8],row[9]]
-                    c.threshold_color_saturation = [row[10],row[11]]
-                    c.threshold_color_brightness = [row[12],row[13]]
-                    c.dpi = row[14]
-                    c.spread_method = row[15]
-                    c.spread_factor_a = row[16]
-                    c.spread_factor_b = row[17]
-                    c.spread_factor_c = row[18]
-                    c.has_image = row[19]
-                    p.spray_cards.append(c)
+                    sc = SprayCard(id=row[0], name=row[1], filepath=str(file))
+                    sc.location = row[2]
+                    sc.include_in_composite = row[3]
+                    sc.threshold_type = row[4]
+                    sc.threshold_method_color = row[5]
+                    sc.threshold_method_grayscale = row[6]
+                    sc.threshold_grayscale = row[7]
+                    sc.threshold_color_hue = [row[8],row[9]]
+                    sc.threshold_color_saturation = [row[10],row[11]]
+                    sc.threshold_color_brightness = [row[12],row[13]]
+                    sc.dpi = row[14]
+                    sc.spread_method = row[15]
+                    sc.spread_factor_a = row[16]
+                    sc.spread_factor_b = row[17]
+                    sc.spread_factor_c = row[18]
+                    sc.has_image = row[19]
+                    p.spray_cards.append(sc)
                 s.passes.append(p)
         # Catch the exception
         except Exception as e:
@@ -195,16 +195,23 @@ class DBReadWrite:
                             ON CONFLICT(id) DO UPDATE SET
                             ground_speed = excluded.ground_speed, ground_speed_units = excluded.ground_speed_units, spray_height = excluded.spray_height, spray_height_units = excluded.spray_height_units, pass_heading = excluded.pass_heading, wind_direction = excluded.wind_direction, wind_speed = excluded.wind_speed, wind_speed_units = excluded.wind_speed_units, temperature = excluded.temperature, temperature_units = excluded.temperature_units, humidity = excluded.humidity, include_in_composite = excluded.include_in_composite, excitation_wav = excluded.excitation_wav, emission_wav = excluded.emission_wav, trim_left = excluded.trim_left, trim_right = excluded.trim_right, trim_vertical = excluded.trim_vertical, excitation_data = excluded.excitation_data, emission_data = excluded.emission_data, data_loc_units = excluded.data_loc_units''',
                             (p.id, seriesData.id, p.number, p.ground_speed, p.ground_speed_units, p.spray_height, p.spray_height_units, p.pass_heading, p.wind_direction, p.wind_speed, p.wind_speed_units, p.temperature, p.temperature_units, p.humidity, p.include_in_composite, p.excitation_wav, p.emission_wav, p.trim_l, p.trim_r, p.trim_v, p.data_ex.to_json(), p.data.to_json(), p.data_loc_units))
-                if isinstance(p.spray_cards, type(None)):
-                    continue
                 for card in p.spray_cards:
-                    assert isinstance(card, SprayCard)
-                    img = None
-                    #Fix after done with intermediate file type (folders)
-                    if not isinstance(card.filepath, type(None)):
-                        img = open(card.filepath, 'rb').read()
-                        img = sqlite3.Binary(img)
                     conn.execute('''INSERT INTO spray_cards (id, pass_id, name, location, include_in_composite, threshold_type, threshold_method_color, threshold_method_grayscale, threshold_grayscale, threshold_color_hue_min, threshold_color_hue_max, threshold_color_saturation_min, threshold_color_saturation_max, threshold_color_brightness_min, threshold_color_brightness_max, dpi, spread_method, spread_factor_a, spread_factor_b, spread_factor_c, has_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                                  ON CONFLICT(id) DO UPDATE SET
                                  name = excluded.name, location = excluded.location, include_in_composite = excluded.include_in_composite, threshold_type = excluded.threshold_type, threshold_method_color = excluded.threshold_method_color, threshold_method_grayscale = excluded.threshold_method_grayscale, threshold_grayscale = excluded.threshold_grayscale, threshold_color_hue_min = excluded.threshold_color_hue_min, threshold_color_hue_max = excluded.threshold_color_hue_max, threshold_color_saturation_min = excluded.threshold_color_saturation_min, threshold_color_saturation_max = excluded.threshold_color_saturation_max, threshold_color_brightness_min = excluded.threshold_color_brightness_min, threshold_color_brightness_max = excluded.threshold_color_brightness_max, dpi = excluded.dpi, spread_method = excluded.spread_method, spread_factor_a = excluded.spread_factor_a, spread_factor_B = excluded.spread_factor_b, spread_factor_c = excluded.spread_factor_c, has_image = excluded.has_image''',
                                  (card.id, p.id, card.name, card.location, card.include_in_composite, card.threshold_type, card.threshold_method_color, card.threshold_method_grayscale, card.threshold_grayscale, card.threshold_color_hue[0], card.threshold_color_hue[1], card.threshold_color_saturation[0], card.threshold_color_saturation[1], card.threshold_color_brightness[0], card.threshold_color_brightness[1], card.dpi, card.spread_method, card.spread_factor_a, card.spread_factor_b, card.spread_factor_c, card.has_image))
+                # Loop through cards on db, delete any not in pass object
+                #Spray Cards Table
+                current_ids = [sc.id for sc in p.spray_cards]
+                cursor = conn.cursor()
+                if len(current_ids) == 0:
+                    cursor.execute('''DELETE FROM spray_cards WHERE pass_id = ?''',(p.id,))
+                else:
+                    in_query = '('
+                    for i, id in enumerate(current_ids):
+                        if i == 0:
+                            in_query += f"'{id}'"
+                        else:
+                            in_query += f", '{id}'"
+                    in_query += ')'
+                    cursor.execute(f'DELETE FROM spray_cards WHERE pass_id = "{p.id}" AND id NOT IN {in_query}')

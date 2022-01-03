@@ -3,7 +3,7 @@ from accupatt.windows.loadCards import LoadCards
 import accupatt.config as cfg
 from accupatt.windows.editThreshold import EditThreshold
 from PyQt5.QtWidgets import QAbstractItemView, QApplication, QComboBox, QFileDialog, QItemDelegate, QListView, QListWidgetItem, QMessageBox, QStyle, QStyleOptionComboBox
-from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QVariant, Qt, QSettings, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QAbstractTableModel, QItemSelectionModel, QModelIndex, QVariant, Qt, QSettings, pyqtSignal, pyqtSlot
 from PyQt5 import uic
 
 import os, sys, copy
@@ -24,6 +24,7 @@ load_image_options = ['One File Per Card','One File, Multiple Cards']
 class EditCardList(baseclass):
 
     applied = pyqtSignal()
+    passDataChanged = pyqtSignal()
 
     def __init__(self, passData=None, filepath=None):
         super().__init__()
@@ -49,6 +50,8 @@ class EditCardList(baseclass):
         self.ui.buttonDown.clicked.connect(self.shift_down)
         
         self.ui.comboBoxLoadMethod.addItems(load_image_options)
+        self.ui.comboBoxLoadMethod.setCurrentIndex(load_image_options.index(
+            self.settings.value('card_manager_load_method', defaultValue=load_image_options[1], type=str)))
         self.ui.buttonLoad.clicked.connect(self.load_cards)
         
         self.ui.buttonBox.accepted.connect(self.on_applied)
@@ -90,6 +93,7 @@ class EditCardList(baseclass):
     @pyqtSlot()
     def add_card(self):
         self.tm.addCard(filepath = self.filepath)
+        self.passDataChanged.emit()
 
     @pyqtSlot()
     def add_cards(self):
@@ -99,7 +103,11 @@ class EditCardList(baseclass):
             c = SprayCard(name=selectedSet['cards'][i], filepath=self.filepath)
             c.location = selectedSet['locations'][i]
             newCards.append(c)
-        self.tm.addCards(newCards)
+        rows = self.tm.addCards(newCards)
+        self.passDataChanged.emit()
+        indexes = [self.tm.index(r, 0) for r in rows]
+        mode = QItemSelectionModel.Select | QItemSelectionModel.Rows
+        [self.tv.selectionModel().select(index, mode) for index in indexes]
         
     @pyqtSlot()
     def remove_cards(self):
@@ -109,8 +117,9 @@ class EditCardList(baseclass):
                 if not self._are_you_sure('One or more selected cards have image data which will be erased. Continue?'): 
                     return
                 else:
-                    continue
+                    break
         self.tm.removeCards(sel)
+        self.passDataChanged.emit()
     
     @pyqtSlot()
     def update_table(self):
@@ -135,6 +144,7 @@ class EditCardList(baseclass):
         else:
             #Single Image, Multiple Cards
             self._load_cards_multi(selection)
+        self.settings.setValue('card_manager_load_method', self.ui.comboBoxLoadMethod.currentText())
     
     def _load_cards_singles(self, selection):
         # TODO: migrate to singles batch method
@@ -161,15 +171,6 @@ class EditCardList(baseclass):
         e.applied.connect(self.update_table)
         #Start Loop
         e.exec_()
-    
-    '''
-    def select_file(self):
-        fname, filter_ = QFileDialog.getOpenFileName(self, 'Open file', 'home', "Image files (*.png)")
-        self.ui.labelFile.setText(fname)
-        
-    def editROIs(self):
-        
-    '''
     
     def on_applied(self):
         self.applied.emit()
@@ -361,9 +362,12 @@ class CardTable(QAbstractTableModel):
     
     def addCards(self, new_cards: List[SprayCard]):
         self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount()+len(new_cards)-1)
+        new_indices = []
         for card in new_cards:
             self.card_list.append(card)
+            new_indices.append(len(self.card_list)-1)
         self.endInsertRows()
+        return new_indices
         
     def removeCards(self, selection: List[QModelIndex]):
         '''rows = []
@@ -371,7 +375,7 @@ class CardTable(QAbstractTableModel):
             rows.append(index.row())'''
         for index in reversed(selection):
             row = index.row()
-            print(row)
+            #print(row)
             self.beginRemoveRows(QModelIndex(), row, row)
             self.card_list.pop(row)
             self.endRemoveRows()

@@ -1,3 +1,4 @@
+from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication, QGraphicsPixmapItem
 from PyQt5.QtCore import Qt, QSettings, pyqtSignal, pyqtSlot
 from PyQt5 import uic
@@ -10,6 +11,7 @@ import pyqtgraph as pg
 from pyqtgraph.functions import mkPen
 
 import accupatt.config as cfg
+from accupatt.models.sprayCard import SprayCard
 
 orientation_options = ['Horizontal','Vertical']
 order_options = ['Increasing','Decreasing']
@@ -63,7 +65,8 @@ class LoadCards(baseclass):
         self.ui.plotWidget.getViewBox().setAspectLocked()
         
         # Load Image from File, invert vertically, add it to plotWidget
-        self.img: QGraphicsPixmapItem = pg.QtGui.QGraphicsPixmapItem(pg.QtGui.QPixmap(image_file))
+        self.img_pixmap = pg.QtGui.QPixmap(image_file)
+        self.img: pg.QtGui.QGraphicsPixmapItem = pg.QtGui.QGraphicsPixmapItem(self.img_pixmap)
         #self.img: ImageItem = pg.ImageItem(image=pg.QtGui.QGraphicsPixmapItem(pg.QtGui.QPixmap(image_file)))
         self.img.scale(1, -1)
         self.ui.plotWidget.addItem(self.img)
@@ -88,15 +91,13 @@ class LoadCards(baseclass):
     
     def draw_rois(self):
         # Order card rectangles based on selected options
-        new_rois = self._sort_rois(self.roi_rectangles, self.orientation, self.order)
-        # Scale rois
-        #new_rois = self._scale_rois(new_rois, self.scale)
+        self._sort_rois(self.orientation, self.order)
         # Clear any previous rois from ViewBox
         for r in self.rois:
             self.ui.plotWidget.getViewBox().removeItem(r)
         # Add rois to image with labels
         self.rois = []
-        for i, r in enumerate(new_rois):
+        for i, r in enumerate(self.roi_rectangles):
             # Only draw the ROI if supplied list supports it
             if i < self.ui.listWidget.count():
                 x, y, w, h = r
@@ -106,11 +107,12 @@ class LoadCards(baseclass):
                             handlePen=mkPen('r',width=3),
                             handleHoverPen=mkPen('r',width=5),
                             removable=True, centered=True, sideScalers=True)
-                roi.scale(s=float(self.scale[0:len(self.scale)-1])/100,center=[0.5,0.5])
+                roi.scale(s=float(self.scale[0:-1])/100,center=[0.5,0.5])
                 text = self.card_list[i].name
                 label = pg.TextItem(text=text, color='m')
                 label.setParentItem(roi)
                 roi.setParentItem(self.img)
+                roi.sigRemoveRequested.connect(self.remove_roi)
                 self.rois.append(roi)
          
     @pyqtSlot(int)
@@ -133,10 +135,33 @@ class LoadCards(baseclass):
         self.scale = scale_options[newIndex]
         self.draw_rois()
         
+    @pyqtSlot(object)
+    def remove_roi(self, roi):
+        #self.ui.plotWidget.scene().removeItem(roi)
+        del self.roi_rectangles[self.rois.index(roi)]
+        #self.rois.remove(roi)
+        self.draw_rois()
+        
     @pyqtSlot()
     def on_applied(self):
+        self.settings.setValue('image_dpi', self.ui.comboBoxDPI.currentText())
         self.settings.setValue('roi_acquisition_orientation', self.ui.comboBoxOrientation.currentText())
         self.settings.setValue('roi_acquisition_order', self.ui.comboBoxOrder.currentText())
+        self.settings.setValue('roi_scale', self.ui.comboBoxScale.currentText())
+        
+        for i, roi in enumerate(self.rois):
+            roi: pg.RectROI
+            size = roi.size()
+            pos = roi.pos()
+            img = self.img_pixmap.copy(pos[0], pos[1], size[0], size[1])
+            byteArray = QtCore.QByteArray()
+            qbuffer = QtCore.QBuffer(byteArray)
+            qbuffer.open(QtCore.QIODevice.WriteOnly)
+            img.save(qbuffer, "PNG")
+            sprayCard: SprayCard = self.card_list[i]
+            sprayCard.save_image_to_file(byteArray)
+            sprayCard.has_image = True
+            sprayCard.include_in_composite = True
         
         self.applied.emit()
         self.accept()
@@ -147,11 +172,11 @@ class LoadCards(baseclass):
         self.reject()
         self.close()
     
-    def _sort_rois(self, rois, orientation, order):
-        rois_original = rois.copy()
+    def _sort_rois(self, orientation, order):
+        rois_original = self.roi_rectangles.copy()
         rois_sorted = []
         # Loop through all rois, removing from old list as added to new sorted list
-        while len(rois_sorted) < len(rois):
+        while len(rois_sorted) < len(self.roi_rectangles):
             # Compute distance from origin for each
             dists_from_origin = []
             for r in rois_original:
@@ -181,8 +206,8 @@ class LoadCards(baseclass):
                 rois_sorted.extend(current)
             # Remove current row/col rois from original list
             rois_original = [r for r in rois_original if r not in current]
-        # Once rois_sorted contains all original rois, return it
-        return rois_sorted      
+        # Once rois_sorted contains all original rois, re-assign the original rois
+        self.roi_rectangles = rois_sorted 
     
     def _scale_rois(self, rois, scale):
         rois_scaled = []

@@ -38,7 +38,7 @@ class DataFileImporter:
                 stream = io.BytesIO()
                 image.save(stream, format="PNG")
                 # Save it to the database
-                c.save_image_to_db(stream.getvalue())
+                c.save_image_to_file(stream.getvalue())
                 # Reclaim resources
                 stream.close()
                 
