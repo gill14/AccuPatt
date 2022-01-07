@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import copy
-import matplotlib.pyplot as plt
 from pyqtgraph import PlotWidget, setConfigOptions, InfiniteLine
 from pyqtgraph.functions import mkPen
 import scipy.signal as sig

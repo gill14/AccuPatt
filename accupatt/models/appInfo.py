@@ -48,7 +48,8 @@ class AppInfo:
     nozzle_spacing_units: str = ""
 
     series: int = 1
-    notes: str = ""
+    notes_setup: str = ""
+    notes_analyst: str = ""
     date: str = ""
     time: str = ""
 
@@ -80,7 +81,7 @@ class AppInfo:
 
     def updateSeries(self, appInfo):
         self.series = appInfo.series
-        self.notes = appInfo.notes
+        #self.notes = appInfo.notes
 
     def addressLine1(self) -> str:
         return self.street
