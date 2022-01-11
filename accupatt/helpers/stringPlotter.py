@@ -64,8 +64,8 @@ class StringPlotter:
         y_smooth = np.array(d.data_mod[d.name].values, dtype=float)
         pyqtplotwidget.plot(name='Smooth', pen=mkPen('y', width=3)).setData(x, y_smooth)
 
-    def drawOverlay(mplCanvas, series):
-        ax = mplCanvas.ax
+    def drawOverlay(mplWidget, series):
+        ax = mplWidget.canvas.ax
         ax.clear()
 
         ax.set_yticks([])
@@ -78,11 +78,11 @@ class StringPlotter:
         ax.set_ylim(ymin=0)
         h,l = ax.get_legend_handles_labels()
         if len(h) > 0: ax.legend()
-        mplCanvas.fig.set_tight_layout(True)
-        mplCanvas.draw()
+        mplWidget.canvas.fig.set_tight_layout(True)
+        mplWidget.canvas.draw()
 
-    def drawAverage(mplCanvas, series):
-        ax = mplCanvas.ax
+    def drawAverage(mplWidget, series):
+        ax = mplWidget.canvas.ax
         ax.clear()
         ax.set_yticks([])
         ax.set_xlabel(f'Location ({series.info.swath_units})')
@@ -104,10 +104,10 @@ class StringPlotter:
         l.set_label('Average')
         ax.set_ylim(ymin=0)
         ax.legend()
-        mplCanvas.fig.set_tight_layout(True)
-        mplCanvas.draw()
+        mplWidget.canvas.fig.set_tight_layout(True)
+        mplWidget.canvas.draw()
 
-    def drawSimulations(mplCanvasRacetrack, mplCanvasBackAndForth, series):
+    def drawSimulations(mplWidgetRT, mplWidgetBF, series):
         #Get adjusted swath from series object
         swathWidth = series.info.swath_adjusted
         #Find number of points per swathwidth for shifting
@@ -119,13 +119,13 @@ class StringPlotter:
         a = series.patternAverage.data_mod['Average'].copy()
         ai = series.patternAverageInverted.data_mod['AverageInverted'].copy()
 
-        axes = [mplCanvasRacetrack.ax, mplCanvasBackAndForth.ax]
+        axes = [mplWidgetRT.canvas.ax, mplWidgetBF.canvas.ax]
         for ax in axes:
             #Clear it
             ax.clear()
             ax.set_yticks([])
             ax.set_xlabel(f'Location ({series.info.swath_units})')
-            if(ax == mplCanvasRacetrack.ax):
+            if(ax == mplWidgetRT.canvas.ax):
                 ax.set_ylabel('Racetrack')
             else:
                 ax.set_ylabel('Back & Forth')
@@ -133,10 +133,10 @@ class StringPlotter:
             f = ax.fill_between(loc, 0, a, label='Center')
 
             sum = a.copy()
-            for i in range(series.string_simulated_adjascent_passes):
+            for i in range(int(series.string_simulated_adjascent_passes)):
                 aa = a.copy()
                 #When B&F and odd pass, use inverted average
-                if (ax == mplCanvasBackAndForth.ax) & ((i%2)==0):
+                if (ax == mplWidgetBF.canvas.ax) & ((i%2)==0):
                     aa = ai.copy()
                 #Left
                 left = aa.copy().shift(periods=-(i+1)*pts)
@@ -157,10 +157,10 @@ class StringPlotter:
             m.set_label('Mean Dep.')
             ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         #Actually draw on the canvas
-        mplCanvasRacetrack.fig.set_tight_layout(True)
-        mplCanvasRacetrack.draw()
-        mplCanvasBackAndForth.fig.set_tight_layout(True)
-        mplCanvasBackAndForth.draw()
+        mplWidgetRT.canvas.fig.set_tight_layout(True)
+        mplWidgetRT.canvas.draw()
+        mplWidgetBF.canvas.fig.set_tight_layout(True)
+        mplWidgetBF.canvas.draw()
 
     def showCVTable(tableView, series):
         swath = series.info.swath_adjusted

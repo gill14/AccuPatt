@@ -1,4 +1,5 @@
 import math
+from PyQt5.QtWidgets import QTableWidget
 import numpy as np
 import matplotlib.ticker
 
@@ -48,4 +49,22 @@ class CardPlotter:
             canvas.fig.set_tight_layout(True)
             canvas.draw()
         
-        
+    def showCardStatTable(tableWidget: QTableWidget, sprayCard: SprayCard):
+        if sprayCard == None or not sprayCard.has_image:
+            # clear tv
+            for row in range(tableWidget.rowCount()):
+                tableWidget.item(row, 1).setText('')
+            return
+        dv01, dv05, dv09, rs, dsc = sprayCard.volumetric_stats()
+        cov = sprayCard.percent_coverage()
+        spsi = sprayCard.stains_per_in2()
+        for row, val in zip([0,1,2,3,4,5,6],[dsc,dv01,dv05,dv09,rs,cov,spsi]):
+            if type(val) is not str:
+                if type(val) is int:
+                    val = str(val) + ' \u03BC' + 'm'
+                else:
+                    val = f'{val:.2f}'
+            if row == 5:
+                val = val + '%'
+            tableWidget.item(row,1).setText(val)
+        tableWidget.resizeColumnsToContents()

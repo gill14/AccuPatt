@@ -1,8 +1,7 @@
-import os, io, json, dataclasses
+import os, io
 import openpyxl
 from openpyxl_image_loader import SheetImageLoader
 import pandas as pd
-from shutil import copy2
 
 import accupatt.config as cfg
 from accupatt.helpers.dBReadWrite import DBReadWrite
@@ -68,7 +67,7 @@ class DataFileImporter:
             #string value from col 1
             val = str(df.iat[row,1])
             #string value from col 2
-            if df.shape[1] > 2: val2 = str(df.iat[row,2])
+            if df.shape[1] > 2: val2 = DataFileImporter.strip_num(df.iat[row,2])
             #asign as needed
             if row == 0: s.info.pilot = val
             if row == 1: s.info.business = val
@@ -83,12 +82,12 @@ class DataFileImporter:
             if row == 9: s.info.model = val
             if row == 10: s.info.nozzle_type_1 = val
             if row == 11: s.info.set_nozzle_quantity_1(val)
-            if row == 12: s.info.set_nozzle_size_1(val)
-            if row == 13: s.info.set_nozzle_deflection_1(val)
+            if row == 12: s.info.nozzle_size_1 = DataFileImporter.strip_num(val)
+            if row == 13: s.info.nozzle_deflection_1 = DataFileImporter.strip_num(val)
             if row == 14: s.info.nozzle_type_2 = val
             if row == 15: s.info.set_nozzle_quantity_2(val)
-            if row == 16: s.info.set_nozzle_size_2(val)
-            if row == 17: s.info.set_nozzle_deflection_2(val)
+            if row == 16: s.info.nozzle_size_2 = DataFileImporter.strip_num(val)
+            if row == 17: s.info.nozzle_deflection_2 = DataFileImporter.strip_num(val)
             if row == 18: s.info.set_pressure(val)
             if row == 19: s.info.set_rate(val)
             if row == 20: s.info.set_swath(val)
@@ -99,7 +98,7 @@ class DataFileImporter:
             if row == 30: s.info.set_boom_drop(val)
             if row == 31: s.info.set_nozzle_spacing(val)
             if row == 32: s.info.winglets = val
-            if row == 33: s.info.notes = val
+            if row == 33: s.info.notes_setup = val
             if row == 35:
                 isMetric = (val == 'True')
                 if isMetric:
@@ -212,62 +211,15 @@ class DataFileImporter:
                 
         return s
     
-    #Below methods were for intermediate testing, no long term need to keep
-    def load_from_accupatt_2_file(directory):
-        seriesData = SeriesData()
-        for (dirpath, dirnames, filenames) in os.walk(directory):
-            base_name = os.path.basename(os.path.normpath(directory))
-            for f in filenames:
-                if f.endswith('.series'):
-                    #Load in AppInfo from the .series file
-                    with open(dirpath+os.path.sep+f, 'r') as j:
-                        seriesData.info = AppInfo(**json.loads(j.read()))
-                if f.endswith('.pass'):
-                    #Load in each Pass from the .pass files
-                    p = None
-                    with open(dirpath+os.path.sep+f, 'r') as j:
-                        p = Pass(**json.loads(j.read()))
-                        #data(_ex,_mod) are loaded as dicts, conver to df's
-                        p.data = pd.DataFrame.from_dict(p.data)
-                        p.data_ex = pd.DataFrame.from_dict(p.data_ex)
-                        if p.spray_cards:
-                            #get a handle on the card folder 
-                            folder = os.path.join(directory, base_name + ' P' + p.name[-1], 'cards')
-                            if os.path.exists(folder):
-                                for i,val in enumerate(p.spray_cards):
-                                    #Change dicts to SprayCard objects in-place in list
-                                    p.spray_cards[i] = SprayCard.load_from_json(val, folder)
-                        seriesData.passes[p.name] = p
-        seriesData.filePath = directory
-        return seriesData
+    def strip_num(x, noneIsZero = False) -> str:
+        if type(x) is str:
+            if x == '':
+                if noneIsZero:
+                    x = 0
+                else:
+                    return ''
+        if float(x).is_integer():
+            return str(int(float(x)))
+        else:
+            return str(float(x))
     
-    def writeToJSONFile(path, fileName, seriesData):
-        #Make a folder for series if needed
-        folder = path + os.path.sep + fileName
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        #Make the .series file
-        filePathNameWExt = folder + os.path.sep + fileName + '.series'
-        with open(filePathNameWExt, 'w') as fp:
-            json.dump(dataclasses.asdict(seriesData.info), fp, indent=4)
-        #Make the .pass files
-        for key, value in seriesData.passes.items():
-            fname = fileName + ' P' + key[-1]
-            subfolder = folder + os.path.sep + fname
-            if not os.path.exists(folder):
-                os.makedirs(folder)
-            filePathNameWExt = subfolder + os.path.sep + fname + '.pass'
-            with open(filePathNameWExt, 'w') as fp:
-                json.dump(value.__dict__, fp, indent=4, default=lambda df: json.loads(df.to_json()))
-    
-    def saveImage(src_file, series_dir, pass_data, spray_card):
-        #Create cards folder if needed
-        base_name = os.path.basename(os.path.normpath(series_dir))
-        folder = os.path.join(series_dir, base_name + ' P' + pass_data.name[-1], 'cards')
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        dest_file = os.path.join(folder, spray_card.name + '.png')
-        #Copy the file
-        copy2(src_file, dest_file)
-        #Update SprayCard object
-        spray_card.filepath = dest_file

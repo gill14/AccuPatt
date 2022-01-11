@@ -33,12 +33,12 @@ class AppInfo:
     pressure: float = 0
     pressure_units: str = ""
     nozzle_type_1: str = ""
-    nozzle_size_1: float = 0
-    nozzle_deflection_1: float = 0
+    nozzle_size_1: str = ""
+    nozzle_deflection_1: str = ""
     nozzle_quantity_1: int = 0
     nozzle_type_2: str = ""
-    nozzle_size_2: float = 0
-    nozzle_deflection_2: float = 0
+    nozzle_size_2: str = ""
+    nozzle_deflection_2: str = ""
     nozzle_quantity_2: int = 0
     boom_width: float = 0
     boom_width_units: str = ""
@@ -95,11 +95,11 @@ class AppInfo:
             return s
         #Check if ZIP is blank, return city, ST if so
         if self.zip != '':
-            s = s + ' ' + self.strip_num(self.zip)
+            s = s + ' ' + self.zip
         else:
             return s
         #If all three not empty, return the whole deal
-        return self.city + ", " + self.state + " " + self.strip_num(self.zip)
+        return self.city + ", " + self.state + " " + self.zip
 
     def string_phone(self) -> str:
         p = self.phone
@@ -133,16 +133,16 @@ class AppInfo:
     def string_nozzle_1(self) -> str:
         degree_sign= u'\N{DEGREE SIGN}'
         if self.nozzle_type_1 != '':
-            return (f'{self.nozzle_type_1} @ {self.strip_num(self.nozzle_deflection_1)}{degree_sign}'+'\n'
-                +f'Orif#{self.strip_num(self.nozzle_size_1)} x{str(self.nozzle_quantity_1)}')
+            return (f'{self.nozzle_type_1} @ {self.nozzle_deflection_1}{degree_sign}'+'\n'
+                +f'Orif#{self.nozzle_size_1} x{str(self.nozzle_quantity_1)}')
         else:
             return ' \n '
 
     def string_nozzle_2(self) -> str:
         degree_sign= u'\N{DEGREE SIGN}'
         if self.nozzle_type_2 != '':
-            return (f'{self.nozzle_type_2} @ {self.strip_num(self.nozzle_deflection_2)}{degree_sign}'+'\n'
-                +f'Orif#{self.strip_num(self.nozzle_size_2)} x{str(self.nozzle_quantity_2)}')
+            return (f'{self.nozzle_type_2} @ {self.nozzle_deflection_2}{degree_sign}'+'\n'
+                +f'Orif#{self.nozzle_size_2} x{str(self.nozzle_quantity_2)}')
         else:
             return ' \n '
 
@@ -179,14 +179,16 @@ class AppInfo:
     def string_series(self) -> str:
         return f'{self.strip_num(self.series)}'
 
-    def strip_num(self, x) -> str:
+    def strip_num(self, x, precision = 2, zeroBlank = False) -> str:
         if type(x) is str:
             if x == '':
                 x = 0
+        if zeroBlank and x == 0:
+            return ''
         if float(x).is_integer():
             return str(int(float(x)))
         else:
-            return f'{round(float(x), 2):.2f}'
+            return f'{round(float(x), 2):.{precision}f}'
 
     def set_wingspan(self, string) -> bool:
         try:
@@ -236,44 +238,12 @@ class AppInfo:
         self.nozzle_quantity_1 = int(float(string))
         return True
 
-    def set_nozzle_size_1(self, string) -> bool:
-        try:
-            float(string)
-        except ValueError:
-            return False
-        self.nozzle_size_1 = float(string)
-        return True
-
-    def set_nozzle_deflection_1(self, string) -> bool:
-        try:
-            float(string)
-        except ValueError:
-            return False
-        self.nozzle_deflection_1 = float(string)
-        return True
-
     def set_nozzle_quantity_2(self, string) -> bool:
         try:
             int(string)
         except ValueError:
             return False
         self.nozzle_quantity_2 = int(string)
-        return True
-
-    def set_nozzle_size_2(self, string) -> bool:
-        try:
-            float(string)
-        except ValueError:
-            return False
-        self.nozzle_size_2 = float(string)
-        return True
-
-    def set_nozzle_deflection_2(self, string) -> bool:
-        try:
-            float(string)
-        except ValueError:
-            return False
-        self.nozzle_deflection_2 = float(string)
         return True
 
     def set_boom_width(self, string) -> bool:
@@ -299,22 +269,6 @@ class AppInfo:
             return False
         self.nozzle_spacing = float(string)
         return True
-
-    '''def set_temperature(self, string) -> bool:
-        try:
-            float(string)
-        except ValueError:
-            return False
-        self.temperature = float(string)
-        return True
-
-    def set_humidity(self, string) -> bool:
-        try:
-            float(string)
-        except ValueError:
-            return False
-        self.humidity = float(string)
-        return True'''
 
     def set_num(self, field, string, type) -> bool:
         try:

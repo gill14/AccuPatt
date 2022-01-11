@@ -1,11 +1,12 @@
 -- Schema for AccuPatt Data File (SeriesData)
--- AppInfo Tables
+
 CREATE TABLE IF NOT EXISTS series (
     id              TEXT PRIMARY KEY,
     series          INTEGER,
     date            TEXT,
     time            TEXT,
-    notes           TEXT
+    notes_setup     TEXT,
+    notes_analyst   TEXT
 );
 CREATE TABLE IF NOT EXISTS series_string (
     series_id                   TEXT PRIMARY KEY REFERENCES series(id),
@@ -52,12 +53,12 @@ CREATE TABLE IF NOT EXISTS spray_system (
     pressure                REAL,
     pressure_units          TEXT,
     nozzle_type_1           TEXT,
-    nozzle_size_1           REAL,
-    nozzle_deflection_1     REAL,
+    nozzle_size_1           TEXT,
+    nozzle_deflection_1     TEXT,
     nozzle_quantity_1       INTEGER,
     nozzle_type_2           TEXT,
-    nozzle_size_2           REAL,
-    nozzle_deflection_2     REAL,
+    nozzle_size_2           TEXT,
+    nozzle_deflection_2     TEXT,
     nozzle_quantity_2       INTEGER,
     boom_width              REAL,
     boom_width_units        TEXT,

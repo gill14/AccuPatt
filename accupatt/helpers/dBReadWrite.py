@@ -21,72 +21,34 @@ class DBReadWrite:
             conn = sqlite3.connect(file)
             # Get a cursor object
             c = conn.cursor()
+            
             # Series Table
-            c.execute('''SELECT id, series, date, time, notes FROM series''')
+            c.execute('''SELECT id, series, date, time, notes_setup, notes_analyst FROM series''')
             data = c.fetchone()
             s = SeriesData(id=data[0])
-            s.info.series = data[1]
-            s.info.date = data[2]
-            s.info.time = data[3]
-            s.info.notes = data[4]
+            i: AppInfo = s.info
+            _, i.series, i.date, i.time, i.notes_setup, i.notes_analyst = data
+            
             # Series String Table
             c.execute('''SELECT smooth_individual, smooth_average, equalize_integrals, center, simulated_adjascent_passes FROM series_string WHERE series_id = ?''', (s.id,))
-            s.string_smooth_individual = data[0]
-            s.string_smooth_average = data[1]
-            s.string_equalize_integrals = data[2]
-            s.string_center = data[3]
-            s.string_simulated_adjascent_passes = data[4]
+            s.string_smooth_individual, s.string_smooth_average, s.string_smooth_average, s.string_equalize_integrals, s.string_center, s.string_simulated_adjascent_passes = c.fetchone()
+            
             #Flyin Table
             c.execute('''SELECT flyin_name, flyin_location, flyin_date, flyin_analyst FROM flyin WHERE series_id = ?''', (s.id,))
-            data = c.fetchone()
-            s.info.flyin_name = data[0]
-            s.info.flyin_location = data[1]
-            s.info.flyin_date = data[2]
-            s.info.flyin_analyst = data[3]
+            i.flyin_name, i.flyin_location, i.flyin_date, i.flyin_analyst = c.fetchone()
+            
             #Applicator Table
             c.execute('''SELECT pilot, business, street, city, state, zip, phone, email FROM applicator WHERE series_id = ?''',(s.id,))
-            data = c.fetchone()
-            s.info.pilot = data[0]
-            s.info.business = data[1]
-            s.info.street = data[2]
-            s.info.city = data[3]
-            s.info.state = data[4]
-            s.info.zip = data[5]
-            s.info.phone = data[6]
-            s.info.email = data[7]
+            i.pilot, i.business, i.street, i.city, i.state, i.zip, i.phone, i.email = c.fetchone()
+            
             #Aircraft Table
             c.execute('''SELECT regnum, make, model, wingspan, wingspan_units, winglets FROM aircraft WHERE series_id = ?''', (s.id,))
-            data = c.fetchone()
-            s.info.regnum = data[0]
-            s.info.make = data[1]
-            s.info.model = data[2]
-            s.info.wingspan = data[3]
-            s.info.wingspan_units = data[4]
-            s.info.winglets = data[5]
+            i.regnum, i.make, i.model, i.wingspan, i.wingspan_units, i.winglets = c.fetchone()
+            
             #Spray System Table
             c.execute('''SELECT swath, swath_adjusted, swath_units, rate, rate_units, pressure, pressure_units, nozzle_type_1, nozzle_size_1, nozzle_deflection_1, nozzle_quantity_1, nozzle_type_2, nozzle_size_2, nozzle_deflection_2, nozzle_quantity_2, boom_width, boom_width_units, boom_drop, boom_drop_units, nozzle_spacing, nozzle_spacing_units FROM spray_system WHERE series_id = ?''',(s.id,))
-            data = c.fetchone()
-            s.info.swath = data[0]
-            s.info.swath_adjusted = data[1]
-            s.info.swath_units = data[2]
-            s.info.rate = data[3]
-            s.info.rate_units = data[4]
-            s.info.pressure = data[5]
-            s.info.pressure_units = data[6]
-            s.info.nozzle_type_1 = data[7]
-            s.info.nozzle_size_1 = data[8]
-            s.info.nozzle_deflection_1 = data[9]
-            s.info.nozzle_quantity_1 = data[10]
-            s.info.nozzle_type_2 = data[11]
-            s.info.nozzle_size_2 = data[12]
-            s.info.nozzle_deflection_2 = data[13]
-            s.info.nozzle_quantity_2 = data[14]
-            s.info.boom_width = data[15]
-            s.info.boom_width_units = data[16]
-            s.info.boom_drop = data[17]
-            s.info.boom_drop_units = data[18]
-            s.info.nozzle_spacing = data[19]
-            s.info.nozzle_spacing_units = data[20]
+            i.swath, i.swath_adjusted, i.swath_units, i.rate, i.rate_units, i.pressure, i.pressure_units, i.nozzle_type_1, i.nozzle_size_1, i.nozzle_deflection_1, i.nozzle_quantity_1, i.nozzle_type_2, i.nozzle_size_2, i.nozzle_deflection_2, i.nozzle_quantity_2, i.boom_width, i.boom_width_units, i.boom_drop, i.boom_drop_units, i.nozzle_spacing, i.nozzle_spacing_units = c.fetchone()
+            
             #Passes Table
             c.execute('''SELECT id, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity, include_in_composite, excitation_wav, emission_wav, trim_left, trim_right, trim_vertical, excitation_data, emission_data, data_loc_units FROM passes WHERE series_id = ?''',(s.id,))
             data = c.fetchall()
@@ -112,6 +74,7 @@ class DBReadWrite:
                 p.data_ex = pd.read_json(row[19])
                 p.data = pd.read_json(row[20])
                 p.data_loc_units = row[21]
+                
                 #Spray Cards Table
                 c.execute('''SELECT id, name, location, include_in_composite, threshold_type, threshold_method_color, threshold_method_grayscale, threshold_grayscale, threshold_color_hue_min, threshold_color_hue_max, threshold_color_saturation_min, threshold_color_saturation_max, threshold_color_brightness_min, threshold_color_brightness_max, dpi, spread_method, spread_factor_a, spread_factor_b, spread_factor_c, has_image FROM spray_cards WHERE pass_id = ?''',(p.id,))
                 cards = c.fetchall()
@@ -159,10 +122,10 @@ class DBReadWrite:
             info = seriesData.info
             assert isinstance(info, AppInfo)
             #Series    
-            conn.execute('''INSERT INTO series (id, series, date, time, notes) VALUES (?, ?, ?, ?, ?)
+            conn.execute('''INSERT INTO series (id, series, date, time, notes_setup, notes_analyst) VALUES (?, ?, ?, ?, ?, ?)
                             ON CONFLICT(id) DO UPDATE SET
-                            series = excluded.series, date = excluded.date, time = excluded.time, notes = excluded.notes''',
-                            (seriesData.id, info.series, info.date, info.time, info.notes))
+                            series = excluded.series, date = excluded.date, time = excluded.time, notes_setup = excluded.notes_setup, notes_analyst = excluded.notes_analyst''',
+                            (seriesData.id, info.series, info.date, info.time, info.notes_setup, info.notes_analyst))
             #Series String
             conn.execute('''INSERT INTO series_string (series_id, smooth_individual, smooth_average, equalize_integrals, center, simulated_adjascent_passes) VALUES (?, ?, ?, ?, ?, ?)
                          ON CONFLICT(series_id) DO UPDATE SET

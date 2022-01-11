@@ -6,7 +6,11 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QGraphicsPixmapItem, QGraphics
 class SplitCardWidget(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        self.fit = Qt.KeepAspectRatioByExpanding
+        
         layout = QHBoxLayout(self)
+        
         #Show original
         self.pixmap_item_original = QGraphicsPixmapItem()
         scene1 = QGraphicsScene(self)
@@ -30,7 +34,7 @@ class SplitCardWidget(QWidget):
 
     def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
-        self.updateSprayCardView()
+        self.resize_and_fit()
 
     def scrollGV_V(self, value):
         self.graphicsView1.verticalScrollBar().setValue(value)
@@ -40,20 +44,28 @@ class SplitCardWidget(QWidget):
         self.graphicsView1.horizontalScrollBar().setValue(value)
         self.graphicsView2.horizontalScrollBar().setValue(value)
 
-    def updateSprayCardView(self, cvImg1=None, cvImg2=None):
+    def updateSprayCardView(self, cvImg1=None, cvImg2=None, fit='horizontal'):
         self.clearSprayCardView()
         if not (cvImg1 is None or cvImg2 is None):
             #Left Image (1)
             self.pixmap_item_original.setPixmap(QPixmap.fromImage(SplitCardWidget.qImg_from_cvImg(cvImg1)))
             #Right Image(2)
             self.pixmap_item_thresh.setPixmap(QPixmap.fromImage(SplitCardWidget.qImg_from_cvImg(cvImg2)))
-        #Auto-resize to fit width of card to width of graphicsView
+        #Auto-resize to fit width or height of card to width or height of graphicsView
+        if fit == 'horizontal':
+            self.fit = Qt.KeepAspectRatioByExpanding
+        else:
+            self.fit = Qt.KeepAspectRatio
+        self.resize_and_fit()
+        
+
+    def resize_and_fit(self):
         scene1 = self.graphicsView1.scene()
         scene1.setSceneRect(scene1.itemsBoundingRect())
-        self.graphicsView1.fitInView(scene1.sceneRect(), Qt.KeepAspectRatioByExpanding)
+        self.graphicsView1.fitInView(scene1.sceneRect(), self.fit)
         scene2 = self.graphicsView2.scene()
         scene2.setSceneRect(scene2.itemsBoundingRect())
-        self.graphicsView2.fitInView(scene2.sceneRect(), Qt.KeepAspectRatioByExpanding)
+        self.graphicsView2.fitInView(scene2.sceneRect(), self.fit)
 
     def clearSprayCardView(self):
         self.pixmap_item_original.setPixmap(QPixmap())
