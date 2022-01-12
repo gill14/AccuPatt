@@ -21,7 +21,7 @@ defined_sets = {
 
 load_image_options = ['One File Per Card','One File, Multiple Cards']
 
-class EditCardList(baseclass):
+class CardManager(baseclass):
 
     applied = pyqtSignal()
     passDataChanged = pyqtSignal()
@@ -391,5 +391,5 @@ class CardTable(QAbstractTableModel):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    w = EditCardList()
+    w = CardManager()
     sys.exit(app.exec_())

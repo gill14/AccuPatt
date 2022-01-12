@@ -15,7 +15,7 @@ from accupatt.helpers.stringPlotter import StringPlotter
 from accupatt.helpers.reportMaker import ReportMaker
 from accupatt.models.sprayCard import SprayCard
 
-from accupatt.windows.editCardList import EditCardList
+from accupatt.windows.cardManager import CardManager
 from accupatt.windows.editThreshold import EditThreshold
 from accupatt.windows.editSpreadFactors import EditSpreadFactors
 from accupatt.windows.passManager import PassManager
@@ -130,7 +130,7 @@ class MainWindow(baseclass):
                         lv.addItem(item)
                         # String Passes
                         if lv == lvs[0]:
-                            if p.data is not None:
+                            if not p.data.empty:
                                 item.setFlags(Qt.ItemIsEnabled|Qt.ItemIsSelectable|Qt.ItemIsUserCheckable)
                                 if p.include_in_composite:
                                     item.setCheckState(Qt.Checked)
@@ -161,14 +161,15 @@ class MainWindow(baseclass):
         #Create popup and send current appInfo vals to popup
         e = PassManager(self.seriesData.passes, self)
         #Connect Slot to retrieve Vals back from popup
-        e.applied.connect(self.updateFromPassManager)
+        e.applied[list].connect(self.updateFromPassManager)
         #Start Loop
         e.exec_()
       
-    @pyqtSlot()  
+    @pyqtSlot(list)  
     def updateFromPassManager(self, passes):
         self.seriesData.passes = passes
         self.update_all_ui()
+        self.saveFile()
 
     @pyqtSlot()
     def makeReport(self):
@@ -355,7 +356,7 @@ class MainWindow(baseclass):
         #Get a handle on the currently selected pass
         p = self.seriesData.passes[self.ui.listWidgetSprayCardPass.currentRow()]
         #Open the Edit Card List window for currently selected pass
-        e = EditCardList(passData=p, filepath=self.currentFile)
+        e = CardManager(passData=p, filepath=self.currentFile)
         #Connect Slot to retrieve Vals back from popup
         e.applied.connect(self.sprayCardPassSelectionChanged)
         e.passDataChanged.connect(self.saveFile)

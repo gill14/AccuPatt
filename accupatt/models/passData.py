@@ -24,7 +24,7 @@ class Pass:
             humidity=None, include_in_composite=True,
             excitation_wav=None, emission_wav=None,
             trim_l=0, trim_r=0, trim_v=0,
-            data_ex=None, data=None, data_mod=None,
+            data_ex=pd.DataFrame(), data=pd.DataFrame(), data_mod=pd.DataFrame(),
             data_loc_units='ft'):
         #Info Stuff
         self.id = id
@@ -61,7 +61,7 @@ class Pass:
         self.spray_cards = []
 
     def modifyData(self, isCenter=True, isSmooth=True):
-        if not isinstance(self.data, pd.DataFrame): return
+        if self.data.empty: return
         d = self.data.copy()
         #Trim it
         d,_ = self.trimLR(d)

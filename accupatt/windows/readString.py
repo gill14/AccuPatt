@@ -89,7 +89,7 @@ class ReadString(baseclass):
         self.clear(showPopup=False)
 
         #Load in pattern data from pass object if available
-        if isinstance(passData.data, pd.DataFrame):
+        if not passData.data.empty:
             self.x = np.array(passData.data['loc'].values, dtype=float)
             self.y = np.array(passData.data[passData.name].values, dtype=float)
             self.y_ex = np.array(passData.data_ex[passData.name].values, dtype=float)

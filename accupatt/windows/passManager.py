@@ -1,4 +1,5 @@
 import sys, os
+from typing import List
 
 from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox, QTableView
 from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QVariant, pyqtSignal, Qt
@@ -44,8 +45,9 @@ class PassManager(baseclass):
     
     def deletePass(self):
         row = self.ui.tableView.selectedIndexes()[0].row()
-        if isinstance(self.tm.pass_list[row].data, pd.DataFrame):
-            if self._are_you_sure(f'{self.tm.pass_list[row].name} constains aquired data which will be permanently erased.'):
+        p: Pass = self.tm.pass_list[row]
+        if not p.data.empty:
+            if self._are_you_sure(f'{p.name} constains aquired data which will be permanently erased.'):
                 self.tm.removePass(self.ui.tableView.selectedIndexes())
 
     def _are_you_sure(self, message):
@@ -60,9 +62,7 @@ class PassManager(baseclass):
         return result == QMessageBox.Yes
 
     def on_applied(self):
-        print(f'Passes:{len(self.passes)}, Pass_List:{len(self.tm.pass_list)}')
         self.passes = copy.copy(self.tm.pass_list)
-        print(f'Passes:{len(self.passes)}, Pass_List:{len(self.tm.pass_list)}')
         #Notify Requestor
         self.applied.emit(self.passes)
         self.accept()
@@ -100,33 +100,35 @@ class PassTable(QAbstractTableModel):
     def data(self, index, role: Qt.DisplayRole):
         i = index.row()
         j = index.column()
+        p: Pass = self.pass_list[i]
         if role == Qt.TextAlignmentRole:
             return Qt.AlignCenter
         elif role == Qt.CheckStateRole:
             if j == 1:
-                if isinstance(self.pass_list[i].data, pd.DataFrame):
+                if not p.data.empty:
                     return Qt.Checked
                 else:
                     return Qt.Unchecked
             else: return QVariant()
         elif role == Qt.DisplayRole or role == Qt.EditRole:
             if j == 0:
-                return self.pass_list[i].name
+                return p.name
             elif j == 2:
-                return self.pass_list[i].trim_l
+                return p.trim_l
             elif j == 3:
-                return self.pass_list[i].trim_r
+                return p.trim_r
             elif j == 4:
-                return self.pass_list[i].trim_v
+                return p.trim_v
         else: return QVariant()
         
     def setData(self, index, value, role = Qt.EditRole) -> bool:
         i = index.row()
         j = index.column()
+        p: Pass = self.pass_list[i]
         if value is None or not role == Qt.EditRole:
             return False
         if j == 0:
-            self.pass_list[i].name = value
+            p.name = value
             self.dataChanged.emit(index,index)
             return True
         elif j == 1:
@@ -137,7 +139,7 @@ class PassTable(QAbstractTableModel):
             except ValueError:
                 print('L and R Trim must be integers')
                 return False
-            self.pass_list[i].trim_l = value
+            p.trim_l = value
             self.dataChanged.emit(index,index)
             return True 
         elif j == 3:
@@ -146,7 +148,7 @@ class PassTable(QAbstractTableModel):
             except ValueError:
                 print('L and R Trim must be integers')
                 return False
-            self.pass_list[i].trim_r = value
+            p.trim_r = value
             self.dataChanged.emit(index,index)
         elif j == 4:
             try:
@@ -154,7 +156,7 @@ class PassTable(QAbstractTableModel):
             except ValueError:
                 print('V Trim must be a number')
                 return False
-            self.pass_list[i].trim_v = value
+            p.trim_v = value
             self.dataChanged.emit(index,index)
         return False
         

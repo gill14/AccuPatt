@@ -32,7 +32,7 @@ class SeriesData:
     def modifyPatterns(self):
         #apply individual pattern modifications
         for p in self.passes:
-            if not isinstance(p.data, pd.DataFrame): continue
+            if p.data.empty: continue
             p.modifyData(isCenter=self.string_center, isSmooth=self.string_smooth_individual)
         #apply cross-pattern modifications
         if self.string_equalize_integrals:
@@ -47,7 +47,7 @@ class SeriesData:
         areas = []
         #Integrate each pattern to find area under the curve
         for p in self.passes:
-            if not isinstance(p.data, pd.DataFrame): continue
+            if p.data.empty: continue
             v = np.trapz(y=p.data_mod[p.name], x=p.data_mod['loc'], axis=0)
             areas.append(v)
         #Find the pass with the largest integral
@@ -55,7 +55,7 @@ class SeriesData:
         #Scale each pass to equalize areas to the maxx above
         for i in range(len(self.passes)):
             p = self.passes[i]
-            if not isinstance(p.data, pd.DataFrame): continue
+            if p.data.empty: continue
             #Calculate scaler and apply to data_mod pattern
             p.data_mod[p.name] = p.data_mod[p.name].multiply(maxx/areas[i])
 
@@ -64,8 +64,9 @@ class SeriesData:
         average = pd.DataFrame()
         #temp df to average accross columns
         d = pd.DataFrame()
+        p: Pass
         for p in self.passes:
-            if not isinstance(p.data, pd.DataFrame): continue
+            if p.data.empty: continue
             #Only include passes checked from listview
             if p.include_in_composite:
                 #add loc column to placeholder, will be overwritten each time with identical values

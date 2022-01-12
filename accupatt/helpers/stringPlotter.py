@@ -28,7 +28,7 @@ class StringPlotter:
         pyqtplotwidget.setLabel(axis='left', text = 'Relative Dye Intensity')
         pyqtplotwidget.showGrid(x=True, y=True)
         #Check if data exists
-        if not isinstance(passData.data, pd.DataFrame): return None, None, None
+        if passData.data.empty: return None, None, None
         #Plot data
         d = passData.data
         _,min = passData.trimLR(d.copy())
@@ -52,7 +52,7 @@ class StringPlotter:
         pyqtplotwidget.setLabel(axis='left', text = 'Relative Dye Intensity')
         pyqtplotwidget.showGrid(x=True, y=True)
         #Check if data exists
-        if not isinstance(passData.data, pd.DataFrame): return
+        if passData.data.empty: return
         #Plot raw data
         d = copy.copy(passData)
         d.modifyData(isCenter=False, isSmooth=False)
@@ -71,7 +71,7 @@ class StringPlotter:
         ax.set_yticks([])
         ax.set_xlabel(f'Location ({series.info.swath_units})')
         for p in series.passes:
-            if not isinstance(p.data, pd.DataFrame): continue
+            if p.data_mod.empty: continue
             if p.include_in_composite:
                 l, = ax.plot(p.data_mod['loc'], p.data_mod[p.name])
                 l.set_label(p.name)
