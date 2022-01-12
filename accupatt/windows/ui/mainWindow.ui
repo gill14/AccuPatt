@@ -36,7 +36,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab_info">
        <attribute name="title">
@@ -160,7 +160,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Global Options</string>
+               <string>Plot Options</string>
               </property>
              </widget>
             </item>

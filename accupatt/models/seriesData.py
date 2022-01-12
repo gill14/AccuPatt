@@ -27,7 +27,6 @@ class SeriesData:
         
         #Convenience Runtime Placeholders
         self.patternAverage = Pass(name='Average')
-        self.patternAverageInverted = Pass(name='AverageInverted')
 
     def modifyPatterns(self):
         #apply individual pattern modifications
@@ -41,7 +40,6 @@ class SeriesData:
         self._averagePattern()
         #Apply avearge pattern modifications
         self.patternAverage.modifyData(isCenter=self.string_center, isSmooth=self.string_smooth_average)
-        self.patternAverageInverted.modifyData(isCenter=self.string_center, isSmooth=self.string_smooth_average)
 
     def _equalizePatterns(self):
         areas = []
@@ -66,9 +64,8 @@ class SeriesData:
         d = pd.DataFrame()
         p: Pass
         for p in self.passes:
-            if p.data.empty: continue
             #Only include passes checked from listview
-            if p.include_in_composite:
+            if not p.data.empty and p.include_in_composite:
                 #add loc column to placeholder, will be overwritten each time with identical values
                 average['loc'] = p.data_mod['loc']
                 #add each modified pattern data to temp df
@@ -78,11 +75,6 @@ class SeriesData:
             average['Average'] = d.mean(axis='columns')
             #copy the placeholder and assign it to the object's previously declared patternAverage object
             self.patternAverage.data = average.copy()
-            #make an inverted copy for simulated overlap
-            averageInverted = pd.DataFrame()
-            averageInverted['loc'] = average['loc'].copy()
-            averageInverted['AverageInverted'] = average['Average'].copy().values[::-1]
-            self.patternAverageInverted.data = averageInverted.copy()
 
     '''
     The methods below are used to convert and calculate info values as needed
