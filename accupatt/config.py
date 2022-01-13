@@ -5,6 +5,7 @@ UNIT_FT = 'ft'
 UNIT_M = 'm'
 UNIT_IN = 'in'
 UNIT_CM = 'cm'
+UNIT_DEG = '°'
 UNIT_DEG_F = '°F'
 UNIT_DEG_C = '°C'
 UNIT_GPA = 'gal/a'
@@ -28,6 +29,11 @@ UM_PER_IN = 25400.0
 FT_PER_M = 3.28084
 MPH_PER_KPH = 0.621371
 MPH_PER_KN = 1.15078
+
+# Pattern Centering
+CENTER_METHOD_NONE = -1
+CENTER_METHOD_CENTROID = 0
+CENTER_METHOD_COD = 1
 
 # String Drive Commands
 STRING_DRIVE_FWD_START = 'AD+\r'

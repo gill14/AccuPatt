@@ -4,7 +4,6 @@ import os
 
 import sqlite3
 
-import accupatt.config as cfg
 from accupatt.models.seriesData import SeriesData
 from accupatt.models.appInfo import AppInfo
 from accupatt.models.passData import Pass
@@ -12,10 +11,7 @@ from accupatt.models.sprayCard import SprayCard
 
 class DBReadWrite:
 
-    def read_from_db(parent_window, last_directory):
-        #file, _ = QFileDialog.getOpenFileName(parent_window, 'Open file', last_directory, "AccuPatt files (*.db)")
-        file = '/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt/testing/N802ET 03.db'
-        
+    def read_from_db(file):
         try:
             # Opens a file connection to the db
             conn = sqlite3.connect(file)

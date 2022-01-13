@@ -22,7 +22,7 @@ from accupatt.windows.passManager import PassManager
 from accupatt.windows.readString import ReadString
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'mainWindow.ui'))
-
+testing = False
 class MainWindow(baseclass):
 
     def __init__(self, *args, **kwargs):
@@ -33,22 +33,25 @@ class MainWindow(baseclass):
 
         #Load in Settings or use defaults
         self.settings = QSettings('BG Application Consulting','AccuPatt')
-        self.currentDirectory = self.settings.value('dir', type=str)
-
-        #Declare a new SeriesData Container
-        self.seriesData = SeriesData()
+        self.currentDirectory = self.settings.value('dir', defaultValue=str(Path.home()), type=str)
 
         # Setup MenuBar
-        self.ui.action_import_accupatt_legacy.triggered.connect(self.importAccuPatt)
+        # --> Setup File Menu
+        self.ui.action_new_series_new_aircraft.triggered.connect(self.newSeriesNewAircraft)
         self.ui.action_save.triggered.connect(self.saveFile)
         self.ui.action_open.triggered.connect(self.openFile)
+        self.ui.action_import_accupatt_legacy.triggered.connect(self.importAccuPatt)
+        if testing:
+            self.ui.menu_file.addAction('TestLoad',self.testLoad)
+        # --> Setup Options Menu
         self.ui.action_pass_manager.triggered.connect(self.openPassManager)
+        # --> Setup Report Menu
         self.ui.actionCreate_Report.triggered.connect(self.makeReport)
-
-        # Setup AppInfo Tab
         
-        
-        # Setup String Analysis Tab
+        # Setup Tab Widget
+        self.ui.tabWidget.setEnabled(False)
+        # --> Setup AppInfo Tab
+        # --> Setup String Analysis Tab
         self.ui.listWidgetStringPass.itemSelectionChanged.connect(self.stringPassSelectionChanged)
         self.ui.listWidgetStringPass.itemChanged[QListWidgetItem].connect(self.stringPassItemChanged)
         self.ui.buttonReadString.clicked.connect(self.readString)
@@ -57,29 +60,48 @@ class MainWindow(baseclass):
         self.ui.checkBoxSmoothIndividual.stateChanged[int].connect(self.smoothIndividualChanged)
         self.ui.checkBoxSmoothAverage.stateChanged[int].connect(self.smoothAverageChanged)
         self.ui.horizontalSliderSimulatedSwath.valueChanged[int].connect(self.swathAdjustedChanged)
-        # --> Setup Individual Passes Tab
-        # --> Setup Composite Tab
-        # --> Setup Simulations Tab
+        # --> | --> Setup Individual Passes Tab
+        # --> | --> Setup Composite Tab
+        # --> | --> Setup Simulations Tab
         self.ui.spinBoxSimulatedSwathPasses.valueChanged[int].connect(self.simulatedSwathPassesChanged)
 
-        #Setup Card Analysis Tab
+        # --> Setup Card Analysis Tab
         self.ui.listWidgetSprayCardPass.itemSelectionChanged.connect(self.sprayCardPassSelectionChanged)
         self.ui.listWidgetSprayCard.itemSelectionChanged.connect(self.sprayCardSelectionChanged)
         self.ui.buttonEditCards.clicked.connect(self.editSprayCardList)
         self.ui.buttonEditThreshold.clicked.connect(self.editThreshold)
         self.ui.buttonEditSpreadFactors.clicked.connect(self.editSpreadFactors)
-        # --> Setup Add/Edit Cards Tab
+        # --> | --> Setup Add/Edit Cards Tab
         self.ui.radioButtonSprayCardFitH.toggled[bool].connect(self.updateSprayCardFitMode)
         self.ui.radioButtonSprayCardFitV.toggled[bool].connect(self.updateSprayCardFitMode)
-        # --> Stup Droplet Distribution Tab
-        # --> Setup Composite Tab
-        # --> Setup Simulations Tab 
+        # --> | --> Stup Droplet Distribution Tab
+        # --> | --> Setup Composite Tab
+        # --> | --> Setup Simulations Tab 
         
         self.show()
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     Menubar
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+    @pyqtSlot()
+    def newSeriesNewAircraft(self):
+        # Dissociate from any currently in-use data file
+        self.currentFile = ''
+        # Declare/clear SeriesData Container
+        self.seriesData = SeriesData()
+        # Load in Fly-In Info from saved settings
+        info = self.seriesData.info
+        info.flyin_name = self.settings.value('flyin_name', defaultValue='', type=str)
+        info.flyin_location = self.settings.value('flyin_location', defaultValue='', type=str)
+        info.flyin_date = self.settings.value('flyin_date', defaultValue='', type=str)
+        info.flyin_analyst = self.settings.value('flyin_analyst', defaultValue='', type=str)
+        # Create empty passes based (# of passes from saved settings)
+        for i in range(self.settings.value('initial_number_of_passes', defaultValue=3, type=int)):
+            self.seriesData.passes.append(Pass(number=i+1))
+        # Clear/Update all ui elements
+        self.update_all_ui()
+        self.ui.tabWidget.setEnabled(True)
 
     @pyqtSlot()
     def importAccuPatt(self):
@@ -96,9 +118,25 @@ class MainWindow(baseclass):
 
         #Update StatusBar
         self.ui.statusbar.showMessage(f'Current File: {file}')
+        self.ui.tabWidget.setEnabled(True)
 
     @pyqtSlot()
     def saveFile(self):
+        if self.currentFile == '':
+            # Have user create a new file
+            fname, _ = QFileDialog.getSaveFileName(parent=self, 
+                                                        caption='Create Data File for Series',
+                                                        directory=self.currentDirectory,
+                                                        filter='AccuPatt (*.db)')
+            if fname is None or fname == '':
+                return
+            self.currentFile = fname
+            self.currentDirectory = os.path.dirname(self.currentFile)
+            self.settings.setValue('dir',self.currentDirectory)
+        self.settings.setValue('flyin_name', self.seriesData.info.flyin_name)
+        self.settings.setValue('flyin_location', self.seriesData.info.flyin_location)
+        self.settings.setValue('flyin_date', self.seriesData.info.flyin_date)
+        self.settings.setValue('flyin_analyst', self.seriesData.info.flyin_analyst)
         DBReadWrite.write_to_db(filePath=self.currentFile, seriesData=self.seriesData)
 
     @pyqtSlot()
@@ -107,8 +145,19 @@ class MainWindow(baseclass):
             self.currentDirectory
         except NameError:
             self.currentDirectory = Path.home()
-        self.currentFile, self.seriesData = DBReadWrite.read_from_db(self, self.currentDirectory)
+        if testing:
+            file = '/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt/testing/N802ET 03.db'
+        else:
+            file, _ = QFileDialog.getOpenFileName(parent=self, 
+                                            caption='Open File',
+                                            directory=self.currentDirectory,
+                                            filter='AccuPatt (*.db)')
+        
+        self.currentFile, self.seriesData = DBReadWrite.read_from_db(file)
+        self.currentDirectory = os.path.dirname(self.currentFile)
+        self.settings.setValue('dir',self.currentDirectory)
         self.update_all_ui()
+        self.ui.tabWidget.setEnabled(True)
 
     def update_all_ui(self):
     
@@ -118,10 +167,10 @@ class MainWindow(baseclass):
         #Refresh ListWidgets
         lvs = [self.ui.listWidgetStringPass, self.ui.listWidgetSprayCardPass]
         for lv in lvs:
-            #Disable all items
-            lv.clear()
-            #Enable applicable passes
             with QSignalBlocker(lv):
+                 #Disable all items
+                lv.clear()
+                #Enable applicable passes
                 for p in self.seriesData.passes:
                     item = QListWidgetItem(p.name, lv)
                     item.setFlags(Qt.ItemIsEnabled|Qt.ItemIsSelectable)
@@ -146,9 +195,12 @@ class MainWindow(baseclass):
         self.sprayCardPassSelectionChanged()
 
         #Update the swath adjustment slider
+        sw = self.seriesData.info.swath
+        if sw == 0:
+            sw = self.seriesData.info.swath_adjusted
         self.ui.labelSimulatedSwath.setText(str(self.seriesData.info.swath_adjusted) + ' ' + self.seriesData.info.swath_units)
-        minn = float(self.seriesData.info.swath) * 0.5
-        maxx = float(self.seriesData.info.swath) * 1.5
+        minn = float(sw) * 0.5
+        maxx = float(sw) * 1.5
         with QSignalBlocker(self.ui.horizontalSliderSimulatedSwath) as blocker:
             self.ui.horizontalSliderSimulatedSwath.setValue(self.seriesData.info.swath_adjusted)
             self.ui.horizontalSliderSimulatedSwath.setMinimum(round(minn))
@@ -261,7 +313,9 @@ class MainWindow(baseclass):
         if modify:
             self.seriesData.modifyPatterns()
         if individuals:
-            passData: Pass = self.seriesData.passes[self.ui.listWidgetStringPass.currentRow()]
+            passData: Pass = None
+            if self.ui.listWidgetStringPass.count() > 0:
+                passData = self.seriesData.passes[self.ui.listWidgetStringPass.currentRow()]
             line_left, line_right, line_vertical = StringPlotter.drawIndividuals(
                     pyqtplotwidget1=self.ui.plotWidgetIndividual,
                     pyqtplotwidget2=self.ui.plotWidgetIndividualTrim,
@@ -321,10 +375,12 @@ class MainWindow(baseclass):
 
     @pyqtSlot()
     def sprayCardPassSelectionChanged(self):
-        passIndex = self.ui.listWidgetSprayCardPass.currentRow()
-        p = self.seriesData.passes[passIndex]
         # Clear Spray Card List
         self.ui.listWidgetSprayCard.clear()
+        
+        passIndex = self.ui.listWidgetSprayCardPass.currentRow()
+        p = self.seriesData.passes[passIndex]
+        
         # Repopulate Spray Card List
         for card in p.spray_cards:
             item = QListWidgetItem(card.name)

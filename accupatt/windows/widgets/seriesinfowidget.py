@@ -2,7 +2,7 @@ import os
 
 from PyQt5.QtWidgets import QComboBox, QMessageBox
 from PyQt5 import uic
-from PyQt5.QtCore import QDate, QDateTime, QSignalBlocker, pyqtSlot
+from PyQt5.QtCore import QDate, QDateTime, QSettings, QSignalBlocker, pyqtSlot
 import numpy as np
 import pandas as pd
 
@@ -182,6 +182,7 @@ class SeriesInfoWidget(baseclass):
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     
     def init_aircraft(self):
+        self.ui.comboBoxMake.addItem('')
         self.aircraft_map = pd.read_excel(self.aircraftFile, sheet_name=None)
         self.ui.comboBoxMake.addItems(self.aircraft_map.keys())
         self.ui.comboBoxMake.setCurrentIndex(-1)
@@ -211,6 +212,7 @@ class SeriesInfoWidget(baseclass):
     @pyqtSlot(str)
     def _on_make_selected(self, make):
         self.ui.comboBoxModel.clear()
+        self.ui.comboBoxModel.addItem('')
         if make in self.aircraft_map.keys():
             df = self.aircraft_map[make]
             self.ui.comboBoxModel.addItems(df['Model'])
@@ -274,7 +276,7 @@ class SeriesInfoWidget(baseclass):
     
     def fill_spray_system(self, info: AppInfo):
         # Target Swath
-        self.ui.lineEditSwath.setText(info.strip_num(info.swath))
+        self.ui.lineEditSwath.setText(info.strip_num(info.swath, zeroBlank=True))
         self.ui.lineEditSwath.editingFinished.connect(self._commit_swath)
         # Target Swath Units
         self.ui.comboBoxUnitsSwath.setCurrentText(info.swath_units)
@@ -363,6 +365,7 @@ class SeriesInfoWidget(baseclass):
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     
     def init_nozzles(self):
+        nozzles = AtomizationModel.nozzles.insert(0,'')
         self.ui.comboBoxNT1.addItems(AtomizationModel.nozzles)
         self.ui.comboBoxNT1.setCurrentIndex(-1)
         self.ui.comboBoxNT1.currentTextChanged[str].connect(self._on_nozzle_1_selected)
@@ -421,6 +424,8 @@ class SeriesInfoWidget(baseclass):
         orif_c = sorted(np.unique(orif_a+orif_b))
         def_c = sorted(np.unique(def_a+def_b))
         #Asign to comboboxes
+        cBSize.addItem('')
+        cBDef.addItem('')
         for item in orif_c:
             cBSize.addItem(str(item))
         for item in def_c:

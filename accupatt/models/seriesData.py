@@ -29,6 +29,8 @@ class SeriesData:
         self.patternAverage = Pass(name='Average')
 
     def modifyPatterns(self):
+        if all(p.data.empty for p in self.passes):
+            return
         #apply individual pattern modifications
         for p in self.passes:
             if p.data.empty: continue

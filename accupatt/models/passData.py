@@ -6,23 +6,17 @@ import scipy.signal as sig
 import accupatt.config as cfg
 class Pass:
 
-    degree_sign= u'\N{DEGREE SIGN}'
-
     c = {'kph_mph': cfg.MPH_PER_KPH,
         'kn_mph': cfg.MPH_PER_KN}
 
-    center_method_none = -1
-    center_method_centroid = 0
-    center_method_cod = 1
-
     def __init__(self, id = '', number=0, name='',
-            ground_speed=None, ground_speed_units='mph',
-            spray_height=None, spray_height_units='ft',
-            pass_heading=None, wind_direction=None,
-            wind_speed=None, wind_speed_units='mph',
-            temperature = None, temperature_units='°F',
-            humidity=None, include_in_composite=True,
-            excitation_wav=None, emission_wav=None,
+            ground_speed=0, ground_speed_units='mph',
+            spray_height=0, spray_height_units='ft',
+            pass_heading=0, wind_direction=None,
+            wind_speed=0, wind_speed_units='mph',
+            temperature = 0, temperature_units='°F',
+            humidity=0, include_in_composite=True,
+            excitation_wav=0, emission_wav=0,
             trim_l=0, trim_r=0, trim_v=0,
             data_ex=pd.DataFrame(), data=pd.DataFrame(), data_mod=pd.DataFrame(),
             data_loc_units='ft'):
@@ -67,11 +61,11 @@ class Pass:
         d,_ = self.trimLR(d)
         d = self.trimV(d)
         #Center it
-        centerMethod = self.center_method_none
+        centerMethod = cfg.CENTER_METHOD_NONE
         if isCenter:
             #Testing centroid vs cod
-            #centerMethod = self.center_method_centroid
-            centerMethod = self.center_method_centroid
+            #centerMethod = cfg.CENTER_METHOD_COD
+            centerMethod = cfg.CENTER_METHOD_CENTROID
         d = self.centerify(d, centerMethod)
         #Smooth it
         if isSmooth:
@@ -113,13 +107,13 @@ class Pass:
         #Need min for shifts out of x range
         min = d[name].min(skipna=True)
         c = 0
-        if centerMethod == self.center_method_none:
+        if centerMethod == cfg.CENTER_METHOD_NONE:
             #No centering applied
             return d
-        elif centerMethod == self.center_method_centroid:
+        elif centerMethod == cfg.CENTER_METHOD_CENTROID:
             #Use Centroid
             c = self.calcCentroid(d)
-        elif centerMethod == self.center_method_cod:
+        elif centerMethod == cfg.CENTER_METHOD_COD:
             #Use Center of Distribution
             c = self.calcCenterOfDistribution(d)
         #convert calculated center to integer points to shift plot
@@ -261,14 +255,14 @@ class Pass:
             float(self.pass_heading)
         except (TypeError, ValueError):
             return ''
-        return str(f'{self.strip_num(self.pass_heading)} {self.degree_sign}')
+        return str(f'{self.strip_num(self.pass_heading)} {cfg.UNIT_DEG}')
         
     def str_wind_direction(self):
         try:
             float(self.wind_direction)
         except (TypeError, ValueError):
             return ''
-        return str(f'{self.strip_num(self.wind_direction)} {self.degree_sign}')
+        return str(f'{self.strip_num(self.wind_direction)} {cfg.UNIT_DEG}')
         
     def str_wind_speed(self):
         try:
@@ -291,16 +285,16 @@ class Pass:
             return ''
         return str(f'{self.strip_num(self.humidity)}%')     
 
-    def strip_num(self, x) -> str:
-        if x is None:
-            return ''
+    def strip_num(self, x, precision = 2, zeroBlank = False) -> str:
         if type(x) is str:
             if x == '':
                 x = 0
+        if zeroBlank and x == 0:
+            return ''
         if float(x).is_integer():
             return str(int(float(x)))
         else:
-            return f'{round(float(x), 2):.2f}'
+            return f'{round(float(x), 2):.{precision}f}'
 
     '''
     The methods below are used to set values as needed

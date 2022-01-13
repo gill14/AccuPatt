@@ -25,7 +25,7 @@ class AppInfo:
     wingspan_units: str = "ft"
     winglets: str = "No"
 
-    swath: int = 50
+    swath: int = 0
     swath_adjusted: int = 50
     swath_units = "ft"
     rate: float = 0
