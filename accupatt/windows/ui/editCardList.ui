@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>Card Manager</string>
   </property>
+  <property name="modal">
+   <bool>true</bool>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
     <widget class="QTableView" name="tableView">

@@ -17,7 +17,7 @@ class PassManager(baseclass):
     applied = pyqtSignal(list)
 
     def __init__(self, passes = None, parent = None):
-        super().__init__()
+        super().__init__(parent = parent)
         # Your code will go here
         self.ui = Ui_Form()
         self.ui.setupUi(self)

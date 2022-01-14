@@ -23,8 +23,8 @@ class LoadCards(baseclass):
 
     applied = pyqtSignal()
 
-    def __init__(self, image_file, card_list):
-        super().__init__()
+    def __init__(self, image_file, card_list, parent=None):
+        super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         

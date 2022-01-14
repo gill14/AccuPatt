@@ -6,12 +6,18 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>721</width>
-    <height>280</height>
+    <width>773</width>
+    <height>281</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Pass Manager</string>
+  </property>
+  <property name="sizeGripEnabled">
+   <bool>false</bool>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>

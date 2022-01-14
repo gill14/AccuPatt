@@ -15,8 +15,8 @@ class EditThreshold(baseclass):
 
     applied = pyqtSignal()
 
-    def __init__(self, sprayCard, passData, seriesData):
-        super().__init__()
+    def __init__(self, sprayCard, passData, seriesData, parent=None):
+        super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         # Your code will go here

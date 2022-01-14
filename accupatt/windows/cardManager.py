@@ -26,8 +26,8 @@ class CardManager(baseclass):
     applied = pyqtSignal()
     passDataChanged = pyqtSignal()
 
-    def __init__(self, passData=None, filepath=None):
-        super().__init__()
+    def __init__(self, passData=None, filepath=None, parent=None):
+        super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         # Your code will go here
@@ -166,7 +166,7 @@ class CardManager(baseclass):
         for row in selection:
             card_list.append(self.tm.card_list[row.row()])
         #Create popup and send current appInfo vals to popup
-        e = LoadCards(image_file=fname, card_list=card_list)
+        e = LoadCards(image_file=fname, card_list=card_list, parent=self)
         #Connect Slot to retrieve Vals back from popup
         e.applied.connect(self.update_table)
         #Start Loop

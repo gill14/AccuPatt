@@ -25,8 +25,8 @@ class ReadString(baseclass):
 
     applied = pyqtSignal(Pass)
 
-    def __init__(self, passData: Pass):
-        super().__init__()
+    def __init__(self, passData: Pass, parent = None):
+        super().__init__(parent = parent)
         # Your code will go here
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -274,7 +274,7 @@ class ReadString(baseclass):
     #Open String Drive Editor
     @pyqtSlot()
     def editStringDrive(self):
-        e = EditStringDrive()
+        e = EditStringDrive(parent=self)
         e.applied.connect(self.setupStringDrive)
         e.exec_()
 
@@ -326,7 +326,7 @@ class ReadString(baseclass):
     #Open Spectrometer Editor
     @pyqtSlot()
     def editSpectrometer(self):
-        e = EditSpectrometer(self.spec)
+        e = EditSpectrometer(self.spec, parent=self)
         e.applied.connect(self.setupSpectrometer)
         e.exec_()
         

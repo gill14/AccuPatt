@@ -13,8 +13,8 @@ class EditSpectrometer(baseclass):
 
     applied = pyqtSignal()
 
-    def __init__(self, spectrometer=None):
-        super().__init__()
+    def __init__(self, spectrometer=None, parent=None):
+        super().__init__(parent=parent)
         # Your code will go here
         self.ui = Ui_Form()
         self.ui.setupUi(self)

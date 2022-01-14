@@ -289,7 +289,7 @@ class Pass:
         if type(x) is str:
             if x == '':
                 x = 0
-        if zeroBlank and x == 0:
+        if x == None or (zeroBlank and x == 0):
             return ''
         if float(x).is_integer():
             return str(int(float(x)))

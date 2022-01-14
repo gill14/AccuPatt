@@ -4,7 +4,7 @@ from openpyxl_image_loader import SheetImageLoader
 import pandas as pd
 
 import accupatt.config as cfg
-from accupatt.helpers.dBReadWrite import DBReadWrite
+from accupatt.helpers.dBBridge import DBBridge
 from accupatt.models.seriesData import SeriesData
 from accupatt.models.appInfo import AppInfo
 from accupatt.models.passData import Pass
@@ -17,7 +17,7 @@ class DataFileImporter:
         s = DataFileImporter.load_from_accupatt_1_file(file)
         #Write to DB (same dir as original xlsx)
         file_db = os.path.splitext(file)[0]+'.db'
-        DBReadWrite.write_to_db(file_db, s)
+        DBBridge(file_db, s).save_to_db()
         #Append Images
         wb = openpyxl.load_workbook(file)
         if not 'Card Data' in wb.sheetnames:

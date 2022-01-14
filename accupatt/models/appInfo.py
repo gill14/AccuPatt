@@ -83,6 +83,13 @@ class AppInfo:
         self.series = appInfo.series
         #self.notes = appInfo.notes
 
+    def string_reg_series(self) -> str:
+        if self.series < 10:
+            s_str = '0'+str(self.series)
+        else:
+            s_str = str(self.series)
+        return self.regnum + ' ' + s_str
+
     def addressLine1(self) -> str:
         return self.street
 

@@ -1,11 +1,11 @@
 from pathlib import Path
 import sys, os
-from PyQt5.QtWidgets import QApplication, QComboBox, QFileDialog, QListWidgetItem, QMessageBox
+from PyQt5.QtWidgets import QApplication, QComboBox, QFileDialog, QListWidgetItem, QMessageBox, QMenu, QAction
 from PyQt5.QtCore import Qt, QSettings, QSignalBlocker, pyqtSlot
 from PyQt5 import uic
 
 from accupatt.helpers.cardPlotter import CardPlotter
-from accupatt.helpers.dBReadWrite import DBReadWrite
+from accupatt.helpers.dBBridge import DBBridge
 from accupatt.helpers.dataFileImporter import DataFileImporter
 from accupatt.models.appInfo import AppInfo
 
@@ -38,6 +38,8 @@ class MainWindow(baseclass):
         # Setup MenuBar
         # --> Setup File Menu
         self.ui.action_new_series_new_aircraft.triggered.connect(self.newSeriesNewAircraft)
+        self.ui.menu_file_aircraft.aboutToShow.connect(self.aboutToShowFileAircraftMenu)
+        self.ui.menu_file_aircraft.triggered[QAction].connect(self.newSeriesFileAircraftMenuAction)
         self.ui.action_save.triggered.connect(self.saveFile)
         self.ui.action_open.triggered.connect(self.openFile)
         self.ui.action_import_accupatt_legacy.triggered.connect(self.importAccuPatt)
@@ -86,6 +88,26 @@ class MainWindow(baseclass):
 
     @pyqtSlot()
     def newSeriesNewAircraft(self):
+        self.newSeries()
+
+    @pyqtSlot()
+    def aboutToShowFileAircraftMenu(self):
+        m: QMenu = self.ui.menu_file_aircraft
+        m.clear()
+        m.addAction('Select File Aircraft')
+        m.addSeparator()
+        for file in [f for f in os.listdir(self.currentDirectory) if f.endswith('.db')]:
+            m.addAction(str(file))
+
+    @pyqtSlot(QAction)
+    def newSeriesFileAircraftMenuAction(self, action: QAction):
+        if action.text() == 'Select File Aircraft':
+            self.newSeries(useFileAircraft=True)
+        else:
+            file = os.path.join(self.currentDirectory,action.text())
+            self.newSeries(useFileAircraft=True, fileAircraft=file)
+        
+    def newSeries(self, useFileAircraft=False, fileAircraft=''):
         # Dissociate from any currently in-use data file
         self.currentFile = ''
         # Declare/clear SeriesData Container
@@ -99,6 +121,17 @@ class MainWindow(baseclass):
         # Create empty passes based (# of passes from saved settings)
         for i in range(self.settings.value('initial_number_of_passes', defaultValue=3, type=int)):
             self.seriesData.passes.append(Pass(number=i+1))
+        # File Aircraft
+        if useFileAircraft:
+            if fileAircraft == '':
+                fileAircraft, _ = QFileDialog.getOpenFileName(parent=self, 
+                                            caption='Open File',
+                                            directory=self.currentDirectory,
+                                            filter='AccuPatt (*.db)')
+            # Load in series info from file
+            DBBridge(fileAircraft, self.seriesData).load_from_db(load_only_info=True)
+            # Increment series number
+            info.series = info.series + 1
         # Clear/Update all ui elements
         self.update_all_ui()
         self.ui.tabWidget.setEnabled(True)
@@ -122,11 +155,13 @@ class MainWindow(baseclass):
 
     @pyqtSlot()
     def saveFile(self):
+        initialFileName = self.seriesData.info.string_reg_series()
+        initialDirectory = os.path.join(self.currentDirectory,initialFileName)
         if self.currentFile == '':
             # Have user create a new file
             fname, _ = QFileDialog.getSaveFileName(parent=self, 
                                                         caption='Create Data File for Series',
-                                                        directory=self.currentDirectory,
+                                                        directory=initialDirectory,
                                                         filter='AccuPatt (*.db)')
             if fname is None or fname == '':
                 return
@@ -137,7 +172,7 @@ class MainWindow(baseclass):
         self.settings.setValue('flyin_location', self.seriesData.info.flyin_location)
         self.settings.setValue('flyin_date', self.seriesData.info.flyin_date)
         self.settings.setValue('flyin_analyst', self.seriesData.info.flyin_analyst)
-        DBReadWrite.write_to_db(filePath=self.currentFile, seriesData=self.seriesData)
+        DBBridge(self.currentFile, self.seriesData).save_to_db()
 
     @pyqtSlot()
     def openFile(self):
@@ -152,8 +187,11 @@ class MainWindow(baseclass):
                                             caption='Open File',
                                             directory=self.currentDirectory,
                                             filter='AccuPatt (*.db)')
-        
-        self.currentFile, self.seriesData = DBReadWrite.read_from_db(file)
+        if file == '':
+            return
+        self.currentFile = file
+        self.seriesData = SeriesData()
+        DBBridge(self.currentFile, self.seriesData).load_from_db()
         self.currentDirectory = os.path.dirname(self.currentFile)
         self.settings.setValue('dir',self.currentDirectory)
         self.update_all_ui()
@@ -277,7 +315,7 @@ class MainWindow(baseclass):
             return
         p = self.seriesData.passes[self.ui.listWidgetStringPass.currentRow()]
         #Create popup and send current appInfo vals to popup
-        e = ReadString(passData=p)
+        e = ReadString(passData=p, parent=self)
         #Connect Slot to retrieve Vals back from popup
         e.applied.connect(self.stringPassSelectionChanged)
         #Start Loop
@@ -291,17 +329,17 @@ class MainWindow(baseclass):
     @pyqtSlot(int) 
     def smoothIndividualChanged(self, checkstate):
         self.seriesData.string_smooth_individual = (checkstate == Qt.Checked)
-        self.updateStringPlots(modify=True, composite=True, simulations=True)
+        self.updateStringPlots(modify=True, composites=True, simulations=True)
         
     @pyqtSlot(int)
     def smoothAverageChanged(self, checkstate):
         self.seriesData.string_smooth_average = (checkstate == Qt.Checked)
-        self.updateStringPlots(modify=True, composite=True, simulations=True)
+        self.updateStringPlots(modify=True, composites=True, simulations=True)
         
     @pyqtSlot(int)
     def equalizeIntegralsChanged(self, checkstate):
         self.seriesData.string_equalize_integrals = (checkstate == Qt.Checked)
-        self.updateStringPlots(modify = True, composite = True, simulations = True)
+        self.updateStringPlots(modify = True, composites = True, simulations = True)
     
     @pyqtSlot(int)
     def swathAdjustedChanged(self, swath):
@@ -402,9 +440,6 @@ class MainWindow(baseclass):
         # Get a handle on the currently selected card
         cardIndex = self.ui.listWidgetSprayCard.currentRow()
         c = p.spray_cards[cardIndex]
-        # Show/Hide image processing buttons
-        self.ui.buttonEditThreshold.setEnabled(c.has_image)
-        self.ui.buttonEditSpreadFactors.setEnabled(c.has_image)
         self.updateSprayCardView(sprayCard=c)
 
     @pyqtSlot()
@@ -412,7 +447,7 @@ class MainWindow(baseclass):
         #Get a handle on the currently selected pass
         p = self.seriesData.passes[self.ui.listWidgetSprayCardPass.currentRow()]
         #Open the Edit Card List window for currently selected pass
-        e = CardManager(passData=p, filepath=self.currentFile)
+        e = CardManager(passData=p, filepath=self.currentFile, parent=self)
         #Connect Slot to retrieve Vals back from popup
         e.applied.connect(self.sprayCardPassSelectionChanged)
         e.passDataChanged.connect(self.saveFile)
@@ -422,12 +457,13 @@ class MainWindow(baseclass):
     @pyqtSlot()
     def editThreshold(self):
         #Abort if no card image
+        if self.ui.listWidgetSprayCard.currentRow() == -1: return
         if self.ui.listWidgetSprayCard.currentItem().checkState() != Qt.Checked: return
         #Get a handle on the card in question
         p = self.seriesData.passes[self.ui.listWidgetSprayCardPass.currentRow()]
         c = p.spray_cards[self.ui.listWidgetSprayCard.currentRow()]
         #Open the Edit Threshold window for currently selected card
-        e = EditThreshold(sprayCard=c, passData=p, seriesData=self.seriesData)
+        e = EditThreshold(sprayCard=c, passData=p, seriesData=self.seriesData, parent=self)
         #Connect Slot to retrieve Vals back from popup
         e.applied.connect(self.saveAndUpdateSprayCardView)
         #Start Loop
@@ -436,12 +472,13 @@ class MainWindow(baseclass):
     @pyqtSlot()
     def editSpreadFactors(self):
         #Abort if no card image
+        if self.ui.listWidgetSprayCard.currentRow() == -1: return
         if self.ui.listWidgetSprayCard.currentItem().checkState() != Qt.Checked: return
         #Get a handle on the card in question
         p = self.seriesData.passes[self.ui.listWidgetSprayCardPass.currentRow()]
         c = p.spray_cards[self.ui.listWidgetSprayCard.currentRow()]
         #Open the Edit Threshold window for currently selected card
-        e = EditSpreadFactors(sprayCard=c, passData=p, seriesData=self.seriesData)
+        e = EditSpreadFactors(sprayCard=c, passData=p, seriesData=self.seriesData, parent=self)
         #Connect Slot to retrieve Vals back from popup
         e.applied.connect(self.saveAndUpdateSprayCardView)
         #Start Loop
