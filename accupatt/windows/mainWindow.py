@@ -61,6 +61,7 @@ class MainWindow(baseclass):
         self.ui.checkBoxEqualizeArea.stateChanged[int].connect(self.equalizeIntegralsChanged)
         self.ui.checkBoxSmoothIndividual.stateChanged[int].connect(self.smoothIndividualChanged)
         self.ui.checkBoxSmoothAverage.stateChanged[int].connect(self.smoothAverageChanged)
+        self.ui.spinBoxSwathAdjusted.valueChanged[int].connect(self.swathAdjustedChanged)
         self.ui.horizontalSliderSimulatedSwath.valueChanged[int].connect(self.swathAdjustedChanged)
         # --> | --> Setup Individual Passes Tab
         # --> | --> Setup Composite Tab
@@ -236,13 +237,15 @@ class MainWindow(baseclass):
         sw = self.seriesData.info.swath
         if sw == 0:
             sw = self.seriesData.info.swath_adjusted
-        self.ui.labelSimulatedSwath.setText(str(self.seriesData.info.swath_adjusted) + ' ' + self.seriesData.info.swath_units)
         minn = float(sw) * 0.5
         maxx = float(sw) * 1.5
-        with QSignalBlocker(self.ui.horizontalSliderSimulatedSwath) as blocker:
+        with QSignalBlocker(self.ui.horizontalSliderSimulatedSwath):
             self.ui.horizontalSliderSimulatedSwath.setValue(self.seriesData.info.swath_adjusted)
             self.ui.horizontalSliderSimulatedSwath.setMinimum(round(minn))
             self.ui.horizontalSliderSimulatedSwath.setMaximum(round(maxx))
+        with QSignalBlocker(self.ui.spinBoxSwathAdjusted):
+            self.ui.spinBoxSwathAdjusted.setValue(self.seriesData.info.swath_adjusted)
+            self.ui.spinBoxSwathAdjusted.setSuffix(self.seriesData.info.swath_units)
             
         self.updateStringPlots(modify=True, individuals=True, composites=True, simulations=True)
 
@@ -281,7 +284,7 @@ class MainWindow(baseclass):
         passIndex = self.ui.listWidgetStringPass.currentRow()
         self.updateStringPlots(individuals=True)
         #Update the info labels on the individual pass tab
-        if (p := self.seriesData.passes[passIndex]).data is not None:
+        if not (p := self.seriesData.passes[passIndex]).data.empty:
             self.ui.buttonReadString.setText(f'Edit {p.name}')
         else:
             self.ui.buttonReadString.setText(f'Capture {p.name}')
@@ -344,7 +347,10 @@ class MainWindow(baseclass):
     @pyqtSlot(int)
     def swathAdjustedChanged(self, swath):
         self.seriesData.info.swath_adjusted = swath
-        self.ui.labelSimulatedSwath.setText(str(swath)+ ' ' + self.seriesData.info.swath_units)
+        with QSignalBlocker(self.ui.spinBoxSwathAdjusted):
+            self.ui.spinBoxSwathAdjusted.setValue(swath)
+        with QSignalBlocker(self.ui.horizontalSliderSimulatedSwath):
+            self.ui.horizontalSliderSimulatedSwath.setValue(swath)
         self.updateStringPlots(composites=True, simulations=True)
     
     def updateStringPlots(self, modify = False, individuals = False, composites = False, simulations = False):
@@ -388,16 +394,18 @@ class MainWindow(baseclass):
         p = self.seriesData.passes[self.ui.listWidgetStringPass.currentRow()]
         # Convert to Indices
         if trim_left is not None:
-            trim_left = abs(p.data['loc'] - trim_left).idxmin()
+            trim_left = int(abs(p.data['loc'] - trim_left).idxmin())
+            print(trim_left)
         if trim_right is not None:
-            trim_right = p.data['loc'].shape[0] -  abs(p.data['loc'] - trim_right).idxmin()
+            trim_right = int(p.data['loc'].shape[0] -  abs(p.data['loc'] - trim_right).idxmin())
+            print(trim_right)
         trim_vertical = None
         if floor is not None:
             #Check if requested floor is higher than lowest point between L/R Trims
             _,min = p.trimLR(p.data.copy())
             if min < floor:
                 # Add the difference in vertical trim
-                trim_vertical = floor - min
+                trim_vertical = float(floor - min)
         p.setTrims(trim_left, trim_right, trim_vertical)
         #ToDo - Slow...
         self.updateStringPlots(modify=True, individuals=True, composites=True, simulations=True)

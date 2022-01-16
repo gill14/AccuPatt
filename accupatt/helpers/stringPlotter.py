@@ -97,6 +97,10 @@ class StringPlotter:
         if series_with_data:
             # Get handles from series object
             sw = series.info.swath_adjusted
+            try:
+                int(sw)
+            except:
+                return
             pattern: pd.DataFrame = series.patternAverage.data_mod
             # Find average deposition inside swath width
             pattern_c = pattern[(pattern['loc']>=-sw/2) & (pattern['loc']<=sw/2)]

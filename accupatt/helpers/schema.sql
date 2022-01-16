@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS passes (
     emission_wav            INTEGER,
     trim_left               INTEGER,
     trim_right              INTEGER,
-    trim_vertical           INTEGER,
+    trim_vertical           REAL,
     excitation_data         TEXT,
     emission_data           TEXT,
     data_loc_units          TEXT

@@ -17,7 +17,7 @@ class Pass:
             temperature = 0, temperature_units='°F',
             humidity=0, include_in_composite=True,
             excitation_wav=0, emission_wav=0,
-            trim_l=0, trim_r=0, trim_v=0,
+            trim_l=0, trim_r=0, trim_v=0.0,
             data_ex=pd.DataFrame(), data=pd.DataFrame(), data_mod=pd.DataFrame(),
             data_loc_units='ft'):
         #Info Stuff
