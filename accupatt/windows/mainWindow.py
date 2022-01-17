@@ -1,28 +1,28 @@
+import os
+import sys
 from pathlib import Path
-import sys, os
-from PyQt5.QtWidgets import QApplication, QComboBox, QFileDialog, QListWidgetItem, QMessageBox, QMenu, QAction
-from PyQt5.QtCore import Qt, QSettings, QSignalBlocker, pyqtSlot
-from PyQt5 import uic
 
 from accupatt.helpers.cardPlotter import CardPlotter
-from accupatt.helpers.dBBridge import DBBridge
 from accupatt.helpers.dataFileImporter import DataFileImporter
+from accupatt.helpers.dBBridge import DBBridge
+from accupatt.helpers.reportMaker import ReportMaker
+from accupatt.helpers.stringPlotter import StringPlotter
 from accupatt.models.appInfo import AppInfo
-
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
-from accupatt.helpers.stringPlotter import StringPlotter
-from accupatt.helpers.reportMaker import ReportMaker
 from accupatt.models.sprayCard import SprayCard
-
 from accupatt.windows.cardManager import CardManager
-from accupatt.windows.editThreshold import EditThreshold
 from accupatt.windows.editSpreadFactors import EditSpreadFactors
+from accupatt.windows.editThreshold import EditThreshold
 from accupatt.windows.passManager import PassManager
 from accupatt.windows.readString import ReadString
+from PyQt5 import uic
+from PyQt5.QtCore import QSettings, QSignalBlocker, Qt, pyqtSlot
+from PyQt5.QtWidgets import (QAction, QApplication, QComboBox, QFileDialog,
+                             QListWidgetItem, QMenu, QMessageBox)
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'mainWindow.ui'))
-testing = False
+testing = True
 class MainWindow(baseclass):
 
     def __init__(self, *args, **kwargs):
@@ -43,8 +43,6 @@ class MainWindow(baseclass):
         self.ui.action_save.triggered.connect(self.saveFile)
         self.ui.action_open.triggered.connect(self.openFile)
         self.ui.action_import_accupatt_legacy.triggered.connect(self.importAccuPatt)
-        if testing:
-            self.ui.menu_file.addAction('TestLoad',self.testLoad)
         # --> Setup Options Menu
         self.ui.action_pass_manager.triggered.connect(self.openPassManager)
         # --> Setup Report Menu
@@ -53,6 +51,7 @@ class MainWindow(baseclass):
         # Setup Tab Widget
         self.ui.tabWidget.setEnabled(False)
         # --> Setup AppInfo Tab
+        self.ui.widgetSeriesInfo.target_swath_changed.connect(self.swathTargetChanged)
         # --> Setup String Analysis Tab
         self.ui.listWidgetStringPass.itemSelectionChanged.connect(self.stringPassSelectionChanged)
         self.ui.listWidgetStringPass.itemChanged[QListWidgetItem].connect(self.stringPassItemChanged)
@@ -82,6 +81,8 @@ class MainWindow(baseclass):
         # --> | --> Setup Simulations Tab 
         
         self.show()
+        # Testing
+        self.openFile()
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     Menubar
@@ -197,57 +198,19 @@ class MainWindow(baseclass):
         self.settings.setValue('dir',self.currentDirectory)
         self.update_all_ui()
         self.ui.tabWidget.setEnabled(True)
-
+                
     def update_all_ui(self):
-    
         #Populate AppInfo tab
         self.ui.widgetSeriesInfo.fill_from_info(self.seriesData.info)
 
         #Refresh ListWidgets
-        lvs = [self.ui.listWidgetStringPass, self.ui.listWidgetSprayCardPass]
-        for lv in lvs:
-            with QSignalBlocker(lv):
-                 #Disable all items
-                lv.clear()
-                #Enable applicable passes
-                for p in self.seriesData.passes:
-                    item = QListWidgetItem(p.name, lv)
-                    item.setFlags(Qt.ItemIsEnabled|Qt.ItemIsSelectable)
-                    item.setCheckState(Qt.CheckState.Unchecked)
-                    with QSignalBlocker(lv):
-                        lv.addItem(item)
-                        # String Passes
-                        if lv == lvs[0]:
-                            if not p.data.empty:
-                                item.setFlags(Qt.ItemIsEnabled|Qt.ItemIsSelectable|Qt.ItemIsUserCheckable)
-                                if p.include_in_composite:
-                                    item.setCheckState(Qt.Checked)
-                                else:
-                                    item.setCheckState(Qt.PartiallyChecked)
-                        # Card Passes
-                        if lv == lvs[1]:
-                            if p.spray_cards:
-                                item.setCheckState(Qt.Checked)
-                                
-                        lv.setCurrentItem(item) 
-        
-        self.sprayCardPassSelectionChanged()
+        self.updatePassListWidgets(string=True, cards=True)
 
-        #Update the swath adjustment slider
-        sw = self.seriesData.info.swath
-        if sw == 0:
-            sw = self.seriesData.info.swath_adjusted
-        minn = float(sw) * 0.5
-        maxx = float(sw) * 1.5
-        with QSignalBlocker(self.ui.horizontalSliderSimulatedSwath):
-            self.ui.horizontalSliderSimulatedSwath.setValue(self.seriesData.info.swath_adjusted)
-            self.ui.horizontalSliderSimulatedSwath.setMinimum(round(minn))
-            self.ui.horizontalSliderSimulatedSwath.setMaximum(round(maxx))
-        with QSignalBlocker(self.ui.spinBoxSwathAdjusted):
-            self.ui.spinBoxSwathAdjusted.setValue(self.seriesData.info.swath_adjusted)
-            self.ui.spinBoxSwathAdjusted.setSuffix(self.seriesData.info.swath_units)
-            
-        self.updateStringPlots(modify=True, individuals=True, composites=True, simulations=True)
+        # Set swath adjust UI, plot loc unit labels and replot
+        self.swathTargetChanged()
+        
+        # Updates spray card views based on potentially new pass list
+        self.sprayCardPassSelectionChanged()
 
     @pyqtSlot()
     def openPassManager(self):
@@ -257,6 +220,39 @@ class MainWindow(baseclass):
         e.applied[list].connect(self.updateFromPassManager)
         #Start Loop
         e.exec_()
+      
+    def updatePassListWidgets(self, string = False, string_index = -1, cards = False, cards_index = -1):
+        # ListWidget String Pass
+        if string:
+            with QSignalBlocker(lwps := self.ui.listWidgetStringPass):
+                lwps.clear()
+                for p in self.seriesData.passes:
+                    item = QListWidgetItem(p.name, lwps)
+                    item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+                    item.setCheckState(Qt.CheckState.Unchecked)
+                    #lwps.addItem(item)
+                    if not p.data.empty:
+                        item.setFlags(Qt.ItemIsEnabled|Qt.ItemIsSelectable|Qt.ItemIsUserCheckable)
+                        if p.include_in_composite:
+                            item.setCheckState(Qt.Checked)
+                        else:
+                            item.setCheckstate(Qt.PartiallyChecked)
+                    lwps.setCurrentItem(item)
+                if string_index != -1:
+                    lwps.setCurrentIndex(string_index)
+        # ListWidget Cards Pass
+        if cards:
+            with QSignalBlocker(lwpc := self.ui.listWidgetSprayCardPass):
+                lwpc.clear()
+                for p in self.seriesData.passes:
+                    item = QListWidgetItem(p.name, lwpc)
+                    item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+                    item.setCheckState(Qt.CheckState.Unchecked)
+                    if p.spray_cards:
+                        item.setCheckState(Qt.Checked)
+                    lwpc.setCurrentItem(item)
+                if cards_index != -1:
+                    lwpc.setCurrentIndex(cards_index)
       
     @pyqtSlot(list)  
     def updateFromPassManager(self, passes):
@@ -320,9 +316,18 @@ class MainWindow(baseclass):
         #Create popup and send current appInfo vals to popup
         e = ReadString(passData=p, parent=self)
         #Connect Slot to retrieve Vals back from popup
-        e.applied.connect(self.stringPassSelectionChanged)
+        e.applied.connect(self.readStringFinished)
         #Start Loop
         e.exec_()
+        
+    @pyqtSlot()
+    def readStringFinished(self):
+        # Handles checking of string pass list widget
+        self.updatePassListWidgets(string=True, string_index=self.ui.listWidgetStringPass.currentRow())
+        # Replot all but individuals
+        self.updateStringPlots(modify=True, individuals=False, composites=True, simulations=True)
+        # Plot individuals and update capture button text
+        self.stringPassSelectionChanged()
 
     @pyqtSlot(int)
     def alignCentroidChanged(self, checkstate):
@@ -352,6 +357,23 @@ class MainWindow(baseclass):
         with QSignalBlocker(self.ui.horizontalSliderSimulatedSwath):
             self.ui.horizontalSliderSimulatedSwath.setValue(swath)
         self.updateStringPlots(composites=True, simulations=True)
+    
+    def swathTargetChanged(self):
+        #Update the swath adjustment slider
+        sw = self.seriesData.info.swath
+        if sw == 0:
+            sw = self.seriesData.info.swath_adjusted
+        minn = float(sw) * 0.5
+        maxx = float(sw) * 1.5
+        with QSignalBlocker(self.ui.horizontalSliderSimulatedSwath):
+            self.ui.horizontalSliderSimulatedSwath.setValue(self.seriesData.info.swath_adjusted)
+            self.ui.horizontalSliderSimulatedSwath.setMinimum(round(minn))
+            self.ui.horizontalSliderSimulatedSwath.setMaximum(round(maxx))
+        with QSignalBlocker(self.ui.spinBoxSwathAdjusted):
+            self.ui.spinBoxSwathAdjusted.setValue(self.seriesData.info.swath_adjusted)
+            self.ui.spinBoxSwathAdjusted.setSuffix(self.seriesData.info.swath_units)
+        # Must update all string plots for new labels and potential new adjusted swath
+        self.updateStringPlots(modify=True, individuals=True, composites=True, simulations=True)
     
     def updateStringPlots(self, modify = False, individuals = False, composites = False, simulations = False):
         if modify:
@@ -395,10 +417,8 @@ class MainWindow(baseclass):
         # Convert to Indices
         if trim_left is not None:
             trim_left = int(abs(p.data['loc'] - trim_left).idxmin())
-            print(trim_left)
         if trim_right is not None:
             trim_right = int(p.data['loc'].shape[0] -  abs(p.data['loc'] - trim_right).idxmin())
-            print(trim_right)
         trim_vertical = None
         if floor is not None:
             #Check if requested floor is higher than lowest point between L/R Trims

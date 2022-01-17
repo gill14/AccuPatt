@@ -47,8 +47,9 @@ class PassManager(baseclass):
         row = self.ui.tableView.selectedIndexes()[0].row()
         p: Pass = self.tm.pass_list[row]
         if not p.data.empty:
-            if self._are_you_sure(f'{p.name} constains aquired data which will be permanently erased.'):
-                self.tm.removePass(self.ui.tableView.selectedIndexes())
+            if not self._are_you_sure(f'{p.name} constains aquired data which will be permanently erased.'):
+                return
+        self.tm.removePass(self.ui.tableView.selectedIndexes())
 
     def _are_you_sure(self, message):
         msg = QMessageBox()

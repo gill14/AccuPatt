@@ -1,20 +1,22 @@
 import os
 
-from PyQt5.QtWidgets import QComboBox, QMessageBox
-from PyQt5 import uic
-from PyQt5.QtCore import QDate, QDateTime, QSettings, QSignalBlocker, pyqtSlot
+import accupatt.config as cfg
 import numpy as np
 import pandas as pd
-
-import accupatt.config as cfg
-from accupatt.helpers.atomizationModel import AtomizationModel 
+from accupatt.helpers.atomizationModel import AtomizationModel
 from accupatt.models.appInfo import AppInfo
+from PyQt5 import uic
+from PyQt5.QtCore import (QDate, QDateTime, QSettings, QSignalBlocker,
+                          pyqtSignal, pyqtSlot)
+from PyQt5.QtWidgets import QComboBox, QMessageBox
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'seriesInfo.ui'))
 
 class SeriesInfoWidget(baseclass):
     
     aircraftFile = os.path.join(os.getcwd(), 'resources', 'AgAircraftData.xlsx')
+    
+    target_swath_changed = pyqtSignal()
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -315,10 +317,13 @@ class SeriesInfoWidget(baseclass):
     @pyqtSlot()
     def _commit_swath(self):
         self.info.set_swath(self.ui.lineEditSwath.text())
+        self.info.set_swath_adjusted(self.ui.lineEditSwath.text())
+        self.target_swath_changed.emit()
         
     @pyqtSlot(str)
     def _commit_swath_units(self, text):
         self.info.swath_units = text
+        self.target_swath_changed.emit()
         
     @pyqtSlot()
     def _commit_rate(self):
