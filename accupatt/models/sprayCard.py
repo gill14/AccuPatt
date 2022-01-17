@@ -50,13 +50,12 @@ class SprayCard:
             return 0
         return round(len(self.stain_areas_all_px2) / self._px2_to_in2(self.area_px2)) 
 
-    def volumetric_stats(self):
-        #P Protect agains empty array
+    def build_droplet_data(self):
+        # Protect agains empty array
         if len(self.stain_areas_valid_px2) == 0:
-            return 0, 0, 0, 0, ''
+            return [],[]
         drop_dia_um = []
         drop_vol_um3 = []
-        drop_vol_um3_cum = []
         # Sort areas into ascending order of size
         self.stain_areas_valid_px2.sort()
         for area in self.stain_areas_valid_px2:
@@ -70,6 +69,14 @@ class SprayCard:
             vol_um3 = (math.pi * dia_um**3) / 6.0
             # Build volume list
             drop_vol_um3.append(vol_um3)
+        return drop_dia_um, drop_vol_um3
+    
+    def volumetric_stats(self, drop_dia_um = None, drop_vol_um3 = None):
+        # Protect agains empty array
+        if len(self.stain_areas_valid_px2) == 0:
+            return 0, 0, 0, 0, ''
+        if drop_dia_um is None or drop_vol_um3 is None:
+            drop_dia_um, drop_vol_um3 = self.build_droplet_data()
         # Calculate volume sum
         drop_vol_um3_sum = sum(drop_vol_um3)
         # Calculate volume fractions

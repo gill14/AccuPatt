@@ -10,6 +10,8 @@ from accupatt.models.sprayCard import SprayCard
 
 class DBBridge:
     
+    schema_filename = os.path.join(os.getcwd(), 'accupatt', 'helpers', 'schema.sql')
+    
     def __init__(self, file: str, series: SeriesData):
         self.file = file
         self.s = series
@@ -19,9 +21,8 @@ class DBBridge:
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
     def load_from_db(self, load_only_info=False):
-        try:
-            # Opens a file connection to the db
-            conn = sqlite3.connect(self.file)
+        # Opens a file connection to the db
+        with sqlite3.connect(self.file) as conn:
             # Get a cursor object
             c = conn.cursor()
             if load_only_info:
@@ -40,14 +41,6 @@ class DBBridge:
                 self._load_table_aircraft(c,self.s)
                 self._load_table_spray_system(c,self.s)
                 self._load_table_passes(c,self.s)
-        except Exception as e:
-            # Roll back any change if something goes wrong
-            conn.rollback()
-            raise e
-        finally:
-            # Close the db connection
-            conn.close()
-        return
 
     def _load_table_series(self, c: sqlite3.Cursor, s: SeriesData):
         i = s.info
@@ -152,73 +145,107 @@ class DBBridge:
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     Saving
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''        
-            
+    
     def save_to_db(self):
-        #db_filename = os.path.splitext(filePath)[0]+'.db'
-        schema_filename = os.path.join(os.getcwd(), 'accupatt', 'helpers', 'schema.sql')
+        # Opens a file connection to the db
         with sqlite3.connect(self.file) as conn:
-            with open(schema_filename, 'rt') as f:
+            # Create db from schema if no tables exist
+            with open(self.schema_filename, 'rt') as f:
                     schema = f.read()
             conn.executescript(schema)
-            #if not os.path.exists(filePath):
-                
-            s = self.s
-            i = s.info
-           
-            #Series    
-            conn.execute('''INSERT INTO series (id, series, date, time, notes_setup, notes_analyst) VALUES (?, ?, ?, ?, ?, ?)
-                            ON CONFLICT(id) DO UPDATE SET
-                            series = excluded.series, date = excluded.date, time = excluded.time, notes_setup = excluded.notes_setup, notes_analyst = excluded.notes_analyst''',
-                            (s.id, i.series, i.date, i.time, i.notes_setup, i.notes_analyst))
-            #Series String
-            conn.execute('''INSERT INTO series_string (series_id, smooth_individual, smooth_average, equalize_integrals, center, simulated_adjascent_passes) VALUES (?, ?, ?, ?, ?, ?)
-                         ON CONFLICT(series_id) DO UPDATE SET
-                         smooth_individual = excluded.smooth_individual, smooth_average = excluded.smooth_average, equalize_integrals = excluded.equalize_integrals, center = excluded.center, simulated_adjascent_passes = excluded.simulated_adjascent_passes''',
-                         (s.id, s.string_smooth_individual, s.string_smooth_average, s.string_equalize_integrals, s.string_center, s.string_simulated_adjascent_passes))
-            #Flyin    
-            conn.execute('''INSERT INTO flyin (series_id, flyin_name, flyin_location, flyin_date, flyin_analyst) VALUES (?, ?, ?, ?, ?)
+            # Get a cursor object
+            c = conn.cursor()
+            # Update all tables
+            self._update_table_series(c, self.s)
+            self._update_table_series_string(c, self.s)
+            self._update_table_flyin(c, self.s)
+            self._update_table_aircraft(c, self.s)
+            self._update_table_applicator(c, self.s)
+            self._update_table_spray_system(c, self.s)
+            self._update_table_passes(c, self.s)
+         
+    def _update_table_series(self, c: sqlite3.Cursor, s: SeriesData):
+        i = s.info    
+        c.execute('''INSERT INTO series (id, series, date, time, notes_setup, notes_analyst) VALUES (?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(id) DO UPDATE SET
+                        series = excluded.series, date = excluded.date, time = excluded.time, notes_setup = excluded.notes_setup, notes_analyst = excluded.notes_analyst''',
+                        (s.id, i.series, i.date, i.time, i.notes_setup, i.notes_analyst))
+            
+    def _update_table_series_string(self, c: sqlite3.Cursor, s: SeriesData):
+        c.execute('''INSERT INTO series_string (series_id, smooth_individual, smooth_average, equalize_integrals, center, simulated_adjascent_passes) VALUES (?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(series_id) DO UPDATE SET
+                        smooth_individual = excluded.smooth_individual, smooth_average = excluded.smooth_average, equalize_integrals = excluded.equalize_integrals, center = excluded.center, simulated_adjascent_passes = excluded.simulated_adjascent_passes''',
+                        (s.id, s.string_smooth_individual, s.string_smooth_average, s.string_equalize_integrals, s.string_center, s.string_simulated_adjascent_passes))
+    
+    def _update_table_flyin(self, c: sqlite3.Cursor, s: SeriesData):
+        i = s.info
+        c.execute('''INSERT INTO flyin (series_id, flyin_name, flyin_location, flyin_date, flyin_analyst) VALUES (?, ?, ?, ?, ?)
                             ON CONFLICT(series_id) DO UPDATE SET
                             flyin_name = excluded.flyin_name, flyin_location = excluded.flyin_location, flyin_date = excluded.flyin_date, flyin_analyst = excluded.flyin_analyst''',
                             (s.id, i.flyin_name, i.flyin_location, i.flyin_date, i.flyin_analyst))
-            #Applicator
-            conn.execute('''INSERT INTO applicator (series_id, pilot, business, street, city, state, zip, phone, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    
+    def _update_table_applicator(self, c: sqlite3.Cursor, s: SeriesData):
+        i = s.info
+        c.execute('''INSERT INTO applicator (series_id, pilot, business, street, city, state, zip, phone, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                          ON CONFLICT(series_id) DO UPDATE SET
                          pilot = excluded.pilot, business = excluded.business, street = excluded.street, city = excluded.city, state = excluded.state, zip = excluded.zip, phone = excluded.phone, email = excluded.email''',
                          (s.id, i.pilot, i.business, i.street, i.city, i.state, i.zip, i.phone, i.email))
-            #Aircraft
-            conn.execute('''INSERT INTO aircraft (series_id, regnum, make, model, wingspan, wingspan_units, winglets) VALUES (?, ?, ?, ?, ?, ?, ?)
+    
+    def _update_table_aircraft(self, c: sqlite3.Cursor, s: SeriesData):
+        i = s.info
+        c.execute('''INSERT INTO aircraft (series_id, regnum, make, model, wingspan, wingspan_units, winglets) VALUES (?, ?, ?, ?, ?, ?, ?)
                          ON CONFLICT(series_id) DO UPDATE SET
                          regnum = excluded.regnum, make = excluded.make, model = excluded.model, wingspan = excluded.wingspan, wingspan_units = excluded.wingspan_units, winglets = excluded.winglets''',
                          (s.id, i.regnum, i.make, i.model, i.wingspan, i.wingspan_units, i.winglets))
-            #Spray System
-            conn.execute('''INSERT INTO spray_system (series_id, swath, swath_adjusted, swath_units, rate, rate_units, pressure, pressure_units, nozzle_type_1, nozzle_size_1, nozzle_deflection_1, nozzle_quantity_1, nozzle_type_2, nozzle_size_2, nozzle_deflection_2, nozzle_quantity_2, boom_width, boom_width_units, boom_drop, boom_drop_units, nozzle_spacing, nozzle_spacing_units) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    
+    def _update_table_spray_system(self, c: sqlite3.Cursor, s: SeriesData):
+        i = s.info
+        c.execute('''INSERT INTO spray_system (series_id, swath, swath_adjusted, swath_units, rate, rate_units, pressure, pressure_units, nozzle_type_1, nozzle_size_1, nozzle_deflection_1, nozzle_quantity_1, nozzle_type_2, nozzle_size_2, nozzle_deflection_2, nozzle_quantity_2, boom_width, boom_width_units, boom_drop, boom_drop_units, nozzle_spacing, nozzle_spacing_units) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                          ON CONFLICT(series_id) DO UPDATE SET
                          swath = excluded.swath, swath_adjusted = excluded.swath_adjusted, swath_units = excluded.swath_units, rate = excluded.rate, rate_units = excluded.rate_units, pressure = excluded.pressure, pressure_units = excluded.pressure_units, nozzle_type_1 = excluded.nozzle_type_1, nozzle_size_1 = excluded.nozzle_size_1, nozzle_deflection_1 = excluded.nozzle_deflection_1, nozzle_quantity_1 = excluded.nozzle_quantity_1, nozzle_type_2 = excluded.nozzle_type_2, nozzle_size_2 = excluded.nozzle_size_2, nozzle_deflection_2 = excluded.nozzle_deflection_2, nozzle_quantity_2 = excluded.nozzle_quantity_2, boom_width = excluded.boom_width, boom_width_units = excluded.boom_width_units, boom_drop = excluded.boom_drop, boom_drop_units = excluded.boom_drop_units, nozzle_spacing = excluded.nozzle_spacing, nozzle_spacing_units = excluded.nozzle_spacing_units''',
                          (s.id, i.swath, i.swath_adjusted, i.swath_units, i.rate, i.rate_units, i.pressure, i.pressure_units, i.nozzle_type_1, i.nozzle_size_1, i.nozzle_deflection_1, i.nozzle_quantity_1, i.nozzle_type_2, i.nozzle_size_2, i.nozzle_deflection_2, i.nozzle_quantity_2, i.boom_width, i.boom_width_units, i.boom_drop, i.boom_drop_units, i.nozzle_spacing, i.nozzle_spacing_units))
-
-            p: Pass
-            for p in s.passes:
-                conn.execute('''INSERT INTO passes (id, series_id, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity, include_in_composite, excitation_wav, emission_wav, trim_left, trim_right, trim_vertical, excitation_data, emission_data, data_loc_units) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                            ON CONFLICT(id) DO UPDATE SET
-                            ground_speed = excluded.ground_speed, ground_speed_units = excluded.ground_speed_units, spray_height = excluded.spray_height, spray_height_units = excluded.spray_height_units, pass_heading = excluded.pass_heading, wind_direction = excluded.wind_direction, wind_speed = excluded.wind_speed, wind_speed_units = excluded.wind_speed_units, temperature = excluded.temperature, temperature_units = excluded.temperature_units, humidity = excluded.humidity, include_in_composite = excluded.include_in_composite, excitation_wav = excluded.excitation_wav, emission_wav = excluded.emission_wav, trim_left = excluded.trim_left, trim_right = excluded.trim_right, trim_vertical = excluded.trim_vertical, excitation_data = excluded.excitation_data, emission_data = excluded.emission_data, data_loc_units = excluded.data_loc_units''',
-                            (p.id, s.id, p.number, p.ground_speed, p.ground_speed_units, p.spray_height, p.spray_height_units, p.pass_heading, p.wind_direction, p.wind_speed, p.wind_speed_units, p.temperature, p.temperature_units, p.humidity, p.include_in_composite, p.excitation_wav, p.emission_wav, p.trim_l, p.trim_r, p.trim_v, p.data_ex.to_json(), p.data.to_json(), p.data_loc_units))
-                for card in p.spray_cards:
-                    conn.execute('''INSERT INTO spray_cards (id, pass_id, name, location, include_in_composite, threshold_type, threshold_method_color, threshold_method_grayscale, threshold_grayscale, threshold_color_hue_min, threshold_color_hue_max, threshold_color_saturation_min, threshold_color_saturation_max, threshold_color_brightness_min, threshold_color_brightness_max, dpi, spread_method, spread_factor_a, spread_factor_b, spread_factor_c, has_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                                 ON CONFLICT(id) DO UPDATE SET
-                                 name = excluded.name, location = excluded.location, include_in_composite = excluded.include_in_composite, threshold_type = excluded.threshold_type, threshold_method_color = excluded.threshold_method_color, threshold_method_grayscale = excluded.threshold_method_grayscale, threshold_grayscale = excluded.threshold_grayscale, threshold_color_hue_min = excluded.threshold_color_hue_min, threshold_color_hue_max = excluded.threshold_color_hue_max, threshold_color_saturation_min = excluded.threshold_color_saturation_min, threshold_color_saturation_max = excluded.threshold_color_saturation_max, threshold_color_brightness_min = excluded.threshold_color_brightness_min, threshold_color_brightness_max = excluded.threshold_color_brightness_max, dpi = excluded.dpi, spread_method = excluded.spread_method, spread_factor_a = excluded.spread_factor_a, spread_factor_B = excluded.spread_factor_b, spread_factor_c = excluded.spread_factor_c, has_image = excluded.has_image''',
-                                 (card.id, p.id, card.name, card.location, card.include_in_composite, card.threshold_type, card.threshold_method_color, card.threshold_method_grayscale, card.threshold_grayscale, card.threshold_color_hue[0], card.threshold_color_hue[1], card.threshold_color_saturation[0], card.threshold_color_saturation[1], card.threshold_color_brightness[0], card.threshold_color_brightness[1], card.dpi, card.spread_method, card.spread_factor_a, card.spread_factor_b, card.spread_factor_c, card.has_image))
-                # Loop through cards on db, delete any not in pass object
-                #Spray Cards Table
-                current_ids = [sc.id for sc in p.spray_cards]
-                cursor = conn.cursor()
-                if len(current_ids) == 0:
-                    cursor.execute('''DELETE FROM spray_cards WHERE pass_id = ?''',(p.id,))
+    
+    def _update_table_passes(self, c: sqlite3.Cursor, s: SeriesData):
+        p: Pass
+        for p in s.passes:
+            c.execute('''INSERT INTO passes (id, series_id, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity, include_in_composite, excitation_wav, emission_wav, trim_left, trim_right, trim_vertical, excitation_data, emission_data, data_loc_units) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(id) DO UPDATE SET
+                        ground_speed = excluded.ground_speed, ground_speed_units = excluded.ground_speed_units, spray_height = excluded.spray_height, spray_height_units = excluded.spray_height_units, pass_heading = excluded.pass_heading, wind_direction = excluded.wind_direction, wind_speed = excluded.wind_speed, wind_speed_units = excluded.wind_speed_units, temperature = excluded.temperature, temperature_units = excluded.temperature_units, humidity = excluded.humidity, include_in_composite = excluded.include_in_composite, excitation_wav = excluded.excitation_wav, emission_wav = excluded.emission_wav, trim_left = excluded.trim_left, trim_right = excluded.trim_right, trim_vertical = excluded.trim_vertical, excitation_data = excluded.excitation_data, emission_data = excluded.emission_data, data_loc_units = excluded.data_loc_units''',
+                        (p.id, s.id, p.number, p.ground_speed, p.ground_speed_units, p.spray_height, p.spray_height_units, p.pass_heading, p.wind_direction, p.wind_speed, p.wind_speed_units, p.temperature, p.temperature_units, p.humidity, p.include_in_composite, p.excitation_wav, p.emission_wav, p.trim_l, p.trim_r, p.trim_v, p.data_ex.to_json(), p.data.to_json(), p.data_loc_units))
+            self._update_table_spray_cards(c, p)
+        # Loop through passes on db, delete any not in series object
+        current_ids = [p.id for p in s.passes]
+        if len(current_ids) == 0:
+            c.execute('''DELETE FROM passes WHERE pass_id = ?''',(p.id,))
+        else:
+            in_query = '('
+            for i, id in enumerate(current_ids):
+                if i == 0:
+                    in_query += f"'{id}'"
                 else:
-                    in_query = '('
-                    for i, id in enumerate(current_ids):
-                        if i == 0:
-                            in_query += f"'{id}'"
-                        else:
-                            in_query += f", '{id}'"
-                    in_query += ')'
-                    cursor.execute(f'DELETE FROM spray_cards WHERE pass_id = "{p.id}" AND id NOT IN {in_query}')
+                    in_query += f", '{id}'"
+            in_query += ')'
+            c.execute(f'DELETE FROM passes WHERE id NOT IN {in_query}')
+            c.execute(f'DELETE FROM spray_cards WHERE pass_id NOT IN {in_query}')
+    
+    def _update_table_spray_cards(self, c: sqlite3.Cursor, p: Pass):
+        card: SprayCard
+        for card in p.spray_cards:
+            c.execute('''INSERT INTO spray_cards (id, pass_id, name, location, include_in_composite, threshold_type, threshold_method_color, threshold_method_grayscale, threshold_grayscale, threshold_color_hue_min, threshold_color_hue_max, threshold_color_saturation_min, threshold_color_saturation_max, threshold_color_brightness_min, threshold_color_brightness_max, dpi, spread_method, spread_factor_a, spread_factor_b, spread_factor_c, has_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            ON CONFLICT(id) DO UPDATE SET
+                            name = excluded.name, location = excluded.location, include_in_composite = excluded.include_in_composite, threshold_type = excluded.threshold_type, threshold_method_color = excluded.threshold_method_color, threshold_method_grayscale = excluded.threshold_method_grayscale, threshold_grayscale = excluded.threshold_grayscale, threshold_color_hue_min = excluded.threshold_color_hue_min, threshold_color_hue_max = excluded.threshold_color_hue_max, threshold_color_saturation_min = excluded.threshold_color_saturation_min, threshold_color_saturation_max = excluded.threshold_color_saturation_max, threshold_color_brightness_min = excluded.threshold_color_brightness_min, threshold_color_brightness_max = excluded.threshold_color_brightness_max, dpi = excluded.dpi, spread_method = excluded.spread_method, spread_factor_a = excluded.spread_factor_a, spread_factor_B = excluded.spread_factor_b, spread_factor_c = excluded.spread_factor_c, has_image = excluded.has_image''',
+                            (card.id, p.id, card.name, card.location, card.include_in_composite, card.threshold_type, card.threshold_method_color, card.threshold_method_grayscale, card.threshold_grayscale, card.threshold_color_hue[0], card.threshold_color_hue[1], card.threshold_color_saturation[0], card.threshold_color_saturation[1], card.threshold_color_brightness[0], card.threshold_color_brightness[1], card.dpi, card.spread_method, card.spread_factor_a, card.spread_factor_b, card.spread_factor_c, card.has_image))
+        # Loop through cards on db, delete any not in pass object
+        current_ids = [sc.id for sc in p.spray_cards]
+        if len(current_ids) == 0:
+            c.execute('''DELETE FROM spray_cards WHERE pass_id = ?''',(p.id,))
+        else:
+            in_query = '('
+            for i, id in enumerate(current_ids):
+                if i == 0:
+                    in_query += f"'{id}'"
+                else:
+                    in_query += f", '{id}'"
+            in_query += ')'
+            c.execute(f'DELETE FROM spray_cards WHERE pass_id = "{p.id}" AND id NOT IN {in_query}')
+            

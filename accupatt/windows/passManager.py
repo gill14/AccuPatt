@@ -46,7 +46,7 @@ class PassManager(baseclass):
     def deletePass(self):
         row = self.ui.tableView.selectedIndexes()[0].row()
         p: Pass = self.tm.pass_list[row]
-        if not p.data.empty:
+        if not p.data.empty or p.spray_cards:
             if not self._are_you_sure(f'{p.name} constains aquired data which will be permanently erased.'):
                 return
         self.tm.removePass(self.ui.tableView.selectedIndexes())
@@ -80,7 +80,7 @@ class PassTable(QAbstractTableModel):
         return len(self.pass_list)
     
     def columnCount(self, parent: QModelIndex()) -> int:
-        return 5
+        return 6
     
     def headerData(self, column, orientation, role=Qt.DisplayRole):
         if role != Qt.DisplayRole:
@@ -96,6 +96,8 @@ class PassTable(QAbstractTableModel):
                 return QVariant('Trim Right')
             elif column == 4:
                 return QVariant('Trim Vertical')
+            elif column == 5:
+                return QVariant('Has Card Data')
             return QVariant()
     
     def data(self, index, role: Qt.DisplayRole):
@@ -107,6 +109,11 @@ class PassTable(QAbstractTableModel):
         elif role == Qt.CheckStateRole:
             if j == 1:
                 if not p.data.empty:
+                    return Qt.Checked
+                else:
+                    return Qt.Unchecked
+            elif j == 5:
+                if p.spray_cards:
                     return Qt.Checked
                 else:
                     return Qt.Unchecked
@@ -159,6 +166,8 @@ class PassTable(QAbstractTableModel):
                 return False
             p.trim_v = value
             self.dataChanged.emit(index,index)
+        elif j == 5:
+            return True
         return False
         
     def addPass(self):
@@ -185,7 +194,7 @@ class PassTable(QAbstractTableModel):
     def flags(self, index):
         if not index.isValid():
             return None
-        if index.column() == 1:
+        if index.column() == 1 or index.column() == 5:
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable
         else:
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
