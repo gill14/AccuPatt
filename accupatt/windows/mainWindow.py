@@ -5,6 +5,7 @@ from pathlib import Path
 from accupatt.helpers.cardPlotter import CardPlotter
 from accupatt.helpers.dataFileImporter import DataFileImporter
 from accupatt.helpers.dBBridge import DBBridge
+from accupatt.helpers.exportExcel import export_all_to_excel, safe_report
 from accupatt.helpers.reportMaker import ReportMaker
 from accupatt.helpers.stringPlotter import StringPlotter
 from accupatt.models.appInfo import AppInfo
@@ -45,6 +46,9 @@ class MainWindow(baseclass):
         self.ui.action_import_accupatt_legacy.triggered.connect(self.importAccuPatt)
         # --> Setup Options Menu
         self.ui.action_pass_manager.triggered.connect(self.openPassManager)
+        # --> Setup Export to Excel Menu
+        self.ui.action_safe_report.triggered.connect(self.createSAFEReport)
+        self.ui.action_detailed_report.triggered.connect(self.createDetailedReport)
         # --> Setup Report Menu
         self.ui.actionCreate_Report.triggered.connect(self.makeReport)
         
@@ -259,6 +263,30 @@ class MainWindow(baseclass):
                     lwpc.setCurrentItem(item)
                 if cards_index != -1:
                     lwpc.setCurrentRow(cards_index)
+
+    @pyqtSlot()
+    def createSAFEReport(self):
+        files, _ = QFileDialog.getOpenFileNames(parent=self,
+                                            caption='Select Files to Include',
+                                            directory=self.currentDirectory,
+                                            filter='AccuPatt (*.db)')
+        if files:
+            dir = os.path.dirname(files[0])
+            savefile, _ = QFileDialog.getSaveFileName(parent=self,
+                                                   caption='Save S.A.F.E. Report As',
+                                                   directory=dir + os.path.sep + 'Operation SAFE Report.xlsx',
+                                                   filter='Excel Files (*.xlsx)')
+        if files and savefile:
+            safe_report(files, savefile)
+
+    @pyqtSlot()
+    def createDetailedReport(self):
+        savefile, _ = QFileDialog.getSaveFileName(parent=self,
+                                                   caption='Save Detailed Report As',
+                                                   directory=self.currentDirectory + os.path.sep + 'AccuPatt Detailed Report.xlsx',
+                                                   filter='Excel Files (*.xlsx)')
+        if savefile:
+            export_all_to_excel(series=self.seriesData, saveFile=savefile)
 
     @pyqtSlot()
     def makeReport(self):
