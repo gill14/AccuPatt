@@ -48,7 +48,7 @@ class MainWindow(baseclass):
         self.ui.action_pass_manager.triggered.connect(self.openPassManager)
         # --> Setup Export to Excel Menu
         self.ui.action_safe_report.triggered.connect(self.createSAFEReport)
-        self.ui.action_detailed_report.triggered.connect(self.createDetailedReport)
+        self.ui.action_detailed_report.triggered.connect(self.exportAllRawData)
         # --> Setup Report Menu
         self.ui.actionCreate_Report.triggered.connect(self.makeReport)
         
@@ -280,10 +280,10 @@ class MainWindow(baseclass):
             safe_report(files, savefile)
 
     @pyqtSlot()
-    def createDetailedReport(self):
+    def exportAllRawData(self):
         savefile, _ = QFileDialog.getSaveFileName(parent=self,
-                                                   caption='Save Detailed Report As',
-                                                   directory=self.currentDirectory + os.path.sep + 'AccuPatt Detailed Report.xlsx',
+                                                   caption='Save As',
+                                                   directory=self.currentDirectory + os.path.sep + f'{self.seriesData.info.string_reg_series} Raw Data.xlsx',
                                                    filter='Excel Files (*.xlsx)')
         if savefile:
             export_all_to_excel(series=self.seriesData, saveFile=savefile)

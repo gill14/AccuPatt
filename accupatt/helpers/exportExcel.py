@@ -140,13 +140,14 @@ def export_all_to_excel(series: SeriesData, saveFile: str):
             ws.merge_cells(start_row=1,start_column=col_pass_name,end_row=1,end_column=col_pass_name+len(p.spray_cards)-1)
             for k, c in enumerate(p.spray_cards):
                 c: SprayCard
-                labels = ['name','include_in_composite','location','threshold_type']
-                vals = [c.name,c.include_in_composite,c.location,c.threshold_type]
+                labels = ['name','has_image','include_in_composite','location','units','threshold_type','threshold_method_grayscale','threshold_grayscale','threshold_method_color','threshold_color_hue_min','threshold_color_hue_max','threshold_color_saturation_min','threshold_color_saturation_max','threshold_color_brightness_min','threshold_color_brightness_max','dpi','spread_method','sf_a','sf_b','sf_c']
+                vals = [c.name,c.has_image,c.include_in_composite,c.location,c.location_units,c.threshold_type,c.threshold_method_grayscale, c.threshold_grayscale, c.threshold_method_color, c.threshold_color_hue[0], c.threshold_color_hue[1], c.threshold_color_saturation[0], c.threshold_color_saturation[1], c.threshold_color_brightness[0], c.threshold_color_brightness[1], c.dpi, c.spread_method, c.spread_factor_a, c.spread_factor_b, c.spread_factor_c]
                 for i, (label, val) in enumerate(zip(labels,vals)):
                     ws.cell(2+i,1,label)
                     ws.cell(2+i,col_pass_name+k,val)
+            col_pass_name += len(p.spray_cards)
     
-    for cell in ws['A'] + ws[1]:
+    for cell in ws['A'] + ws[1] + ws[2]:
         cell.style = 'Pandas'
         
     # Save it

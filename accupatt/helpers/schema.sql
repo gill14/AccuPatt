@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS spray_system (
 CREATE TABLE IF NOT EXISTS passes (
     id                      TEXT PRIMARY KEY,
     series_id               TEXT REFERENCES series(id),
+    pass_name               TEXT,
     pass_number             INTEGER,
     ground_speed            REAL,
     ground_speed_units      TEXT,
@@ -99,6 +100,7 @@ CREATE TABLE IF NOT EXISTS spray_cards (
     pass_id                         TEXT REFERENCES passes(id),
     name                            TEXT,
     location                        REAL,
+    location_units                  TEXT,
     include_in_composite            INTEGER,
     threshold_type                  INTEGER,
     threshold_method_color          INTEGER,

@@ -15,7 +15,8 @@ Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windo
 defined_sets = {
     'Standard Fly-In': {
         'cards': ['L-32', 'L-24', 'L-16', 'L-8', 'Center', 'R-8', 'R-16', 'R-24', 'R-32'],
-        'locations': [-32, -24, -16, -8, 0, 8, 16, 24, 32]
+        'locations': [-32, -24, -16, -8, 0, 8, 16, 24, 32],
+        'location_units': cfg.UNIT_FT
     }
 }
 
@@ -61,9 +62,9 @@ class CardManager(baseclass):
         self.tm.loadCards(passData.spray_cards)
         self.tv = self.ui.tableView
         self.tv.setModel(self.tm)
-        self.tv.setItemDelegateForColumn(3,ComboBoxDelegate(self, [cfg.INCLUDE_IN_COMPOSITE_NO_STRING, cfg.INCLUDE_IN_COMPOSITE_YES_STRING]))
-        self.tv.setItemDelegateForColumn(4, ComboBoxDelegate(self, cfg.DPI_OPTIONS))
-        self.tv.setItemDelegateForColumn(5,ComboBoxDelegate(self, [cfg.THRESHOLD_TYPE_GRAYSCALE_STRING,cfg.THRESHOLD_TYPE_COLOR_STRING]))
+        self.tv.setItemDelegateForColumn(2,ComboBoxDelegate(self, [cfg.INCLUDE_IN_COMPOSITE_NO_STRING, cfg.INCLUDE_IN_COMPOSITE_YES_STRING]))
+        self.tv.setItemDelegateForColumn(4, ComboBoxDelegate(self, cfg.UNITS_LENGTH_LARGE))
+        self.tv.setItemDelegateForColumn(5, ComboBoxDelegate(self, cfg.DPI_OPTIONS))
         self.tv.setColumnWidth(5,100)
 
         self.selection_changed()
@@ -102,6 +103,7 @@ class CardManager(baseclass):
         for i in range(len(selectedSet['cards'])):
             c = SprayCard(name=selectedSet['cards'][i], filepath=self.filepath)
             c.location = selectedSet['locations'][i]
+            c.location_units = selectedSet['location_units']
             newCards.append(c)
         rows = self.tm.addCards(newCards)
         self.passDataChanged.emit()
@@ -224,19 +226,10 @@ class CardTable(QAbstractTableModel):
         if role!=Qt.DisplayRole:
             return QVariant()
         if orientation==Qt.Horizontal:
-            if column == 0:
-                return QVariant('Name')
-            elif column == 1:
-                return QVariant('Location')
-            elif column == 2:
-                return QVariant('Has Image?')
-            elif column == 3:
-                return QVariant('In Composite')
-            elif column == 4:
-                return QVariant('Px Per In')
-            elif column == 5:
-                return QVariant('Thresh. Method')
-            return QVariant()
+            headers = ['Name','Has Image?','In Composite','Location','Units','Px Per In']
+            if column < len(headers):
+                return QVariant(headers[column])
+        return QVariant()
 
     def data(self, index, role: Qt.DisplayRole):
         i = index.row()
@@ -245,12 +238,12 @@ class CardTable(QAbstractTableModel):
         if role == Qt.TextAlignmentRole:
             return Qt.AlignCenter
         elif role == Qt.CheckStateRole:
-            if j == 2:
+            if j == 1:
                 if card.has_image == 1:
                     return Qt.Checked
                 else:
                     return Qt.Unchecked
-            elif j == 3:
+            elif j == 2:
                 if card.include_in_composite == 1:
                     return Qt.Checked
                 else:
@@ -261,15 +254,12 @@ class CardTable(QAbstractTableModel):
                 # Name
                 return card.name
             elif j == 1:
-                # Location
-                return card.location
-            elif j == 2:
                 # Has Image?
                 if card.has_image:
                     return cfg.HAS_IMAGE_YES_STRING
                 else:
                     return cfg.HAS_IMAGE_NO_STRING
-            elif j == 3:
+            elif j == 2:
                 # Include in Composite?
                 if role == Qt.DisplayRole:
                     if card.include_in_composite:
@@ -278,22 +268,22 @@ class CardTable(QAbstractTableModel):
                         return cfg.INCLUDE_IN_COMPOSITE_NO_STRING
                 elif role == Qt.EditRole:
                     return card.include_in_composite
+            elif j == 3:
+                # Location
+                return card.location
             elif j == 4:
+                # Location Units
+                if role == Qt.DisplayRole:
+                    return card.location_units
+                elif role == Qt.EditRole:
+                    return cfg.UNITS_LENGTH_LARGE.index(card.location_units)
+            elif j == 5:
                 # PPI
                 if role == Qt.DisplayRole:
                     return str(card.dpi)
                 elif role == Qt.EditRole:
                     return cfg.DPI_OPTIONS.index(str(card.dpi))
-            elif j == 5:
-                # Thresh Type
-                if role == Qt.DisplayRole:
-                    if card.threshold_type == cfg.THRESHOLD_TYPE_GRAYSCALE:
-                        return cfg.THRESHOLD_TYPE_GRAYSCALE_STRING
-                    elif card.threshold_type == cfg.THRESHOLD_TYPE_COLOR:
-                        return cfg.THRESHOLD_TYPE_COLOR_STRING
-                elif role == Qt.EditRole:
-                    return card.threshold_type 
-        else: return QVariant()
+        return QVariant()
     
     def setData(self, index, value, role = Qt.EditRole) -> bool:
         i = index.row()
@@ -307,6 +297,13 @@ class CardTable(QAbstractTableModel):
             self.dataChanged.emit(index,index)
             return True
         elif j == 1:
+            return True
+        elif j == 2:
+            # Include In Composite
+            card.include_in_composite = value
+            self.dataChanged.emit(index,index)
+            return True
+        elif j == 3:
             #Location
             try:
                 float(value)
@@ -316,21 +313,13 @@ class CardTable(QAbstractTableModel):
             card.location = value
             self.dataChanged.emit(index,index)
             return True 
-        elif j == 2:
-            return True
-        elif j == 3:
-            # Include In Composite
-            card.include_in_composite = value
-            self.dataChanged.emit(index,index)
-            return True
         elif j == 4:
+            # Location Units
+            card.location_units = cfg.UNITS_LENGTH_LARGE[value]
+            self.dataChanged.emit(index,index)
+        elif j == 5:
             # PPI
             card.dpi = int(cfg.DPI_OPTIONS[value])
-            self.dataChanged.emit(index,index)
-            return True
-        elif j == 5:
-            # Threshold Type
-            card.threshold_type = value
             self.dataChanged.emit(index,index)
             return True
         return False
@@ -370,12 +359,8 @@ class CardTable(QAbstractTableModel):
         return new_indices
         
     def removeCards(self, selection: List[QModelIndex]):
-        '''rows = []
-        for index in selection:
-            rows.append(index.row())'''
         for index in reversed(selection):
             row = index.row()
-            #print(row)
             self.beginRemoveRows(QModelIndex(), row, row)
             self.card_list.pop(row)
             self.endRemoveRows()
@@ -383,7 +368,7 @@ class CardTable(QAbstractTableModel):
     def flags(self, index):
         if not index.isValid():
             return None
-        if index.column() == 2:
+        if index.column() == 1:
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable
         else:
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable

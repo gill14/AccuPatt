@@ -92,54 +92,28 @@ class DBBridge:
 
     def _load_table_passes(self, c: sqlite3.Cursor, s: SeriesData):
         #Passes Table
-        c.execute('''SELECT id, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity, include_in_composite, excitation_wav, emission_wav, trim_left, trim_right, trim_vertical, excitation_data, emission_data, data_loc_units FROM passes WHERE series_id = ?''',(s.id,))
+        c.execute('''SELECT id, pass_name, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity, include_in_composite, excitation_wav, emission_wav, trim_left, trim_right, trim_vertical, excitation_data, emission_data, data_loc_units FROM passes WHERE series_id = ?''',(s.id,))
         data = c.fetchall()
         for row in data:
-            p = Pass(id=row[0], number=row[1])
-            p.ground_speed = row[2]
-            p.ground_speed_units = row[3]
-            p.spray_height = row[4]
-            p.spray_height_units = row[5]
-            p.pass_heading = row[6]
-            p.wind_direction = row[7]
-            p.wind_speed = row[8]
-            p.wind_speed_units = row[9]
-            p.temperature = row[10]
-            p.temperature_units = row[11]
-            p.humidity = row[12]
-            p.include_in_composite = row[13]
-            p.excitation_wav = row[14]
-            p.emission_wav = row[15]
-            p.trim_l = row[16]
-            p.trim_r = row[17]
-            p.trim_v = row[18]
-            p.data_ex = pd.read_json(row[19])
-            p.data = pd.read_json(row[20])
-            p.data_loc_units = row[21]
+            p = Pass(id=row[0], number=row[2])
+            _, p.name, _, p.ground_speed, p.ground_speed_units, p.spray_height, p.spray_height_units, p.pass_heading, p.wind_direction, p.wind_speed, p.wind_speed_units, p.temperature, p.temperature_units, p.humidity, p.include_in_composite, p.excitation_wav, p.emission_wav, p.trim_l, p.trim_r, p.trim_v, d_ex, d_em, p.data_loc_units = row
+            p.data_ex = pd.read_json(d_ex)
+            p.data = pd.read_json(d_em)
+            
             self._load_table_spray_cards(c,p)
+            
             s.passes.append(p)
 
     def _load_table_spray_cards(self, c: sqlite3.Cursor, p: Pass):
         #Spray Cards Table
-        c.execute('''SELECT id, name, location, include_in_composite, threshold_type, threshold_method_color, threshold_method_grayscale, threshold_grayscale, threshold_color_hue_min, threshold_color_hue_max, threshold_color_saturation_min, threshold_color_saturation_max, threshold_color_brightness_min, threshold_color_brightness_max, dpi, spread_method, spread_factor_a, spread_factor_b, spread_factor_c, has_image FROM spray_cards WHERE pass_id = ?''',(p.id,))
+        c.execute('''SELECT id, name, location, location_units, include_in_composite, threshold_type, threshold_method_grayscale, threshold_grayscale, threshold_method_color, threshold_color_hue_min, threshold_color_hue_max, threshold_color_saturation_min, threshold_color_saturation_max, threshold_color_brightness_min, threshold_color_brightness_max, dpi, spread_method, spread_factor_a, spread_factor_b, spread_factor_c, has_image FROM spray_cards WHERE pass_id = ?''',(p.id,))
         cards = c.fetchall()
         for row in cards:
             sc = SprayCard(id=row[0], name=row[1], filepath=str(self.file))
-            sc.location = row[2]
-            sc.include_in_composite = row[3]
-            sc.threshold_type = row[4]
-            sc.threshold_method_color = row[5]
-            sc.threshold_method_grayscale = row[6]
-            sc.threshold_grayscale = row[7]
-            sc.threshold_color_hue = [row[8],row[9]]
-            sc.threshold_color_saturation = [row[10],row[11]]
-            sc.threshold_color_brightness = [row[12],row[13]]
-            sc.dpi = row[14]
-            sc.spread_method = row[15]
-            sc.spread_factor_a = row[16]
-            sc.spread_factor_b = row[17]
-            sc.spread_factor_c = row[18]
-            sc.has_image = row[19]
+            _, _, sc.location, sc.location_units, sc.include_in_composite, sc.threshold_type, sc.threshold_method_grayscale, sc.threshold_grayscale, sc.threshold_method_color, hmin, hmax, smin, smax, bmin, bmax,sc.dpi,sc.spread_method,sc.spread_factor_a,sc.spread_factor_b,sc.spread_factor_c,sc.has_image = row
+            sc.set_threshold_color_hue(hmin, hmax)
+            sc.set_threshold_color_saturation(smin, smax)
+            sc.set_threshold_color_brightness(bmin, bmax)
             p.spray_cards.append(sc)
             
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -208,10 +182,10 @@ class DBBridge:
     def _update_table_passes(self, c: sqlite3.Cursor, s: SeriesData):
         p: Pass
         for p in s.passes:
-            c.execute('''INSERT INTO passes (id, series_id, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity, include_in_composite, excitation_wav, emission_wav, trim_left, trim_right, trim_vertical, excitation_data, emission_data, data_loc_units) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            c.execute('''INSERT INTO passes (id, series_id, pass_name, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity, include_in_composite, excitation_wav, emission_wav, trim_left, trim_right, trim_vertical, excitation_data, emission_data, data_loc_units) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         ON CONFLICT(id) DO UPDATE SET
-                        ground_speed = excluded.ground_speed, ground_speed_units = excluded.ground_speed_units, spray_height = excluded.spray_height, spray_height_units = excluded.spray_height_units, pass_heading = excluded.pass_heading, wind_direction = excluded.wind_direction, wind_speed = excluded.wind_speed, wind_speed_units = excluded.wind_speed_units, temperature = excluded.temperature, temperature_units = excluded.temperature_units, humidity = excluded.humidity, include_in_composite = excluded.include_in_composite, excitation_wav = excluded.excitation_wav, emission_wav = excluded.emission_wav, trim_left = excluded.trim_left, trim_right = excluded.trim_right, trim_vertical = excluded.trim_vertical, excitation_data = excluded.excitation_data, emission_data = excluded.emission_data, data_loc_units = excluded.data_loc_units''',
-                        (p.id, s.id, p.number, p.ground_speed, p.ground_speed_units, p.spray_height, p.spray_height_units, p.pass_heading, p.wind_direction, p.wind_speed, p.wind_speed_units, p.temperature, p.temperature_units, p.humidity, p.include_in_composite, p.excitation_wav, p.emission_wav, p.trim_l, p.trim_r, p.trim_v, p.data_ex.to_json(), p.data.to_json(), p.data_loc_units))
+                        pass_name = excluded.pass_name, pass_number = excluded.pass_number, ground_speed = excluded.ground_speed, ground_speed_units = excluded.ground_speed_units, spray_height = excluded.spray_height, spray_height_units = excluded.spray_height_units, pass_heading = excluded.pass_heading, wind_direction = excluded.wind_direction, wind_speed = excluded.wind_speed, wind_speed_units = excluded.wind_speed_units, temperature = excluded.temperature, temperature_units = excluded.temperature_units, humidity = excluded.humidity, include_in_composite = excluded.include_in_composite, excitation_wav = excluded.excitation_wav, emission_wav = excluded.emission_wav, trim_left = excluded.trim_left, trim_right = excluded.trim_right, trim_vertical = excluded.trim_vertical, excitation_data = excluded.excitation_data, emission_data = excluded.emission_data, data_loc_units = excluded.data_loc_units''',
+                        (p.id, s.id, p.name, p.number, p.ground_speed, p.ground_speed_units, p.spray_height, p.spray_height_units, p.pass_heading, p.wind_direction, p.wind_speed, p.wind_speed_units, p.temperature, p.temperature_units, p.humidity, p.include_in_composite, p.excitation_wav, p.emission_wav, p.trim_l, p.trim_r, p.trim_v, p.data_ex.to_json(), p.data.to_json(), p.data_loc_units))
             self._update_table_spray_cards(c, p)
         # Loop through passes on db, delete any not in series object
         current_ids = [p.id for p in s.passes]
@@ -231,10 +205,10 @@ class DBBridge:
     def _update_table_spray_cards(self, c: sqlite3.Cursor, p: Pass):
         card: SprayCard
         for card in p.spray_cards:
-            c.execute('''INSERT INTO spray_cards (id, pass_id, name, location, include_in_composite, threshold_type, threshold_method_color, threshold_method_grayscale, threshold_grayscale, threshold_color_hue_min, threshold_color_hue_max, threshold_color_saturation_min, threshold_color_saturation_max, threshold_color_brightness_min, threshold_color_brightness_max, dpi, spread_method, spread_factor_a, spread_factor_b, spread_factor_c, has_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            c.execute('''INSERT INTO spray_cards (id, pass_id, name, location, location_units, include_in_composite, threshold_type, threshold_method_grayscale, threshold_grayscale, threshold_method_color, threshold_color_hue_min, threshold_color_hue_max, threshold_color_saturation_min, threshold_color_saturation_max, threshold_color_brightness_min, threshold_color_brightness_max, dpi, spread_method, spread_factor_a, spread_factor_b, spread_factor_c, has_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                             ON CONFLICT(id) DO UPDATE SET
-                            name = excluded.name, location = excluded.location, include_in_composite = excluded.include_in_composite, threshold_type = excluded.threshold_type, threshold_method_color = excluded.threshold_method_color, threshold_method_grayscale = excluded.threshold_method_grayscale, threshold_grayscale = excluded.threshold_grayscale, threshold_color_hue_min = excluded.threshold_color_hue_min, threshold_color_hue_max = excluded.threshold_color_hue_max, threshold_color_saturation_min = excluded.threshold_color_saturation_min, threshold_color_saturation_max = excluded.threshold_color_saturation_max, threshold_color_brightness_min = excluded.threshold_color_brightness_min, threshold_color_brightness_max = excluded.threshold_color_brightness_max, dpi = excluded.dpi, spread_method = excluded.spread_method, spread_factor_a = excluded.spread_factor_a, spread_factor_B = excluded.spread_factor_b, spread_factor_c = excluded.spread_factor_c, has_image = excluded.has_image''',
-                            (card.id, p.id, card.name, card.location, card.include_in_composite, card.threshold_type, card.threshold_method_color, card.threshold_method_grayscale, card.threshold_grayscale, card.threshold_color_hue[0], card.threshold_color_hue[1], card.threshold_color_saturation[0], card.threshold_color_saturation[1], card.threshold_color_brightness[0], card.threshold_color_brightness[1], card.dpi, card.spread_method, card.spread_factor_a, card.spread_factor_b, card.spread_factor_c, card.has_image))
+                            name = excluded.name, location = excluded.location, location_units = excluded.location_units, include_in_composite = excluded.include_in_composite, threshold_type = excluded.threshold_type, threshold_method_grayscale = excluded.threshold_method_grayscale, threshold_grayscale = excluded.threshold_grayscale, threshold_method_color = excluded.threshold_method_color, threshold_color_hue_min = excluded.threshold_color_hue_min, threshold_color_hue_max = excluded.threshold_color_hue_max, threshold_color_saturation_min = excluded.threshold_color_saturation_min, threshold_color_saturation_max = excluded.threshold_color_saturation_max, threshold_color_brightness_min = excluded.threshold_color_brightness_min, threshold_color_brightness_max = excluded.threshold_color_brightness_max, dpi = excluded.dpi, spread_method = excluded.spread_method, spread_factor_a = excluded.spread_factor_a, spread_factor_B = excluded.spread_factor_b, spread_factor_c = excluded.spread_factor_c, has_image = excluded.has_image''',
+                            (card.id, p.id, card.name, card.location, card.location_units, card.include_in_composite, card.threshold_type, card.threshold_method_grayscale, card.threshold_grayscale, card.threshold_method_color, card.threshold_color_hue[0], card.threshold_color_hue[1], card.threshold_color_saturation[0], card.threshold_color_saturation[1], card.threshold_color_brightness[0], card.threshold_color_brightness[1], card.dpi, card.spread_method, card.spread_factor_a, card.spread_factor_b, card.spread_factor_c, card.has_image))
         # Loop through cards on db, delete any not in pass object
         current_ids = [sc.id for sc in p.spray_cards]
         if len(current_ids) == 0:

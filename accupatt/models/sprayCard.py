@@ -15,6 +15,7 @@ class SprayCard:
         self.filepath = filepath
         self.name = name
         self.location = None
+        self.location_units = None
         self.has_image = False
         self.include_in_composite = cfg.INCLUDE_IN_COMPOSITE_NO
 

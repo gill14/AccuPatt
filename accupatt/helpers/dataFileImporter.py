@@ -198,6 +198,7 @@ class DataFileImporter:
                 continue
             c = SprayCard(name=sh.cell(row=1,column=col).value)
             c.location = (col-9)*spacing
+            c.location_units = cfg.UNIT_FT
             c.has_image = 1 if sh.cell(row=2,column=col).value else 0
             c.include_in_composite = 1 if sh.cell(row=3,column=col).value else 0
             if c.has_image:
