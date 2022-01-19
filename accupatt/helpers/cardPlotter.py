@@ -1,11 +1,15 @@
 import math
+from typing import List
 from PyQt5.QtWidgets import QTableWidget
 import numpy as np
 import matplotlib.ticker
+from accupatt.helpers.atomizationModel import AtomizationModel
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
 
 from accupatt.models.sprayCard import SprayCard
+from accupatt.windows.widgets.mplwidget import MplWidget
+import accupatt.config as cfg
 
 class SprayCardComposite(SprayCard):
     
@@ -126,3 +130,62 @@ class CardPlotter:
                 val = str(val)
             tableWidget.item(row,1).setText(val)
         tableWidget.resizeColumnsToContents()
+        
+    def plotSpatial(mplWidget1: MplWidget, mplWidget2: MplWidget, sprayCards: List[SprayCard], colorize = False):
+        # Units for plot - TODO 
+        units = cfg.UNIT_FT
+        # Setup Axes
+        ax1 = mplWidget1.canvas.ax
+        ax1.clear()
+        ax1.set_xlabel(f'Location ({units})')
+        ax1.set_ylabel('Droplet Size (microns)')
+        ax2 = mplWidget2.canvas.ax
+        ax2.clear()
+        ax2.set_xlabel(f'Location ({units})')
+        ax2.set_ylabel('Coverage')
+        #ax2.set_ylim(ymin=0)
+        ax2.yaxis.set_major_formatter(matplotlib.ticker.PercentFormatter(xmax=100, decimals=0))
+        # Get a sorted list of valid cards with locations
+        card: SprayCard
+        scs = [card for card in sprayCards if card.has_image and card.include_in_composite and card.location]
+        if len(scs) > 0:
+            scs.sort(key=lambda x: x.location)
+            # Process each card and get stats
+            stats = []
+            for card in scs:
+                card.images_processed()
+                stats.append(card.volumetric_stats())
+            # Create plottable series
+            locs = [card.location for card in scs]
+            cov = [card.percent_coverage() for card in scs]
+            dv01 = [stat[0] for stat in stats]
+            dv05 = [stat[1] for stat in stats]
+            dv09 = [stat[2] for stat in stats]
+            # Plot DSC by location
+            ax1.plot(locs,dv09, label='Dv0.9')
+            ax1.plot(locs,dv05, label='VMD')
+            ax1.plot(locs,dv01, label='Dv0.1')
+            ax1.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+            # Interpolate so that fill-between looks good
+            locs_i = np.linspace(locs[0],locs[-1],num=1000)
+            cov_i = np.interp(locs_i, locs, cov)
+            #Colorize
+            if colorize:
+                # Get a np array of dsc's calculated for each interpolated loc
+                dv01_i = np.interp(locs_i, locs, dv01)
+                dv05_i = np.interp(locs_i, locs, dv05)
+                dsc_i = np.array([AtomizationModel().dsc(dv01=dv01, dv05=dv05) for (dv01,dv05) in zip(dv01_i,dv05_i)])
+                # Plot the fill data using dsc-specified colors
+                categories = ['VF','F','M','C','VC','XC','UC']
+                colors = ['red','orange','yellow','blue','green','lightgray','black']
+                for (category, color) in zip(categories,colors):
+                    ax2.fill_between(locs_i, np.ma.masked_where(dsc_i != category, cov_i), color=color, label=category)
+                ax2.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+            # Plot base coverage
+            ax2.plot(locs_i,cov_i,color='black')
+        # Draw the plots
+        mplWidget1.canvas.fig.set_tight_layout(True)
+        mplWidget1.canvas.draw()
+        mplWidget2.canvas.fig.set_tight_layout(True)
+        mplWidget2.canvas.draw()
+        

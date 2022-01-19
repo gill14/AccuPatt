@@ -460,7 +460,7 @@ class AtomizationModel():
                 }
             }
 
-    def __init__(self, nozzle, orifice, airspeed, pressure, angle):
+    def __init__(self, nozzle=None, orifice=None, airspeed=None, pressure=None, angle=None):
         self.nozzle = nozzle
         self.orifice = orifice
         self.airspeed = airspeed

@@ -82,7 +82,8 @@ class MainWindow(baseclass):
         self.ui.radioButtonSprayCardFitV.toggled[bool].connect(self.updateSprayCardFitMode)
         # --> | --> Stup Droplet Distribution Tab
         self.ui.comboBoxSprayCardDist.currentIndexChanged[int].connect(self.sprayCardDistModeChanged)
-        # --> | --> Setup Composite Tab
+        # --> | --> Setup Spatial Tab
+        self.ui.checkBoxColorByDSC.stateChanged[int].connect(self.colorByDSCChanged)
         # --> | --> Setup Simulations Tab 
         
         self.show()
@@ -473,8 +474,9 @@ class MainWindow(baseclass):
             # Clear Spray Card List
             self.ui.listWidgetSprayCard.clear()
             if (passIndex := self.ui.listWidgetSprayCardPass.currentRow()) != -1:
+                p: Pass = self.seriesData.passes[passIndex]
                 # Repopulate Spray Card List
-                for card in self.seriesData.passes[passIndex].spray_cards:
+                for card in p.spray_cards:
                     item = QListWidgetItem(card.name,self.ui.listWidgetSprayCard)
                     #self.ui.listWidgetSprayCard.addItem(item)
                     if card.has_image: 
@@ -482,7 +484,10 @@ class MainWindow(baseclass):
                     else:
                         item.setCheckState(Qt.Unchecked)
                     item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+                # Spatial plot
+                self.plotSpatial(p)
         self.sprayCardSelectionChanged()
+        
 
     @pyqtSlot()
     def sprayCardSelectionChanged(self):
@@ -562,6 +567,13 @@ class MainWindow(baseclass):
     def sprayCardDistModeChanged(self, mode):
         self.updateCardPlots(distributions=True)
     
+    @pyqtSlot(int)
+    def colorByDSCChanged(self, checkstate):
+        # Check if a card is selected
+        if (passIndex := self.ui.listWidgetSprayCardPass.currentRow()) != -1:
+            passData: Pass = self.seriesData.passes[passIndex]
+            self.plotSpatial(passData=passData)
+    
     def saveAndUpdateSprayCardView(self, sprayCard=None):
         self.saveFile()
         self.updateCardPlots(images = True, distributions = True)
@@ -601,6 +613,12 @@ class MainWindow(baseclass):
             composite = CardPlotter.createRepresentativeComposite(sprayCard=sprayCard)
         CardPlotter.showCardStatTable(self.ui.tableWidgetSprayCardStats, composite)
         CardPlotter.plotDropletDistribution(self.ui.plotWidgetDropDist1, self.ui.plotWidgetDropDist2, composite)
+    
+    def plotSpatial(self, passData: Pass):
+        CardPlotter.plotSpatial(mplWidget1=self.ui.mplWidgetCardSpatial1,
+                                mplWidget2=self.ui.mplWidgetCardSpatial2,
+                                sprayCards=passData.spray_cards,
+                                colorize=self.ui.checkBoxColorByDSC.isChecked())
     
     def setSprayCardProcessingButtonsEnable(self, enable = False):
         self.ui.buttonEditThreshold.setEnabled(enable)
