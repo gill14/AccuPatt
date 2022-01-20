@@ -1,7 +1,7 @@
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QImage, QPixmap, QResizeEvent
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QGraphicsPixmapItem, QGraphicsScene
+from PyQt6 import QtWidgets
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QImage, QPixmap, QResizeEvent
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QGraphicsPixmapItem, QGraphicsScene
 
 class SingleCVImageWidget(QWidget):
     def __init__(self, *args, **kwargs):
@@ -37,7 +37,7 @@ class SingleCVImageWidget(QWidget):
         #Auto-resize to fit width of card to width of graphicsView
         scene1 = self.graphicsView1.scene()
         scene1.setSceneRect(scene1.itemsBoundingRect())
-        self.graphicsView1.fitInView(scene1.sceneRect(), Qt.KeepAspectRatioByExpanding)
+        self.graphicsView1.fitInView(scene1.sceneRect(), Qt.AspectRatioMode.KeepAspectRatioByExpanding)
 
     def clearSprayCardView(self):
         self.pixmap_item_original.setPixmap(QPixmap())

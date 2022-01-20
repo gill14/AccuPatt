@@ -1,8 +1,8 @@
 import sys, os
 
-from PyQt5.QtWidgets import QApplication, QMessageBox
-from PyQt5.QtCore import QSettings, pyqtSignal
-from PyQt5 import uic
+from PyQt6.QtWidgets import QApplication, QMessageBox
+from PyQt6.QtCore import QSettings, pyqtSignal
+from PyQt6 import uic
 
 from serial.tools import list_ports
 
@@ -109,18 +109,18 @@ class EditStringDrive(baseclass):
 
     def _show_validation_error(self, message):
         msg = QMessageBox()
-        msg.setIcon(QMessageBox.Critical)
+        msg.setIcon(QMessageBox.Icon.Critical)
         msg.setText("Input Validation Error")
         msg.setInformativeText(message)
         #msg.setWindowTitle("MessageBox demo")
         #msg.setDetailedText("The details are as follows:")
-        msg.setStandardButtons(QMessageBox.Ok)
+        msg.setStandardButtons(QMessageBox.StandardButton.Ok)
         result = msg.exec()
-        if result == QMessageBox.Ok:
+        if result == QMessageBox.StandardButton.Ok:
             self.raise_()
             self.activateWindow()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     w = EditStringDrive()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

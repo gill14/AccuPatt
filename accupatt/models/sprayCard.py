@@ -1,6 +1,6 @@
 import math, cv2
 import sqlite3
-from PyQt5.QtCore import QSettings
+from PyQt6.QtCore import QSettings
 import numpy as np
 import uuid
 

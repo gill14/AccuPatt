@@ -1,7 +1,7 @@
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import QApplication, QGraphicsPixmapItem
-from PyQt5.QtCore import Qt, QSettings, pyqtSignal, pyqtSlot
-from PyQt5 import uic
+from PyQt6.QtWidgets import QGraphicsPixmapItem
+from PyQt6.QtCore import Qt, QSettings, pyqtSignal, pyqtSlot
+from PyQt6.QtGui import QPixmap, QImageReader
+from PyQt6 import uic
 
 import operator
 import os, sys
@@ -65,11 +65,22 @@ class LoadCards(baseclass):
         self.ui.plotWidget.getViewBox().setAspectLocked()
         
         # Load Image from File, invert vertically, add it to plotWidget
-        self.img_pixmap = pg.QtGui.QPixmap(image_file)
-        self.img: pg.QtGui.QGraphicsPixmapItem = pg.QtGui.QGraphicsPixmapItem(self.img_pixmap)
-        #self.img: ImageItem = pg.ImageItem(image=pg.QtGui.QGraphicsPixmapItem(pg.QtGui.QPixmap(image_file)))
-        self.img.scale(1, -1)
+        self.image_file = image_file
+        image_reader = QImageReader(image_file)
+        size_og = image_reader.size()
+        size_mod = size_og
+        if size_og.width() * size_og.height() > 33000000:
+            scale = 4000 / size_mod.width()
+            size_mod = size_mod.scaled(int(size_mod.width()*scale),int(size_mod.height()*scale),Qt.AspectRatioMode.IgnoreAspectRatio)
+        image_reader.setScaledSize(size_mod)
+        self.img = image_reader.read()
+        self.img = self.img.scaled(size_og.width(),size_og.height())
+        self.img_pixmap = QPixmap.fromImage(self.img)
+        
+        self.img = QGraphicsPixmapItem(self.img_pixmap)
+        
         self.ui.plotWidget.addItem(self.img)
+        self.ui.plotWidget.getPlotItem().invertY(True)
        
         # Only search image for ROIs once
         self.roi_rectangles = self._find_rois(image_file)
@@ -151,15 +162,18 @@ class LoadCards(baseclass):
         
         for i, roi in enumerate(self.rois):
             roi: pg.RectROI
-            size = roi.size()
-            pos = roi.pos()
-            img = self.img_pixmap.copy(pos[0], pos[1], size[0], size[1])
-            byteArray = QtCore.QByteArray()
-            qbuffer = QtCore.QBuffer(byteArray)
-            qbuffer.open(QtCore.QIODevice.WriteOnly)
-            img.save(qbuffer, "PNG")
+            x = int(roi.pos()[0])
+            y = int(roi.pos()[1])
+            w = int(roi.size()[0])
+            h = int(roi.size()[1])
+            # Use CV to crop image roi
+            img = cv2.imread(self.image_file)
+            img_crop = img[y:y+h,x:x+w]
+            # Save to bytestream
+            _, buffer = cv2.imencode('*.png',img_crop)
+            # Write to db and update spray card object
             sprayCard: SprayCard = self.card_list[i]
-            sprayCard.save_image_to_file(byteArray)
+            sprayCard.save_image_to_file(buffer)
             sprayCard.has_image = True
             sprayCard.include_in_composite = True
         
@@ -241,9 +255,3 @@ class LoadCards(baseclass):
                 continue
             roi_rectangles.append((x, y, w, h)) 
         return roi_rectangles
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    
-    sys.exit(app.exec_())

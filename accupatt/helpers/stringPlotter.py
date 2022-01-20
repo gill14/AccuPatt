@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QTableWidget
+from PyQt6.QtWidgets import QTableWidget
 import pandas as pd
 import numpy as np
 import copy
@@ -207,7 +207,7 @@ class StringPlotter:
                 continue
             # Print swath width
             _sw = sw - (tv.rowCount()-1) + (2*row)
-            item_sw.setText(f"{sw} {swath_units}")
+            item_sw.setText(f"{_sw} {swath_units}")
             # Calc and Print RT CV
             rt_cv = StringPlotter.calcCV(series, series.string_simulated_adjascent_passes, _sw, False)
             item_rt.setText(f"{rt_cv} %")

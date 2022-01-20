@@ -1,22 +1,16 @@
+import os
+
+import accupatt.config as cfg
 import numpy as np
-import sys, os
-
-from PyQt5.QtWidgets import QApplication, QMessageBox
-from PyQt5.QtCore import QSettings, QTimer, pyqtSignal, pyqtSlot
-from PyQt5 import uic
-import pandas as pd
-
-from seabreeze.spectrometers import Spectrometer
-import serial
 import pyqtgraph
-
-#from accupatt.helpers.stringPlotter import StringPlotter
-#from accupatt.widgets.pyqtplotwidget import PyQtPlotWidget
-import accupatt.config as cfg 
+import serial
 from accupatt.models.passData import Pass
-
-from accupatt.windows.editStringDrive import EditStringDrive
 from accupatt.windows.editSpectrometer import EditSpectrometer
+from accupatt.windows.editStringDrive import EditStringDrive
+from PyQt6 import uic
+from PyQt6.QtCore import QSettings, QTimer, pyqtSignal, pyqtSlot
+from PyQt6.QtWidgets import QMessageBox
+from seabreeze.spectrometers import Spectrometer
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'readString.ui'))
 
@@ -276,7 +270,7 @@ class ReadString(baseclass):
     def editStringDrive(self):
         e = EditStringDrive(parent=self)
         e.applied.connect(self.setupStringDrive)
-        e.exec_()
+        e.exec()
 
     def setupStringDrive(self):
         #Get a handle to the serial object, else return "Disconnected" status label
@@ -328,7 +322,7 @@ class ReadString(baseclass):
     def editSpectrometer(self):
         e = EditSpectrometer(self.spec, parent=self)
         e.applied.connect(self.setupSpectrometer)
-        e.exec_()
+        e.exec()
         
     def setupSpectrometer(self):
         #Get a handle to the spec object, else return "Disconnected" status
@@ -359,29 +353,25 @@ class ReadString(baseclass):
     
     def _show_validation_error(self, message):
         msg = QMessageBox()
-        msg.setIcon(QMessageBox.Critical)
+        msg.setIcon(QMessageBox.Icon.Critical)
         msg.setText("Input Validation Error")
         msg.setInformativeText(message)
         #msg.setWindowTitle("MessageBox demo")
         #msg.setDetailedText("The details are as follows:")
-        msg.setStandardButtons(QMessageBox.Ok)
+        msg.setStandardButtons(QMessageBox.StandardButton.Ok)
         result = msg.exec()
-        if result == QMessageBox.Ok:
+        if result == QMessageBox.StandardButton.Ok:
             self.raise_()
             self.activateWindow()
             
     def _are_you_sure(self, message):
         msg = QMessageBox()
-        msg.setIcon(QMessageBox.Critical)
+        msg.setIcon(QMessageBox.Icon.Critical)
         msg.setText("Are You Sure?")
         msg.setInformativeText(message)
         #msg.setWindowTitle("MessageBox demo")
         #msg.setDetailedText("The details are as follows:")
-        msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         result = msg.exec()
-        return result == QMessageBox.Yes
+        return result == QMessageBox.StandardButton.Yes
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    w = ReadString(Pass())
-    sys.exit(app.exec_())

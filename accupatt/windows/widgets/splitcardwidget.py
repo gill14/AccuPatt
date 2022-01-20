@@ -1,13 +1,13 @@
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QImage, QPixmap, QResizeEvent
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QGraphicsPixmapItem, QGraphicsScene
+from PyQt6 import QtWidgets
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QImage, QPixmap, QResizeEvent
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QGraphicsPixmapItem, QGraphicsScene
 
 class SplitCardWidget(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        self.fit = Qt.KeepAspectRatioByExpanding
+        self.fit = Qt.AspectRatioMode.KeepAspectRatioByExpanding
         
         layout = QHBoxLayout(self)
         
@@ -53,9 +53,9 @@ class SplitCardWidget(QWidget):
             self.pixmap_item_thresh.setPixmap(QPixmap.fromImage(SplitCardWidget.qImg_from_cvImg(cvImg2)))
         #Auto-resize to fit width or height of card to width or height of graphicsView
         if fit == 'horizontal':
-            self.fit = Qt.KeepAspectRatioByExpanding
+            self.fit = Qt.AspectRatioMode.KeepAspectRatioByExpanding
         else:
-            self.fit = Qt.KeepAspectRatio
+            self.fit = Qt.AspectRatioMode.KeepAspectRatio
         self.resize_and_fit()
         
 
@@ -75,9 +75,9 @@ class SplitCardWidget(QWidget):
         height, width = cvImg.shape[:2]
         if len(cvImg.shape) == 2:
             bytesPerLine = 1 * width
-            qImg = QImage(cvImg.data, width, height, bytesPerLine, QImage.Format_Grayscale8)
+            qImg = QImage(cvImg.data, width, height, bytesPerLine, QImage.Format.Format_Grayscale8)
         elif len(cvImg.shape) == 3:
             bytesPerLine = 3 * width
-            qImg = QImage(cvImg.data, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+            qImg = QImage(cvImg.data, width, height, bytesPerLine, QImage.Format.Format_BGR888)
         return qImg
         

@@ -17,9 +17,9 @@ from accupatt.windows.editSpreadFactors import EditSpreadFactors
 from accupatt.windows.editThreshold import EditThreshold
 from accupatt.windows.passManager import PassManager
 from accupatt.windows.readString import ReadString
-from PyQt5 import uic
-from PyQt5.QtCore import QSettings, QSignalBlocker, Qt, pyqtSlot
-from PyQt5.QtWidgets import (QAction, QApplication, QComboBox, QFileDialog,
+from PyQt6 import uic
+from PyQt6.QtCore import QSettings, QSignalBlocker, Qt, pyqtSlot
+from PyQt6.QtWidgets import (QApplication, QComboBox, QFileDialog,
                              QListWidgetItem, QMenu, QMessageBox)
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'mainWindow.ui'))
@@ -40,7 +40,7 @@ class MainWindow(baseclass):
         # --> Setup File Menu
         self.ui.action_new_series_new_aircraft.triggered.connect(self.newSeriesNewAircraft)
         self.ui.menu_file_aircraft.aboutToShow.connect(self.aboutToShowFileAircraftMenu)
-        self.ui.menu_file_aircraft.triggered[QAction].connect(self.newSeriesFileAircraftMenuAction)
+        self.ui.menu_file_aircraft.triggered.connect(self.newSeriesFileAircraftMenuAction)
         self.ui.action_save.triggered.connect(self.saveFile)
         self.ui.action_open.triggered.connect(self.openFile)
         self.ui.action_import_accupatt_legacy.triggered.connect(self.importAccuPatt)
@@ -107,8 +107,8 @@ class MainWindow(baseclass):
         for file in [f for f in os.listdir(self.currentDirectory) if f.endswith('.db')]:
             m.addAction(str(file))
 
-    @pyqtSlot(QAction)
-    def newSeriesFileAircraftMenuAction(self, action: QAction):
+    @pyqtSlot()
+    def newSeriesFileAircraftMenuAction(self, action):
         if action.text() == 'Select File Aircraft':
             self.newSeries(useFileAircraft=True)
         else:
@@ -225,7 +225,7 @@ class MainWindow(baseclass):
         #Connect Slot to retrieve Vals back from popup
         e.applied[list].connect(self.updateFromPassManager)
         #Start Loop
-        e.exec_()
+        e.exec()
       
     @pyqtSlot(list)  
     def updateFromPassManager(self, passes):
@@ -240,14 +240,14 @@ class MainWindow(baseclass):
                 lwps.clear()
                 for p in self.seriesData.passes:
                     item = QListWidgetItem(p.name, lwps)
-                    item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+                    item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
                     item.setCheckState(Qt.CheckState.Unchecked)
                     if not p.data.empty:
-                        item.setFlags(Qt.ItemIsEnabled|Qt.ItemIsSelectable|Qt.ItemIsUserCheckable)
+                        item.setFlags(Qt.ItemFlag.ItemIsEnabled|Qt.ItemFlag.ItemIsSelectable|Qt.ItemFlag.ItemIsUserCheckable)
                         if p.include_in_composite:
-                            item.setCheckState(Qt.Checked)
+                            item.setCheckState(Qt.CheckState.Checked)
                         else:
-                            item.setCheckstate(Qt.PartiallyChecked)
+                            item.setCheckstate(Qt.CheckState.PartiallyChecked)
                     lwps.setCurrentItem(item)
                 if string_index != -1:
                     lwps.setCurrentRow(string_index)
@@ -257,10 +257,10 @@ class MainWindow(baseclass):
                 lwpc.clear()
                 for p in self.seriesData.passes:
                     item = QListWidgetItem(p.name, lwpc)
-                    item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+                    item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
                     item.setCheckState(Qt.CheckState.Unchecked)
                     if p.spray_cards:
-                        item.setCheckState(Qt.Checked)
+                        item.setCheckState(Qt.CheckState.Checked)
                     lwpc.setCurrentItem(item)
                 if cards_index != -1:
                     lwpc.setCurrentRow(cards_index)
@@ -318,11 +318,11 @@ class MainWindow(baseclass):
     def stringPassItemChanged(self, item: QListWidgetItem):
         # Checkstate on item changed
         # If new state is unchecked, make it partial
-        if item.checkState() == Qt.Unchecked:
-            item.setCheckState(Qt.PartiallyChecked)
+        if item.checkState() == Qt.CheckState.Unchecked:
+            item.setCheckState(Qt.CheckState.PartiallyChecked)
         # Update SeriesData -> Pass object
         p = self.seriesData.passes[self.ui.listWidgetStringPass.row(item)]
-        p.include_in_composite = (item.checkState() == Qt.Checked)
+        p.include_in_composite = (item.checkState() == Qt.CheckState.Checked)
         # Replot composites, simulations
         self.updateStringPlots(modify=True, composites=True, simulations=True)
 
@@ -330,14 +330,14 @@ class MainWindow(baseclass):
     def readString(self):
         if self.ui.listWidgetStringPass.currentItem()==None:
             msg = QMessageBox()
-            msg.setIcon(QMessageBox.Critical)
+            msg.setIcon(QMessageBox.Icon.Critical)
             msg.setText("No Pass Selected")
             msg.setInformativeText('Select Pass from list and try again.')
             #msg.setWindowTitle("MessageBox demo")
             #msg.setDetailedText("The details are as follows:")
-            msg.setStandardButtons(QMessageBox.Ok)
+            msg.setStandardButtons(QMessageBox.StandardButton.Ok)
             result = msg.exec()
-            if result == QMessageBox.Ok:
+            if result == QMessageBox.StandardButton.Ok:
                 self.raise_()
                 self.activateWindow()
             return
@@ -347,7 +347,7 @@ class MainWindow(baseclass):
         #Connect Slot to retrieve Vals back from popup
         e.applied.connect(self.readStringFinished)
         #Start Loop
-        e.exec_()
+        e.exec()
         
     @pyqtSlot()
     def readStringFinished(self):
@@ -360,22 +360,22 @@ class MainWindow(baseclass):
 
     @pyqtSlot(int)
     def alignCentroidChanged(self, checkstate):
-        self.seriesData.string_center = (checkstate == Qt.Checked)
+        self.seriesData.string_center = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
         self.updateStringPlots(modify=True, composites=True, simulations=True)
     
     @pyqtSlot(int) 
     def smoothIndividualChanged(self, checkstate):
-        self.seriesData.string_smooth_individual = (checkstate == Qt.Checked)
+        self.seriesData.string_smooth_individual = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
         self.updateStringPlots(modify=True, composites=True, simulations=True)
         
     @pyqtSlot(int)
     def smoothAverageChanged(self, checkstate):
-        self.seriesData.string_smooth_average = (checkstate == Qt.Checked)
+        self.seriesData.string_smooth_average = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
         self.updateStringPlots(modify=True, composites=True, simulations=True)
         
     @pyqtSlot(int)
     def equalizeIntegralsChanged(self, checkstate):
-        self.seriesData.string_equalize_integrals = (checkstate == Qt.Checked)
+        self.seriesData.string_equalize_integrals = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
         self.updateStringPlots(modify = True, composites = True, simulations = True)
     
     @pyqtSlot(int)
@@ -400,7 +400,7 @@ class MainWindow(baseclass):
             self.ui.horizontalSliderSimulatedSwath.setMaximum(round(maxx))
         with QSignalBlocker(self.ui.spinBoxSwathAdjusted):
             self.ui.spinBoxSwathAdjusted.setValue(self.seriesData.info.swath_adjusted)
-            self.ui.spinBoxSwathAdjusted.setSuffix(self.seriesData.info.swath_units)
+            self.ui.spinBoxSwathAdjusted.setSuffix(' ' + self.seriesData.info.swath_units)
         # Must update all string plots for new labels and potential new adjusted swath
         self.updateStringPlots(modify=True, individuals=True, composites=True, simulations=True)
     
@@ -480,10 +480,10 @@ class MainWindow(baseclass):
                     item = QListWidgetItem(card.name,self.ui.listWidgetSprayCard)
                     #self.ui.listWidgetSprayCard.addItem(item)
                     if card.has_image: 
-                        item.setCheckState(Qt.Checked)
+                        item.setCheckState(Qt.CheckState.Checked)
                     else:
-                        item.setCheckState(Qt.Unchecked)
-                    item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+                        item.setCheckState(Qt.CheckState.Unchecked)
+                    item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
                 # Spatial plot
                 self.plotSpatial(p)
         self.sprayCardSelectionChanged()
@@ -501,10 +501,13 @@ class MainWindow(baseclass):
                 if (cardIndex := self.ui.listWidgetSprayCard.currentRow()) != -1:
                     # Get a handle on selected card
                     sprayCard: SprayCard = passData.spray_cards[cardIndex]
-                    cb.addItems([sprayCard.name,passData.name, 'Series'])
-                    cb.setCurrentIndex(0)
+                    cb.addItem(sprayCard.name)
                     if sprayCard.has_image:
                         self.setSprayCardProcessingButtonsEnable(True)
+                else:
+                    cb.addItem('')
+                cb.addItems([passData.name,'Series'])
+                cb.setCurrentIndex(0)
         # Update plot/image ui
         self.updateCardPlots(images=True, distributions=True)
 
@@ -518,7 +521,7 @@ class MainWindow(baseclass):
         e.applied.connect(self.editSprayCardListFinished)
         e.passDataChanged.connect(self.saveFile)
         #Start Loop
-        e.exec_()
+        e.exec()
         
     @pyqtSlot()
     def editSprayCardListFinished(self):
@@ -541,7 +544,7 @@ class MainWindow(baseclass):
                     #Connect Slot to retrieve Vals back from popup
                     e.applied.connect(self.saveAndUpdateSprayCardView)
                     #Start Loop
-                    e.exec_()
+                    e.exec()
     
     @pyqtSlot()
     def editSpreadFactors(self):
@@ -557,7 +560,7 @@ class MainWindow(baseclass):
                     #Connect Slot to retrieve Vals back from popup
                     e.applied.connect(self.saveAndUpdateSprayCardView)
                     #Start Loop
-                    e.exec_()
+                    e.exec()
 
     @pyqtSlot(bool)
     def updateSprayCardFitMode(self, newBool):
@@ -602,6 +605,9 @@ class MainWindow(baseclass):
                         self.ui.splitCardWidget.updateSprayCardView(cvImg1, cvImg2, fitMode)
                     if distributions:
                         self.plotDropletDistributions(sprayCard, passData)
+            else:
+                if distributions:
+                    self.plotDropletDistributions(passData = passData)
                         
     def plotDropletDistributions(self, sprayCard: SprayCard = None, passData: Pass = None):
         index = self.ui.comboBoxSprayCardDist.currentIndex()
@@ -619,7 +625,8 @@ class MainWindow(baseclass):
                                 mplWidget2=self.ui.mplWidgetCardSpatial2,
                                 sprayCards=passData.spray_cards,
                                 colorize=self.ui.checkBoxColorByDSC.isChecked())
-    
+        self.ui.labelSpatialShowing.setText(passData.name)
+        
     def setSprayCardProcessingButtonsEnable(self, enable = False):
         self.ui.buttonEditThreshold.setEnabled(enable)
         self.ui.buttonEditSpreadFactors.setEnabled(enable)
@@ -628,4 +635,4 @@ class MainWindow(baseclass):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     w = MainWindow()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

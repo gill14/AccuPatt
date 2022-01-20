@@ -1,11 +1,8 @@
-import sys, os
-from typing import List
+import os
 
-from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox, QTableView
-from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QVariant, pyqtSignal, Qt
-from PyQt5 import uic
-from numpy.lib.function_base import select
-import pandas as pd
+from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtCore import QAbstractTableModel, QModelIndex, QVariant, pyqtSignal, Qt
+from PyQt6 import uic
 import copy
 
 from accupatt.models.passData import Pass
@@ -53,14 +50,14 @@ class PassManager(baseclass):
 
     def _are_you_sure(self, message):
         msg = QMessageBox()
-        msg.setIcon(QMessageBox.Critical)
+        msg.setIcon(QMessageBox.Icon.Critical)
         msg.setText("Are You Sure?")
         msg.setInformativeText(message)
         #msg.setWindowTitle("MessageBox demo")
         #msg.setDetailedText("The details are as follows:")
-        msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         result = msg.exec()
-        return result == QMessageBox.Yes
+        return result == QMessageBox.StandardButton.Yes
 
     def on_applied(self):
         self.passes = copy.copy(self.tm.pass_list)
@@ -82,10 +79,10 @@ class PassTable(QAbstractTableModel):
     def columnCount(self, parent: QModelIndex()) -> int:
         return 6
     
-    def headerData(self, column, orientation, role=Qt.DisplayRole):
-        if role != Qt.DisplayRole:
+    def headerData(self, column, orientation, role=Qt.ItemDataRole.DisplayRole):
+        if role != Qt.ItemDataRole.DisplayRole:
             return QVariant()
-        if orientation == Qt.Horizontal:
+        if orientation == Qt.Orientation.Horizontal:
             if column == 0:
                 return QVariant('Name')
             elif column == 1:
@@ -100,25 +97,25 @@ class PassTable(QAbstractTableModel):
                 return QVariant('Has Card Data')
             return QVariant()
     
-    def data(self, index, role: Qt.DisplayRole):
+    def data(self, index, role: Qt.ItemDataRole.DisplayRole):
         i = index.row()
         j = index.column()
         p: Pass = self.pass_list[i]
-        if role == Qt.TextAlignmentRole:
-            return Qt.AlignCenter
-        elif role == Qt.CheckStateRole:
+        if role == Qt.ItemDataRole.TextAlignmentRole:
+            return Qt.AlignmentFlag.AlignCenter
+        elif role == Qt.ItemDataRole.CheckStateRole:
             if j == 1:
                 if not p.data.empty:
-                    return Qt.Checked
+                    return Qt.CheckState.Checked
                 else:
-                    return Qt.Unchecked
+                    return Qt.CheckState.Unchecked
             elif j == 5:
                 if p.spray_cards:
-                    return Qt.Checked
+                    return Qt.CheckState.Checked
                 else:
-                    return Qt.Unchecked
+                    return Qt.CheckState.Unchecked
             else: return QVariant()
-        elif role == Qt.DisplayRole or role == Qt.EditRole:
+        elif role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
             if j == 0:
                 return p.name
             elif j == 2:
@@ -129,11 +126,11 @@ class PassTable(QAbstractTableModel):
                 return p.trim_v
         else: return QVariant()
         
-    def setData(self, index, value, role = Qt.EditRole) -> bool:
+    def setData(self, index, value, role = Qt.ItemDataRole.EditRole) -> bool:
         i = index.row()
         j = index.column()
         p: Pass = self.pass_list[i]
-        if value is None or not role == Qt.EditRole:
+        if value is None or not role == Qt.ItemDataRole.EditRole:
             return False
         if j == 0:
             p.name = value
@@ -195,7 +192,7 @@ class PassTable(QAbstractTableModel):
         if not index.isValid():
             return None
         if index.column() == 1 or index.column() == 5:
-            return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+            return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
         else:
-            return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
+            return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEditable
 

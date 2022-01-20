@@ -1,6 +1,6 @@
 import math
 from typing import List
-from PyQt5.QtWidgets import QTableWidget
+from PyQt6.QtWidgets import QTableWidget
 import numpy as np
 import matplotlib.ticker
 from accupatt.helpers.atomizationModel import AtomizationModel

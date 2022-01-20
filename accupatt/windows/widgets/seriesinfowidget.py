@@ -5,10 +5,9 @@ import numpy as np
 import pandas as pd
 from accupatt.helpers.atomizationModel import AtomizationModel
 from accupatt.models.appInfo import AppInfo
-from PyQt5 import uic
-from PyQt5.QtCore import (QDate, QDateTime, QSettings, QSignalBlocker,
-                          pyqtSignal, pyqtSlot)
-from PyQt5.QtWidgets import QComboBox, QMessageBox
+from PyQt6 import uic
+from PyQt6.QtCore import QDate, QDateTime, pyqtSignal, pyqtSlot
+from PyQt6.QtWidgets import QComboBox, QMessageBox
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'seriesInfo.ui'))
 
@@ -475,11 +474,11 @@ class SeriesInfoWidget(baseclass):
     
     def show_validation_error(self, message):
         msg = QMessageBox()
-        msg.setIcon(QMessageBox.critical)
+        msg.setIcon(QMessageBox.Icon.Critical)
         msg.setText("Input Validation Error")
         msg.setInformativeText(message)
-        msg.setStandardButtons(QMessageBox.Ok)
+        msg.setStandardButtons(QMessageBox.StandardButton.Ok)
         result = msg.exec()
-        if result == QMessageBox.Ok:
+        if result == QMessageBox.StandardButton.Ok:
             self.raise_()
             self.activateWindow()

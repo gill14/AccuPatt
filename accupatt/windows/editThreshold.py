@@ -1,13 +1,9 @@
-from PyQt5.QtWidgets import QApplication, QGraphicsScene, QGraphicsPixmapItem
-from PyQt5.QtCore import Qt, QSettings, pyqtSignal
-from PyQt5.QtGui import QImage, QPixmap, QResizeEvent
-from PyQt5 import uic
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6 import uic
 
-import os, sys, copy
+import os, copy
 
-sys.path.insert(1, '/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt')
 import accupatt.config as cfg
-from accupatt.models.sprayCard import SprayCard
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editThreshold.ui'))
 
@@ -116,9 +112,9 @@ class EditThreshold(baseclass):
 
     def toggleApplyToAllSeries(self, boo:bool):
         if boo: 
-            self.ui.checkBoxApplyToAllPass.setCheckState(Qt.Checked)
+            self.ui.checkBoxApplyToAllPass.setCheckState(Qt.CheckState.Checked)
         else:
-            self.ui.checkBoxApplyToAllPass.setCheckState(Qt.Unchecked)
+            self.ui.checkBoxApplyToAllPass.setCheckState(Qt.CheckState.Unchecked)
         self.ui.checkBoxApplyToAllPass.setEnabled(not boo)
 
     def updateSprayCardView(self):
@@ -131,10 +127,10 @@ class EditThreshold(baseclass):
         #Cycle through passes
         for p in self.seriesData.passes:
             #Check if should apply to pass
-            if p.name == self.passData.name or self.ui.checkBoxApplyToAllSeries.checkState() == Qt.Checked:
+            if p.name == self.passData.name or self.ui.checkBoxApplyToAllSeries.checkState() == Qt.CheckState.Checked:
                 #Cycle through cards in pass
                 for card in p.spray_cards:
-                    if card.name == self.sprayCard_OG.name or self.ui.checkBoxApplyToAllPass.checkState() == Qt.Checked:
+                    if card.name == self.sprayCard_OG.name or self.ui.checkBoxApplyToAllPass.checkState() == Qt.CheckState.Checked:
                         #Apply
                         #Set overall type
                         card.set_threshold_type(self.sprayCard.threshold_type)
@@ -153,17 +149,3 @@ class EditThreshold(baseclass):
 
     def on_rejected(self):
         self.reject
-
-if __name__ == '__main__':
-    
-    print('test')
-    app = QApplication(sys.argv)
-    sprayCard = SprayCard(name='test', filepath='/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt/testing/N802ET S3/N802ET S3 P3/cards/L-24.png')
-    sprayCard.set_threshold_type(cfg.THRESHOLD_TYPE_GRAYSCALE)
-    sprayCard.set_threshold_method_grayscale(cfg.THRESHOLD_METHOD_AUTOMATIC)
-    sprayCard.set_threshold_color_hue(min=0,max=255)
-    sprayCard.set_threshold_color_saturation(min=0, max=255)
-    sprayCard.set_threshold_color_brightness(min=0, max=188)
-    sprayCard.set_threshold_method_color(cfg.THRESHOLD_METHOD_INCLUDE)
-    w = EditThreshold(sprayCard, None, None)
-    sys.exit(app.exec_())

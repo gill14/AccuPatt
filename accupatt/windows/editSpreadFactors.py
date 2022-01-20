@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QApplication, QMessageBox
-from PyQt5.QtCore import QSettings, Qt, pyqtSignal
-from PyQt5 import uic
+from PyQt6.QtWidgets import QApplication, QMessageBox
+from PyQt6.QtCore import QSettings, Qt, pyqtSignal
+from PyQt6 import uic
 
 import pandas as pd
 from pathlib import Path
@@ -113,9 +113,9 @@ class EditSpreadFactors(baseclass):
 
     def toggleApplyToAllSeries(self, boo:bool):
         if boo: 
-            self.ui.checkBoxApplyToAllPass.setCheckState(Qt.Checked)
+            self.ui.checkBoxApplyToAllPass.setCheckState(Qt.CheckState.Checked)
         else:
-            self.ui.checkBoxApplyToAllPass.setCheckState(Qt.Unchecked)
+            self.ui.checkBoxApplyToAllPass.setCheckState(Qt.CheckState.Unchecked)
         self.ui.checkBoxApplyToAllPass.setEnabled(not boo)
 
     def on_applied(self):
@@ -131,14 +131,14 @@ class EditSpreadFactors(baseclass):
             float(c)
         except ValueError:
             msg = QMessageBox()
-            msg.setIcon(QMessageBox.Critical)
+            msg.setIcon(QMessageBox.Icon.Critical)
             msg.setText("Non-Numeric Entry")
             msg.setInformativeText('Do you want to proceed without saving spread factors?')
             #msg.setWindowTitle("MessageBox")
             #msg.setDetailedText("The details are as follows:")
-            msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+            msg.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.Cancel)
             result = msg.exec()
-            if result != QMessageBox.Ok:
+            if result != QMessageBox.StandardButton.Ok:
                 self.raise_()
                 self.activateWindow()
                 return
@@ -146,10 +146,10 @@ class EditSpreadFactors(baseclass):
         #Cycle through passes
         for p in self.seriesData.passes:
             #Check if should apply to pass
-            if p.name == self.passData.name or self.ui.checkBoxApplyToAllSeries.checkState() == Qt.Checked:
+            if p.name == self.passData.name or self.ui.checkBoxApplyToAllSeries.checkState() == Qt.CheckState.Checked:
                 #Cycle through cards in pass
                 for card in p.spray_cards:
-                    if card.name == self.sprayCard.name or self.ui.checkBoxApplyToAllPass.checkState() == Qt.Checked:
+                    if card.name == self.sprayCard.name or self.ui.checkBoxApplyToAllPass.checkState() == Qt.CheckState.Checked:
                         #Apply
                         # Spread Method
                         if self.ui.radioButtonAdaptive.isChecked():
@@ -171,4 +171,4 @@ class EditSpreadFactors(baseclass):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     w = EditSpreadFactors()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

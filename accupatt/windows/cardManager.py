@@ -1,10 +1,9 @@
 from typing import List
 from accupatt.windows.loadCards import LoadCards
 import accupatt.config as cfg
-from accupatt.windows.editThreshold import EditThreshold
-from PyQt5.QtWidgets import QAbstractItemView, QApplication, QComboBox, QFileDialog, QItemDelegate, QListView, QListWidgetItem, QMessageBox, QStyle, QStyleOptionComboBox
-from PyQt5.QtCore import QAbstractTableModel, QItemSelectionModel, QModelIndex, QVariant, Qt, QSettings, pyqtSignal, pyqtSlot
-from PyQt5 import uic
+from PyQt6.QtWidgets import QApplication, QComboBox, QFileDialog, QItemDelegate, QMessageBox
+from PyQt6.QtCore import QAbstractTableModel, QItemSelectionModel, QModelIndex, QVariant, Qt, QSettings, pyqtSignal, pyqtSlot
+from PyQt6 import uic
 
 import os, sys, copy
 
@@ -108,7 +107,7 @@ class CardManager(baseclass):
         rows = self.tm.addCards(newCards)
         self.passDataChanged.emit()
         indexes = [self.tm.index(r, 0) for r in rows]
-        mode = QItemSelectionModel.Select | QItemSelectionModel.Rows
+        mode = QItemSelectionModel.SelectionFlag.Select | QItemSelectionModel.SelectionFlag.Rows
         [self.tv.selectionModel().select(index, mode) for index in indexes]
         
     @pyqtSlot()
@@ -172,7 +171,7 @@ class CardManager(baseclass):
         #Connect Slot to retrieve Vals back from popup
         e.applied.connect(self.update_table)
         #Start Loop
-        e.exec_()
+        e.exec()
     
     def on_applied(self):
         self.applied.emit()
@@ -181,14 +180,14 @@ class CardManager(baseclass):
     
     def _are_you_sure(self, message):
         msg = QMessageBox()
-        msg.setIcon(QMessageBox.Critical)
+        msg.setIcon(QMessageBox.Icon.Critical)
         msg.setText("Are You Sure?")
         msg.setInformativeText(message)
         #msg.setWindowTitle("MessageBox demo")
         #msg.setDetailedText("The details are as follows:")
-        msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         result = msg.exec()
-        return result == QMessageBox.Yes
+        return result == QMessageBox.StandardButton.Yes
 
 class ComboBoxDelegate(QItemDelegate):
     def __init__(self, owner, itemList):
@@ -201,10 +200,10 @@ class ComboBoxDelegate(QItemDelegate):
         return editor
     
     def setEditorData(self, comboBox, index):
-        comboBox.setCurrentIndex(int(index.model().data(index, role=Qt.EditRole)))
+        comboBox.setCurrentIndex(int(index.model().data(index, role=Qt.ItemDataRole.EditRole)))
         
     def setModelData(self, comboBox, model, index):
-        model.setData(index, comboBox.currentIndex(), Qt.EditRole)
+        model.setData(index, comboBox.currentIndex(), Qt.ItemDataRole.EditRole)
         
     def updateEditorGeometry(self, editor, option, index):
         editor.setGeometry(option.rect)
@@ -222,34 +221,34 @@ class CardTable(QAbstractTableModel):
     def columnCount(self, parent = QModelIndex()) -> int:
         return 6
 
-    def headerData(self, column, orientation, role=Qt.DisplayRole):
-        if role!=Qt.DisplayRole:
+    def headerData(self, column, orientation, role=Qt.ItemDataRole.DisplayRole):
+        if role!=Qt.ItemDataRole.DisplayRole:
             return QVariant()
-        if orientation==Qt.Horizontal:
+        if orientation==Qt.Orientation.Horizontal:
             headers = ['Name','Has Image?','In Composite','Location','Units','Px Per In']
             if column < len(headers):
                 return QVariant(headers[column])
         return QVariant()
 
-    def data(self, index, role: Qt.DisplayRole):
+    def data(self, index, role: Qt.ItemDataRole.DisplayRole):
         i = index.row()
         j = index.column()
         card: SprayCard = self.card_list[i]
-        if role == Qt.TextAlignmentRole:
-            return Qt.AlignCenter
-        elif role == Qt.CheckStateRole:
+        if role == Qt.ItemDataRole.TextAlignmentRole:
+            return Qt.AlignmentFlag.AlignCenter
+        elif role == Qt.ItemDataRole.CheckStateRole:
             if j == 1:
                 if card.has_image == 1:
-                    return Qt.Checked
+                    return Qt.CheckState.Checked
                 else:
-                    return Qt.Unchecked
+                    return Qt.CheckState.Unchecked
             elif j == 2:
                 if card.include_in_composite == 1:
-                    return Qt.Checked
+                    return Qt.CheckState.Checked
                 else:
-                    return Qt.Unchecked
+                    return Qt.CheckState.Unchecked
             else: return QVariant()
-        elif role == Qt.DisplayRole or role == Qt.EditRole:
+        elif role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
             if j == 0:
                 # Name
                 return card.name
@@ -261,34 +260,34 @@ class CardTable(QAbstractTableModel):
                     return cfg.HAS_IMAGE_NO_STRING
             elif j == 2:
                 # Include in Composite?
-                if role == Qt.DisplayRole:
+                if role == Qt.ItemDataRole.DisplayRole:
                     if card.include_in_composite:
                         return cfg.INCLUDE_IN_COMPOSITE_YES_STRING
                     else:
                         return cfg.INCLUDE_IN_COMPOSITE_NO_STRING
-                elif role == Qt.EditRole:
+                elif role == Qt.ItemDataRole.EditRole:
                     return card.include_in_composite
             elif j == 3:
                 # Location
                 return card.location
             elif j == 4:
                 # Location Units
-                if role == Qt.DisplayRole:
+                if role == Qt.ItemDataRole.DisplayRole:
                     return card.location_units
-                elif role == Qt.EditRole:
+                elif role == Qt.ItemDataRole.EditRole:
                     return cfg.UNITS_LENGTH_LARGE.index(card.location_units)
             elif j == 5:
                 # PPI
-                if role == Qt.DisplayRole:
+                if role == Qt.ItemDataRole.DisplayRole:
                     return str(card.dpi)
-                elif role == Qt.EditRole:
+                elif role == Qt.ItemDataRole.EditRole:
                     return cfg.DPI_OPTIONS.index(str(card.dpi))
         return QVariant()
     
-    def setData(self, index, value, role = Qt.EditRole) -> bool:
+    def setData(self, index, value, role = Qt.ItemDataRole.EditRole) -> bool:
         i = index.row()
         j = index.column()
-        if value is None or not role == Qt.EditRole:
+        if value is None or not role == Qt.ItemDataRole.EditRole:
             return False
         card = self.card_list[i]
         if j == 0:
@@ -369,12 +368,12 @@ class CardTable(QAbstractTableModel):
         if not index.isValid():
             return None
         if index.column() == 1:
-            return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+            return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
         else:
-            return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
+            return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEditable
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     w = CardManager()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
