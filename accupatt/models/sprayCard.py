@@ -1,11 +1,16 @@
-import math, cv2
+import math
 import sqlite3
-from PyQt6.QtCore import QSettings
-import numpy as np
 import uuid
 
 import accupatt.config as cfg
+import cv2
+import numpy as np
 from accupatt.helpers.atomizationModel import AtomizationModel
+from openpyxl import load_workbook
+from openpyxl_image_loader import SheetImageLoader
+from PyQt6.QtCore import QSettings
+
+
 class SprayCard:
 
     def __init__(self, id = '', name = '', filepath = None, dpi=600):
@@ -167,7 +172,7 @@ class SprayCard:
 class sprayCardImageFileHandler:
     
     def read_image_from_file(sprayCard: SprayCard):
-        if sprayCard.filepath == None: return
+        if sprayCard.filepath == None or not sprayCard.has_image: return
         if sprayCard.filepath[-1] == 'x':
             return sprayCardImageFileHandler._read_image_from_xlsx(sprayCard=sprayCard)
         elif sprayCard.filepath[-1] == 'b':
@@ -180,10 +185,13 @@ class sprayCardImageFileHandler:
             return sprayCardImageFileHandler._write_image_to_db(sprayCard=sprayCard, image=image)
     
     def _read_image_from_xlsx(sprayCard: SprayCard):
-        pass
+        wb = load_workbook(sprayCard.filepath)
+        # Get Image from applicable sheet
+        image_PIL = SheetImageLoader(wb[sprayCard.name]).get('A1')
+        #Convert PIL Image to CVImage
+        return cv2.cvtColor(np.array(image_PIL), cv2.COLOR_RGB2BGR)
     
     def _read_image_from_db(sprayCard: SprayCard):
-        if sprayCard.filepath == None: return
         img = None
         try:
             # Opens a file connection to the db

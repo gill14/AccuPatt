@@ -1,9 +1,11 @@
 import uuid
-import pandas as pd
-import numpy as np
-import scipy.signal as sig
 
 import accupatt.config as cfg
+import numpy as np
+import pandas as pd
+import scipy.signal as sig
+
+
 class Pass:
 
     c = {'kph_mph': cfg.MPH_PER_KPH,

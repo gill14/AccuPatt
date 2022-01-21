@@ -1,9 +1,8 @@
 import uuid
-import pandas as pd
+
 import numpy as np
-
-from accupatt.helpers.atomizationModel import AtomizationModel, AtomizationModelMulti
-
+import pandas as pd
+from accupatt.helpers.atomizationModel import AtomizationModelMulti
 from accupatt.models.appInfo import AppInfo
 from accupatt.models.passData import Pass
 

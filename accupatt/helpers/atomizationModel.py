@@ -1,5 +1,4 @@
 """
-May 2021
 Authors: Bradley Fritz, Matt Gill
 USDA ARS Droplet Size Models
 

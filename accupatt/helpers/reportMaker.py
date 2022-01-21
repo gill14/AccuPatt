@@ -1,12 +1,15 @@
 from io import BytesIO
-from reportlab.pdfgen import canvas
+
 from reportlab.graphics import renderPDF
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.pagesizes import A4, letter
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Frame, Paragraph
+from reportlab.pdfgen import canvas
+from reportlab.platypus import (Frame, Paragraph, SimpleDocTemplate, Table,
+                                TableStyle)
 from reportlab.platypus.flowables import Flowable
 from svglib.svglib import svg2rlg
+
 
 class ReportMaker:
 

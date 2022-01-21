@@ -1,13 +1,13 @@
-import pandas as pd
-
 from typing import List
-from openpyxl import Workbook 
-from openpyxl.utils.dataframe import dataframe_to_rows
-from accupatt.helpers.dBBridge import DBBridge
-from accupatt.models.passData import Pass
-from accupatt.models.sprayCard import SprayCard
 
+import pandas as pd
+from accupatt.helpers.dBBridge import load_from_db
+from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
+from accupatt.models.sprayCard import SprayCard
+from openpyxl import Workbook
+from openpyxl.utils.dataframe import dataframe_to_rows
+
 
 def safe_report(filesToInclude: List[str], saveFile: str):
     wb = Workbook()
@@ -29,7 +29,7 @@ def safe_report(filesToInclude: List[str], saveFile: str):
     next_row_avail = 7
     for i, file in enumerate(filesToInclude):
         s = SeriesData()
-        DBBridge(file=file, series=s).load_from_db()
+        load_from_db(file=file, s=s)
         # Flyin - Will overwrite each time
         ws['C1'] = s.info.flyin_name
         ws['C2'] = s.info.flyin_location
@@ -74,7 +74,7 @@ def export_all_to_excel(series: SeriesData, saveFile: str):
     ws = wb.active
     ws.title = 'App Info'
     # Table Series
-    labels = ['series','data','time','notes_setup','notes_analyst']
+    labels = ['series','date','time','notes_setup','notes_analyst']
     vals = [i.series,i.date,i.time,i.notes_setup,i.notes_analyst]
     # Table Flyin
     labels.extend(['flyin_name','flyin_location','flyin_date','flyin_analyst'])

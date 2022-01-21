@@ -1,12 +1,10 @@
-import sys, os
-
-from PyQt6.QtWidgets import QApplication, QMessageBox
-from PyQt6.QtCore import QSettings, pyqtSignal
-from PyQt6 import uic
-
-from serial.tools import list_ports
+import os
 
 import accupatt.config as cfg
+from PyQt6 import uic
+from PyQt6.QtCore import QSettings, pyqtSignal
+from PyQt6.QtWidgets import QApplication, QMessageBox
+from serial.tools import list_ports
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editStringDrive.ui'))
 
@@ -120,7 +118,3 @@ class EditStringDrive(baseclass):
             self.raise_()
             self.activateWindow()
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    w = EditStringDrive()
-    sys.exit(app.exec())

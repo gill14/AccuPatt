@@ -1,17 +1,16 @@
-from PyQt6.QtWidgets import QGraphicsPixmapItem
-from PyQt6.QtCore import Qt, QSettings, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QPixmap, QImageReader
-from PyQt6 import uic
-
 import operator
-import os, sys
+import os
+
+import accupatt.config as cfg
 import cv2
 import numpy as np
 import pyqtgraph as pg
-from pyqtgraph.functions import mkPen
-
-import accupatt.config as cfg
 from accupatt.models.sprayCard import SprayCard
+from PyQt6 import uic
+from PyQt6.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
+from PyQt6.QtGui import QImageReader, QPixmap
+from PyQt6.QtWidgets import QGraphicsPixmapItem
+from pyqtgraph.functions import mkPen
 
 orientation_options = ['Horizontal','Vertical']
 order_options = ['Increasing','Decreasing']

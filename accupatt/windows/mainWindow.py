@@ -1,10 +1,9 @@
 import os
-import sys
 from pathlib import Path
 
 from accupatt.helpers.cardPlotter import CardPlotter
-from accupatt.helpers.dataFileImporter import DataFileImporter
-from accupatt.helpers.dBBridge import DBBridge
+from accupatt.helpers.dataFileImporter import convert_xlsx_to_db, load_from_accupatt_1_file
+from accupatt.helpers.dBBridge import load_from_db, save_to_db
 from accupatt.helpers.exportExcel import export_all_to_excel, safe_report
 from accupatt.helpers.reportMaker import ReportMaker
 from accupatt.helpers.stringPlotter import StringPlotter
@@ -19,11 +18,11 @@ from accupatt.windows.passManager import PassManager
 from accupatt.windows.readString import ReadString
 from PyQt6 import uic
 from PyQt6.QtCore import QSettings, QSignalBlocker, Qt, pyqtSlot
-from PyQt6.QtWidgets import (QApplication, QComboBox, QFileDialog,
+from PyQt6.QtWidgets import (QComboBox, QFileDialog,
                              QListWidgetItem, QMenu, QMessageBox)
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'mainWindow.ui'))
-testing = True
+testing = False
 class MainWindow(baseclass):
 
     def __init__(self, *args, **kwargs):
@@ -88,7 +87,8 @@ class MainWindow(baseclass):
         
         self.show()
         # Testing
-        self.openFile()
+        if testing:
+            self.openFile()
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     Menubar
@@ -137,36 +137,53 @@ class MainWindow(baseclass):
                                             directory=self.currentDirectory,
                                             filter='AccuPatt (*.db)')
             # Load in series info from file
-            DBBridge(fileAircraft, self.seriesData).load_from_db(load_only_info=True)
+            load_from_db(file=fileAircraft, s=self.seriesData,load_only_info=True)
             # Increment series number
             info.series = info.series + 1
         # Clear/Update all ui elements
         self.update_all_ui()
+        self.ui.statusbar.showMessage('No Current Data File')
         self.ui.tabWidget.setEnabled(True)
 
     @pyqtSlot()
     def importAccuPatt(self):
-        #Get the file
-        #fname, filter_ = QFileDialog.getOpenFileName(self, 'Open file', '/Users/gill14/OneDrive/Matt Scott Share/Fly in data/2018 Reed Fly-In', "AccuPatt files (*.xlsx)")
-        #dA = dataAccuPatt(fname)
-        file = "/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt/testing/N802ET 03.xlsx"
-        
-        self.currentFile = file
+        try:
+            self.currentDirectory
+        except NameError:
+            self.currentDirectory = Path.home()
+        if testing:
+            file = '/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt/testing/N802ET 03.xlsx'
+        else:
+            file, _ = QFileDialog.getOpenFileName(parent=self, 
+                                            caption='Open File',
+                                            directory=self.currentDirectory,
+                                            filter='AccuPatt Legacy(*.xlsx)')
+        if file == '':
+            return
         #Load in the values
-        #self.seriesData = FileTools.load_from_accupatt_1_file(file=file)
-        self.seriesData = DataFileImporter.convert_xlsx_to_db(file=file)
+        self.seriesData = load_from_accupatt_1_file(file=file)
+        self.currentFile = file
+        self.currentDirectory = os.path.dirname(self.currentFile)
+        self.settings.setValue('dir',self.currentDirectory)
         self.update_all_ui()
-
-        #Update StatusBar
         self.ui.statusbar.showMessage(f'Current File: {file}')
         self.ui.tabWidget.setEnabled(True)
 
     @pyqtSlot()
     def saveFile(self):
-        initialFileName = self.seriesData.info.string_reg_series()
-        initialDirectory = os.path.join(self.currentDirectory,initialFileName)
+        # If viewing from XLSX, Prompt to convert
+        if self.currentFile[-1] == 'x':
+            msg = QMessageBox.question(self, 'Unable to Edit Datafile',
+                                       'Current File is of type: AccuPatt 1 (.xlsx). Would you like to create an edit-compatible (.db) copy?')
+            if msg == QMessageBox.StandardButton.Yes:
+                self.currentFile = convert_xlsx_to_db(self.currentFile, self.seriesData)
+                self.ui.statusbar.showMessage(f'Current File: {self.currentFile}')
+            return
+        # If db file doesn't exist, lets create one
         if self.currentFile == '':
             # Have user create a new file
+            initialFileName = self.seriesData.info.string_reg_series()
+            initialDirectory = os.path.join(self.currentDirectory,initialFileName)
             fname, _ = QFileDialog.getSaveFileName(parent=self, 
                                                         caption='Create Data File for Series',
                                                         directory=initialDirectory,
@@ -176,11 +193,14 @@ class MainWindow(baseclass):
             self.currentFile = fname
             self.currentDirectory = os.path.dirname(self.currentFile)
             self.settings.setValue('dir',self.currentDirectory)
+        # If db file exists, or a new one has been created, update QSettings for Flyin
         self.settings.setValue('flyin_name', self.seriesData.info.flyin_name)
         self.settings.setValue('flyin_location', self.seriesData.info.flyin_location)
         self.settings.setValue('flyin_date', self.seriesData.info.flyin_date)
         self.settings.setValue('flyin_analyst', self.seriesData.info.flyin_analyst)
-        DBBridge(self.currentFile, self.seriesData).save_to_db()
+        # If db file exists, or a new one has been created, save all SeriesData to the db
+        save_to_db(file=self.currentFile, s=self.seriesData)
+        self.ui.statusbar.showMessage(f'Current File: {self.currentFile}')
 
     @pyqtSlot()
     def openFile(self):
@@ -199,10 +219,11 @@ class MainWindow(baseclass):
             return
         self.currentFile = file
         self.seriesData = SeriesData()
-        DBBridge(self.currentFile, self.seriesData).load_from_db()
+        load_from_db(file=self.currentFile, s=self.seriesData)
         self.currentDirectory = os.path.dirname(self.currentFile)
         self.settings.setValue('dir',self.currentDirectory)
         self.update_all_ui()
+        self.ui.statusbar.showMessage(f'Current File: {file}')
         self.ui.tabWidget.setEnabled(True)
                 
     def update_all_ui(self):
@@ -274,8 +295,8 @@ class MainWindow(baseclass):
         if files:
             dir = os.path.dirname(files[0])
             savefile, _ = QFileDialog.getSaveFileName(parent=self,
-                                                   caption='Save S.A.F.E. Report As',
-                                                   directory=dir + os.path.sep + 'Operation SAFE Report.xlsx',
+                                                   caption='Save S.A.F.E. Attendee Log As',
+                                                   directory=dir + os.path.sep + 'Operation SAFE Attendee Log.xlsx',
                                                    filter='Excel Files (*.xlsx)')
         if files and savefile:
             safe_report(files, savefile)
@@ -328,26 +349,14 @@ class MainWindow(baseclass):
 
     @pyqtSlot()
     def readString(self):
-        if self.ui.listWidgetStringPass.currentItem()==None:
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Icon.Critical)
-            msg.setText("No Pass Selected")
-            msg.setInformativeText('Select Pass from list and try again.')
-            #msg.setWindowTitle("MessageBox demo")
-            #msg.setDetailedText("The details are as follows:")
-            msg.setStandardButtons(QMessageBox.StandardButton.Ok)
-            result = msg.exec()
-            if result == QMessageBox.StandardButton.Ok:
-                self.raise_()
-                self.activateWindow()
-            return
-        p = self.seriesData.passes[self.ui.listWidgetStringPass.currentRow()]
-        #Create popup and send current appInfo vals to popup
-        e = ReadString(passData=p, parent=self)
-        #Connect Slot to retrieve Vals back from popup
-        e.applied.connect(self.readStringFinished)
-        #Start Loop
-        e.exec()
+        if (passIndex := self.ui.listWidgetStringPass.currentRow()) != -1:
+            passData: Pass = self.seriesData.passes[passIndex]
+            #Create popup and send current appInfo vals to popup
+            e = ReadString(passData=passData, parent=self)
+            #Connect Slot to retrieve Vals back from popup
+            e.applied.connect(self.readStringFinished)
+            #Start Loop
+            e.exec()
         
     @pyqtSlot()
     def readStringFinished(self):
@@ -485,7 +494,7 @@ class MainWindow(baseclass):
                         item.setCheckState(Qt.CheckState.Unchecked)
                     item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
                 # Spatial plot
-                self.plotSpatial(p)
+                self.plotSpatial()
         self.sprayCardSelectionChanged()
         
 
@@ -572,14 +581,13 @@ class MainWindow(baseclass):
     
     @pyqtSlot(int)
     def colorByDSCChanged(self, checkstate):
-        # Check if a card is selected
-        if (passIndex := self.ui.listWidgetSprayCardPass.currentRow()) != -1:
-            passData: Pass = self.seriesData.passes[passIndex]
-            self.plotSpatial(passData=passData)
+        self.plotSpatial()
     
-    def saveAndUpdateSprayCardView(self, sprayCard=None):
+    @pyqtSlot()
+    def saveAndUpdateSprayCardView(self):
         self.saveFile()
         self.updateCardPlots(images = True, distributions = True)
+        self.plotSpatial()
 
     def updateCardPlots(self, images = False, distributions = False):
         # Clear
@@ -620,19 +628,17 @@ class MainWindow(baseclass):
         CardPlotter.showCardStatTable(self.ui.tableWidgetSprayCardStats, composite)
         CardPlotter.plotDropletDistribution(self.ui.plotWidgetDropDist1, self.ui.plotWidgetDropDist2, composite)
     
-    def plotSpatial(self, passData: Pass):
-        CardPlotter.plotSpatial(mplWidget1=self.ui.mplWidgetCardSpatial1,
-                                mplWidget2=self.ui.mplWidgetCardSpatial2,
-                                sprayCards=passData.spray_cards,
-                                colorize=self.ui.checkBoxColorByDSC.isChecked())
-        self.ui.labelSpatialShowing.setText(passData.name)
+    def plotSpatial(self):
+        # Check if a card is selected
+        if (passIndex := self.ui.listWidgetSprayCardPass.currentRow()) != -1:
+            passData = self.seriesData.passes[passIndex]
+            CardPlotter.plotSpatial(mplWidget1=self.ui.mplWidgetCardSpatial1,
+                                    mplWidget2=self.ui.mplWidgetCardSpatial2,
+                                    sprayCards=passData.spray_cards,
+                                    colorize=self.ui.checkBoxColorByDSC.isChecked())
+            self.ui.labelSpatialShowing.setText(passData.name)
         
     def setSprayCardProcessingButtonsEnable(self, enable = False):
         self.ui.buttonEditThreshold.setEnabled(enable)
         self.ui.buttonEditSpreadFactors.setEnabled(enable)
         
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    w = MainWindow()
-    sys.exit(app.exec())

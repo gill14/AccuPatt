@@ -1,12 +1,10 @@
-from PyQt6.QtWidgets import QApplication, QMessageBox
-from PyQt6.QtCore import QSettings, Qt, pyqtSignal
-from PyQt6 import uic
-
-import pandas as pd
-from pathlib import Path
-import sys, os
+import os
+import sys
 
 import accupatt.config as cfg
+from PyQt6 import uic
+from PyQt6.QtCore import QSettings, Qt, pyqtSignal
+from PyQt6.QtWidgets import QApplication, QMessageBox
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editSpreadFactors.ui'))
 

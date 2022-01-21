@@ -1,11 +1,11 @@
+import copy
 import os
 
-from PyQt6.QtWidgets import QMessageBox
-from PyQt6.QtCore import QAbstractTableModel, QModelIndex, QVariant, pyqtSignal, Qt
-from PyQt6 import uic
-import copy
-
 from accupatt.models.passData import Pass
+from PyQt6 import uic
+from PyQt6.QtCore import (QAbstractTableModel, QModelIndex, Qt, QVariant,
+                          pyqtSignal)
+from PyQt6.QtWidgets import QMessageBox
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'passManager.ui'))
 

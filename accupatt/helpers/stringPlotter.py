@@ -1,15 +1,15 @@
-from PyQt6.QtWidgets import QTableWidget
-import pandas as pd
-import numpy as np
 import copy
-from pyqtgraph import PlotWidget, setConfigOptions, InfiniteLine
+
+import numpy as np
+import pandas as pd
+from accupatt.models.passData import Pass
+from accupatt.models.seriesData import SeriesData
+from accupatt.windows.widgets.mplwidget import MplWidget
+from PyQt6.QtWidgets import QTableWidget
+from pyqtgraph import InfiniteLine, PlotWidget, setConfigOptions
 from pyqtgraph.functions import mkPen
-import scipy.signal as sig
 from scipy.stats import variation
 
-from accupatt.models.seriesData import SeriesData
-from accupatt.models.passData import Pass
-from accupatt.windows.widgets.mplwidget import MplWidget
 
 class StringPlotter:
         
@@ -145,6 +145,7 @@ class StringPlotter:
             pts = len(pattern_c.index)
             for ax in axes:
                 # Plot the central pass
+                #print(pattern)
                 ax.fill_between(pattern['loc'], 0, pattern['Average'], label='Center')
                 # Sum counter to always draw on top of
                 sum = pattern['Average'].copy()

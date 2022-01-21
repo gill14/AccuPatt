@@ -1,15 +1,15 @@
-import math
 from typing import List
-from PyQt6.QtWidgets import QTableWidget
-import numpy as np
+
+import accupatt.config as cfg
 import matplotlib.ticker
+import numpy as np
 from accupatt.helpers.atomizationModel import AtomizationModel
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
-
 from accupatt.models.sprayCard import SprayCard
 from accupatt.windows.widgets.mplwidget import MplWidget
-import accupatt.config as cfg
+from PyQt6.QtWidgets import QTableWidget
+
 
 class SprayCardComposite(SprayCard):
     

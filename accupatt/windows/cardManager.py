@@ -1,13 +1,16 @@
+import os
+import sys
 from typing import List
-from accupatt.windows.loadCards import LoadCards
+
 import accupatt.config as cfg
-from PyQt6.QtWidgets import QApplication, QComboBox, QFileDialog, QItemDelegate, QMessageBox
-from PyQt6.QtCore import QAbstractTableModel, QItemSelectionModel, QModelIndex, QVariant, Qt, QSettings, pyqtSignal, pyqtSlot
-from PyQt6 import uic
-
-import os, sys, copy
-
 from accupatt.models.sprayCard import SprayCard
+from accupatt.windows.loadCards import LoadCards
+from PyQt6 import uic
+from PyQt6.QtCore import (QAbstractTableModel, QItemSelectionModel,
+                          QModelIndex, QSettings, Qt, QVariant, pyqtSignal,
+                          pyqtSlot)
+from PyQt6.QtWidgets import (QApplication, QComboBox, QFileDialog,
+                             QItemDelegate, QMessageBox)
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editCardList.ui'))
 
