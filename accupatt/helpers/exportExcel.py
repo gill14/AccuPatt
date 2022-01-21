@@ -74,8 +74,8 @@ def export_all_to_excel(series: SeriesData, saveFile: str):
     ws = wb.active
     ws.title = 'App Info'
     # Table Series
-    labels = ['series','date','time','notes_setup','notes_analyst']
-    vals = [i.series,i.date,i.time,i.notes_setup,i.notes_analyst]
+    labels = ['series','created','modified','notes_setup','notes_analyst']
+    vals = [i.series,i.created,i.modified,i.notes_setup,i.notes_analyst]
     # Table Flyin
     labels.extend(['flyin_name','flyin_location','flyin_date','flyin_analyst'])
     vals.extend([i.flyin_name,i.flyin_location,i.flyin_date,i.flyin_analyst])

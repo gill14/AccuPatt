@@ -86,7 +86,6 @@ def load_from_accupatt_1_file(file) -> SeriesData:
     i.set_rate(df.iat[19,1])
     i.set_swath(df.iat[20,1])
     i.set_swath_adjusted(df.iat[20,1]) # Just in case it isn't set below
-    i.time = df.iat[26,1]
     i.set_wingspan(df.iat[27,1])
     i.set_boom_width(df.iat[28,1])
     i.set_boom_drop(df.iat[30,1])

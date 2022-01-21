@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from datetime import datetime
 
 import pandas as pd
 from accupatt.models.appInfo import AppInfo
@@ -38,8 +39,8 @@ def load_from_db(file: str, s: SeriesData, load_only_info=False):
 def _load_table_series(c: sqlite3.Cursor, s: SeriesData):
     i = s.info
     # Series Table
-    c.execute('''SELECT id, series, date, time, notes_setup, notes_analyst FROM series''')
-    s.id, i.series, i.date, i.time, i.notes_setup, i.notes_analyst = c.fetchone()
+    c.execute('''SELECT id, series, created, modified, notes_setup, notes_analyst FROM series''')
+    s.id, i.series, i.created, i.modified, i.notes_setup, i.notes_analyst = c.fetchone()
 
 def _load_table_series_string(c: sqlite3.Cursor, s: SeriesData):
     i = s.info
@@ -114,6 +115,10 @@ Saving
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''        
 
 def save_to_db(file: str, s: SeriesData):
+    # If db not yet created need create timestamp
+    if not os.path.isfile(file):
+        s.info.created = int(datetime.now().timestamp())
+    s.info.modified = int(datetime.now().timestamp())
     # Opens a file connection to the db
     with sqlite3.connect(file) as conn:
         # Create db from schema if no tables exist
@@ -133,10 +138,10 @@ def save_to_db(file: str, s: SeriesData):
         
 def _update_table_series(c: sqlite3.Cursor, s: SeriesData):
     i = s.info    
-    c.execute('''INSERT INTO series (id, series, date, time, notes_setup, notes_analyst) VALUES (?, ?, ?, ?, ?, ?)
+    c.execute('''INSERT INTO series (id, series, created, modified, notes_setup, notes_analyst) VALUES (?, ?, ?, ?, ?, ?)
                     ON CONFLICT(id) DO UPDATE SET
-                    series = excluded.series, date = excluded.date, time = excluded.time, notes_setup = excluded.notes_setup, notes_analyst = excluded.notes_analyst''',
-                    (s.id, i.series, i.date, i.time, i.notes_setup, i.notes_analyst))
+                    series = excluded.series, created = excluded.created, modified = excluded.modified, notes_setup = excluded.notes_setup, notes_analyst = excluded.notes_analyst''',
+                    (s.id, i.series, i.created, i.modified, i.notes_setup, i.notes_analyst))
         
 def _update_table_series_string(c: sqlite3.Cursor, s: SeriesData):
     c.execute('''INSERT INTO series_string (series_id, smooth_individual, smooth_average, equalize_integrals, center, simulated_adjascent_passes) VALUES (?, ?, ?, ?, ?, ?)

@@ -23,7 +23,6 @@ class SeriesData:
         self.string_equalize_integrals = True
         self.string_center = True
         self.string_simulated_adjascent_passes = 2
-        
         #Convenience Runtime Placeholders
         self.patternAverage = Pass(name='Average')
 

@@ -3,8 +3,8 @@
 CREATE TABLE IF NOT EXISTS series (
     id              TEXT PRIMARY KEY,
     series          INTEGER,
-    date            TEXT,
-    time            TEXT,
+    created         INTEGER,
+    modified        INTEGER,
     notes_setup     TEXT,
     notes_analyst   TEXT
 );

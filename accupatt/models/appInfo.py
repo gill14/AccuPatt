@@ -50,38 +50,8 @@ class AppInfo:
     series: int = 1
     notes_setup: str = ""
     notes_analyst: str = ""
-    date: str = ""
-    time: str = ""
-
-    def updateApplicatorInfo(self, appInfo):
-        self.pilot = appInfo.pilot
-        self.business = appInfo.business
-        self.street = appInfo.street
-        self.city = appInfo.city
-        self.state = appInfo.state
-        self.zip = appInfo.zip
-        self.phone = appInfo.phone
-        self.email = appInfo.email
-
-    def updateAircraft(self, appInfo):
-        self.regnum = appInfo.regnum
-        self.make = appInfo.make
-        self.model = appInfo.model
-        self.wingspan = appInfo.wingspan
-        self.wingspan_units = appInfo.wingspan_units
-        self.winglets = appInfo.winglets
-
-    def updateSpraySystem(self, appInfo):
-        self.swath = appInfo.swath
-        self.swath_units = appInfo.swath_units
-        self.rate = appInfo.rate
-        self.rate_units = appInfo.rate_units
-        self.pressure = appInfo.pressure
-        self.pressure_units = appInfo.pressure_units
-
-    def updateSeries(self, appInfo):
-        self.series = appInfo.series
-        #self.notes = appInfo.notes
+    created: int = 0
+    modified: int = 0
 
     def string_reg_series(self) -> str:
         if self.series < 10:

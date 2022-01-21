@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 from pathlib import Path
 
@@ -18,7 +19,7 @@ from accupatt.windows.passManager import PassManager
 from accupatt.windows.readString import ReadString
 from PyQt6 import uic
 from PyQt6.QtCore import QSettings, QSignalBlocker, Qt, pyqtSlot
-from PyQt6.QtWidgets import (QComboBox, QFileDialog,
+from PyQt6.QtWidgets import (QComboBox, QFileDialog, QLabel,
                              QListWidgetItem, QMenu, QMessageBox)
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'mainWindow.ui'))
@@ -85,6 +86,11 @@ class MainWindow(baseclass):
         self.ui.checkBoxColorByDSC.stateChanged[int].connect(self.colorByDSCChanged)
         # --> | --> Setup Simulations Tab 
         
+        # Setup Statusbar
+        self.status_label_file = QLabel('No Current Datafile')
+        self.status_label_modified = QLabel()
+        self.ui.statusbar.addWidget(self.status_label_file)
+        self.ui.statusbar.addPermanentWidget(self.status_label_modified)
         self.show()
         # Testing
         if testing:
@@ -142,7 +148,8 @@ class MainWindow(baseclass):
             info.series = info.series + 1
         # Clear/Update all ui elements
         self.update_all_ui()
-        self.ui.statusbar.showMessage('No Current Data File')
+        self.status_label_file.setText('No Current Data File')
+        self.status_label_modified.setText('')
         self.ui.tabWidget.setEnabled(True)
 
     @pyqtSlot()
@@ -166,7 +173,8 @@ class MainWindow(baseclass):
         self.currentDirectory = os.path.dirname(self.currentFile)
         self.settings.setValue('dir',self.currentDirectory)
         self.update_all_ui()
-        self.ui.statusbar.showMessage(f'Current File: {file}')
+        self.status_label_file.setText(f'Current File: {file}')
+        self.status_label_modified.setText('View-Only Mode')
         self.ui.tabWidget.setEnabled(True)
 
     @pyqtSlot()
@@ -177,7 +185,8 @@ class MainWindow(baseclass):
                                        'Current File is of type: AccuPatt 1 (.xlsx). Would you like to create an edit-compatible (.db) copy?')
             if msg == QMessageBox.StandardButton.Yes:
                 self.currentFile = convert_xlsx_to_db(self.currentFile, self.seriesData)
-                self.ui.statusbar.showMessage(f'Current File: {self.currentFile}')
+                self.status_label_file.setText(f'Current File: {self.currentFile}')
+                self.status_label_modified.setText(f'Last Save: {datetime.fromtimestamp(self.seriesData.info.modified)}')
             return
         # If db file doesn't exist, lets create one
         if self.currentFile == '':
@@ -200,7 +209,8 @@ class MainWindow(baseclass):
         self.settings.setValue('flyin_analyst', self.seriesData.info.flyin_analyst)
         # If db file exists, or a new one has been created, save all SeriesData to the db
         save_to_db(file=self.currentFile, s=self.seriesData)
-        self.ui.statusbar.showMessage(f'Current File: {self.currentFile}')
+        self.status_label_file.setText(f'Current File: {self.currentFile}')
+        self.status_label_modified.setText(f'Last Save: {datetime.fromtimestamp(self.seriesData.info.modified)}')
 
     @pyqtSlot()
     def openFile(self):
@@ -223,7 +233,8 @@ class MainWindow(baseclass):
         self.currentDirectory = os.path.dirname(self.currentFile)
         self.settings.setValue('dir',self.currentDirectory)
         self.update_all_ui()
-        self.ui.statusbar.showMessage(f'Current File: {file}')
+        self.status_label_file.setText(f'Current File: {self.currentFile}')
+        self.status_label_modified.setText(f'Last Save: {datetime.fromtimestamp(self.seriesData.info.modified)}')
         self.ui.tabWidget.setEnabled(True)
                 
     def update_all_ui(self):
