@@ -316,7 +316,7 @@ class MainWindow(baseclass):
     def exportAllRawData(self):
         savefile, _ = QFileDialog.getSaveFileName(parent=self,
                                                    caption='Save As',
-                                                   directory=self.currentDirectory + os.path.sep + f'{self.seriesData.info.string_reg_series} Raw Data.xlsx',
+                                                   directory=self.currentDirectory + os.path.sep + f'{self.seriesData.info.string_reg_series()} Raw Data.xlsx',
                                                    filter='Excel Files (*.xlsx)')
         if savefile:
             export_all_to_excel(series=self.seriesData, saveFile=savefile)

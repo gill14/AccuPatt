@@ -4,9 +4,9 @@ import accupatt.config as cfg
 import numpy as np
 import pandas as pd
 from accupatt.helpers.atomizationModel import AtomizationModel
-from accupatt.models.appInfo import AppInfo
+from accupatt.models.appInfo import AppInfo, Nozzle
 from PyQt6 import uic
-from PyQt6.QtCore import QDate, QDateTime, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QDate, QDateTime, pyqtSignal, pyqtSlot, QSignalBlocker
 from PyQt6.QtWidgets import QComboBox, QMessageBox
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'seriesInfo.ui'))
@@ -369,45 +369,65 @@ class SeriesInfoWidget(baseclass):
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     
     def init_nozzles(self):
-        nozzles = AtomizationModel.nozzles.insert(0,'')
-        self.ui.comboBoxNT1.addItems(AtomizationModel.nozzles)
-        self.ui.comboBoxNT1.setCurrentIndex(-1)
-        self.ui.comboBoxNT1.currentTextChanged[str].connect(self._on_nozzle_1_selected)
-        self.ui.comboBoxNT2.addItems(AtomizationModel.nozzles)
-        self.ui.comboBoxNT2.setCurrentIndex(-1)
-        self.ui.comboBoxNT2.currentTextChanged[str].connect(self._on_nozzle_2_selected)
+        # Nozzle Set Buttons
+        self.ui.pushButtonNozzleSetAdd.pressed.connect(self._on_nozzle_set_add)
+        self.ui.pushButtonNozzleSetRemove.pressed.connect(self._on_nozzle_set_remove)
+        # Populate Nozzle Type ComboBox Items
+        avail_nozzles = AtomizationModel.nozzles.copy()
+        avail_nozzles.insert(0,'')
+        self.ui.comboBoxNT.addItems(avail_nozzles)
+        self.ui.comboBoxNT.currentTextChanged[str].connect(self._on_nozzle_selected)
         
     def fill_nozzles(self, info: AppInfo):
-        # Nozzle Set #1
-        self.ui.comboBoxNT1.setCurrentText(info.nozzle_type_1)
-        self.ui.comboBoxNS1.setCurrentText(info.nozzle_size_1)
-        self.ui.comboBoxNS1.currentTextChanged[str].connect(self._commit_nozzle_size_1)
-        self.ui.comboBoxND1.setCurrentText(info.nozzle_deflection_1)
-        self.ui.comboBoxND1.currentTextChanged[str].connect(self._commit_nozzle_deflection_1)
-        self.ui.lineEditNQ1.setText(info.strip_num(info.nozzle_quantity_1, zeroBlank=True))
-        self.ui.lineEditNQ1.editingFinished.connect(self._commit_nozzle_quantity_1)
-        # Nozzle Set #2
-        self.ui.comboBoxNT2.setCurrentText(info.nozzle_type_2)
-        self.ui.comboBoxNS2.setCurrentText(info.nozzle_size_2)
-        self.ui.comboBoxNS2.currentTextChanged[str].connect(self._commit_nozzle_size_2)
-        self.ui.comboBoxND2.setCurrentText(info.nozzle_deflection_2)
-        self.ui.comboBoxND2.currentTextChanged[str].connect(self._commit_nozzle_deflection_2)
-        self.ui.lineEditNQ2.setText(info.strip_num(info.nozzle_quantity_2, zeroBlank=True))
-        self.ui.lineEditNQ2.editingFinished.connect(self._commit_nozzle_quantity_2)
+        cb_set: QComboBox = self.ui.comboBoxNozzleSet
+        cb_set.clear()
+        # Create first nozzle set be default if not exists
+        if len(info.nozzles) < 1:
+            info.nozzles.append(Nozzle())
+        # Populate Nozzle Set ComboBox Items
+        for n in info.nozzles:
+            cb_set.addItem(f'Nozzle Set {n.id}')
+        cb_set.currentIndexChanged[int].connect(self._on_nozzle_set_changed)
+        self.ui.comboBoxNS.currentTextChanged[str].connect(self._commit_nozzle_size)
+        self.ui.comboBoxND.currentTextChanged[str].connect(self._commit_nozzle_deflection)
+        self.ui.lineEditNQ.editingFinished.connect(self._commit_nozzle_quantity)
+        cb_set.setCurrentIndex(0)
+        self._on_nozzle_set_changed(0)
+    
+    @pyqtSlot()
+    def _on_nozzle_set_add(self):
+        cb_set: QComboBox = self.ui.comboBoxNozzleSet
+        new_num = cb_set.count()+1
+        self.info.nozzles.append(Nozzle(id=new_num))
+        cb_set.addItem(f'Nozzle Set {new_num}')
+        cb_set.setCurrentIndex(cb_set.count()-1)
+        
+    @pyqtSlot()
+    def _on_nozzle_set_remove(self):
+        cb_set: QComboBox = self.ui.comboBoxNozzleSet
+        index = cb_set.currentIndex()
+        if index > 0:
+            cb_set.removeItem(index)
+            self.info.nozzles.pop(index)
+        for i, n in enumerate(self.info.nozzles):
+            n.id = i+1
+            cb_set.setItemText(i, f'Nozzle Set {n.id}')
+        self._on_nozzle_set_changed(index-1)
+    
+    @pyqtSlot(int)
+    def _on_nozzle_set_changed(self, index):
+        if index >= 0:
+            self._loading_nozzle = True
+            self.ui.comboBoxNT.setCurrentText(self.info.nozzles[index].type)
+            self.ui.comboBoxNS.setCurrentText(self.info.nozzles[index].size)   
+            self.ui.comboBoxND.setCurrentText(self.info.nozzles[index].deflection)
+            self.ui.lineEditNQ.setText(str(self.info.nozzles[index].quantity))
+            self._loading_nozzle = False               
     
     @pyqtSlot(str)
-    def _on_nozzle_1_selected(self, nozzle):
-        self._on_nozzle_selected(nozzle, cBSize = self.ui.comboBoxNS1, cBDef = self.ui.comboBoxND1)
-        if self.info is not None:
-            self._commit_nozzle_type_1(nozzle)
-        
-    @pyqtSlot(str)
-    def _on_nozzle_2_selected(self, nozzle):
-        self._on_nozzle_selected(nozzle, cBSize = self.ui.comboBoxNS2, cBDef = self.ui.comboBoxND2)
-        if self.info is not None:
-            self._commit_nozzle_type_2(nozzle)
-        
-    def _on_nozzle_selected(self, nozzle, cBSize: QComboBox, cBDef: QComboBox):
+    def _on_nozzle_selected(self, nozzle):
+        cBSize: QComboBox = self.ui.comboBoxNS
+        cBDef: QComboBox = self.ui.comboBoxND
         cBSize.clear()
         cBDef.clear()
         if nozzle not in AtomizationModel.nozzles:
@@ -437,36 +457,34 @@ class SeriesInfoWidget(baseclass):
         #remove selection
         cBSize.setCurrentIndex(-1)
         cBDef.setCurrentIndex(-1)
-        
-    def _commit_nozzle_type_1(self, text):
-        self.info.nozzle_type_1 = text
+        # Commmit signal
+        if self.info is not None:
+            self._commit_nozzle_type(nozzle)
+  
+    def _commit_nozzle_type(self, text):
+        index = self.ui.comboBoxNozzleSet.currentIndex()
+        if not self._loading_nozzle:
+            self.info.nozzles[index].type = text
         
     @pyqtSlot(str)
-    def _commit_nozzle_size_1(self, text):
-        self.info.nozzle_size_1= text
+    def _commit_nozzle_size(self, text):
+        index = self.ui.comboBoxNozzleSet.currentIndex()
+        if not self._loading_nozzle:
+            print('committing size: '+text)
+            self.info.nozzles[index].size = text
         
     @pyqtSlot(str)
-    def _commit_nozzle_deflection_1(self, text):
-        self.info.nozzle_deflection_1 = text
+    def _commit_nozzle_deflection(self, text):
+        index = self.ui.comboBoxNozzleSet.currentIndex()
+        if not self._loading_nozzle:
+            print('committing defl: '+text)
+            self.info.nozzles[index].deflection = text
         
     @pyqtSlot()
-    def _commit_nozzle_quantity_1(self):
-        self.info.set_nozzle_quantity_1(self.ui.lineEditNQ1.text())
-        
-    def _commit_nozzle_type_2(self, text):
-        self.info.nozzle_type_2 = text
-        
-    @pyqtSlot(str)
-    def _commit_nozzle_size_2(self, text):
-        self.info.nozzle_size_2= text
-        
-    @pyqtSlot(str)
-    def _commit_nozzle_deflection_2(self, text):
-        self.info.nozzle_deflection_2 = text
-        
-    @pyqtSlot()
-    def _commit_nozzle_quantity_2(self):
-        self.info.set_nozzle_quantity_2(self.ui.lineEditNQ2.text())
+    def _commit_nozzle_quantity(self):
+        index = self.ui.comboBoxNozzleSet.currentIndex()
+        if not self._loading_nozzle:
+            self.info.nozzles[index].set_quantity(self.ui.lineEditNQ.text())
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     Validation

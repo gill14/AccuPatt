@@ -151,16 +151,12 @@ class SeriesData:
 
     def _populate_model(self):
         model = AtomizationModelMulti()
-        model.addNozzleSet(name=self.info.nozzle_type_1,
-            orifice=self.info.nozzle_size_1,
-            airspeed=self.calc_airspeed_mean(),
-            pressure=self.info.pressure,
-            angle=self.info.nozzle_deflection_1,
-            quantity=self.info.nozzle_quantity_1)
-        model.addNozzleSet(name=self.info.nozzle_type_2,
-            orifice=self.info.nozzle_size_2,
-            airspeed=self.calc_airspeed_mean(),
-            pressure=self.info.pressure,
-            angle=self.info.nozzle_deflection_2,
-            quantity=self.info.nozzle_quantity_2)
+        for n in self.info.nozzles:
+            model.addNozzleSet(name=n.type,
+                               orifice=n.size,
+                               airspeed=self.calc_airspeed_mean(),
+                               pressure=self.info.pressure,
+                               angle=n.deflection,
+                               quantity=n.quantity)
         return model
+        

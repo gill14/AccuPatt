@@ -3,7 +3,7 @@ import sqlite3
 from datetime import datetime
 
 import pandas as pd
-from accupatt.models.appInfo import AppInfo
+from accupatt.models.appInfo import AppInfo, Nozzle
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
 from accupatt.models.sprayCard import SprayCard
@@ -27,6 +27,7 @@ def load_from_db(file: str, s: SeriesData, load_only_info=False):
             _load_table_applicator(c,s,s_.id)
             _load_table_aircraft(c,s,s_.id)
             _load_table_spray_system(c,s,s_.id)
+            _load_table_nozzles(c,s,s_.id)
         else:
             _load_table_series(c,s)
             _load_table_series_string(c,s)
@@ -34,6 +35,7 @@ def load_from_db(file: str, s: SeriesData, load_only_info=False):
             _load_table_applicator(c,s)
             _load_table_aircraft(c,s)
             _load_table_spray_system(c,s)
+            _load_table_nozzles(c,s)
             _load_table_passes(c,s,file)
 
 def _load_table_series(c: sqlite3.Cursor, s: SeriesData):
@@ -81,8 +83,23 @@ def _load_table_spray_system(c: sqlite3.Cursor, s: SeriesData, alt_id: str = '')
         id = alt_id
     i = s.info
     #Spray System Table
-    c.execute('''SELECT swath, swath_adjusted, swath_units, rate, rate_units, pressure, pressure_units, nozzle_type_1, nozzle_size_1, nozzle_deflection_1, nozzle_quantity_1, nozzle_type_2, nozzle_size_2, nozzle_deflection_2, nozzle_quantity_2, boom_width, boom_width_units, boom_drop, boom_drop_units, nozzle_spacing, nozzle_spacing_units FROM spray_system WHERE series_id = ?''',(id,))
-    i.swath, i.swath_adjusted, i.swath_units, i.rate, i.rate_units, i.pressure, i.pressure_units, i.nozzle_type_1, i.nozzle_size_1, i.nozzle_deflection_1, i.nozzle_quantity_1, i.nozzle_type_2, i.nozzle_size_2, i.nozzle_deflection_2, i.nozzle_quantity_2, i.boom_width, i.boom_width_units, i.boom_drop, i.boom_drop_units, i.nozzle_spacing, i.nozzle_spacing_units = c.fetchone()
+    c.execute('''SELECT swath, swath_adjusted, swath_units, rate, rate_units, pressure, pressure_units, boom_width, boom_width_units, boom_drop, boom_drop_units, nozzle_spacing, nozzle_spacing_units FROM spray_system WHERE series_id = ?''',(id,))
+    i.swath, i.swath_adjusted, i.swath_units, i.rate, i.rate_units, i.pressure, i.pressure_units, i.boom_width, i.boom_width_units, i.boom_drop, i.boom_drop_units, i.nozzle_spacing, i.nozzle_spacing_units = c.fetchone()
+
+def _load_table_nozzles(c: sqlite3.Cursor, s: SeriesData, alt_id: str = ''):
+    if alt_id == '':
+        id = s.id
+    else:
+        id = alt_id
+    i = s.info
+    c.execute('''SELECT id, type, size, deflection, quantity FROM nozzles WHERE series_id = ?''',(id,))
+    data = c.fetchall()
+    for row in data:
+        i.nozzles.append(Nozzle(id=row[0],
+                                type=row[1],
+                                size=row[2],
+                                deflection=row[3],
+                                quantity=row[4]))
 
 def _load_table_passes(c: sqlite3.Cursor, s: SeriesData, file: str):
     #Passes Table
@@ -134,6 +151,7 @@ def save_to_db(file: str, s: SeriesData):
         _update_table_aircraft(c, s)
         _update_table_applicator(c, s)
         _update_table_spray_system(c, s)
+        _update_table_nozzles(c, s)
         _update_table_passes(c, s)
         
 def _update_table_series(c: sqlite3.Cursor, s: SeriesData):
@@ -172,10 +190,32 @@ def _update_table_aircraft(c: sqlite3.Cursor, s: SeriesData):
 
 def _update_table_spray_system(c: sqlite3.Cursor, s: SeriesData):
     i = s.info
-    c.execute('''INSERT INTO spray_system (series_id, swath, swath_adjusted, swath_units, rate, rate_units, pressure, pressure_units, nozzle_type_1, nozzle_size_1, nozzle_deflection_1, nozzle_quantity_1, nozzle_type_2, nozzle_size_2, nozzle_deflection_2, nozzle_quantity_2, boom_width, boom_width_units, boom_drop, boom_drop_units, nozzle_spacing, nozzle_spacing_units) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    c.execute('''INSERT INTO spray_system (series_id, swath, swath_adjusted, swath_units, rate, rate_units, pressure, pressure_units, boom_width, boom_width_units, boom_drop, boom_drop_units, nozzle_spacing, nozzle_spacing_units) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         ON CONFLICT(series_id) DO UPDATE SET
-                        swath = excluded.swath, swath_adjusted = excluded.swath_adjusted, swath_units = excluded.swath_units, rate = excluded.rate, rate_units = excluded.rate_units, pressure = excluded.pressure, pressure_units = excluded.pressure_units, nozzle_type_1 = excluded.nozzle_type_1, nozzle_size_1 = excluded.nozzle_size_1, nozzle_deflection_1 = excluded.nozzle_deflection_1, nozzle_quantity_1 = excluded.nozzle_quantity_1, nozzle_type_2 = excluded.nozzle_type_2, nozzle_size_2 = excluded.nozzle_size_2, nozzle_deflection_2 = excluded.nozzle_deflection_2, nozzle_quantity_2 = excluded.nozzle_quantity_2, boom_width = excluded.boom_width, boom_width_units = excluded.boom_width_units, boom_drop = excluded.boom_drop, boom_drop_units = excluded.boom_drop_units, nozzle_spacing = excluded.nozzle_spacing, nozzle_spacing_units = excluded.nozzle_spacing_units''',
-                        (s.id, i.swath, i.swath_adjusted, i.swath_units, i.rate, i.rate_units, i.pressure, i.pressure_units, i.nozzle_type_1, i.nozzle_size_1, i.nozzle_deflection_1, i.nozzle_quantity_1, i.nozzle_type_2, i.nozzle_size_2, i.nozzle_deflection_2, i.nozzle_quantity_2, i.boom_width, i.boom_width_units, i.boom_drop, i.boom_drop_units, i.nozzle_spacing, i.nozzle_spacing_units))
+                        swath = excluded.swath, swath_adjusted = excluded.swath_adjusted, swath_units = excluded.swath_units, rate = excluded.rate, rate_units = excluded.rate_units, pressure = excluded.pressure, pressure_units = excluded.pressure_units,  boom_width = excluded.boom_width, boom_width_units = excluded.boom_width_units, boom_drop = excluded.boom_drop, boom_drop_units = excluded.boom_drop_units, nozzle_spacing = excluded.nozzle_spacing, nozzle_spacing_units = excluded.nozzle_spacing_units''',
+                        (s.id, i.swath, i.swath_adjusted, i.swath_units, i.rate, i.rate_units, i.pressure, i.pressure_units, i.boom_width, i.boom_width_units, i.boom_drop, i.boom_drop_units, i.nozzle_spacing, i.nozzle_spacing_units))
+
+def _update_table_nozzles(c: sqlite3.Cursor, s: SeriesData):
+    i = s.info
+    n: Nozzle
+    for n in i.nozzles:
+        c.execute('''INSERT INTO nozzles (id, series_id, type, size, deflection, quantity) VALUES (?, ?, ?, ?, ?, ?)
+                  ON CONFLICT(id) DO UPDATE SET
+                  type = excluded.type, size = excluded.size, deflection = excluded.deflection, quantity = excluded.quantity''',
+                  (n.id, s.id, n.type, n.size, n.deflection, n.quantity))
+    # Loop through nozzles on db, delete any not in series object
+    current_ids = [n.id for n in i.nozzles]
+    if len(current_ids) == 0:
+        c.execute('''DELETE FROM nozzles WHERE id = ?''',(n.id,))
+    else:
+        in_query = '('
+        for i, id in enumerate(current_ids):
+            if i == 0:
+                in_query += f"'{id}'"
+            else:
+                in_query += f", '{id}'"
+        in_query += ')'
+        c.execute(f'DELETE FROM nozzles WHERE id NOT IN {in_query}')
 
 def _update_table_passes(c: sqlite3.Cursor, s: SeriesData):
     p: Pass

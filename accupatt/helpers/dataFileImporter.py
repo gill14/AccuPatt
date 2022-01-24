@@ -6,7 +6,7 @@ import numpy as np
 import openpyxl
 import pandas as pd
 from accupatt.helpers.dBBridge import save_to_db
-from accupatt.models.appInfo import AppInfo
+from accupatt.models.appInfo import AppInfo, Nozzle
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
 from accupatt.models.sprayCard import SprayCard
@@ -74,14 +74,18 @@ def load_from_accupatt_1_file(file) -> SeriesData:
     i.series = df.iat[7,1]
     i.make = df.iat[8,1]
     i.model = df.iat[9,1]
-    i.nozzle_type_1 = df.iat[10,1]
-    i.set_nozzle_quantity_1(df.iat[11,1])
-    i.nozzle_size_1 = df.iat[12,1]
-    i.nozzle_deflection_1 = df.iat[13,1]
-    i.nozzle_type_2 = df.iat[14,1]
-    i.set_nozzle_quantity_2(df.iat[15,1])
-    i.nozzle_size_2 = df.iat[16,1]
-    i.nozzle_deflection_2 = df.iat[17,1]
+    if((noz_type_1 := df.iat[10,1]) != ''):
+        i.nozzles.append(Nozzle(id=1,
+                              type=noz_type_1,
+                              size=df.iat[12,1],
+                              deflection=df.iat[13,1],
+                              quantity=df.iat[11,1]))
+    if((noz_type_2 := df.iat[14,1]) != ''):
+        i.nozzles.append(Nozzle(id=2,
+                              type=noz_type_2,
+                              size=df.iat[16,1],
+                              deflection=df.iat[17,1],
+                              quantity=df.iat[15,1]))
     i.set_pressure(df.iat[18,1])
     i.set_rate(df.iat[19,1])
     i.set_swath(df.iat[20,1])

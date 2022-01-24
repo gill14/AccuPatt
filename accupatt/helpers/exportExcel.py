@@ -86,8 +86,12 @@ def export_all_to_excel(series: SeriesData, saveFile: str):
     labels.extend(['regnum','make','model','wingspan','wingspan_units','winglets'])
     vals.extend([i.regnum,i.make,i.model,i.wingspan,i.wingspan_units,i.winglets])
     # Table Spray System
-    labels.extend(['swath','swath_adjusted','swath_units','rate','rate_units','pressure','pressure_units','nozzle_type_1','nozzle_size_1','nozzle_deflection_1','nozzle_quantity_1','nozzle_type_2','nozzle_size_2','nozzle_deflection_2','nozzle_quantity_2','boom_width','boom_width_units','boom_drop','boom_drop_units','nozzle_spacing','nozzle_spacing_units']) 
-    vals.extend([i.swath,i.swath_adjusted,i.swath_units,i.rate,i.rate_units,i.pressure,i.pressure_units,i.nozzle_type_1,i.nozzle_size_1,i.nozzle_deflection_1,i.nozzle_quantity_1, i.nozzle_type_2,i.nozzle_size_2,i.nozzle_deflection_2,i.nozzle_quantity_2,i.boom_width,i.boom_width_units,i.boom_drop,i.boom_drop_units,i.nozzle_spacing,i.nozzle_spacing_units])
+    labels.extend(['swath','swath_adjusted','swath_units','rate','rate_units','pressure','pressure_units','boom_width','boom_width_units','boom_drop','boom_drop_units','nozzle_spacing','nozzle_spacing_units']) 
+    vals.extend([i.swath,i.swath_adjusted,i.swath_units,i.rate,i.rate_units,i.pressure,i.pressure_units, i.boom_width,i.boom_width_units,i.boom_drop,i.boom_drop_units,i.nozzle_spacing,i.nozzle_spacing_units])
+    # Table Nozzles
+    for n in i.nozzles:
+        labels.extend([f'Nozzle {n.id} type',f'Nozzle {n.id} size',f'Nozzle {n.id} deflection',f'Nozzle {n.id} quantity'])
+        vals.extend([n.type,n.size,n.deflection,n.quantity])
     # Table Series String
     labels.extend(['smooth_individual','smooth_average','equalize_integrals','center','simulated_adjascent_passes'])
     vals.extend([s.string_smooth_individual,s.string_smooth_average,s.string_equalize_integrals,s.string_center,s.string_simulated_adjascent_passes])

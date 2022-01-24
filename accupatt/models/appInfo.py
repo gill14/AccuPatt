@@ -1,4 +1,27 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+@dataclass
+class Nozzle:
+    id: int = 1
+    type: str = ''
+    size: str = ''
+    deflection: str = ''
+    quantity: int = 0
+    
+    def as_string_tuple(self) -> tuple:
+        if self.type == '':
+            return ('','')
+        line_1 = f'{self.type} @ {self.deflection}' + '\N{DEGREE SIGN}'
+        line_2 = f'Orif#{self.size} x{str(self.quantity)}'
+        return (line_1, line_2)
+    
+    def set_quantity(self, new_quantity) -> bool:
+        try:
+            q = int(new_quantity)
+            self.quantity = q
+        except ValueError:
+            return False
+        return True
 
 @dataclass
 class AppInfo:
@@ -32,20 +55,14 @@ class AppInfo:
     rate_units: str = ""
     pressure: float = 0
     pressure_units: str = ""
-    nozzle_type_1: str = ""
-    nozzle_size_1: str = ""
-    nozzle_deflection_1: str = ""
-    nozzle_quantity_1: int = 0
-    nozzle_type_2: str = ""
-    nozzle_size_2: str = ""
-    nozzle_deflection_2: str = ""
-    nozzle_quantity_2: int = 0
     boom_width: float = 0
     boom_width_units: str = ""
     boom_drop: float = 0
     boom_drop_units: str = ""
     nozzle_spacing: float = 0
     nozzle_spacing_units: str = ""
+    
+    nozzles: list[Nozzle] = field(default_factory=list)
 
     series: int = 1
     notes_setup: str = ""
@@ -106,22 +123,6 @@ class AppInfo:
             return f'{self.strip_num(self.pressure)} {self.pressure_units}'
         else:
             return ''
-
-    def string_nozzle_1(self) -> str:
-        degree_sign= u'\N{DEGREE SIGN}'
-        if self.nozzle_type_1 != '':
-            return (f'{self.nozzle_type_1} @ {self.nozzle_deflection_1}{degree_sign}'+'\n'
-                +f'Orif#{self.nozzle_size_1} x{str(self.nozzle_quantity_1)}')
-        else:
-            return ' \n '
-
-    def string_nozzle_2(self) -> str:
-        degree_sign= u'\N{DEGREE SIGN}'
-        if self.nozzle_type_2 != '':
-            return (f'{self.nozzle_type_2} @ {self.nozzle_deflection_2}{degree_sign}'+'\n'
-                +f'Orif#{self.nozzle_size_2} x{str(self.nozzle_quantity_2)}')
-        else:
-            return ' \n '
 
     def string_boom_width(self) -> str:
         if self.boom_width > 0:
@@ -207,22 +208,6 @@ class AppInfo:
         self.pressure = float(string)
         return True
 
-    def set_nozzle_quantity_1(self, string) -> bool:
-        try:
-            int(float(string))
-        except ValueError:
-            return False
-        self.nozzle_quantity_1 = int(float(string))
-        return True
-
-    def set_nozzle_quantity_2(self, string) -> bool:
-        try:
-            int(string)
-        except ValueError:
-            return False
-        self.nozzle_quantity_2 = int(string)
-        return True
-
     def set_boom_width(self, string) -> bool:
         try:
             float(string)
@@ -256,3 +241,5 @@ class AppInfo:
             return True
         except ValueError:
             return False
+        
+

@@ -52,14 +52,6 @@ CREATE TABLE IF NOT EXISTS spray_system (
     rate_units              TEXT,
     pressure                REAL,
     pressure_units          TEXT,
-    nozzle_type_1           TEXT,
-    nozzle_size_1           TEXT,
-    nozzle_deflection_1     TEXT,
-    nozzle_quantity_1       INTEGER,
-    nozzle_type_2           TEXT,
-    nozzle_size_2           TEXT,
-    nozzle_deflection_2     TEXT,
-    nozzle_quantity_2       INTEGER,
     boom_width              REAL,
     boom_width_units        TEXT,
     boom_drop               REAL,
@@ -67,7 +59,14 @@ CREATE TABLE IF NOT EXISTS spray_system (
     nozzle_spacing          REAL,
     nozzle_spacing_units    TEXT
 );
---Passes{} Table
+CREATE TABLE IF NOT EXISTS nozzles (
+    id              TEXT PRIMARY KEY,
+    series_id       TEXT REFERENCES series(id),
+    type            TEXT,
+    size            TEXT,
+    deflection      TEXT,
+    quantity        INTEGER
+);
 CREATE TABLE IF NOT EXISTS passes (
     id                      TEXT PRIMARY KEY,
     series_id               TEXT REFERENCES series(id),
@@ -94,7 +93,6 @@ CREATE TABLE IF NOT EXISTS passes (
     emission_data           TEXT,
     data_loc_units          TEXT
 );
---Spray Cards Table
 CREATE TABLE IF NOT EXISTS spray_cards (
     id                              TEXT PRIMARY KEY,
     pass_id                         TEXT REFERENCES passes(id),
