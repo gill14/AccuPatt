@@ -47,7 +47,7 @@ class MainWindow(baseclass):
         # --> Setup Options Menu
         self.ui.action_pass_manager.triggered.connect(self.openPassManager)
         # --> Setup Export to Excel Menu
-        self.ui.action_safe_report.triggered.connect(self.createSAFEReport)
+        self.ui.action_safe_report.triggered.connect(self.exportSAFEAttendeeLog)
         self.ui.action_detailed_report.triggered.connect(self.exportAllRawData)
         # --> Setup Report Menu
         self.ui.actionCreate_Report.triggered.connect(self.makeReport)
@@ -298,7 +298,7 @@ class MainWindow(baseclass):
                     lwpc.setCurrentRow(cards_index)
 
     @pyqtSlot()
-    def createSAFEReport(self):
+    def exportSAFEAttendeeLog(self):
         files, _ = QFileDialog.getOpenFileNames(parent=self,
                                             caption='Select Files to Include',
                                             directory=self.currentDirectory,
@@ -323,14 +323,19 @@ class MainWindow(baseclass):
 
     @pyqtSlot()
     def makeReport(self):
-        r = ReportMaker()
-        r.makeReport(
-            seriesData=self.seriesData,
-            mplCanvasOverlay=self.ui.plotWidgetOverlay.canvas,
-            mplCanvasAverage=self.ui.plotWidgetAverage.canvas,
-            mplCanvasRT=self.ui.plotWidgetRacetrack.canvas,
-            mplCanvasBF=self.ui.plotWidgetBackAndForth.canvas,
-            tableView=self.ui.tableWidgetCV)
+        savefile, _ = QFileDialog.getSaveFileName(parent=self,
+                                                   caption='Save As',
+                                                   directory=self.currentDirectory + os.path.sep + f'{self.seriesData.info.string_reg_series()}.pdf',
+                                                   filter='PDF Files (*.pdf)')
+        if savefile:
+            ReportMaker().makeReport(
+                seriesData=self.seriesData,
+                saveFile=savefile,
+                mplCanvasOverlay=self.ui.plotWidgetOverlay.canvas,
+                mplCanvasAverage=self.ui.plotWidgetAverage.canvas,
+                mplCanvasRT=self.ui.plotWidgetRacetrack.canvas,
+                mplCanvasBF=self.ui.plotWidgetBackAndForth.canvas,
+                tableView=self.ui.tableWidgetCV)
         
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     String Analysis

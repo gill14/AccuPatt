@@ -14,11 +14,11 @@ from svglib.svglib import svg2rlg
 
 class ReportMaker:
 
-    def makeReport(self, seriesData: SeriesData, mplCanvasOverlay, mplCanvasAverage, mplCanvasRT, mplCanvasBF, tableView):
+    def makeReport(self, saveFile, seriesData: SeriesData, mplCanvasOverlay, mplCanvasAverage, mplCanvasRT, mplCanvasBF, tableView):
         s = seriesData
         i = s.info
         
-        c = canvas.Canvas('test2.pdf',pagesize=letter)
+        c = canvas.Canvas(saveFile,pagesize=letter)
         width, height = letter
         c.setLineCap(2)
         c.setFont("Helvetica", 8)
