@@ -1,23 +1,33 @@
 from io import BytesIO
 
+from accupatt.models.passData import Pass
+from accupatt.models.seriesData import SeriesData
 from reportlab.graphics import renderPDF
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, letter
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfgen import canvas
-from reportlab.platypus import (Frame, Paragraph, SimpleDocTemplate, Table,
-                                TableStyle)
+from reportlab.platypus import Frame, Paragraph, Table, TableStyle
 from reportlab.platypus.flowables import Flowable
 from svglib.svglib import svg2rlg
 
 
 class ReportMaker:
 
-    def makeReport(self, seriesData, mplCanvasOverlay, mplCanvasAverage, mplCanvasRT, mplCanvasBF, tableView):
+    def makeReport(self, seriesData: SeriesData, mplCanvasOverlay, mplCanvasAverage, mplCanvasRT, mplCanvasBF, tableView):
+        s = seriesData
+        i = s.info
+        
         c = canvas.Canvas('test2.pdf',pagesize=letter)
         width, height = letter
         c.setLineCap(2)
         c.setFont("Helvetica", 8)
+        style = ParagraphStyle(
+            name='normal',
+            fontName='Helvetica',
+            fontSize=8,
+            leading=10
+        )
 
         tablestyle = [
             ('INNERGRID', (0,0), (-1,-1), 0.25, colors.lightgrey, None, (2,2,2)),
@@ -33,95 +43,98 @@ class ReportMaker:
             ('SPAN',(0,0),(0,-1)),
         ]
 
-        #Applicator Info Box
-        c.line(20,705,175,705)
-        c.line(175,705,175,775)
-        c.line(175,775,20,775)
-        c.line(20,775,20,705)
-        c.drawString(25, 760, seriesData.info.pilot)
-        c.drawString(25, 750, seriesData.info.business)
-        c.drawString(25, 740, seriesData.info.addressLine1())
-        c.drawString(25, 730, seriesData.info.addressLine2())
-        c.drawString(25, 720, seriesData.info.phone)
-        c.drawString(25, 710, seriesData.info.email)
-
-        #Aircraft Info Box
-        aircraft = [
-            [TTR('Aircraft'), 'Reg. #:', seriesData.info.regnum],
-            ['', 'Make:', seriesData.info.make],
-            ['', 'Model:', seriesData.info.model],
-            ['', 'Wingspan:', seriesData.info.string_wingspan()],
-            ['', 'Winglets?:', seriesData.info.winglets]
-        ]
-        t = Table(aircraft,style=tablestyle)
-        t.wrapOn(c, 50, 30)
-        t.drawOn(c, 190, 705)
-
-        #Start list for frame
         list = []
-
-        #Spray System
-        spray_system = [
-            [TTR('Spray System'), 'Target Swath:', seriesData.info.string_swath()],
-            ['', 'Target Rate:', seriesData.info.string_rate()],
-            ['', 'Boom Pressure:', seriesData.info.string_pressure()],
-            ['', 'Boom Width:', seriesData.info.string_boom_width()],
-            ['', 'Boom Drop:', seriesData.info.string_boom_drop()],
-            ['', 'Nozzle Spacing:', seriesData.info.string_nozzle_spacing()]
+        
+        business = [
+            [TTR('Applicator'), i.pilot],
+            ['', i.business],
+            ['', i.addressLine1()],
+            ['', i.addressLine2()],
+            ['', i.string_phone()],
+            ['', i.email]
         ]
-        t_spray_system = Table(spray_system,style=tablestyle)
-        t_spray_system.wrapOn(c, 50, 30)
-        t_spray_system.drawOn(c, 20, 620)
+        list.append(Table(business, style=tablestyle))
 
-        #Nozzles
+        aircraft = [
+            [TTR('Aircraft'), 'Reg. #:', i.regnum],
+            ['', 'Series:', i.series],
+            ['', 'Make:', i.make],
+            ['', 'Model:', i.model],
+            ['', 'Wingspan:', i.string_wingspan()],
+            ['', 'Winglets?:', i.winglets]
+        ]
+        tablestyle_alt = tablestyle + [
+            ('BACKGROUND',(1,0),(-1,1),colors.palegreen),
+        ]
+        list.append(Table(aircraft,style=tablestyle_alt))
+
+        spray_system = [
+            [TTR('Spray System'), 'Target Swath:', i.string_swath()],
+            ['', 'Target Rate:', i.string_rate()],
+            ['', 'Boom Pressure:', i.string_pressure()],
+            ['', 'Boom Width:', i.string_boom_width()],
+            ['', 'Boom Drop:', i.string_boom_drop()],
+            ['', 'Nozzle Spacing:', i.string_nozzle_spacing()]
+        ]
+        list.append(Table(spray_system,style=tablestyle))
+
+        nozzle1 = i.nozzles[0].as_string_tuple() if len(i.nozzles) > 0 else ('','')
+        nozzle2 = i.nozzles[1].as_string_tuple() if len(i.nozzles) > 1 else ('','')
         nozzles = [
             [TTR('Nozzles'), 'Set #1'],
-            ['', f'{seriesData.info.string_nozzle_1().splitlines()[0]}'],
-            ['', f'{seriesData.info.string_nozzle_1().splitlines()[1]}'],
+            ['', f'{nozzle1[0]}'],
+            ['', f'{nozzle1[1]}'],
             ['', 'Set #2'],
-            ['', f'{seriesData.info.string_nozzle_2().splitlines()[0]}'],
-            ['', f'{seriesData.info.string_nozzle_2().splitlines()[1]}']
+            ['', f'{nozzle2[0]}'],
+            ['', f'{nozzle2[1]}'],
         ]
         tablestyle_alt = tablestyle + [
-            ('BACKGROUND',(1,0),(-1,0),colors.navajowhite),
-            ('BACKGROUND',(1,3),(-1,3),colors.navajowhite),
+            ('BACKGROUND',(1,0),(-1,0),colors.lightgrey),
+            ('BACKGROUND',(1,3),(-1,3),colors.lightgrey),
         ]
+        list.append(Table(nozzles,style=tablestyle_alt))
+        
+        t_info = Table([list],hAlign='CENTER',vAlign='CENTER')
+        t_info.wrapOn(c, 50, 30)
+        f_info = Frame(int(0.05*width), 700, int(0.90*width), 75, leftPadding=0,rightPadding=0, bottomPadding=0, topPadding=0, showBoundary=0)
+        f_info.addFromList([t_info],c)
 
-        t_nozzles = Table(nozzles,style=tablestyle_alt)
-        t_nozzles.wrapOn(c, 50, 30)
-        t_nozzles.drawOn(c, 150, 620)
+        flyin = [
+            [TTR('Fly-In'), i.flyin_name],
+            ['', i.flyin_location],
+            ['', i.flyin_date],
+            ['', f'Analyst: {i.flyin_analyst}']
+        ]
+        list = []
+        list.append(Table(flyin,style=tablestyle))
 
         #Pass data
-        p1,p2,p3 = 'Pass 1','Pass 2','Pass 3'
-        observables = [
-            ['', '', p1, p2, p3, 'Average'],
-            [TTR('Observables'), 'Airspeed',
-                seriesData.passes[p1].calc_airspeed(),
-                seriesData.passes[p2].calc_airspeed(),
-                seriesData.passes[p3].calc_airspeed(),
-                f'{self.strip_num(seriesData.calc_airspeed_mean())} mph'],
-            ['', 'Spray Height:',
-                self.strip_num(seriesData.passes[p1].spray_height),
-                self.strip_num(seriesData.passes[p2].spray_height),
-                self.strip_num(seriesData.passes[p3].spray_height),
-                f'{self.strip_num(seriesData.calc_spray_height_mean())} ft'],
-            ['', 'Wind Speed:',
-                self.strip_num(seriesData.passes[p1].wind_speed),
-                self.strip_num(seriesData.passes[p2].wind_speed),
-                self.strip_num(seriesData.passes[p3].wind_speed),
-                f'{self.strip_num(seriesData.calc_wind_speed_mean())} mph'],
-            ['', 'X-Wind Speed:',
-                self.strip_num(seriesData.passes[p1].calc_crosswind()),
-                self.strip_num(seriesData.passes[p2].calc_crosswind()),
-                self.strip_num(seriesData.passes[p3].calc_crosswind()),
-                f'{self.strip_num(seriesData.calc_crosswind_mean())} mph'],
-            ['', 'Temperature:', '-', '-','-',
-                f'{self.strip_num(seriesData.calc_temperature_mean())} °F'],
-            ['', 'Humidity:', '-', '-','-',
-                f'{self.strip_num(seriesData.calc_humidity_mean())}%']
-        ]
+        row1 = ['','']
+        row2 = [TTR('Observables'),'Airspeed:']
+        row3 = ['','Spray Height:']
+        row4 = ['', 'Wind Speed:']
+        row5 = ['', 'X-Wind Speed:']
+        row6 = ['', 'Temperature:']
+        row7 = ['', 'Humidity:']
+        p: Pass
+        for p in s.passes:
+            row1.append(p.name)
+            row2.append(p.str_airspeed(units='mph'))
+            row3.append(p.str_spray_height())
+            row4.append(p.str_wind_speed())
+            row5.append(p.str_crosswind(units='mph'))
+            row6.append('-')
+            row7.append('-')
+        row1.append('Average')
+        row2.append(f'{s.calc_airspeed_mean()} mph')
+        row3.append(f'{s.calc_spray_height_mean():.1f} ft')
+        row4.append(f'{s.calc_wind_speed_mean():.1f} mph')
+        row5.append(f'{s.calc_crosswind_mean():.1f} mph')
+        row6.append(f'{s.calc_temperature_mean()} °F')
+        row7.append(f'{s.calc_humidity_mean()}%')
+        observables = [row1,row2,row3,row4,row5,row6,row7]
         tablestyle_alt = tablestyle + [
-            ('BACKGROUND',(2,0),(-1,0),colors.navajowhite),
+            ('BACKGROUND',(2,0),(-1,0),colors.lightgrey),
             ('BACKGROUND',(0,1),(0,-1),colors.lightgrey),
             ('SPAN',(0,1),(0,-1)),
             ('SPAN',(0,0),(1,0)),
@@ -135,23 +148,33 @@ class ReportMaker:
         tablestyle_alt.remove(('BOX', (0,0), (-1,-1), 0.25, colors.black))
         tablestyle_alt.remove(('SPAN',(0,0),(0,-1)))
         tablestyle_alt.remove(('BACKGROUND',(0,0),(0,-1),colors.lightgrey))
-        t_observables = Table(observables,style=tablestyle_alt)
+        list.append(Table(observables,style=tablestyle_alt))
+        
+        notes = [
+            [TTR('Setup Notes'), Paragraph(i.notes_setup,style=style)]
+        ]
+        list.append(Table(notes,style=tablestyle,rowHeights=[75],colWidths=[None,80]))
+        
+        
+        t_observables = Table([list],hAlign='CENTER',vAlign='CENTER')
         t_observables.wrapOn(c, 50, 30)
-        t_observables.drawOn(c, 255, 620)
+        f_observables = Frame(int(0.05*width), 610, int(0.90*width), 90, leftPadding=0,rightPadding=0, bottomPadding=0, topPadding=0, showBoundary=0)
+        f_observables.addFromList([t_observables],c)
+        #t_observables.drawOn(c, 255, 620)
 
         #Droplet Spectrum
-        droplet_spectrum = [
-            [TTR('USDA Model'), 'Category:', seriesData.calc_dsc()],
-            ['', 'VMD:', f'{seriesData.calc_dv05()} μm'],
-            ['', 'Dv0.1:', f'{seriesData.calc_dv01()} μm'],
-            ['', 'Dv0.9:', f'{seriesData.calc_dv09()} μm'],
-            ['', '%v<100 μm:', f'{seriesData.calc_p_lt_100()}%'],
-            ['', '%v<200 μm:', f'{seriesData.calc_p_lt_200()}%']
+        '''droplet_spectrum = [
+            [TTR('USDA Model'), 'Category:', s.calc_dsc()],
+            ['', 'VMD:', f'{s.calc_dv05()} μm'],
+            ['', 'Dv0.1:', f'{s.calc_dv01()} μm'],
+            ['', 'Dv0.9:', f'{s.calc_dv09()} μm'],
+            ['', '%v<100 μm:', f'{s.calc_p_lt_100()}%'],
+            ['', '%v<200 μm:', f'{s.calc_p_lt_200()}%']
         ]
         t_droplet_spectrum = Table(droplet_spectrum,style=tablestyle)
         t_droplet_spectrum.wrapOn(c, 50, 30)
-        t_droplet_spectrum.drawOn(c, 490, 620)
-
+        t_droplet_spectrum.drawOn(c, 490, 620)'''
+        
         #Overlay
         fig = mplCanvasOverlay.fig
         fig.set_size_inches(6, 2)
@@ -234,3 +257,4 @@ class TTR(Flowable):       #TableTextRotate
     def wrap(self,aW,aH):
          canv = self.canv
          return canv._leading, canv.stringWidth(self.text)
+     

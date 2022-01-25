@@ -82,18 +82,11 @@ class AppInfo:
 
     def addressLine2(self) -> str:
         s = self.city
-        #Check if state is blank, return city only if so
-        if self.state != '':
-            s = s + ', ' + self.state
-        else:
-            return s
-        #Check if ZIP is blank, return city, ST if so
-        if self.zip != '':
-            s = s + ' ' + self.zip
-        else:
-            return s
-        #If all three not empty, return the whole deal
-        return self.city + ", " + self.state + " " + self.zip
+        # Append state if not blank
+        s = s + ', ' + self.state if self.state != '' else s
+        # Append ZIP if not blank
+        s = s + ' ' + self.zip if self.zip != '' else s
+        return s
 
     def string_phone(self) -> str:
         p = self.phone

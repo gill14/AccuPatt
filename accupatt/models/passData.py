@@ -197,7 +197,7 @@ class Pass:
         #Return value as int
         return int(round(airspeed))
     
-    def str_airspeed(self, units=None) -> str:
+    def str_airspeed(self, units=None, printUnits=False) -> str:
         try:
             float(self.ground_speed)
             float(self.wind_speed)
@@ -207,7 +207,10 @@ class Pass:
             return ''
         if units==None:
             units=self.ground_speed_units
-        return str(f'{self.calc_airspeed(units=units)} {units}')
+        text = f'{self.calc_airspeed(units=units)}'
+        if printUnits:
+            text += f' {units}'
+        return text
 
     def calc_crosswind(self, units='mph') -> float:
         ws = float(self.wind_speed)
@@ -227,7 +230,7 @@ class Pass:
         #Return value as int
         return float(crosswind)
     
-    def str_crosswind(self, units=None) -> str:
+    def str_crosswind(self, units=None, printUnits=False) -> str:
         try:
             float(self.wind_speed)
             float(self.wind_direction)
@@ -236,55 +239,79 @@ class Pass:
             return ''
         if units==None:
             units=self.wind_speed_units
-        return str(f'{self.strip_num(self.calc_crosswind(units=units))} {units}')
+        text = f'{self.strip_num(self.calc_crosswind(units=units))}'
+        if printUnits:
+            text += f' {units}'
+        return text
     
-    def str_ground_speed(self):
+    def str_ground_speed(self, printUnits=False):
         try:
             float(self.ground_speed)
         except (TypeError, ValueError):
             return ''
-        return str(f'{self.strip_num(self.ground_speed)} {self.ground_speed_units}')
+        text = f'{self.strip_num(self.ground_speed)}'
+        if printUnits:
+            text += f' {self.ground_speed_units}'
+        return text
         
-    def str_spray_height(self):
+    def str_spray_height(self, printUnits=False):
         try:
             float(self.spray_height)
         except (TypeError, ValueError):
             return ''
-        return str(f'{self.strip_num(self.spray_height)} {self.spray_height_units}')
+        text = f'{self.strip_num(self.spray_height)}'
+        if printUnits:
+            text += f' {self.spray_height_units}'
+        return text
         
-    def str_pass_heading(self):
+    def str_pass_heading(self, printUnits=False):
         try:
             float(self.pass_heading)
         except (TypeError, ValueError):
             return ''
-        return str(f'{self.strip_num(self.pass_heading)} {cfg.UNIT_DEG}')
+        text = f'{self.strip_num(self.pass_heading)}'
+        if printUnits:
+            text += f'{cfg.UNIT_DEG}'
+        return text
         
-    def str_wind_direction(self):
+    def str_wind_direction(self, printUnits=False):
         try:
             float(self.wind_direction)
         except (TypeError, ValueError):
             return ''
-        return str(f'{self.strip_num(self.wind_direction)} {cfg.UNIT_DEG}')
+        text = f'{self.strip_num(self.wind_direction)}'
+        if printUnits:
+            text += f'{cfg.UNIT_DEG}'
+        return text
         
-    def str_wind_speed(self):
+    def str_wind_speed(self, printUnits=False):
         try:
             float(self.wind_speed)
         except (TypeError, ValueError):
             return ''
-        return str(f'{self.strip_num(self.wind_speed)} {self.wind_speed_units}')
+        text = f'{self.strip_num(self.wind_speed)}'
+        if printUnits:
+            text += f' {self.wind_speed_units}'
+        return text
         
-    def str_temperature(self):
+    def str_temperature(self, printUnits=False):
         try:
             float(self.temperature)
         except (TypeError, ValueError):
             return ''
-        return str(f'{self.strip_num(self.temperature)} {self.temperature_units}')     
+        text = f'{self.strip_num(self.temperature)}'
+        if printUnits:
+            text += f' {self.temperature_units}'
+        return text  
         
-    def str_humidity(self):
+    def str_humidity(self, printUnits=False):
         try:
             float(self.humidity)
         except (TypeError, ValueError):
             return ''
+        text = f'{self.strip_num(self.humidity)}'
+        if printUnits:
+            text += '%'
         return str(f'{self.strip_num(self.humidity)}%')     
 
     def strip_num(self, x, precision = 2, zeroBlank = False) -> str:

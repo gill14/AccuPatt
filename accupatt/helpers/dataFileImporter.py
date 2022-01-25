@@ -99,7 +99,7 @@ def load_from_accupatt_1_file(file) -> SeriesData:
     # Col 2 if available
     if df.shape[1] > 2:
         i.email = df.iat[0,2]
-        i.zip = str(df.iat[5,2])
+        i.zip = str(int(df.iat[5,2]))
         i.set_swath_adjusted(df.iat[20,2])
     # Set units for series/passes based on 'metric' identifier
     isMetric = (df.iat[35,1] == 'TRUE')
