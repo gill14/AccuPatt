@@ -132,7 +132,7 @@ def load_from_accupatt_1_file(file) -> SeriesData:
 
     #Pull data from Pattern Data tab
     df: pd.DataFrame = df_map['Pattern Data'].fillna(np.nan)
-    #if df.shape[1] < 13: df['nan'] = np.nan
+    if df.shape[1] < 13: df['nan'] = np.nan
     #Make new empty dataframe for info
     #df_info = pd.DataFrame({'Pass 1':[], 'Pass 2':[], 'Pass 3':[], 'Pass 4':[], 'Pass 5':[], 'Pass 6':[]})
     cols = ['loc', 'Pass 1', 'Pass 2', 'Pass 3', 'Pass 4', 'Pass 5', 'Pass 6']
@@ -149,9 +149,9 @@ def load_from_accupatt_1_file(file) -> SeriesData:
     #Pull patterns and place them into seriesData.passes list by name (created above)
     p: Pass
     for p in s.passes:
-        p.trim_l = 0 if trims.at[0,p.name] == np.nan else int(trims.at[0,p.name])
-        p.trim_r = 0 if trims.at[1,p.name] == np.nan else int(trims.at[1,p.name])
-        p.trim_v = 0 if trims.at[2,p.name] == np.nan else trims.at[2,p.name]
+        p.trim_l = 0 if np.isnan(trims.at[0,p.name]) else int(trims.at[0,p.name])
+        p.trim_r = 0 if np.isnan(trims.at[1,p.name]) else int(trims.at[1,p.name])
+        p.trim_v = 0 if np.isnan(trims.at[2,p.name]) else trims.at[2,p.name]
         # TODO Integration Time is params row 0, must convert to int
         # TODO Ex/Em Wavs are params rows 1, 2 respective, must strip string
         p.data = df_em[['loc',p.name]]
