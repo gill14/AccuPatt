@@ -6,7 +6,7 @@ from PyQt6.QtCore import QSettings, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from serial.tools import list_ports
 
-Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editStringDrive.ui'))
+Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'editStringDrive.ui'))
 
 class EditStringDrive(baseclass):
 

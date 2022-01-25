@@ -12,7 +12,7 @@ from PyQt6.QtCore import (QAbstractTableModel, QItemSelectionModel,
 from PyQt6.QtWidgets import (QApplication, QComboBox, QFileDialog,
                              QItemDelegate, QMessageBox)
 
-Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editCardList.ui'))
+Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'editCardList.ui'))
 
 defined_sets = {
     'Standard Fly-In': {

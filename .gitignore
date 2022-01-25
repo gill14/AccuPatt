@@ -1,5 +1,7 @@
 __pycache__/
 .DS_Store
 .vscode/
-N802ET S3/
+build/
+dist/
 ~*
+*.pdf

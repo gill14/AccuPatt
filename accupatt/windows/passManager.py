@@ -7,7 +7,7 @@ from PyQt6.QtCore import (QAbstractTableModel, QModelIndex, Qt, QVariant,
                           pyqtSignal)
 from PyQt6.QtWidgets import QMessageBox
 
-Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'passManager.ui'))
+Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'passManager.ui'))
 
 class PassManager(baseclass):
 

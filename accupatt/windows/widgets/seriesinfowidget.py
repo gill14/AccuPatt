@@ -9,7 +9,7 @@ from PyQt6 import uic
 from PyQt6.QtCore import QDate, QDateTime, pyqtSignal, pyqtSlot, QSignalBlocker
 from PyQt6.QtWidgets import QComboBox, QMessageBox
 
-Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'seriesInfo.ui'))
+Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'seriesInfo.ui'))
 
 class SeriesInfoWidget(baseclass):
     

@@ -6,7 +6,7 @@ from PyQt6 import uic
 from PyQt6.QtCore import QSettings, Qt, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
-Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editSpreadFactors.ui'))
+Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'editSpreadFactors.ui'))
 
 class EditSpreadFactors(baseclass):
 

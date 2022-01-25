@@ -16,7 +16,7 @@ orientation_options = ['Horizontal','Vertical']
 order_options = ['Increasing','Decreasing']
 scale_options = ['10%','20%','30%','40%','50%','60%','70%','80%','90%','100%']
 
-Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'loadCards.ui'))
+Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'loadCards.ui'))
 
 class LoadCards(baseclass):
 

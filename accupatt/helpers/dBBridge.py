@@ -8,7 +8,7 @@ from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
 from accupatt.models.sprayCard import SprayCard
 
-schema_filename = os.path.join(os.getcwd(), 'accupatt', 'helpers', 'schema.sql')
+schema_filename = os.path.join(os.getcwd(), 'resources', 'schema.sql')
     
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 Loading

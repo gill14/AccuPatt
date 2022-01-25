@@ -1,11 +1,12 @@
 import copy
 import os
 
+import superqt
 import accupatt.config as cfg
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSignal
 
-Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'editThreshold.ui'))
+Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'editThreshold.ui'))
 
 class EditThreshold(baseclass):
 

@@ -22,8 +22,8 @@ from PyQt6.QtCore import QSettings, QSignalBlocker, Qt, pyqtSlot
 from PyQt6.QtWidgets import (QComboBox, QFileDialog, QLabel,
                              QListWidgetItem, QMenu, QMessageBox)
 
-Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'mainWindow.ui'))
-testing = True
+Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'mainWindow.ui'))
+testing = False
 class MainWindow(baseclass):
 
     def __init__(self, *args, **kwargs):
@@ -180,7 +180,7 @@ class MainWindow(baseclass):
     @pyqtSlot()
     def saveFile(self):
         # If viewing from XLSX, Prompt to convert
-        if self.currentFile[-1] == 'x':
+        if self.currentFile != '' and self.currentFile[-1] == 'x':
             msg = QMessageBox.question(self, 'Unable to Edit Datafile',
                                        'Current File is of type: AccuPatt 1 (.xlsx). Would you like to create an edit-compatible (.db) copy?')
             if msg == QMessageBox.StandardButton.Yes:

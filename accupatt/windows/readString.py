@@ -12,7 +12,7 @@ from PyQt6.QtCore import QSettings, QTimer, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import QMessageBox
 from seabreeze.spectrometers import Spectrometer
 
-Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'accupatt', 'windows', 'ui', 'readString.ui'))
+Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'readString.ui'))
 
 class ReadString(baseclass):
     """ A Container for communicating with the Spectrometer and String Drive """
