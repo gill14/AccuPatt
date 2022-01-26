@@ -9,3 +9,4 @@ dist/
 *.dmg
 accupatt_logo.png
 testing/
+.eggs*

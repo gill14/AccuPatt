@@ -11,7 +11,7 @@ from setuptools import setup
 DATA_FILES = [('resources',['resources/AgAircraftData.xlsx','resources/edit-alt-512.webp','resources/editCardList.ui','resources/editSpectrometer.ui','resources/editSpreadFactors.ui','resources/editStringDrive.ui','resources/editThreshold.ui','resources/loadCards.ui','resources/mainWindow.ui','resources/passManager.ui','resources/readString.ui','resources/refresh.png','resources/seriesInfo.ui','resources/schema.sql','resources/illini.icns'])]
 OPTIONS = {
     'iconfile':'./resources/illini.icns',
-    'plist': {'CFBundleShortVersionString':'2.0.0',}
+    'plist': {'CFBundleShortVersionString':'2.0.1',}
 }
 
 if sys.platform == 'darwin':

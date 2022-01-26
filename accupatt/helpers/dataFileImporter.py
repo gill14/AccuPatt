@@ -99,7 +99,9 @@ def load_from_accupatt_1_file(file) -> SeriesData:
     # Col 2 if available
     if df.shape[1] > 2:
         i.email = df.iat[0,2]
-        i.zip = str(int(df.iat[5,2]))
+        i.zip = df.iat[5,2]
+        if i.zip != '':
+            i.zip = str(int(i.zip))
         i.set_swath_adjusted(df.iat[20,2])
     # Set units for series/passes based on 'metric' identifier
     isMetric = (df.iat[35,1] == 'TRUE')
@@ -184,7 +186,7 @@ def load_from_accupatt_1_file(file) -> SeriesData:
             c.has_image = 1 if sh.cell(row=2,column=col).value else 0
             c.include_in_composite = 1 if sh.cell(row=3,column=col).value else 0
             if c.has_image:
-                c.threshold_grayscale = sh.cell(row=4,column=col).value
+                c.threshold_grayscale = int(sh.cell(row=4,column=col).value)
             c.threshold_type = cfg.THRESHOLD_TYPE_GRAYSCALE
             c.spread_method = spread_method
             c.spread_factor_a = spread_a
