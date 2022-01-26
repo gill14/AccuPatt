@@ -3,10 +3,13 @@ import os
 import accupatt.config as cfg
 from PyQt6 import uic
 from PyQt6.QtCore import QSettings, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QMessageBox
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QMessageBox
 from serial.tools import list_ports
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'editStringDrive.ui'))
+
+icon_file = os.path.join(os.getcwd(), 'resources', 'refresh.png')
 
 class EditStringDrive(baseclass):
 
@@ -19,7 +22,7 @@ class EditStringDrive(baseclass):
         self.ui.setupUi(self)
 
         #Load in Settings or use defaults
-        self.settings = QSettings('BG Application Consulting','AccuPatt')
+        self.settings = QSettings('accupatt','AccuPatt')
 
         #Hook up serial port combobox signal
         self.ui.comboBoxSerialPort.currentTextChanged[str].connect(self.on_sp_selected)
@@ -27,6 +30,7 @@ class EditStringDrive(baseclass):
         self.refresh_sp_list()
 
         #Hook up Refresh Button signal
+        self.ui.buttonRefresh.setIcon(QIcon(icon_file))
         self.ui.buttonRefresh.clicked.connect(self.refresh_sp_list)
 
         #Init flightline Length

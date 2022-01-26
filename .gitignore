@@ -5,3 +5,7 @@ build/
 dist/
 ~*
 *.pdf
+*.sh
+*.dmg
+accupatt_logo.png
+testing/

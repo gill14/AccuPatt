@@ -36,7 +36,7 @@ class CardManager(baseclass):
         # Your code will go here
 
         #Load in Settings
-        self.settings = QSettings('BG Application Consulting','AccuPatt')
+        self.settings = QSettings('accupatt','AccuPatt')
        
         # File path for creating new cards
         self.filepath = filepath

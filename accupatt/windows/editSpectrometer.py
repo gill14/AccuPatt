@@ -20,7 +20,7 @@ class EditSpectrometer(baseclass):
         self.ui.setupUi(self)
 
         #Load in Settings or use defaults
-        self.settings = QSettings('BG Application Consulting','AccuPatt')
+        self.settings = QSettings('accupatt','AccuPatt')
         #Excitation Wavelength
         if self.settings.contains('target_excitation_wavelength'):
             self.target_excitation_wavelength = self.settings.value('target_excitation_wavelength', type=int)

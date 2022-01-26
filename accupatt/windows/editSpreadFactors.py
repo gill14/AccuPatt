@@ -28,7 +28,7 @@ class EditSpreadFactors(baseclass):
         self.factor_c = None
 
         # Load in Spray Card or use Settings
-        self.settings = QSettings('BG Application Consulting','AccuPatt')
+        self.settings = QSettings('accupatt','AccuPatt')
         if self.sprayCard.spread_method == None:
             self.method = self.settings.value('spread_factor_method', defaultValue=cfg.SPREAD_METHOD_ADAPTIVE, type=int)
         else:

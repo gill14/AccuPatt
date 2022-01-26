@@ -25,27 +25,27 @@ class ReadString(baseclass):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         #Import Settings
-        self.settings = QSettings('BG Application Consulting','AccuPatt')
+        self.settings = QSettings('accupatt','AccuPatt')
         #Make ref to seriesData/passData for later updating in on_applied
         self.passData = passData
         
         #Populate Pass Info fields
         self.ui.labelPass.setText(passData.name)
-        self.ui.lineEditGS.setText(passData.strip_num(passData.ground_speed))
+        self.ui.lineEditGS.setText(passData.str_ground_speed())
         self.ui.comboBoxUnitsGS.addItems(cfg.UNITS_GS)
         self.ui.comboBoxUnitsGS.setCurrentText(passData.ground_speed_units)
-        self.ui.lineEditSH.setText(passData.strip_num(passData.spray_height))
+        self.ui.lineEditSH.setText(passData.str_spray_height())
         self.ui.comboBoxUnitsSH.addItems(cfg.UNITS_SH)
         self.ui.comboBoxUnitsSH.setCurrentText(passData.spray_height_units)
-        self.ui.lineEditPH.setText(passData.strip_num(passData.pass_heading))
-        self.ui.lineEditWD.setText(passData.strip_num(passData.wind_direction))
-        self.ui.lineEditWS.setText(passData.strip_num(passData.wind_speed))
+        self.ui.lineEditPH.setText(passData.str_pass_heading())
+        self.ui.lineEditWD.setText(passData.str_wind_direction())
+        self.ui.lineEditWS.setText(passData.str_wind_speed())
         self.ui.comboBoxUnitsWS.addItems(cfg.UNITS_WS)
         self.ui.comboBoxUnitsWS.setCurrentText(passData.wind_speed_units)
-        self.ui.lineEditT.setText(passData.strip_num(passData.temperature))
+        self.ui.lineEditT.setText(passData.str_temperature())
         self.ui.comboBoxUnitsT.addItems(cfg.UNITS_T)
         self.ui.comboBoxUnitsT.setCurrentText(passData.temperature_units)
-        self.ui.lineEditH.setText(passData.strip_num(passData.humidity))
+        self.ui.lineEditH.setText(passData.str_humidity())
 
         #Setup Spectrometer
         self.spec = None
@@ -108,7 +108,7 @@ class ReadString(baseclass):
                 self.traces[name] = self.p.plot(name='Emission',pen='w')
             if name == 'excitation':
                 self.traces[name] = self.p.plot(name='Excitation',pen='c')
-                pass
+                #pass
 
     def plotFrame(self):
         #get Location
@@ -134,9 +134,8 @@ class ReadString(baseclass):
             self.timer.stop()
             self.ser.write(cfg.STRING_DRIVE_FWD_STOP.encode())
             self.ui.buttonStart.setText('Start')
-            self.ui.buttonStart.setEnable(True)
-            self.ui.buttonAbort.setEnable(False)
-            self.ui.buttonClear.setEnable(True)
+            self.ui.buttonAbort.setEnabled(False)
+            self.ui.buttonClear.setEnabled(True)
 
     @pyqtSlot()
     def click_start(self):
@@ -155,6 +154,7 @@ class ReadString(baseclass):
             #Start String Drive (forward)
             self.ser.write(cfg.STRING_DRIVE_FWD_START.encode())
             self.ui.buttonStart.setText('Mark')
+            self.marked = True
         else:
             #Initialize timer
             self.timer = QTimer(self)
@@ -162,10 +162,10 @@ class ReadString(baseclass):
             self.timer.timeout.connect(self.plotFrame)
             self.plotFrame()
             self.timer.start(int(self.settings.value('integration_time_ms', defaultValue=100.0, type=float)))
-            self.ui.buttonStart.setEnable(False)
+            self.ui.buttonStart.setEnabled(False)
         #Enable abort button
-        self.ui.buttonAbort.setEnable(True)
-        self.ui.buttonClear.setEnable(False)
+        self.ui.buttonAbort.setEnabled(True)
+        self.ui.buttonClear.setEnabled(False)
  
     @pyqtSlot()
     def click_abort(self):
@@ -173,13 +173,19 @@ class ReadString(baseclass):
         self.ser.write(cfg.STRING_DRIVE_FWD_STOP.encode())
         self.clear()
         self.ui.buttonStart.setText('Start')
-        self.ui.buttonStart.setEnable(True)
-        self.ui.buttonAbort.setEnable(False)
-        self.ui.buttonClear.setEnable(True)
+        self.ui.buttonStart.setEnabled(True)
+        self.marked = False
+        self.ui.buttonAbort.setEnabled(False)
+        self.ui.buttonClear.setEnabled(True)
         
     @pyqtSlot()
     def click_clear(self):
-        self.clear(showPopup=True)
+        if self.clear(showPopup=True):
+            self.ui.buttonStart.setText('Start')
+            self.ui.buttonStart.setEnabled(True)
+            self.marked = False
+            self.ui.buttonAbort.setEnabled(False)
+            self.ui.buttonClear.setEnabled(True)
 
     def clear(self, showPopup=True):
         if showPopup and not self.y == []:
@@ -189,6 +195,7 @@ class ReadString(baseclass):
         self.y = []
         self.y_ex = []
         self.p.clear()
+        self.traces = dict()
         return True
 
     def on_applied(self):

@@ -31,7 +31,7 @@ class SeriesData:
             return
         #apply individual pattern modifications
         for p in self.passes:
-            if p.data.empty: continue
+            if p.data.empty or not p.include_in_composite: continue
             p.modifyData(isCenter=self.string_center, isSmooth=self.string_smooth_individual)
         #apply cross-pattern modifications
         if self.string_equalize_integrals:
@@ -45,17 +45,15 @@ class SeriesData:
         areas = []
         #Integrate each pattern to find area under the curve
         for p in self.passes:
-            if p.data.empty: continue
-            v = np.trapz(y=p.data_mod[p.name], x=p.data_mod['loc'], axis=0)
-            areas.append(v)
+            area = 0 if p.data.empty or not p.include_in_composite else np.trapz(y=p.data_mod[p.name], x=p.data_mod['loc'], axis=0)
+            areas.append(area)
         #Find the pass with the largest integral
         maxx = max(areas)
         #Scale each pass to equalize areas to the maxx above
-        for i in range(len(self.passes)):
-            p = self.passes[i]
-            if p.data.empty: continue
-            #Calculate scaler and apply to data_mod pattern
-            p.data_mod[p.name] = p.data_mod[p.name].multiply(maxx/areas[i])
+        for i, p in enumerate(self.passes):
+            if not p.data.empty and p.include_in_composite:
+                #Calculate scaler and apply to data_mod pattern
+                p.data_mod[p.name] = p.data_mod[p.name].multiply(maxx/areas[i])
 
     def _averagePattern(self):
         #df placeholder
@@ -82,37 +80,43 @@ class SeriesData:
     def calc_airspeed_mean(self):
         m = []
         for p in self.passes:
-            m.append(p.calc_airspeed())
+            if p.include_in_composite:
+                m.append(p.calc_airspeed())
         return int(np.mean(m))
 
     def calc_spray_height_mean(self):
         m = []
         for p in self.passes:
-            m.append(p.spray_height)
+            if p.include_in_composite:
+                m.append(p.spray_height)
         return float(np.mean(m))
 
     def calc_wind_speed_mean(self):
         m = []
         for p in self.passes:
-            m.append(p.wind_speed)
+            if p.include_in_composite:
+                m.append(p.wind_speed)
         return float(np.mean(m))
 
     def calc_crosswind_mean(self):
         m = []
         for p in self.passes:
-            m.append(p.calc_crosswind())
+            if p.include_in_composite:
+                m.append(p.calc_crosswind())
         return float(np.mean(m))
 
     def calc_temperature_mean(self):
         m = []
         for p in self.passes:
-            m.append(p.temperature)
+            if p.include_in_composite:
+                m.append(p.temperature)
         return int(np.mean(m))
 
     def calc_humidity_mean(self):
         m = []
         for p in self.passes:
-            m.append(p.humidity)
+            if p.include_in_composite:
+                m.append(p.humidity)
         return int(np.mean(m))
 
     #Convience Accessor so that the model is only run once  

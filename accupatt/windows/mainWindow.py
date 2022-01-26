@@ -33,7 +33,7 @@ class MainWindow(baseclass):
         self.ui.setupUi(self)
 
         #Load in Settings or use defaults
-        self.settings = QSettings('BG Application Consulting','AccuPatt')
+        self.settings = QSettings('accupatt','AccuPatt')
         self.currentDirectory = self.settings.value('dir', defaultValue=str(Path.home()), type=str)
 
         # Setup MenuBar

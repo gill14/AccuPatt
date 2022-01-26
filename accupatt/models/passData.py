@@ -14,7 +14,7 @@ class Pass:
     def __init__(self, id = '', number=0, name='',
             ground_speed=0, ground_speed_units='mph',
             spray_height=0, spray_height_units='ft',
-            pass_heading=0, wind_direction=None,
+            pass_heading=0, wind_direction=0,
             wind_speed=0, wind_speed_units='mph',
             temperature = 0, temperature_units='°F',
             humidity=0, include_in_composite=True,
@@ -157,10 +157,10 @@ class Pass:
         return d
 
     def setData(self, x_data, y_data, y_ex_data):
-        pattern = np.array([x_data, y_data])
-        self.data = pd.DataFrame(data=pattern, columns=['loc', self.name])
-        pattern_ex = np.array([x_data, y_ex_data])
-        self.data_ex = pd.DataFrame(data=pattern_ex, columns=['loc', self.name])
+        #pattern = np.array(x_data, y_data)
+        self.data = pd.DataFrame(data=list(zip(x_data,y_data)), columns=['loc', self.name])
+        #pattern_ex = np.array([x_data, y_ex_data])
+        self.data_ex = pd.DataFrame(data=list(zip(x_data, y_ex_data)), columns=['loc', self.name])
 
     def setTrims(self, trim_l = None, trim_r = None, trim_v = None):
         if trim_l is not None:
@@ -249,7 +249,7 @@ class Pass:
             float(self.ground_speed)
         except (TypeError, ValueError):
             return ''
-        text = f'{self.strip_num(self.ground_speed)}'
+        text = f'{self.strip_num(self.ground_speed,zeroBlank=True)}'
         if printUnits:
             text += f' {self.ground_speed_units}'
         return text
@@ -259,7 +259,7 @@ class Pass:
             float(self.spray_height)
         except (TypeError, ValueError):
             return ''
-        text = f'{self.strip_num(self.spray_height)}'
+        text = f'{self.strip_num(self.spray_height,zeroBlank=True)}'
         if printUnits:
             text += f' {self.spray_height_units}'
         return text
@@ -269,7 +269,7 @@ class Pass:
             float(self.pass_heading)
         except (TypeError, ValueError):
             return ''
-        text = f'{self.strip_num(self.pass_heading)}'
+        text = f'{self.strip_num(self.pass_heading,zeroBlank=True)}'
         if printUnits:
             text += f'{cfg.UNIT_DEG}'
         return text
@@ -279,7 +279,7 @@ class Pass:
             float(self.wind_direction)
         except (TypeError, ValueError):
             return ''
-        text = f'{self.strip_num(self.wind_direction)}'
+        text = f'{self.strip_num(self.wind_direction,zeroBlank=True)}'
         if printUnits:
             text += f'{cfg.UNIT_DEG}'
         return text
@@ -289,7 +289,7 @@ class Pass:
             float(self.wind_speed)
         except (TypeError, ValueError):
             return ''
-        text = f'{self.strip_num(self.wind_speed)}'
+        text = f'{self.strip_num(self.wind_speed,zeroBlank=True)}'
         if printUnits:
             text += f' {self.wind_speed_units}'
         return text
@@ -299,7 +299,7 @@ class Pass:
             float(self.temperature)
         except (TypeError, ValueError):
             return ''
-        text = f'{self.strip_num(self.temperature)}'
+        text = f'{self.strip_num(self.temperature,zeroBlank=True)}'
         if printUnits:
             text += f' {self.temperature_units}'
         return text  
@@ -309,10 +309,10 @@ class Pass:
             float(self.humidity)
         except (TypeError, ValueError):
             return ''
-        text = f'{self.strip_num(self.humidity)}'
+        text = f'{self.strip_num(self.humidity,zeroBlank=True)}'
         if printUnits:
             text += '%'
-        return str(f'{self.strip_num(self.humidity)}%')     
+        return text   
 
     def strip_num(self, x, precision = 2, zeroBlank = False) -> str:
         if type(x) is str:
@@ -330,6 +330,8 @@ class Pass:
     '''
 
     def set_ground_speed(self, val, units=None) -> bool:
+        if val=='':
+            val = 0
         try:
             self.ground_speed = float(val)
         except ValueError:
@@ -339,6 +341,8 @@ class Pass:
         return True
 
     def set_spray_height(self, val, units=None) -> bool:
+        if val=='':
+            val = 0
         try:
             self.spray_height = float(val)
         except ValueError:
@@ -348,6 +352,8 @@ class Pass:
         return True
 
     def set_pass_heading(self, val) -> bool:
+        if val=='':
+            val = 0
         try:
             self.pass_heading = float(val)
         except ValueError:
@@ -355,6 +361,8 @@ class Pass:
         return True
 
     def set_wind_direction(self, val) -> bool:
+        if val=='':
+            val = 0
         try:
             self.wind_direction = float(val)
         except ValueError:
@@ -362,6 +370,8 @@ class Pass:
         return True
 
     def set_wind_speed(self, val, units=None) -> bool:
+        if val=='':
+            val = 0
         try:
             self.wind_speed = float(val)
         except ValueError:
@@ -371,6 +381,8 @@ class Pass:
         return True
 
     def set_temperature(self, val, units=None) -> bool:
+        if val=='':
+            val = 0
         try:
             self.temperature = float(val)
         except ValueError:
@@ -380,6 +392,8 @@ class Pass:
         return True
 
     def set_humidity(self, val) -> bool:
+        if val=='':
+            val = 0
         try:
             self.humidity = float(val)
         except ValueError:
