@@ -374,6 +374,9 @@ class SprayCardImageProcessor:
             # If contour is below the min pixel size, don't count it anywhere
             if w < 3 or h < 3:
                 continue
+            # If contour is whole card, don't count it anywhere
+            if area >= 0.95 * w * h:
+                continue
             # If contour above min area size, count it for coverage only
             self.sprayCard.stain_areas_all_px2.append(area)
             # If contour touches edge, count it for coverage only
@@ -382,12 +385,13 @@ class SprayCardImageProcessor:
             # Passes all checks, include in droplet analysis
             contours_include.append(c)
             self.sprayCard.stain_areas_valid_px2.append(area)   
-        # Draw all contours
-        cv2.drawContours(img, contours, -1, color_stain_not_counted, thickness=thickness)
-        # Draw record-worthy contour (over previously drawn contour, just new color)
-        cv2.drawContours(img, contours_include, -1, color_stain_counted, thickness=thickness)
-        if fillShapes:
-            cv2.drawContours(img, contours, -1, (255,255,255), thickness=1)
+        if len(contours_include) > 0:
+            # Draw all contours
+            cv2.drawContours(img, contours, -1, color_stain_not_counted, thickness=thickness)
+            # Draw record-worthy contour (over previously drawn contour, just new color)
+            cv2.drawContours(img, contours_include, -1, color_stain_counted, thickness=thickness)
+            if fillShapes:
+                cv2.drawContours(img, contours, -1, (255,255,255), thickness=1)
         
         return img
 

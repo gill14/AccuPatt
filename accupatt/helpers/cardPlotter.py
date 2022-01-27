@@ -147,14 +147,17 @@ class CardPlotter:
         ax2.yaxis.set_major_formatter(matplotlib.ticker.PercentFormatter(xmax=100, decimals=0))
         # Get a sorted list of valid cards with locations
         card: SprayCard
-        scs = [card for card in sprayCards if card.has_image and card.include_in_composite and card.location]
+        scs = [card for card in sprayCards if card.has_image and card.include_in_composite and card.location is not None]
+        #Process each card for stats
+        for card in scs:
+            card.images_processed()
+        # Remove cards with no stains
+        scs = [card for card in scs if len(card.stain_areas_valid_px2)>0]
         if len(scs) > 0:
+           # Sort by location
             scs.sort(key=lambda x: x.location)
-            # Process each card and get stats
-            stats = []
-            for card in scs:
-                card.images_processed()
-                stats.append(card.volumetric_stats())
+            # Calculate all card stats only once for speed
+            stats = [card.volumetric_stats() for card in scs]
             # Create plottable series
             locs = [card.location for card in scs]
             cov = [card.percent_coverage() for card in scs]
