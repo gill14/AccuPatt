@@ -2,8 +2,8 @@
 This script will generate the a .app file
 
 Usage:
-    python bundle_mac.py py2app
-    python bundle_mac.py py2app -A
+    poetry run python bundle_mac.py py2app
+    poetry run python bundle_mac.py py2app -A
 """
 
 import subprocess
