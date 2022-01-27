@@ -7,5 +7,9 @@ if sys.platform == 'win32':
         './accupatt/__main__.py',
         '--name=AccuPatt',
         '--windowed',
-        f'--add-data=./resources{os.pathsep}resources'
+        '--exclude-module=tkinter'
+        f'--add-data=../../resources{os.pathsep}resources',
+        '--distpath=./dist/win/dist',
+        '--specpath=./dist/win',
+        '--workpath=./dist/win/build'
         ])

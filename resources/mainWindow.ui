@@ -36,7 +36,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab_info">
        <attribute name="title">
@@ -331,7 +331,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget_2">
           <property name="currentIndex">
-           <number>0</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="tab">
            <attribute name="title">
@@ -832,7 +832,7 @@
                  </property>
                  <property name="font">
                   <font>
-                   <pointsize>14</pointsize>
+                   <pointsize>13</pointsize>
                    <weight>75</weight>
                    <bold>true</bold>
                   </font>
@@ -856,7 +856,7 @@
                  </property>
                  <property name="font">
                   <font>
-                   <pointsize>14</pointsize>
+                   <pointsize>13</pointsize>
                    <weight>75</weight>
                    <bold>true</bold>
                   </font>
@@ -880,7 +880,7 @@
                  </property>
                  <property name="font">
                   <font>
-                   <pointsize>14</pointsize>
+                   <pointsize>13</pointsize>
                    <weight>75</weight>
                    <bold>true</bold>
                   </font>
@@ -1202,7 +1202,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget_3">
           <property name="currentIndex">
-           <number>2</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="tab_5">
            <attribute name="title">
@@ -1503,13 +1503,6 @@
                  <property name="text">
                   <string>Category</string>
                  </property>
-                 <property name="font">
-                  <font>
-                   <pointsize>12</pointsize>
-                   <weight>75</weight>
-                   <bold>true</bold>
-                  </font>
-                 </property>
                  <property name="textAlignment">
                   <set>AlignCenter</set>
                  </property>
@@ -1518,12 +1511,6 @@
                  <property name="text">
                   <string>0</string>
                  </property>
-                 <property name="font">
-                  <font>
-                   <weight>75</weight>
-                   <bold>true</bold>
-                  </font>
-                 </property>
                  <property name="textAlignment">
                   <set>AlignCenter</set>
                  </property>
@@ -1531,11 +1518,6 @@
                 <item row="1" column="0">
                  <property name="text">
                   <string>Dv0.1</string>
-                 </property>
-                 <property name="font">
-                  <font>
-                   <pointsize>12</pointsize>
-                  </font>
                  </property>
                  <property name="textAlignment">
                   <set>AlignCenter</set>
@@ -1553,11 +1535,6 @@
                  <property name="text">
                   <string>Dv0.5</string>
                  </property>
-                 <property name="font">
-                  <font>
-                   <pointsize>12</pointsize>
-                  </font>
-                 </property>
                  <property name="textAlignment">
                   <set>AlignCenter</set>
                  </property>
@@ -1573,11 +1550,6 @@
                 <item row="3" column="0">
                  <property name="text">
                   <string>Dv0.9</string>
-                 </property>
-                 <property name="font">
-                  <font>
-                   <pointsize>12</pointsize>
-                  </font>
                  </property>
                  <property name="textAlignment">
                   <set>AlignCenter</set>
@@ -1595,11 +1567,6 @@
                  <property name="text">
                   <string>RS</string>
                  </property>
-                 <property name="font">
-                  <font>
-                   <pointsize>12</pointsize>
-                  </font>
-                 </property>
                  <property name="textAlignment">
                   <set>AlignCenter</set>
                  </property>
@@ -1616,13 +1583,6 @@
                  <property name="text">
                   <string>Cov.</string>
                  </property>
-                 <property name="font">
-                  <font>
-                   <pointsize>12</pointsize>
-                   <weight>50</weight>
-                   <bold>false</bold>
-                  </font>
-                 </property>
                  <property name="textAlignment">
                   <set>AlignCenter</set>
                  </property>
@@ -1631,13 +1591,6 @@
                  <property name="text">
                   <string>0</string>
                  </property>
-                 <property name="font">
-                  <font>
-                   <pointsize>14</pointsize>
-                   <weight>50</weight>
-                   <bold>false</bold>
-                  </font>
-                 </property>
                  <property name="textAlignment">
                   <set>AlignCenter</set>
                  </property>
@@ -1645,11 +1598,6 @@
                 <item row="6" column="0">
                  <property name="text">
                   <string>Area</string>
-                 </property>
-                 <property name="font">
-                  <font>
-                   <pointsize>12</pointsize>
-                  </font>
                  </property>
                  <property name="textAlignment">
                   <set>AlignCenter</set>
@@ -1667,11 +1615,6 @@
                  <property name="text">
                   <string>Stains</string>
                  </property>
-                 <property name="font">
-                  <font>
-                   <pointsize>12</pointsize>
-                  </font>
-                 </property>
                  <property name="textAlignment">
                   <set>AlignCenter</set>
                  </property>
@@ -1687,11 +1630,6 @@
                 <item row="8" column="0">
                  <property name="text">
                   <string>D / in2</string>
-                 </property>
-                 <property name="font">
-                  <font>
-                   <pointsize>12</pointsize>
-                  </font>
                  </property>
                  <property name="textAlignment">
                   <set>AlignCenter</set>
@@ -2014,6 +1952,11 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>PlotWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>pyqtgraph</header>
+  </customwidget>
+  <customwidget>
    <class>SplitCardWidget</class>
    <extends>QWidget</extends>
    <header>accupatt/windows/widgets/splitcardwidget.h</header>
@@ -2024,11 +1967,6 @@
    <extends>QWidget</extends>
    <header>accupatt/windows/widgets/mplwidget.h</header>
    <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>PlotWidget</class>
-   <extends>QGraphicsView</extends>
-   <header>pyqtgraph</header>
   </customwidget>
   <customwidget>
    <class>SeriesInfoWidget</class>

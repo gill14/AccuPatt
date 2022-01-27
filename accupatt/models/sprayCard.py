@@ -180,7 +180,8 @@ class sprayCardImageFileHandler:
         return
     
     def save_image_to_file(sprayCard: SprayCard, image):
-        if sprayCard.filepath == None: return
+        if sprayCard.filepath == None or sprayCard.filepath == '': return
+        print(sprayCard.filepath)
         if sprayCard.filepath[-1] == 'b':
             return sprayCardImageFileHandler._write_image_to_db(sprayCard=sprayCard, image=image)
     

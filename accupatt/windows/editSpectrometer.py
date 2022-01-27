@@ -4,10 +4,13 @@ import sys
 import numpy as np
 from PyQt6 import uic
 from PyQt6.QtCore import QSettings, pyqtSignal
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from seabreeze.spectrometers import Spectrometer
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'editSpectrometer.ui'))
+
+icon_file = os.path.join(os.getcwd(), 'resources', 'refresh.png')
 
 class EditSpectrometer(baseclass):
 
@@ -40,6 +43,7 @@ class EditSpectrometer(baseclass):
         self.spec = spectrometer
 
         #Hook up signals
+        self.ui.buttonRefresh.setIcon(QIcon(icon_file))
         self.ui.buttonRefresh.clicked.connect(self.refresh_spec)
         self.ui.lineEditEx.textChanged.connect(self.refresh_spec)
         self.ui.lineEditEm.textChanged.connect(self.refresh_spec)

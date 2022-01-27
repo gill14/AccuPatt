@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Capture Pass</string>
+   <string>Capture/Edit Pass</string>
   </property>
   <property name="modal">
    <bool>true</bool>
