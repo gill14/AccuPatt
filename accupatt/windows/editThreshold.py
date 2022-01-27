@@ -1,7 +1,7 @@
 import copy
 import os
 
-import superqt
+from superqt import QLabeledRangeSlider, QLabeledSlider
 import accupatt.config as cfg
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -35,33 +35,35 @@ class EditThreshold(baseclass):
         #Populate grayscale ui from spray card
         self.ui.radioButtonAutomatic.setChecked(self.sprayCard.threshold_method_grayscale == cfg.THRESHOLD_METHOD_AUTOMATIC)
         self.ui.radioButtonManual.setChecked(self.sprayCard.threshold_method_grayscale == cfg.THRESHOLD_METHOD_MANUAL)
+        self.ui.radioButtonAutomatic.toggled.connect(self.toggleThresholdMethodGrayscale)
+        self.ui.radioButtonManual.toggled.connect(self.toggleThresholdMethodGrayscale)
         self.ui.sliderGrayscale.setValue(self.sprayCard.threshold_grayscale)
+        self.ui.sliderGrayscale.valueChanged[int].connect(self.updateThresholdGrayscale)
 
         #Populate color ui from spray card
         self.ui.radioButtonInclude.setChecked(self.sprayCard.threshold_method_color == cfg.THRESHOLD_METHOD_INCLUDE)
-        self.ui.radioButtonManual.setChecked(self.sprayCard.threshold_method_color == cfg.THRESHOLD_METHOD_EXCLUDE)
-        self.ui.rangeSliderHue.setValue([self.sprayCard.threshold_color_hue[0],self.sprayCard.threshold_color_hue[1]])
-        self.ui.rangeSliderSaturation.setValue([self.sprayCard.threshold_color_saturation[0],self.sprayCard.threshold_color_saturation[1]])
-        self.ui.rangeSliderBrightness.setValue([self.sprayCard.threshold_color_brightness[0],self.sprayCard.threshold_color_brightness[1]])
-
-        #Signals for controls
-        self.ui.radioButtonAutomatic.toggled.connect(self.toggleThresholdMethodGrayscale)
-        self.ui.radioButtonManual.toggled.connect(self.toggleThresholdMethodGrayscale)
-        self.ui.sliderGrayscale.valueChanged[int].connect(self.updateThresholdGrayscale)
+        self.ui.radioButtonExclude.setChecked(self.sprayCard.threshold_method_color == cfg.THRESHOLD_METHOD_EXCLUDE)
         self.ui.radioButtonInclude.toggled[bool].connect(self.toggleThresholdMethodColor)
         self.ui.radioButtonExclude.toggled[bool].connect(self.toggleThresholdMethodColor)
-        self.ui.rangeSliderHue.valueChanged[tuple].connect(self.updateHue)
-        self.ui.rangeSliderSaturation.valueChanged[tuple].connect(self.updateSaturation)
-        self.ui.rangeSliderBrightness.valueChanged[tuple].connect(self.updateBrightness)
+        rs_hue: QLabeledRangeSlider = self.ui.rangeSliderHue
+        rs_sat: QLabeledRangeSlider = self.ui.rangeSliderSaturation
+        rs_bri: QLabeledRangeSlider = self.ui.rangeSliderBrightness
+        for rs in [rs_hue,rs_sat,rs_bri]:
+            rs.setEdgeLabelMode(0)
+            rs.setMinimum(0)
+            rs.setMaximum(255)
+        rs_hue.setValue([self.sprayCard.threshold_color_hue[0],self.sprayCard.threshold_color_hue[1]])
+        rs_hue.valueChanged[tuple].connect(self.updateHue)
+        rs_sat.setValue([self.sprayCard.threshold_color_saturation[0],self.sprayCard.threshold_color_saturation[1]])
+        rs_sat.valueChanged[tuple].connect(self.updateSaturation)
+        rs_bri.setValue([self.sprayCard.threshold_color_brightness[0],self.sprayCard.threshold_color_brightness[1]])
+        rs_bri.valueChanged[tuple].connect(self.updateBrightness)
+
+        #Signals for saving
         self.ui.checkBoxApplyToAllSeries.toggled[bool].connect(self.toggleApplyToAllSeries)
         #ButtonBox
         self.ui.buttonBox.accepted.connect(self.on_applied)
         self.ui.buttonBox.rejected.connect(self.reject)
-
-        #Configure sliders
-        self.ui.rangeSliderHue.setEdgeLabelMode(0)
-        self.ui.rangeSliderSaturation.setEdgeLabelMode(0)
-        self.ui.rangeSliderBrightness.setEdgeLabelMode(0)
 
         # Your code ends here
         self.show()
