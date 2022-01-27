@@ -17,6 +17,7 @@ from accupatt.windows.editSpreadFactors import EditSpreadFactors
 from accupatt.windows.editThreshold import EditThreshold
 from accupatt.windows.passManager import PassManager
 from accupatt.windows.readString import ReadString
+from accupatt.windows.widgets import mplwidget, seriesinfowidget, singleCVImageWidget, splitcardwidget
 from PyQt6 import uic
 from PyQt6.QtCore import QSettings, QSignalBlocker, Qt, pyqtSlot
 from PyQt6.QtWidgets import (QComboBox, QFileDialog, QLabel,
