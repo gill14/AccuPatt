@@ -112,5 +112,7 @@ class EditSpectrometer(baseclass):
         if len(excepts) > 0:
             QMessageBox.warning(self, 'Invalid Data', '\n'.join(excepts))
             return
+        # Release spectrometer
+        self.spec.close()
         # If all checks out, notify requestor and close
         super().accept()
