@@ -355,7 +355,7 @@ class Pass:
         if val=='':
             val = 0
         try:
-            self.pass_heading = float(val)
+            self.pass_heading = int(val)
         except ValueError:
             return False
         return True
@@ -364,7 +364,7 @@ class Pass:
         if val=='':
             val = 0
         try:
-            self.wind_direction = float(val)
+            self.wind_direction = int(val)
         except ValueError:
             return False
         return True

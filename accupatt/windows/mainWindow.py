@@ -371,9 +371,9 @@ class MainWindow(baseclass):
             #Create popup and send current appInfo vals to popup
             e = ReadString(passData=passData, parent=self)
             #Connect Slot to retrieve Vals back from popup
-            e.applied.connect(self.readStringFinished)
+            e.accepted.connect(self.readStringFinished)
             #Start Loop
-            e.exec()
+            e.show()
         
     @pyqtSlot()
     def readStringFinished(self):

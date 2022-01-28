@@ -8,27 +8,22 @@ from accupatt.models.passData import Pass
 from accupatt.windows.editSpectrometer import EditSpectrometer
 from accupatt.windows.editStringDrive import EditStringDrive
 from PyQt6 import uic
-from PyQt6.QtCore import QSettings, QTimer, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QSettings, QTimer, pyqtSlot
 from PyQt6.QtWidgets import QMessageBox
 from seabreeze.spectrometers import Spectrometer
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'readString.ui'))
 
 class ReadString(baseclass):
-    """ A Container for communicating with the Spectrometer and String Drive """
-
-    applied = pyqtSignal(Pass)
-
+    
     def __init__(self, passData: Pass, parent = None):
         super().__init__(parent = parent)
-        # Your code will go here
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         #Import Settings
         self.settings = QSettings('accupatt','AccuPatt')
         #Make ref to seriesData/passData for later updating in on_applied
         self.passData = passData
-        
         #Populate Pass Info fields
         self.ui.labelPass.setText(passData.name)
         self.ui.lineEditGS.setText(passData.str_ground_speed())
@@ -92,13 +87,7 @@ class ReadString(baseclass):
             self.set_plotdata(name='emission', data_x=self.x, data_y=self.y)
             #self.set_plotdata(name='excitation', data_x=self.x, data_y=self.y_ex)
 
-        #Utilize built-in signals
-        self.ui.buttonBox.accepted.connect(self.on_applied)
-        self.ui.buttonBox.rejected.connect(self.reject)
-        # Your code ends here
         self.show()
-        self.raise_()
-        self.activateWindow()
 
     def set_plotdata(self, name, data_x, data_y):
         if name in self.traces:
@@ -108,7 +97,6 @@ class ReadString(baseclass):
                 self.traces[name] = self.p.plot(name='Emission',pen='w')
             if name == 'excitation':
                 self.traces[name] = self.p.plot(name='Excitation',pen='c')
-                #pass
 
     def plotFrame(self):
         #get Location
@@ -189,7 +177,9 @@ class ReadString(baseclass):
 
     def clear(self, showPopup=True):
         if showPopup and not self.y == []:
-            if not self._are_you_sure(f'Clear Existing String Data for {self.passData.name}?'):
+            msg = QMessageBox.question(self, 'Are You Sure?',
+                                       f'Clear Existing String Data for {self.passData.name}?')
+            if msg == QMessageBox.StandardButton.No:
                 return False
         self.x = []
         self.y = []
@@ -198,59 +188,45 @@ class ReadString(baseclass):
         self.traces = dict()
         return True
 
-    def on_applied(self):
-        #Validate all and accept if valid
+    def accept(self):
         p = self.passData
+        excepts = []
         #Ground Speed
         if not p.set_ground_speed(self.ui.lineEditGS.text()):
-            self._show_validation_error(
-                'Entered GROUND SPEED cannot be converted to an number')
-            return
+            excepts.append('-GROUND SPEED cannot be converted to a NUMBER')
         p.ground_speed_units = self.ui.comboBoxUnitsGS.currentText()
         #Spray Height
         if not p.set_spray_height(self.ui.lineEditSH.text()):
-            self._show_validation_error(
-                'Entered SPRAY HEIGHT cannot be converted to an number')
-            return
+            excepts.append('-SPRAY HEIGHT cannot be converted to a NUMBER')
         p.spray_height_units = self.ui.comboBoxUnitsSH.currentText()
         #Pass Heading
         if not p.set_pass_heading(self.ui.lineEditPH.text()):
-            self._show_validation_error(
-                'Entered PASS HEADING cannot be converted to an number')
-            return
+            excepts.append('-PASS HEADING cannot be converted to an INTEGER')
         #Wind Direction
         if not p.set_wind_direction(self.ui.lineEditWD.text()):
-            self._show_validation_error(
-                'Entered WIND DIRECTION cannot be converted to an number')
-            return
+            excepts.append('-WIND DIRECTION cannot be converted to a NUMBER')
         #Wind Speed
         if not p.set_wind_speed(self.ui.lineEditWS.text()):
-            self._show_validation_error(
-                'Entered WIND SPEED cannot be converted to an number')
-            return
+            excepts.append('-WIND SPEED cannot be converted to a NUMBER')
         p.wind_speed_units = self.ui.comboBoxUnitsWS.currentText()
         #Temperature
         if not p.set_temperature(self.ui.lineEditT.text()):
-            self._show_validation_error(
-                'Entered TEMPERATURE cannot be converted to an number')
-            return
+            excepts.append('-TEMPERATURE cannot be converted to a NUMBER')
         p.temperature_units = self.ui.comboBoxUnitsT.currentText()
         #Humidity
         if not p.set_humidity(self.ui.lineEditH.text()):
-            self._show_validation_error(
-                'Entered GROUND SPEED cannot be converted to an number')
+            excepts.append('-HUMIDITY cannot be converted to a NUMBER')
+        # If any invalid, show user and return to current window
+        if len(excepts) > 0:
+            QMessageBox.warning(self, 'Invalid Data', '\n'.join(excepts))
             return
         #data_loc_units
         p.data_loc_units = self.settings.value('flightline_length_units', defaultValue='ft', type=str)
         #Pattern
         if len(self.x) > 0:
             p.setData(self.x, self.y, self.y_ex)
-
-        #All Valid, go ahead and accept and let main know to update vals in UI
-        self.applied.emit(p)
-
-        self.accept()
-        self.close()
+        # If all checks out, notify requestor and close
+        super().accept()
 
     def strip_num(self, x) -> str:
         if x is None:
@@ -276,7 +252,7 @@ class ReadString(baseclass):
     @pyqtSlot()
     def editStringDrive(self):
         e = EditStringDrive(parent=self)
-        e.applied.connect(self.setupStringDrive)
+        e.accepted.connect(self.setupStringDrive)
         e.exec()
 
     def setupStringDrive(self):
@@ -291,7 +267,6 @@ class ReadString(baseclass):
             return
         #Setup String Drive labels
         self.ui.labelStringDrive.setText(f'String Drive Port: {self.ser.name}')
-        print(self.ser.name)
         self.ui.labelStringLength.setText("String Length: "
             f"{self.strip_num(self.settings.value('flightline_length', defaultValue=150, type=float))} "
             f"{self.settings.value('flightline_length_units', defaultValue='ft', type=str)}")
@@ -328,7 +303,7 @@ class ReadString(baseclass):
     @pyqtSlot()
     def editSpectrometer(self):
         e = EditSpectrometer(self.spec, parent=self)
-        e.applied.connect(self.setupSpectrometer)
+        e.accepted.connect(self.setupSpectrometer)
         e.exec()
         
     def setupSpectrometer(self):
@@ -353,32 +328,3 @@ class ReadString(baseclass):
         self.ui.labelIntegrationTime.setText(
             f"Integration Time: {self.settings.value('integration_time_ms', defaultValue=100, type=int)} ms")
         self.checkReady()
-    
-    '''
-    Popup messages
-    '''
-    
-    def _show_validation_error(self, message):
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Icon.Critical)
-        msg.setText("Input Validation Error")
-        msg.setInformativeText(message)
-        #msg.setWindowTitle("MessageBox demo")
-        #msg.setDetailedText("The details are as follows:")
-        msg.setStandardButtons(QMessageBox.StandardButton.Ok)
-        result = msg.exec()
-        if result == QMessageBox.StandardButton.Ok:
-            self.raise_()
-            self.activateWindow()
-            
-    def _are_you_sure(self, message):
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Icon.Critical)
-        msg.setText("Are You Sure?")
-        msg.setInformativeText(message)
-        #msg.setWindowTitle("MessageBox demo")
-        #msg.setDetailedText("The details are as follows:")
-        msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-        result = msg.exec()
-        return result == QMessageBox.StandardButton.Yes
-

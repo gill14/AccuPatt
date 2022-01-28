@@ -1,11 +1,11 @@
 import os
-import sys
 
+import accupatt.config as cfg
 import numpy as np
 from PyQt6 import uic
-from PyQt6.QtCore import QSettings, pyqtSignal
+from PyQt6.QtCore import QSettings
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QApplication, QMessageBox
+from PyQt6.QtWidgets import QMessageBox
 from seabreeze.spectrometers import Spectrometer
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'editSpectrometer.ui'))
@@ -14,11 +14,8 @@ icon_file = os.path.join(os.getcwd(), 'resources', 'refresh.png')
 
 class EditSpectrometer(baseclass):
 
-    applied = pyqtSignal()
-
     def __init__(self, spectrometer=None, parent=None):
         super().__init__(parent=parent)
-        # Your code will go here
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
@@ -28,35 +25,33 @@ class EditSpectrometer(baseclass):
         if self.settings.contains('target_excitation_wavelength'):
             self.target_excitation_wavelength = self.settings.value('target_excitation_wavelength', type=int)
         else:
-            self.target_excitation_wavelength = 525
+            self.target_excitation_wavelength = cfg.SPEC_WAV_EX__DEFAULT
         #Emission Wavelength
         if self.settings.contains('target_emission_wavelength'):
             self.target_emission_wavelength = self.settings.value('target_emission_wavelength', type=int)
         else:
-            self.target_emission_wavelength = 575
+            self.target_emission_wavelength = cfg.SPEC_WAV_EM__DEFAULT
         #Integration Time
         if self.settings.contains('integration_time_ms'):
             self.integration_time_ms = self.settings.value('integration_time_ms', type=int)
         else:
-            self.integration_time_ms = 100
+            self.integration_time_ms = cfg.SPEC_INT_TIME_MS__DEFAULT
 
         self.spec = spectrometer
+        
+        
+        self.ui.lineEditEx.setText(str(self.target_excitation_wavelength))
+        self.ui.lineEditEm.setText(str(self.target_emission_wavelength))
+        self.ui.lineEditIntegrationTime.setText(str(self.integration_time_ms))
 
         #Hook up signals
         self.ui.buttonRefresh.setIcon(QIcon(icon_file))
         self.ui.buttonRefresh.clicked.connect(self.refresh_spec)
         self.ui.lineEditEx.textChanged.connect(self.refresh_spec)
         self.ui.lineEditEm.textChanged.connect(self.refresh_spec)
+        
+        self.refresh_spec()
 
-        self.ui.lineEditEx.setText(str(self.target_excitation_wavelength))
-        self.ui.lineEditEm.setText(str(self.target_emission_wavelength))
-        self.ui.lineEditIntegrationTime.setText(str(self.integration_time_ms))
-
-        #Utilize built-in signals
-        self.ui.buttonBox.accepted.connect(self.on_applied)
-        self.ui.buttonBox.rejected.connect(self.reject)
-
-        # Your code ends here
         self.show()
 
     def refresh_spec(self):
@@ -98,47 +93,24 @@ class EditSpectrometer(baseclass):
         else:
             return f'{round(float(x), 2):.2f}'
 
-    def on_applied(self):
-        #Validate all and accept if valid
+    def accept(self):
+        excepts = []
+        # Save Excitation Wavelength
         try:
             self.settings.setValue('target_excitation_wavelength', int(self.ui.lineEditEx.text()))
         except:
-            self._show_validation_error(
-                'Entered TARGET EXCITATION WAVELENGTH cannot be converted to an INTEGER')
-            return
+            excepts.append('-TARGET EXCITATION WAVELENGTH cannot be converted to an INTEGER')
         try:
             self.settings.setValue('target_emission_wavelength', int(self.ui.lineEditEm.text()))
         except:
-            self._show_validation_error(
-                'Entered TARGET EMISSION WAVELENGTH cannot be converted to an INTEGER')
-            return
+            excepts.append('-TARGET EMISSION WAVELENGTH cannot be converted to an INTEGER')
         try:
             self.settings.setValue('integration_time_ms', int(self.ui.lineEditIntegrationTime.text()))
         except:
-            self._show_validation_error(
-                'Entered INTEGRATION TIME cannot be converted to an INTEGER')
+            excepts.append('-INTEGRATION TIME cannot be converted to an INTEGER')
+        # If any invalid, show user and return to current window
+        if len(excepts) > 0:
+            QMessageBox.warning(self, 'Invalid Data', '\n'.join(excepts))
             return
-        
-        #All Valid, go ahead and accept and let main know to update vals
-        self.applied.emit()
-
-        self.accept()
-        self.close()
-
-    def _show_validation_error(self, message):
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Icon.Critical)
-        msg.setText("Input Validation Error")
-        msg.setInformativeText(message)
-        #msg.setWindowTitle("MessageBox demo")
-        #msg.setDetailedText("The details are as follows:")
-        msg.setStandardButtons(QMessageBox.StandardButton.Ok)
-        result = msg.exec()
-        if result == QMessageBox.StandardButton.Ok:
-            self.raise_()
-            self.activateWindow()
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    w = EditSpectrometer()
-    sys.exit(app.exec())
+        # If all checks out, notify requestor and close
+        super().accept()
