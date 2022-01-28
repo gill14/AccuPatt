@@ -11,26 +11,18 @@ Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'pass
 
 class PassManager(baseclass):
 
-    applied = pyqtSignal(list)
+    pass_list_updated = pyqtSignal(list)
 
     def __init__(self, passes = None, parent = None):
         super().__init__(parent = parent)
-        # Your code will go here
         self.ui = Ui_Form()
         self.ui.setupUi(self)
-        self.passes = []
-        if passes is not None:
-            self.passes = passes
-            
+        
         self.populateList(copy.copy(passes))
 
         self.ui.button_new_pass.clicked.connect(self.newPass)
         self.ui.button_delete_pass.clicked.connect(self.deletePass)
 
-        self.ui.buttonBox.accepted.connect(self.on_applied)
-        self.ui.buttonBox.rejected.connect(self.reject)
-
-        # Your code ends here
         self.show()
 
     def populateList(self, passes):
@@ -44,27 +36,16 @@ class PassManager(baseclass):
         row = self.ui.tableView.selectedIndexes()[0].row()
         p: Pass = self.tm.pass_list[row]
         if not p.data.empty or p.spray_cards:
-            if not self._are_you_sure(f'{p.name} constains aquired data which will be permanently erased.'):
+            msg = QMessageBox.question(self,'Are You Sure?',
+                                       f'{p.name} constains aquired data which will be permanently erased.')
+            if msg == QMessageBox.StandardButton.No:
                 return
         self.tm.removePass(self.ui.tableView.selectedIndexes())
 
-    def _are_you_sure(self, message):
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Icon.Critical)
-        msg.setText("Are You Sure?")
-        msg.setInformativeText(message)
-        #msg.setWindowTitle("MessageBox demo")
-        #msg.setDetailedText("The details are as follows:")
-        msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-        result = msg.exec()
-        return result == QMessageBox.StandardButton.Yes
-
-    def on_applied(self):
-        self.passes = copy.copy(self.tm.pass_list)
+    def accept(self):
+        self.pass_list_updated.emit(copy.copy(self.tm.pass_list))
         #Notify Requestor
-        self.applied.emit(self.passes)
-        self.accept()
-        self.close()
+        super().accept()
 
 class PassTable(QAbstractTableModel):
     def __init__(self, pass_list, parent=None, *args):

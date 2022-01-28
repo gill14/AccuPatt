@@ -1,5 +1,4 @@
 import os
-import sys
 from typing import List
 
 import accupatt.config as cfg
@@ -9,32 +8,36 @@ from PyQt6 import uic
 from PyQt6.QtCore import (QAbstractTableModel, QItemSelectionModel,
                           QModelIndex, QSettings, Qt, QVariant, pyqtSignal,
                           pyqtSlot)
-from PyQt6.QtWidgets import (QApplication, QComboBox, QFileDialog,
-                             QItemDelegate, QMessageBox)
+from PyQt6.QtWidgets import QComboBox, QFileDialog, QItemDelegate, QMessageBox
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'editCardList.ui'))
 
 defined_sets = {
-    'Standard Fly-In': {
+    'Standard Fly-In (WSP)': {
         'cards': ['L-32', 'L-24', 'L-16', 'L-8', 'Center', 'R-8', 'R-16', 'R-24', 'R-32'],
         'locations': [-32, -24, -16, -8, 0, 8, 16, 24, 32],
-        'location_units': cfg.UNIT_FT
-    }
+        'location_units': cfg.UNIT_FT,
+        'threshold_type': cfg.THRESHOLD_TYPE_GRAYSCALE
+    },
+    'Standard Fly-In (Cast-Coat)': {
+        'cards': ['L-32', 'L-24', 'L-16', 'L-8', 'Center', 'R-8', 'R-16', 'R-24', 'R-32'],
+        'locations': [-32, -24, -16, -8, 0, 8, 16, 24, 32],
+        'location_units': cfg.UNIT_FT,
+        'threshold_type': cfg.THRESHOLD_TYPE_COLOR
+    },
 }
 
 load_image_options = ['One File Per Card','One File, Multiple Cards']
 
 class CardManager(baseclass):
 
-    applied = pyqtSignal()
     passDataChanged = pyqtSignal()
 
     def __init__(self, passData=None, filepath=None, parent=None):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
-        # Your code will go here
-
+        
         #Load in Settings
         self.settings = QSettings('accupatt','AccuPatt')
        
@@ -57,8 +60,6 @@ class CardManager(baseclass):
             self.settings.value('card_manager_load_method', defaultValue=load_image_options[1], type=str)))
         self.ui.buttonLoad.clicked.connect(self.load_cards)
         
-        self.ui.buttonBox.accepted.connect(self.on_applied)
-        
         #Populate TableView
         self.tm = CardTable(self)
         self.tm.loadCards(passData.spray_cards)
@@ -71,7 +72,6 @@ class CardManager(baseclass):
 
         self.selection_changed()
 
-        # Your code ends here
         self.show()
         
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selection_changed)
@@ -106,6 +106,7 @@ class CardManager(baseclass):
             c = SprayCard(name=selectedSet['cards'][i], filepath=self.filepath)
             c.location = selectedSet['locations'][i]
             c.location_units = selectedSet['location_units']
+            c.threshold_type = selectedSet['threshold_type']
             newCards.append(c)
         rows = self.tm.addCards(newCards)
         self.passDataChanged.emit()
@@ -118,10 +119,12 @@ class CardManager(baseclass):
         sel = self.ui.tableView.selectionModel().selectedRows()
         for index in sel:
             if self.tm.card_list[index.row()].has_image:
-                if not self._are_you_sure('One or more selected cards have image data which will be erased. Continue?'): 
-                    return
-                else:
+                msg = QMessageBox.question(self, 'Are You Sure?',
+                                           'One or more selected cards have image data which will be erased. Continue?')
+                if msg == QMessageBox.StandardButton.Yes:
                     break
+                else:
+                    return
         self.tm.removeCards(sel)
         self.passDataChanged.emit()
     
@@ -136,10 +139,12 @@ class CardManager(baseclass):
         for row in selection:
             card: SprayCard = self.tm.card_list[row.row()]
             if card.has_image:
-                if not self._are_you_sure(f'{card.name} already has image data, overwrite?'):
-                    return
-                else:
+                msg = QMessageBox.question(self, 'Are You Sure?',
+                                           f'{card.name} already has image data, overwrite?')
+                if msg == QMessageBox.StandardButton.Yes:
                     break
+                else:
+                    return
         # Use chosen load method
         method = self.ui.comboBoxLoadMethod.currentText()
         if method == load_image_options[0]:
@@ -153,9 +158,6 @@ class CardManager(baseclass):
     def _load_cards_singles(self, selection):
         # TODO: migrate to singles batch method
         card: SprayCard = self.tm.card_list[selection[0].row()]
-        if card.has_image:
-            if not self._are_you_sure(f'{card.name} already has image data, overwrite?'):
-                return
         fname, _ = QFileDialog.getOpenFileName(self, 'Open file', 'home', "Image files (*.png)")
         with open(fname, 'rb') as file:
             binary_data = file.read()  
@@ -172,25 +174,9 @@ class CardManager(baseclass):
         #Create popup and send current appInfo vals to popup
         e = LoadCards(image_file=fname, card_list=card_list, parent=self)
         #Connect Slot to retrieve Vals back from popup
-        e.applied.connect(self.update_table)
+        e.accepted.connect(self.update_table)
         #Start Loop
         e.exec()
-    
-    def on_applied(self):
-        self.applied.emit()
-        self.accept()
-        self.close()
-    
-    def _are_you_sure(self, message):
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Icon.Critical)
-        msg.setText("Are You Sure?")
-        msg.setInformativeText(message)
-        #msg.setWindowTitle("MessageBox demo")
-        #msg.setDetailedText("The details are as follows:")
-        msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-        result = msg.exec()
-        return result == QMessageBox.StandardButton.Yes
 
 class ComboBoxDelegate(QItemDelegate):
     def __init__(self, owner, itemList):
@@ -374,9 +360,3 @@ class CardTable(QAbstractTableModel):
             return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
         else:
             return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEditable
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    w = CardManager()
-    sys.exit(app.exec())

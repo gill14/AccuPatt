@@ -1,62 +1,39 @@
 import os
-import sys
 
 import accupatt.config as cfg
+from accupatt.models.sprayCard import SprayCard
 from PyQt6 import uic
-from PyQt6.QtCore import QSettings, Qt, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QMessageBox
+from PyQt6.QtCore import QSettings, Qt
+from PyQt6.QtWidgets import QMessageBox
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'editSpreadFactors.ui'))
 
 class EditSpreadFactors(baseclass):
 
-    applied = pyqtSignal()
-
     def __init__(self, sprayCard, passData, seriesData, parent=None):
         super().__init__(parent=parent)
-        # Your code will go here
         self.ui = Ui_Form()
         self.ui.setupUi(self)
+        
         #To operate upon
-        self.sprayCard = sprayCard
+        self.sprayCard: SprayCard = sprayCard
         self.passData = passData
         self.seriesData = seriesData
-        #To use internally
-        self.method = None
-        self.factor_a = None
-        self.factor_b = None
-        self.factor_c = None
 
         # Load in Spray Card or use Settings
         self.settings = QSettings('accupatt','AccuPatt')
-        if self.sprayCard.spread_method == None:
-            self.method = self.settings.value('spread_factor_method', defaultValue=cfg.SPREAD_METHOD_ADAPTIVE, type=int)
-        else:
-            self.method = self.sprayCard.spread_method
-        if self.sprayCard.spread_factor_a == None:
-            self.factor_a = self.settings.value('spread_factor_a', defaultValue=0.0, type=float)
-        else:
-            self.factor_a = self.sprayCard.spread_factor_a
-        if self.sprayCard.spread_factor_b == None:
-            self.factor_b = self.settings.value('spread_factor_b', defaultValue=0.0009, type=float)
-        else:
-            self.factor_b = self.sprayCard.spread_factor_b
-        if self.sprayCard.spread_factor_c == None:
-            self.factor_c = self.settings.value('spread_factor_c', defaultValue=1.6333, type=float)
-        else:
-            self.factor_c = self.sprayCard.spread_factor_c
 
         #Setup UI to vals
+        self.method = self.sprayCard.spread_method
         if self.method == cfg.SPREAD_METHOD_ADAPTIVE:
             self.ui.radioButtonAdaptive.setChecked(True)
         elif self.method == cfg.SPREAD_METHOD_DIRECT:
             self.ui.radioButtonDirect.setChecked(True)
         else:
             self.ui.radioButtonNone.setChecked(True)
-        self.ui.spreadFactorALineEdit.setText(f'{self.factor_a:g}')
-        self.ui.spreadFactorBLineEdit.setText(f'{self.factor_b:g}')
-        self.ui.spreadFactorCLineEdit.setText(f'{self.factor_c:g}')
-        
+        self.ui.spreadFactorALineEdit.setText(f'{self.sprayCard.spread_factor_a:g}')
+        self.ui.spreadFactorBLineEdit.setText(f'{self.sprayCard.spread_factor_b:g}')
+        self.ui.spreadFactorCLineEdit.setText(f'{self.sprayCard.spread_factor_c:g}')
 
         #Setup signals
         self.ui.radioButtonAdaptive.toggled.connect(self.updateLabel)
@@ -69,15 +46,8 @@ class EditSpreadFactors(baseclass):
         self.ui.checkBoxApplyToAllSeries.toggled[bool].connect(self.toggleApplyToAllSeries)
 
         self.updateLabel()
-       
-        #ButtonBox
-        self.ui.buttonBox.accepted.connect(self.on_applied)
-        self.ui.buttonBox.rejected.connect(self.reject)
 
-        # Your code ends here
         self.show()
-        self.raise_()
-        self.activateWindow()
 
     def updateLabel(self):
         # Default
@@ -88,6 +58,7 @@ class EditSpreadFactors(baseclass):
         self.ui.spreadFactorALineEdit.setEnabled(not isNone)
         if isNone:
             self.ui.labelEquation.setText(eqn)
+            self.method = cfg.SPREAD_METHOD_NONE
             return
         # shortcuts for sf's
         a = self.ui.spreadFactorALineEdit.text()
@@ -99,13 +70,19 @@ class EditSpreadFactors(baseclass):
             float(b)
             float(c)
         except ValueError:
-            self.ui.labelEquation.setText('Invalid Spread Factors')
+            self.ui.labelEquation.setText('Invalid Spread Factor(s)')
             return
         #Update Text dependant upon method
+        pcs = []
+        if float(a)>0.000001: pcs.append(f'{a}(DS)^2')
+        if float(b)>0.000001: pcs.append(f'{b}(DS)')
+        if float(c)>0.000001: pcs.append(f'{c}')
         if self.ui.radioButtonAdaptive.isChecked():
-            eqn = 'DD = DS / ( '+a+'(DS)^2 + '+b+'(DS) + '+c+' )'
+            eqn = 'DD = DS / ('+'+'.join(pcs)+')'
+            self.method = cfg.SPREAD_METHOD_ADAPTIVE
         elif self.ui.radioButtonDirect.isChecked():
-            eqn = 'DD = '+a+'(DS)^2 + '+b+'(DS) + '+c
+            eqn = 'DD = '+'+'.join(pcs)
+            self.method = cfg.SPREAD_METHOD_DIRECT
             
         self.ui.labelEquation.setText(eqn)
 
@@ -116,57 +93,40 @@ class EditSpreadFactors(baseclass):
             self.ui.checkBoxApplyToAllPass.setCheckState(Qt.CheckState.Unchecked)
         self.ui.checkBoxApplyToAllPass.setEnabled(not boo)
 
-    def on_applied(self):
-        
-        # Upate Spread Factors on SprayCard object
-        # shortcuts for sf's
+    def accept(self):
+        excepts = []
         a = self.ui.spreadFactorALineEdit.text()
         b = self.ui.spreadFactorBLineEdit.text()
         c = self.ui.spreadFactorCLineEdit.text()
         try: 
-            float(a)
-            float(b)
-            float(c)
-        except ValueError:
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Icon.Critical)
-            msg.setText("Non-Numeric Entry")
-            msg.setInformativeText('Do you want to proceed without saving spread factors?')
-            #msg.setWindowTitle("MessageBox")
-            #msg.setDetailedText("The details are as follows:")
-            msg.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.Cancel)
-            result = msg.exec()
-            if result != QMessageBox.StandardButton.Ok:
-                self.raise_()
-                self.activateWindow()
-                return
+            self.settings.setValue('spread_factor_a', float(a)) 
+        except:
+            excepts.append('-SPREAD FACTOR A cannot be converted to a NUMBER')
+        try: 
+            self.settings.setValue('spread_factor_b', float(b))
+        except:
+            excepts.append('-SPREAD FACTOR B cannot be converted to a NUMBER')
+        try: 
+            self.settings.setValue('spread_factor_c', float(c))
+        except:
+            excepts.append('-SPREAD FACTOR C cannot be converted to a NUMBER')
+        if len(excepts) > 0:
+            QMessageBox.warning(self, 'Invalid Data', '\n'.join(excepts))
+            return
+        self.settings.setValue('spread_factor_method',self.method)
         
-        #Cycle through passes
+        # Apply to multiple cards if requested
+        # Cycle through passes
         for p in self.seriesData.passes:
-            #Check if should apply to pass
+            # Check if should apply to pass
             if p.name == self.passData.name or self.ui.checkBoxApplyToAllSeries.checkState() == Qt.CheckState.Checked:
-                #Cycle through cards in pass
+                # Cycle through cards in pass
                 for card in p.spray_cards:
                     if card.name == self.sprayCard.name or self.ui.checkBoxApplyToAllPass.checkState() == Qt.CheckState.Checked:
-                        #Apply
                         # Spread Method
-                        if self.ui.radioButtonAdaptive.isChecked():
-                            card.spread_method = cfg.SPREAD_METHOD_ADAPTIVE
-                        elif self.ui.radioButtonDirect.isChecked():
-                            card.spread_method = cfg.SPREAD_METHOD_DIRECT
-                        else:
-                            card.spread_method = cfg.SPREAD_METHOD_NONE
+                        card.spread_method = self.method
                         # Spread Factors
                         card.spread_factor_a = float(a)
                         card.spread_factor_b = float(b)
                         card.spread_factor_c = float(c)
-
-        self.applied.emit()
-
-        self.accept()
-        self.close()
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    w = EditSpreadFactors()
-    sys.exit(app.exec())
+        super().accept()

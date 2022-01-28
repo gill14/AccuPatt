@@ -137,7 +137,7 @@ class SprayCard:
         # Load in Settings
         self.settings = QSettings('accupatt','AccuPatt')
         if self.spread_method == None:
-            self.method = self.settings.value('spread_factor_method', defaultValue=cfg.SPREAD_METHOD_ADAPTIVE, type=int)
+            self.spread_method = self.settings.value('spread_factor_method', defaultValue=cfg.SPREAD_METHOD_ADAPTIVE, type=int)
         if self.spread_factor_a == None:
             self.spread_factor_a = self.settings.value('spread_factor_a', defaultValue=0.0, type=float)
         if self.spread_factor_b == None:

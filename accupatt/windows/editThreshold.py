@@ -4,19 +4,18 @@ import os
 from superqt import QLabeledRangeSlider, QLabeledSlider
 import accupatt.config as cfg
 from PyQt6 import uic
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt
+
+from accupatt.models.sprayCard import SprayCard
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'editThreshold.ui'))
 
 class EditThreshold(baseclass):
 
-    applied = pyqtSignal()
-
     def __init__(self, sprayCard, passData, seriesData, parent=None):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
-        # Your code will go here
 
         #Get a handle on the card (will be used to commit changes in on_applied)
         self.sprayCard_OG = sprayCard
@@ -52,6 +51,7 @@ class EditThreshold(baseclass):
             rs.setEdgeLabelMode(0)
             rs.setMinimum(0)
             rs.setMaximum(255)
+            sc: SprayCard = self.sprayCard.threshold_color_hue
         rs_hue.setValue([self.sprayCard.threshold_color_hue[0],self.sprayCard.threshold_color_hue[1]])
         rs_hue.valueChanged[tuple].connect(self.updateHue)
         rs_sat.setValue([self.sprayCard.threshold_color_saturation[0],self.sprayCard.threshold_color_saturation[1]])
@@ -61,11 +61,7 @@ class EditThreshold(baseclass):
 
         #Signals for saving
         self.ui.checkBoxApplyToAllSeries.toggled[bool].connect(self.toggleApplyToAllSeries)
-        #ButtonBox
-        self.ui.buttonBox.accepted.connect(self.on_applied)
-        self.ui.buttonBox.rejected.connect(self.reject)
 
-        # Your code ends here
         self.show()
         self.updateSprayCardView()
 
@@ -126,7 +122,7 @@ class EditThreshold(baseclass):
 
         self.ui.splitCardWidget.updateSprayCardView(cvImg1, cvImg2)
 
-    def on_applied(self):
+    def accept(self):
         #Cycle through passes
         for p in self.seriesData.passes:
             #Check if should apply to pass
@@ -145,10 +141,8 @@ class EditThreshold(baseclass):
                         card.set_threshold_color_hue(min=self.sprayCard.threshold_color_hue[0],max=self.sprayCard.threshold_color_hue[1])
                         card.set_threshold_color_saturation(min=self.sprayCard.threshold_color_saturation[0],max=self.sprayCard.threshold_color_saturation[1])
                         card.set_threshold_color_brightness(min=self.sprayCard.threshold_color_brightness[0],max=self.sprayCard.threshold_color_brightness[1])
-
         #Notify requestor
-        self.applied.emit()
-        self.accept
+        super().accept()
 
     def on_rejected(self):
         self.reject

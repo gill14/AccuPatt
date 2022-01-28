@@ -54,8 +54,6 @@ class LoadCards(baseclass):
         self.ui.comboBoxOrientation.currentIndexChanged[int].connect(self.orientation_changed)
         self.ui.comboBoxOrder.currentIndexChanged[int].connect(self.order_changed)
         self.ui.comboBoxScale.currentIndexChanged[int].connect(self.scale_changed)
-        self.ui.buttonBox.accepted.connect(self.on_applied)
-        self.ui.buttonBox.rejected.connect(self.on_rejected)
         
         # Set pyqtgraph global options
         pg.setConfigOptions(antialias=True)
@@ -87,8 +85,6 @@ class LoadCards(baseclass):
         self.rois = []
         self.draw_rois()
         
-
-        # Your code ends here
         self.show()
         self.show_image_characteristics()
         
@@ -153,7 +149,7 @@ class LoadCards(baseclass):
         self.draw_rois()
         
     @pyqtSlot()
-    def on_applied(self):
+    def accept(self):
         self.settings.setValue('image_dpi', self.ui.comboBoxDPI.currentText())
         self.settings.setValue('roi_acquisition_orientation', self.ui.comboBoxOrientation.currentText())
         self.settings.setValue('roi_acquisition_order', self.ui.comboBoxOrder.currentText())
@@ -176,14 +172,7 @@ class LoadCards(baseclass):
             sprayCard.has_image = True
             sprayCard.include_in_composite = True
         
-        self.applied.emit()
-        self.accept()
-        self.close()
-     
-    @pyqtSlot()    
-    def on_rejected(self):
-        self.reject()
-        self.close()
+        super().accept()
     
     def _sort_rois(self, orientation, order):
         rois_original = self.roi_rectangles.copy()

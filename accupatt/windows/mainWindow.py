@@ -256,7 +256,7 @@ class MainWindow(baseclass):
         #Create popup and send current appInfo vals to popup
         e = PassManager(self.seriesData.passes, self)
         #Connect Slot to retrieve Vals back from popup
-        e.applied[list].connect(self.updateFromPassManager)
+        e.pass_list_updated[list].connect(self.updateFromPassManager)
         #Start Loop
         e.exec()
       
@@ -541,10 +541,13 @@ class MainWindow(baseclass):
     def editSprayCardList(self):
         #Get a handle on the currently selected pass
         p = self.seriesData.passes[self.ui.listWidgetSprayCardPass.currentRow()]
+        #Trigger file save if filapath needed
+        if self.currentFile == None or self.currentFile == '':
+            self.saveFile()
         #Open the Edit Card List window for currently selected pass
         e = CardManager(passData=p, filepath=self.currentFile, parent=self)
         #Connect Slot to retrieve Vals back from popup
-        e.applied.connect(self.editSprayCardListFinished)
+        e.accepted.connect(self.editSprayCardListFinished)
         e.passDataChanged.connect(self.saveFile)
         #Start Loop
         e.exec()
@@ -568,7 +571,7 @@ class MainWindow(baseclass):
                     #Open the Edit SF window for currently selected card
                     e = EditThreshold(sprayCard=sprayCard, passData=passData, seriesData=self.seriesData, parent=self)
                     #Connect Slot to retrieve Vals back from popup
-                    e.applied.connect(self.saveAndUpdateSprayCardView)
+                    e.accepted.connect(self.saveAndUpdateSprayCardView)
                     #Start Loop
                     e.exec()
     
@@ -584,7 +587,7 @@ class MainWindow(baseclass):
                     #Open the Edit SF window for currently selected card
                     e = EditSpreadFactors(sprayCard=sprayCard, passData=passData, seriesData=self.seriesData, parent=self)
                     #Connect Slot to retrieve Vals back from popup
-                    e.applied.connect(self.saveAndUpdateSprayCardView)
+                    e.accepted.connect(self.saveAndUpdateSprayCardView)
                     #Start Loop
                     e.exec()
 

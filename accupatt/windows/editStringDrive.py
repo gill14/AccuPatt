@@ -106,13 +106,13 @@ class EditStringDrive(baseclass):
         try:
             self.settings.setValue('flightline_length',float(self.ui.lineEditFlightlineLength.text()))
         except:
-            excepts.append('STRING LENGTH cannot be converted to a NUMBER')
+            excepts.append('-STRING LENGTH cannot be converted to a NUMBER')
         self.settings.setValue('flightline_length_units', self.ui.comboBoxFlightlineLengthUnits.currentText())
         # Save String Speed
         try:
             self.settings.setValue('advance_speed',float(self.ui.lineEditSpeed.text()))
         except:
-            excepts.append('STRING SPEED cannot be converted to a NUMBER')
+            excepts.append('-STRING SPEED cannot be converted to a NUMBER')
         # If any invalid, show user and return to current window
         if len(excepts) > 0:
             QMessageBox.warning(self, 'Invalid Data', '\n'.join(excepts))
