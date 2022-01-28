@@ -10,7 +10,7 @@ from PyQt6.QtCore import (QAbstractTableModel, QItemSelectionModel,
                           pyqtSlot)
 from PyQt6.QtWidgets import QComboBox, QFileDialog, QItemDelegate, QMessageBox
 
-Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'editCardList.ui'))
+Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'cardManager.ui'))
 
 defined_sets = {
     'Standard Fly-In (WSP)': {

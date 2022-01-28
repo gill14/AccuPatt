@@ -188,7 +188,8 @@ class MainWindow(baseclass):
                 self.currentFile = convert_xlsx_to_db(self.currentFile, self.seriesData)
                 self.status_label_file.setText(f'Current File: {self.currentFile}')
                 self.status_label_modified.setText(f'Last Save: {datetime.fromtimestamp(self.seriesData.info.modified)}')
-            return
+                return True
+            return False
         # If db file doesn't exist, lets create one
         if self.currentFile == '':
             # Have user create a new file
@@ -199,7 +200,7 @@ class MainWindow(baseclass):
                                                         directory=initialDirectory,
                                                         filter='AccuPatt (*.db)')
             if fname is None or fname == '':
-                return
+                return False
             self.currentFile = fname
             self.currentDirectory = os.path.dirname(self.currentFile)
             self.settings.setValue('dir',self.currentDirectory)
@@ -212,6 +213,7 @@ class MainWindow(baseclass):
         save_to_db(file=self.currentFile, s=self.seriesData)
         self.status_label_file.setText(f'Current File: {self.currentFile}')
         self.status_label_modified.setText(f'Last Save: {datetime.fromtimestamp(self.seriesData.info.modified)}')
+        return True
 
     @pyqtSlot()
     def openFile(self):
@@ -543,7 +545,8 @@ class MainWindow(baseclass):
         p = self.seriesData.passes[self.ui.listWidgetSprayCardPass.currentRow()]
         #Trigger file save if filapath needed
         if self.currentFile == None or self.currentFile == '':
-            self.saveFile()
+            if not self.saveFile():
+                return
         #Open the Edit Card List window for currently selected pass
         e = CardManager(passData=p, filepath=self.currentFile, parent=self)
         #Connect Slot to retrieve Vals back from popup
