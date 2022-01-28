@@ -10,29 +10,24 @@ import subprocess
 import sys
 from setuptools import setup
 
-DATA_FILES = [('resources',['resources/AgAircraftData.xlsx','resources/edit-alt-512.webp','resources/editCardList.ui','resources/editSpectrometer.ui','resources/editSpreadFactors.ui','resources/editStringDrive.ui','resources/editThreshold.ui','resources/loadCards.ui','resources/mainWindow.ui','resources/passManager.ui','resources/readString.ui','resources/refresh.png','resources/seriesInfo.ui','resources/schema.sql','resources/illini.icns'])]
-#DATA_FILES = [('resources',['resources'])]
+VERSION = '2.0.2'
 
 OPTIONS = {
     'iconfile':'./resources/illini.icns',
+    'resources':['./resources'],
     'bdist_base':'./dist/osx/build',
     'dist_dir':'./dist/osx/dist',
-    'plist': {'CFBundleShortVersionString':'2.0.1',
+    'plist': {'CFBundleShortVersionString':VERSION,
               'CFBundleIdentifier':'edu.illinois.accupatt',}
 }
 
 if sys.platform == 'darwin':
-    extra_options = dict(
+    setup(
         setup_requires=['py2app'],
         app=['./accupatt/__main__.py'],
-        options={'py2app': OPTIONS}
-    )
-    
-    setup(
+        options={'py2app': OPTIONS},
         name='AccuPatt',
-        version='2.0.0',
-        data_files=DATA_FILES,
-        **extra_options
+        version=VERSION,
     )
     
     subprocess.call(['sh','./dist/osx/genAppDmg.sh'])
