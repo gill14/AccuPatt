@@ -7,7 +7,7 @@ from accupatt.helpers.atomizationModel import AtomizationModel
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
 from accupatt.models.sprayCard import SprayCard
-from accupatt.windows.widgets.mplwidget import MplWidget
+from accupatt.widgets.mplwidget import MplWidget
 from PyQt6.QtWidgets import QTableWidget
 
 
