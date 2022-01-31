@@ -110,6 +110,8 @@ CREATE TABLE IF NOT EXISTS spray_cards (
     threshold_color_saturation_max  INTEGER,
     threshold_color_brightness_min  INTEGER,
     threshold_color_brightness_max  INTEGER,
+    watershed                       INTEGER,
+    min_stain_area_px               INTEGER,
     dpi                             INTEGER,
     spread_method                   INTEGER,
     spread_factor_a                 REAL,

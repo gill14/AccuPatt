@@ -23,7 +23,7 @@ defined_sets = {
         'cards': ['L-32', 'L-24', 'L-16', 'L-8', 'Center', 'R-8', 'R-16', 'R-24', 'R-32'],
         'locations': [-32, -24, -16, -8, 0, 8, 16, 24, 32],
         'location_units': cfg.UNIT_FT,
-        'threshold_type': cfg.THRESHOLD_TYPE_COLOR
+        'threshold_type': cfg.THRESHOLD_TYPE_HSB
     },
 }
 
@@ -65,7 +65,6 @@ class CardManager(baseclass):
         self.tm.loadCards(passData.spray_cards)
         self.tv = self.ui.tableView
         self.tv.setModel(self.tm)
-        self.tv.setItemDelegateForColumn(2,ComboBoxDelegate(self, [cfg.INCLUDE_IN_COMPOSITE_NO_STRING, cfg.INCLUDE_IN_COMPOSITE_YES_STRING]))
         self.tv.setItemDelegateForColumn(4, ComboBoxDelegate(self, cfg.UNITS_LENGTH_LARGE))
         self.tv.setItemDelegateForColumn(5, ComboBoxDelegate(self, cfg.DPI_OPTIONS))
         self.tv.setColumnWidth(5,100)
@@ -242,18 +241,11 @@ class CardTable(QAbstractTableModel):
                 # Name
                 return card.name
             elif j == 1:
-                # Has Image?
-                if card.has_image:
-                    return cfg.HAS_IMAGE_YES_STRING
-                else:
-                    return cfg.HAS_IMAGE_NO_STRING
+                return 'Yes' if card.has_image else 'No'
             elif j == 2:
                 # Include in Composite?
                 if role == Qt.ItemDataRole.DisplayRole:
-                    if card.include_in_composite:
-                        return cfg.INCLUDE_IN_COMPOSITE_YES_STRING
-                    else:
-                        return cfg.INCLUDE_IN_COMPOSITE_NO_STRING
+                    return 'Yes' if card.include_in_composite else 'No'
                 elif role == Qt.ItemDataRole.EditRole:
                     return card.include_in_composite
             elif j == 3:
@@ -276,9 +268,15 @@ class CardTable(QAbstractTableModel):
     def setData(self, index, value, role = Qt.ItemDataRole.EditRole) -> bool:
         i = index.row()
         j = index.column()
-        if value is None or not role == Qt.ItemDataRole.EditRole:
-            return False
         card = self.card_list[i]
+        if value is None:
+            return False
+        if role == Qt.ItemDataRole.CheckStateRole:
+            if j == 2:
+                card.include_in_composite = (Qt.CheckState(value) == Qt.CheckState.Checked)
+                self.dataChanged.emit(index,index)
+        if not role == Qt.ItemDataRole.EditRole:
+            return False
         if j == 0:
             #Name
             card.name = value
@@ -358,5 +356,7 @@ class CardTable(QAbstractTableModel):
             return None
         if index.column() == 1:
             return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
+        elif index.column() == 2:
+            return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsUserCheckable
         else:
             return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEditable

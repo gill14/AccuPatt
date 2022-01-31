@@ -22,14 +22,12 @@ class SprayCard:
         self.location = None
         self.location_units = None
         self.has_image = False
-        self.include_in_composite = cfg.INCLUDE_IN_COMPOSITE_NO
+        self.include_in_composite = False
 
         self.dpi = dpi
         self.area_px2 = 0.0
         self.stain_areas_all_px2 = []
         self.stain_areas_valid_px2 = []
-        
-        self.watershed = True
 
         self._load_defaults()
     
@@ -124,12 +122,14 @@ class SprayCard:
 
     def _load_defaults(self):
         self.threshold_type = cfg.THRESHOLD_TYPE__DEFAULT
-        self.threshold_method_color = cfg.THRESHOLD_METHOD_COLOR__DEFAULT
-        self.threshold_method_grayscale = cfg.THRESHOLD_METHOD_GRAYSCALE__DEFAULT
+        self.threshold_method_color = cfg.THRESHOLD_HSB_METHOD__DEFAULT
+        self.threshold_method_grayscale = cfg.THRESHOLD_GRAYSCALE_METHOD__DEFAULT
         self.threshold_grayscale = cfg.THRESHOLD_GRAYSCALE__DEFAULT
-        self.threshold_color_hue = cfg.THRESHOLD_COLOR_HUE__DEFAULT
-        self.threshold_color_saturation = cfg.THRESHOLD_COLOR_SATURATION__DEFAULT
-        self.threshold_color_brightness = cfg.THRESHOLD_COLOR_BRIGHTNESS__DEFAULT
+        self.threshold_color_hue = cfg.THRESHOLD_HSB_HUE__DEFAULT
+        self.threshold_color_saturation = cfg.THRESHOLD_HSB_SATURATION__DEFAULT
+        self.threshold_color_brightness = cfg.THRESHOLD_HSB_BRIGHTNESS__DEFAULT
+        self.watershed = True
+        self.min_stain_area_px = 4
         self.spread_method = cfg.SPREAD_METHOD__DEFAULT
         self.spread_factor_a = cfg.SPREAD_FACTOR_A__DEFAULT
         self.spread_factor_b = cfg.SPREAD_FACTOR_B__DEFAULT
@@ -148,26 +148,26 @@ class SprayCard:
     def save_image_to_file(self, image):
         return sprayCardImageFileHandler.save_image_to_file(self, image)
 
-    def set_threshold_type(self, type=cfg.THRESHOLD_TYPE_GRAYSCALE):
+    def set_threshold_type(self, type=cfg.THRESHOLD_TYPE__DEFAULT):
         self.threshold_type = type
 
-    def set_threshold_method_grayscale(self, method=cfg.THRESHOLD_METHOD_AUTOMATIC):
+    def set_threshold_method_grayscale(self, method=cfg.THRESHOLD_GRAYSCALE_METHOD__DEFAULT):
         self.threshold_method_grayscale = method
 
     def set_threshold_grayscale(self, threshold: int):
         self.threshold_grayscale = threshold
 
-    def set_threshold_method_color(self, method=cfg.THRESHOLD_METHOD_INCLUDE):
+    def set_threshold_method_color(self, method=cfg.THRESHOLD_HSB_METHOD__DEFAULT):
         self.threshold_method_color = method
 
-    def set_threshold_color_hue(self, min: 0, max: 255):
-        self.threshold_color_hue = [min,max]
+    def set_threshold_color_hue(self, range: tuple[int,int]):
+        self.threshold_color_hue = range
 
-    def set_threshold_color_saturation(self, min: 0, max: 255):
-        self.threshold_color_saturation = [min,max]
+    def set_threshold_color_saturation(self, range: tuple[int,int]):
+        self.threshold_color_saturation = range
 
-    def set_threshold_color_brightness(self, min: 0, max: 255):
-        self.threshold_color_brightness = [min,max]
+    def set_threshold_color_brightness(self, range: tuple[int,int]):
+        self.threshold_color_brightness = range
       
 class sprayCardImageFileHandler:
     
@@ -268,7 +268,7 @@ class SprayCardImageProcessor:
     def _image_threshold_grayscale(self, img):
         #Convert to grayscale
         img_gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-        if self.sprayCard.threshold_method_grayscale == cfg.THRESHOLD_METHOD_AUTOMATIC:
+        if self.sprayCard.threshold_method_grayscale == cfg.THRESHOLD_GRAYSCALE_METHOD_AUTO:
             #Run Otsu Threshold, if threshold value is within ui-specified range, return it
             thresh_val,_img_thresh = cv2.threshold(
                 src = img_gray,
@@ -296,7 +296,7 @@ class SprayCardImageProcessor:
         # Binarize image with TRUE for HSB values in user-defined range
         mask = cv2.inRange(img_hsv, minHSV, maxHSV)
         # Invert image according to user defined method
-        if self.sprayCard.threshold_method_color == cfg.THRESHOLD_METHOD_INCLUDE:
+        if self.sprayCard.threshold_method_color == cfg.THRESHOLD_HSB_METHOD_INCLUDE:
             mask = cv2.bitwise_not(mask)
         return mask
 
@@ -359,26 +359,25 @@ class SprayCardImageProcessor:
         self.sprayCard.stain_areas_all_px2 = []
         self.sprayCard.stain_areas_valid_px2 = []
         # When !fillShapes (default), set thickness will outline contours on img_src using these colors
-        color_stain_counted = cfg.COLOR_STAIN_OUTLINE
-        color_stain_not_counted = cfg.COLOR_STAIN_OUTLINE
-        thickness = 1
         # When fillshapes, netagive thickness will fill contours on white image using these new colors
-        if fillShapes: 
-            thickness = -1
-            color_stain_not_counted = cfg.COLOR_STAIN_FILL_ALL
-            color_stain_counted = cfg.COLOR_STAIN_FILL_VALID      
+        thickness = -1 if fillShapes else 1
+        color_stain_counted = cfg.COLOR_STAIN_FILL_VALID if fillShapes else cfg.COLOR_STAIN_OUTLINE
+        color_stain_edge = cfg.COLOR_STAIN_FILL_EDGE if fillShapes else cfg.COLOR_STAIN_OUTLINE
+        color_stain_not_counted = cfg.COLOR_STAIN_FILL_ALL if fillShapes else cfg.COLOR_STAIN_OUTLINE  
         # Iterate thorugh each contour to find includables
+        contours_edge = []
         contours_include = []
         for c in contours:
             area = self._calc_contour_area(c)
             x, y, w, h = cv2.boundingRect(c)
             # If contour is below the min pixel size, don't count it anywhere
-            if w < 3 or h < 3:
+            if area < self.sprayCard.min_stain_area_px:
                 continue
             # If contour is whole card, don't count it anywhere
             if area >= 0.95 * w * h:
                 continue
             # If contour above min area size, count it for coverage only
+            contours_edge.append(c)
             self.sprayCard.stain_areas_all_px2.append(area)
             # If contour touches edge, count it for coverage only
             if x <= 0 or y <= 0 or (x+w) >= img.shape[1]-1 or (y+h) >= img.shape[0]-1:
@@ -389,7 +388,9 @@ class SprayCardImageProcessor:
         if len(contours_include) > 0:
             # Draw all contours
             cv2.drawContours(img, contours, -1, color_stain_not_counted, thickness=thickness)
-            # Draw record-worthy contour (over previously drawn contour, just new color)
+            # Draw edge contours overlay (for cov only)
+            cv2.drawContours(img, contours_edge, -1, color_stain_edge, thickness=thickness)
+            # Draw record-worthy contour overlay (for cov and ds calcs)
             cv2.drawContours(img, contours_include, -1, color_stain_counted, thickness=thickness)
             if fillShapes:
                 cv2.drawContours(img, contours, -1, (255,255,255), thickness=1)

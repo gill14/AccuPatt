@@ -160,7 +160,7 @@ class MainWindow(baseclass):
         except NameError:
             self.currentDirectory = Path.home()
         if testing:
-            file = '/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt/testing/N802ET 03.xlsx'
+            file = '/Users/gill14/Library/CloudStorage/OneDrive-UniversityofIllinois-Urbana/AccuProjects/AccuPatt/testing/N802BK 01.xlsx'
         else:
             file, _ = QFileDialog.getOpenFileName(parent=self, 
                                             caption='Open File',
@@ -222,7 +222,7 @@ class MainWindow(baseclass):
         except NameError:
             self.currentDirectory = Path.home()
         if testing:
-            file = '/Users/gill14/OneDrive - University of Illinois - Urbana/AccuProjects/Python Projects/AccuPatt/testing/N802ET 03.db'
+            file = '/Users/gill14/Library/CloudStorage/OneDrive-UniversityofIllinois-Urbana/AccuProjects/AccuPatt/testing/N802BK 01.db'
         else:
             file, _ = QFileDialog.getOpenFileName(parent=self, 
                                             caption='Open File',
@@ -507,8 +507,11 @@ class MainWindow(baseclass):
                 for card in p.spray_cards:
                     item = QListWidgetItem(card.name,self.ui.listWidgetSprayCard)
                     #self.ui.listWidgetSprayCard.addItem(item)
-                    if card.has_image: 
-                        item.setCheckState(Qt.CheckState.Checked)
+                    if card.has_image:
+                        if card.include_in_composite: 
+                            item.setCheckState(Qt.CheckState.Checked)
+                        else:
+                            item.setCheckState(Qt.CheckState.PartiallyChecked)
                     else:
                         item.setCheckState(Qt.CheckState.Unchecked)
                     item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)

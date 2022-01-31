@@ -167,9 +167,9 @@ def load_from_accupatt_1_file(file) -> SeriesData:
         on_pass = int(sh['B2'].value)
         spread_method_text = sh['B3'].value
         spread_method = cfg.SPREAD_METHOD_ADAPTIVE
-        if spread_method_text == cfg.SPREAD_METHOD_DIRECT_STRING:
+        if spread_method_text == cfg.SPREAD_METHOD_DIRECT:
             spread_method = cfg.SPREAD_METHOD_DIRECT
-        if spread_method_text == cfg.SPREAD_METHOD_NONE_STRING:
+        if spread_method_text == cfg.SPREAD_METHOD_NONE:
             spread_method = cfg.SPREAD_METHOD_NONE
         spread_a = sh['B4'].value
         spread_b = sh['B5'].value

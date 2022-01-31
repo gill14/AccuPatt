@@ -4,7 +4,8 @@ import os
 from superqt import QLabeledRangeSlider, QLabeledSlider
 import accupatt.config as cfg
 from PyQt6 import uic
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSlot
+from PyQt6.QtWidgets import QGroupBox, QVBoxLayout
 
 from accupatt.models.sprayCard import SprayCard
 
@@ -20,28 +21,27 @@ class EditThreshold(baseclass):
         #Get a handle on the card (will be used to commit changes in on_applied)
         self.sprayCard_OG = sprayCard
         #Make a working copy
-        self.sprayCard = copy.copy(sprayCard)
+        self.sprayCard: SprayCard = copy.copy(sprayCard)
         #Get a handle to seriesData and passData to enable "Apply to all cards on save"
         self.seriesData = seriesData
         self.passData = passData
 
-        #Signals for toggling group boxes
-        self.ui.groupBoxGrayscale.toggled[bool].connect(self.toggleGrayscale)
-        self.ui.groupBoxColor.toggled[bool].connect(self.toggleColor)
-        #Select appropriate group box
-        self.ui.groupBoxGrayscale.setChecked(self.sprayCard.threshold_type == cfg.THRESHOLD_TYPE_GRAYSCALE)
+        # Threshold Type Combobox - Sets contents of Threshold GroupBox
+        self.ui.comboBoxThresholdType.addItems(cfg.THRESHOLD_TYPES)
+        self.ui.comboBoxThresholdType.currentIndexChanged[int].connect(self.threshold_type_changed)
+        self.ui.comboBoxThresholdType.setCurrentIndex(cfg.THRESHOLD_TYPES.index(self.sprayCard.threshold_type))
 
         #Populate grayscale ui from spray card
-        self.ui.radioButtonAutomatic.setChecked(self.sprayCard.threshold_method_grayscale == cfg.THRESHOLD_METHOD_AUTOMATIC)
-        self.ui.radioButtonManual.setChecked(self.sprayCard.threshold_method_grayscale == cfg.THRESHOLD_METHOD_MANUAL)
+        self.ui.radioButtonAutomatic.setChecked(self.sprayCard.threshold_method_grayscale == cfg.THRESHOLD_GRAYSCALE_METHOD_AUTO)
+        self.ui.radioButtonManual.setChecked(self.sprayCard.threshold_method_grayscale == cfg.THRESHOLD_GRAYSCALE_METHOD_MANUAL)
         self.ui.radioButtonAutomatic.toggled.connect(self.toggleThresholdMethodGrayscale)
         self.ui.radioButtonManual.toggled.connect(self.toggleThresholdMethodGrayscale)
         self.ui.sliderGrayscale.setValue(self.sprayCard.threshold_grayscale)
         self.ui.sliderGrayscale.valueChanged[int].connect(self.updateThresholdGrayscale)
 
         #Populate color ui from spray card
-        self.ui.radioButtonInclude.setChecked(self.sprayCard.threshold_method_color == cfg.THRESHOLD_METHOD_INCLUDE)
-        self.ui.radioButtonExclude.setChecked(self.sprayCard.threshold_method_color == cfg.THRESHOLD_METHOD_EXCLUDE)
+        self.ui.radioButtonInclude.setChecked(self.sprayCard.threshold_method_color == cfg.THRESHOLD_HSB_METHOD_INCLUDE)
+        self.ui.radioButtonExclude.setChecked(self.sprayCard.threshold_method_color == cfg.THRESHOLD_HSB_METHOD_EXCLUDE)
         self.ui.radioButtonInclude.toggled[bool].connect(self.toggleThresholdMethodColor)
         self.ui.radioButtonExclude.toggled[bool].connect(self.toggleThresholdMethodColor)
         rs_hue: QLabeledRangeSlider = self.ui.rangeSliderHue
@@ -51,24 +51,43 @@ class EditThreshold(baseclass):
             rs.setEdgeLabelMode(0)
             rs.setMinimum(0)
             rs.setMaximum(255)
-            sc: SprayCard = self.sprayCard.threshold_color_hue
-        rs_hue.setValue([self.sprayCard.threshold_color_hue[0],self.sprayCard.threshold_color_hue[1]])
+        rs_hue.setValue(self.sprayCard.threshold_color_hue)
         rs_hue.valueChanged[tuple].connect(self.updateHue)
-        rs_sat.setValue([self.sprayCard.threshold_color_saturation[0],self.sprayCard.threshold_color_saturation[1]])
+        rs_sat.setValue(self.sprayCard.threshold_color_saturation)
         rs_sat.valueChanged[tuple].connect(self.updateSaturation)
-        rs_bri.setValue([self.sprayCard.threshold_color_brightness[0],self.sprayCard.threshold_color_brightness[1]])
+        rs_bri.setValue(self.sprayCard.threshold_color_brightness)
         rs_bri.valueChanged[tuple].connect(self.updateBrightness)
+        
+        #Populate Watershed
+        self.ui.checkBoxWatershed.setCheckState(Qt.CheckState.Checked if self.sprayCard.watershed else Qt.CheckState.Unchecked)
+        self.ui.checkBoxWatershed.stateChanged[int].connect(self.toggleWatershed)
+        
+        #Populate Stain Approx Method
+        
+        #Populate Min Stain Size
+        self.ui.spinBoxMinSize.setValue(self.sprayCard.min_stain_area_px)
+        self.ui.spinBoxMinSize.valueChanged[int].connect(self.updateMinSize)
 
         #Signals for saving
         self.ui.checkBoxApplyToAllSeries.toggled[bool].connect(self.toggleApplyToAllSeries)
 
+        
+        self.threshold_type_changed(self.ui.comboBoxThresholdType.currentIndex())
         self.show()
-        self.updateSprayCardView()
 
-    def toggleGrayscale(self, boo):
-        self.ui.groupBoxColor.setChecked(not boo)
-        thresh_type = cfg.THRESHOLD_TYPE_COLOR
-        if boo: thresh_type = cfg.THRESHOLD_TYPE_GRAYSCALE
+    @pyqtSlot(int)
+    def threshold_type_changed(self, index):
+        if index == 0:
+            # Grayscale
+            self.ui.groupBoxColor.hide()
+            self.ui.groupBoxGrayscale.show()
+            thresh_type = cfg.THRESHOLD_TYPE_GRAYSCALE
+        else:
+            # HSB
+            self.ui.groupBoxGrayscale.hide()
+            self.ui.groupBoxColor.show()
+            thresh_type = cfg.THRESHOLD_TYPE_HSB
+        # Update Thresh Type, redraw
         self.sprayCard.set_threshold_type(type=thresh_type)
         self.updateSprayCardView()
 
@@ -77,36 +96,42 @@ class EditThreshold(baseclass):
         self.updateSprayCardView()
 
     def toggleThresholdMethodGrayscale(self):
-        method = cfg.THRESHOLD_METHOD_AUTOMATIC
+        method = cfg.THRESHOLD_GRAYSCALE_METHOD_AUTO
         if self.ui.radioButtonManual.isChecked():
-            method = cfg.THRESHOLD_METHOD_MANUAL
+            method = cfg.THRESHOLD_GRAYSCALE_METHOD_MANUAL
         self.sprayCard.threshold_method_grayscale = method
-        self.updateSprayCardView()
-
-    def toggleColor(self, boo):
-        self.ui.groupBoxGrayscale.setChecked(not boo)
-        thresh_type = cfg.THRESHOLD_TYPE_GRAYSCALE
-        if boo: thresh_type = cfg.THRESHOLD_TYPE_COLOR
-        self.sprayCard.set_threshold_type(type=thresh_type)
         self.updateSprayCardView()
 
     def toggleThresholdMethodColor(self):
         if self.ui.radioButtonInclude.isChecked():
-            self.sprayCard.threshold_method_color = cfg.THRESHOLD_METHOD_INCLUDE
+            self.sprayCard.threshold_method_color = cfg.THRESHOLD_HSB_METHOD_INCLUDE
         elif self.ui.radioButtonExclude.isChecked():
-            self.sprayCard.threshold_method_color = cfg.THRESHOLD_METHOD_EXCLUDE
+            self.sprayCard.threshold_method_color = cfg.THRESHOLD_HSB_METHOD_EXCLUDE
         self.updateSprayCardView()
 
+    @pyqtSlot(tuple)
     def updateHue(self, vals):
-        self.sprayCard.set_threshold_color_hue(min=vals[0], max=vals[1])
+        self.sprayCard.set_threshold_color_hue(vals)
         self.updateSprayCardView()
     
+    @pyqtSlot(tuple)
     def updateSaturation(self, vals):
-        self.sprayCard.set_threshold_color_saturation(min=vals[0], max=vals[1])
+        self.sprayCard.set_threshold_color_saturation(vals)
         self.updateSprayCardView()
 
+    @pyqtSlot(tuple)
     def updateBrightness(self, vals):
-        self.sprayCard.set_threshold_color_brightness(min=vals[0], max=vals[1])
+        self.sprayCard.set_threshold_color_brightness(vals)
+        self.updateSprayCardView()
+        
+    @pyqtSlot(int)
+    def toggleWatershed(self, checkstate):
+        self.sprayCard.watershed = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
+        self.updateSprayCardView()
+        
+    @pyqtSlot(int)
+    def updateMinSize(self, val):
+        self.sprayCard.min_stain_area_px = val
         self.updateSprayCardView()
 
     def toggleApplyToAllSeries(self, boo:bool):
@@ -128,6 +153,7 @@ class EditThreshold(baseclass):
             #Check if should apply to pass
             if p.name == self.passData.name or self.ui.checkBoxApplyToAllSeries.checkState() == Qt.CheckState.Checked:
                 #Cycle through cards in pass
+                card: SprayCard
                 for card in p.spray_cards:
                     if card.name == self.sprayCard_OG.name or self.ui.checkBoxApplyToAllPass.checkState() == Qt.CheckState.Checked:
                         #Apply
@@ -138,11 +164,11 @@ class EditThreshold(baseclass):
                         card.set_threshold_grayscale(self.sprayCard.threshold_grayscale)
                         #Set color options
                         card.set_threshold_method_color(self.sprayCard.threshold_method_color)
-                        card.set_threshold_color_hue(min=self.sprayCard.threshold_color_hue[0],max=self.sprayCard.threshold_color_hue[1])
-                        card.set_threshold_color_saturation(min=self.sprayCard.threshold_color_saturation[0],max=self.sprayCard.threshold_color_saturation[1])
-                        card.set_threshold_color_brightness(min=self.sprayCard.threshold_color_brightness[0],max=self.sprayCard.threshold_color_brightness[1])
+                        card.set_threshold_color_hue(self.sprayCard.threshold_color_hue)
+                        card.set_threshold_color_saturation(self.sprayCard.threshold_color_saturation)
+                        card.set_threshold_color_brightness(self.sprayCard.threshold_color_brightness)
+                        #Set Additional Options
+                        card.watershed = self.sprayCard.watershed
+                        card.min_stain_area_px = self.sprayCard.min_stain_area_px
         #Notify requestor
         super().accept()
-
-    def on_rejected(self):
-        self.reject

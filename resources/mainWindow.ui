@@ -1952,26 +1952,26 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>SplitCardWidget</class>
+   <extends>QWidget</extends>
+   <header>accupatt/widgets/splitcardwidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
    <class>PlotWidget</class>
    <extends>QGraphicsView</extends>
    <header>pyqtgraph</header>
   </customwidget>
   <customwidget>
-   <class>SplitCardWidget</class>
-   <extends>QWidget</extends>
-   <header>accupatt/windows/widgets/splitcardwidget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>MplWidget</class>
    <extends>QWidget</extends>
-   <header>accupatt/windows/widgets/mplwidget.h</header>
+   <header>accupatt/widgets/mplwidget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>SeriesInfoWidget</class>
    <extends>QWidget</extends>
-   <header>accupatt/windows/widgets/seriesinfowidget.h</header>
+   <header>accupatt/widgets/seriesinfowidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
