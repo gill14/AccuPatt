@@ -373,9 +373,8 @@ class SeriesInfoWidget(baseclass):
         self.ui.pushButtonNozzleSetAdd.pressed.connect(self._on_nozzle_set_add)
         self.ui.pushButtonNozzleSetRemove.pressed.connect(self._on_nozzle_set_remove)
         # Populate Nozzle Type ComboBox Items
-        avail_nozzles = AtomizationModel.nozzles.copy()
-        avail_nozzles.insert(0,'')
-        self.ui.comboBoxNT.addItems(avail_nozzles)
+        self.ui.comboBoxNT.addItems(AtomizationModel.nozzles)
+        self.ui.comboBoxNT.setCurrentIndex(-1)
         self.ui.comboBoxNT.currentTextChanged[str].connect(self._on_nozzle_selected)
         
     def fill_nozzles(self, info: AppInfo):
@@ -430,30 +429,11 @@ class SeriesInfoWidget(baseclass):
         cBDef: QComboBox = self.ui.comboBoxND
         cBSize.clear()
         cBDef.clear()
-        if nozzle not in AtomizationModel.nozzles:
-            return
-        #Check ls
-        orif_a = []
-        def_a = []
-        if nozzle in AtomizationModel.ls_dict.keys():
-            orif_a = AtomizationModel.ls_dict[nozzle]['Orifice']
-            def_a = AtomizationModel.ls_dict[nozzle]['Angle']
-        #Check hs
-        orif_b = []
-        def_b = []
-        if nozzle in AtomizationModel.hs_dict.keys():
-            orif_b = AtomizationModel.hs_dict[nozzle]['Orifice']
-            def_b = AtomizationModel.hs_dict[nozzle]['Angle']
-        #combine and remove duplicates
-        orif_c = sorted(np.unique(orif_a+orif_b))
-        def_c = sorted(np.unique(def_a+def_b))
-        #Asign to comboboxes
-        cBSize.addItem('')
-        cBDef.addItem('')
-        for item in orif_c:
-            cBSize.addItem(str(item))
-        for item in def_c:
-            cBDef.addItem(str(item))
+        # Populate Comboboxes
+        orifices = AtomizationModel().get_deflections_for_nozzle(nozzle)
+        cBSize.addItems([str(o) for o in orifices])
+        deflections = AtomizationModel().get_deflections_for_nozzle(nozzle)
+        cBDef.addItems([str(d) for d in deflections])
         #remove selection
         cBSize.setCurrentIndex(-1)
         cBDef.setCurrentIndex(-1)
@@ -470,14 +450,12 @@ class SeriesInfoWidget(baseclass):
     def _commit_nozzle_size(self, text):
         index = self.ui.comboBoxNozzleSet.currentIndex()
         if not self._loading_nozzle:
-            print('committing size: '+text)
             self.info.nozzles[index].size = text
         
     @pyqtSlot(str)
     def _commit_nozzle_deflection(self, text):
         index = self.ui.comboBoxNozzleSet.currentIndex()
         if not self._loading_nozzle:
-            print('committing defl: '+text)
             self.info.nozzles[index].deflection = text
         
     @pyqtSlot()

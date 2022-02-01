@@ -75,17 +75,18 @@ def load_from_accupatt_1_file(file) -> SeriesData:
     i.make = df.iat[8,1]
     i.model = df.iat[9,1]
     if((noz_type_1 := df.iat[10,1]) != ''):
-        i.nozzles.append(Nozzle(id=1,
-                              type=noz_type_1,
-                              size=df.iat[12,1],
-                              deflection=df.iat[13,1],
-                              quantity=df.iat[11,1]))
+        i.nozzles.append(translateNozzle(id=1,
+                                type=noz_type_1,
+                                size=df.iat[12,1],
+                                defl=df.iat[13,1],
+                                quant=df.iat[11,1]))
+                              
     if((noz_type_2 := df.iat[14,1]) != ''):
-        i.nozzles.append(Nozzle(id=2,
+        i.nozzles.append(translateNozzle(id=2,
                               type=noz_type_2,
                               size=df.iat[16,1],
-                              deflection=df.iat[17,1],
-                              quantity=df.iat[15,1]))
+                              defl=df.iat[17,1],
+                              quant=df.iat[15,1]))
     i.set_pressure(df.iat[18,1])
     i.set_rate(df.iat[19,1])
     i.set_swath(df.iat[20,1])
@@ -195,3 +196,34 @@ def load_from_accupatt_1_file(file) -> SeriesData:
             p.spray_cards.append(c)
             
     return s
+
+def translateNozzle(id, type, size, defl, quant) -> Nozzle:
+    conv = {
+        'CP11TT 20Deg FF': 'CP11TT 20°FF',
+        'CP11TT 40Deg FF': 'CP11TT 40°FF',
+        'CP11TT 80Deg FF': 'CP11TT 80°FF',
+        'Hollow Cone Steel DC45': 'Steel Disc Core 45',
+        'Hollow Cone Ceramic DC45': 'Ceramic Disc Core 45',
+        '40Deg FF': 'Standard 40°FF',
+        '80Deg FF': 'Standard 80°FF',
+    }
+    if type in conv.keys():
+        type = conv[type]
+    try:
+        f = float(size)
+        if f.is_integer():
+            size = int(f)
+    except:
+        pass
+    try:
+        f = float(defl)
+        if f.is_integer():
+            defl = int(f)
+    except:
+        pass
+    try:
+        i = int(quant)
+        quant = i
+    except:
+        pass
+    return Nozzle(id, type, str(size), str(defl), quant)

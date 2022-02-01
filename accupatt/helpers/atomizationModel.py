@@ -61,6 +61,22 @@ class AtomizationModel():
         'CP11TT 110°FF',                     #4
         'CP11TT SS',                         #5
         'CP03',                              #6
+        'CP09',                              #7
+        'Davidon TriSet',                    #8
+        'Steel Disc Core 45',                #9
+        'Ceramic Disc Core 45',              #10
+        'Steel Disc Core SS',                #11
+        'Ceramic Disc Core SS',              #12
+        'Standard 40°FF',                    #13
+        'Standard 80°FF']                    #14
+    
+    nozzles_internal = ['CP11TT 20°FF',      #0
+        'CP11TT 40°FF',                      #1
+        'CP11TT 60°FF',                      #2
+        'CP11TT 80°FF',                      #3
+        'CP11TT 110°FF',                     #4
+        'CP11TT SS',                         #5
+        'CP03',                              #6
         'CP09 Deflection',                   #7
         'CP09 SS',                           #8
         'Davidon TriSet Deflection',         #9
@@ -488,7 +504,7 @@ class AtomizationModel():
         p = pressure
         an = angle
         #Ensure we're matching up nozzle name correctly to models
-        n = self._parseNozzleName(n, a)
+        n = self._parseNozzleName(n, a, an)
         #Ensure we are in bounds
         if not self._checkBounds(n, o, a, p, an):
             return -1
@@ -537,7 +553,12 @@ class AtomizationModel():
     have their names altered to reflect which model (LS or HS) their airspeed
     corresponds to.
     '''
-    def _parseNozzleName(self, nozzle, airspeed):
+    def _parseNozzleName(self, nozzle, airspeed, angle):
+        # Check if nozzle has alternate ss/def models
+        if nozzle=='CP09':
+            nozzle = 'CP09 SS' if int(angle)==0 else 'CP09 Deflection'
+        if nozzle=='Davidon TriSet':
+            nozzle = 'Davidon TriSet SS' if int(angle)==0 else 'Davidon TriSet Deflection'
         if airspeed >= 120:
             #High Speed corrections
             if nozzle=='CP11TT 110°FF':
@@ -557,6 +578,21 @@ class AtomizationModel():
             return nozzle
         #If nozzle is not listed in either model pass empty string so no calcs are tried
         return ''
+
+    def _params_for_nozzle(self, nozzle, param):
+        nozzles = [nozzle]
+        # Check if nozzle has alternate ss/def models
+        if nozzle=='CP09':
+            nozzles.extend(['CP09 SS', 'CP09 Deflection'])
+        if nozzle=='Davidon TriSet':
+            nozzles.extend(['Davidon TriSet SS', 'Davidon TriSet Deflection'])
+        vals = []
+        for n in nozzles:
+            if n in self.hs_dict.keys():
+                vals.extend(self.hs_dict[n][param])
+            if n in self.ls_dict.keys():
+                vals.extend(self.ls_dict[n][param])
+        return sorted(set(vals))
 
     '''
     This method is designed to be called internally, but may be called externally
@@ -659,7 +695,19 @@ class AtomizationModel():
     '''
     def calc_gpm(self):
         return self._calc(self, 'GPM')
+    
+    '''
+    These methods are used to call externally to get available nozzle options. This
+    is primarily needed to get over the quirks of the hs/ls model differences
+    '''
+    def get_nozzles(self) -> list[str]:
+        return self.nozzles
 
+    def get_orifices_for_nozzle(self, nozzle: str) -> list[str]:
+        return self._params_for_nozzle(nozzle, 'Orifice')
+    
+    def get_deflections_for_nozzle(self, nozzle: str) -> list[str]:
+        return self._params_for_nozzle(nozzle, 'Angle')
 
 class AtomizationModelMulti(AtomizationModel):
 
