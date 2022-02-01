@@ -18,10 +18,12 @@ class Pass:
             wind_speed=0, wind_speed_units='mph',
             temperature = 0, temperature_units='°F',
             humidity=0, include_in_composite=True,
-            excitation_wav=0, emission_wav=0,
+            excitation_wav=cfg.SPEC_WAV_EX__DEFAULT, 
+            emission_wav=cfg.SPEC_WAV_EM__DEFAULT,
+            integration_time_ms=cfg.SPEC_INT_TIME_MS__DEFAULT,
             trim_l=0, trim_r=0, trim_v=0.0,
             data_ex=pd.DataFrame(), data=pd.DataFrame(), data_mod=pd.DataFrame(),
-            data_loc_units='ft'):
+            data_loc_units=cfg.UNIT_FT):
         #Info Stuff
         self.id = id
         if self.id == '':
@@ -43,9 +45,10 @@ class Pass:
         self.humidity = humidity
         #Include in Composite by default
         self.include_in_composite = include_in_composite
-        #Pattern stuff
+        #String stuff
         self.excitation_wav = excitation_wav
         self.emission_wav = emission_wav
+        self.integration_time_ms = integration_time_ms
         self.trim_l = trim_l
         self.trim_r = trim_r
         self.trim_v = trim_v
@@ -56,9 +59,12 @@ class Pass:
         #Cards
         self.spray_cards = []
 
-    def modifyData(self, isCenter=True, isSmooth=True):
+    def modifyData(self, isCenter=True, isSmooth=True, loc_units=None):
         if self.data.empty: return
         d = self.data.copy()
+        # If loc_units provided, ensure we use them
+        if loc_units:
+            d = self.reLoc(d, loc_units)
         #Trim it
         d,_ = self.trimLR(d)
         d = self.trimV(d)
@@ -75,8 +81,17 @@ class Pass:
         #Set data_mod for plot use
         self.data_mod = d.copy()
 
+    def reLoc(self, dataIntermediate, loc_units):
+        if loc_units != self.data_loc_units:
+            if loc_units == cfg.UNIT_FT:
+                # Convert loc from M to FT
+                dataIntermediate['loc'] = dataIntermediate['loc'].multiply(cfg.FT_PER_M)
+            else:
+                # Convert loc from FT to M
+                dataIntermediate['loc'] = dataIntermediate['loc'].divide(cfg.FT_PER_M)
+        return dataIntermediate
+
     def trimLR(self, dataIntermediate):
-        #print(f'trim left = {self.trim_l}, trim right = {self.trim_r}')
         name = self.name
         d = dataIntermediate
         #Trim Left

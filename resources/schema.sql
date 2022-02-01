@@ -83,9 +83,13 @@ CREATE TABLE IF NOT EXISTS passes (
     temperature             REAL,
     temperature_units       TEXT,
     humidity                REAL,
-    include_in_composite    INTEGER,
+    include_in_composite    INTEGER
+);
+CREATE TABLE IF NOT EXISTS pass_string (
+    pass_id                 TEXT PRIMARY KEY REFERENCES passes(id),
     excitation_wav          INTEGER,
     emission_wav            INTEGER,
+    integration_time_ms     INTEGER,
     trim_left               INTEGER,
     trim_right              INTEGER,
     trim_vertical           REAL,

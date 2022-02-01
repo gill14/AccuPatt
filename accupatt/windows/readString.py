@@ -222,6 +222,10 @@ class ReadString(baseclass):
             return
         #data_loc_units
         p.data_loc_units = self.settings.value('flightline_length_units', defaultValue='ft', type=str)
+        # String Params
+        p.excitation_wav = self.settings.value('target_excitation_wavelength', defaultValue=cfg.SPEC_WAV_EX__DEFAULT, type=int)
+        p.emission_wav = self.settings.value('target_emission_wavelength', defaultValue=cfg.SPEC_WAV_EM__DEFAULT, type=int)
+        p.integration_time_ms = self.settings.value('integration_time_ms', defaultValue=cfg.SPEC_INT_TIME_MS__DEFAULT, type=int)
         #Pattern
         if len(self.x) > 0:
             p.setData(self.x, self.y, self.y_ex)
@@ -318,13 +322,13 @@ class ReadString(baseclass):
                 return
         #Inform spectrometer of new int time
         self.spec.integration_time_micros(self.settings.value(
-            'integration_time_ms', defaultValue=100, type=int) * 1000)
+            'integration_time_ms', defaultValue=cfg.SPEC_INT_TIME_MS__DEFAULT, type=int) * 1000)
         #Populate Spectrometer labels
         self.ui.labelSpec.setText(f"Spectrometer: {self.spec.model}")
         self.ui.labelExcitation.setText(
-            f"Excitation: {self.settings.value('target_excitation_wavelength', defaultValue=525, type=int)} nm")
+            f"Excitation: {self.settings.value('target_excitation_wavelength', defaultValue=cfg.SPEC_WAV_EX__DEFAULT, type=int)} nm")
         self.ui.labelEmission.setText(
-            f"Emission: {self.settings.value('target_emission_wavelength', defaultValue=575, type=int)} nm")
+            f"Emission: {self.settings.value('target_emission_wavelength', defaultValue=cfg.SPEC_WAV_EM__DEFAULT, type=int)} nm")
         self.ui.labelIntegrationTime.setText(
-            f"Integration Time: {self.settings.value('integration_time_ms', defaultValue=100, type=int)} ms")
+            f"Integration Time: {self.settings.value('integration_time_ms', defaultValue=cfg.SPEC_INT_TIME_MS__DEFAULT, type=int)} ms")
         self.checkReady()

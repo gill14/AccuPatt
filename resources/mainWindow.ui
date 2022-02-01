@@ -1202,7 +1202,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget_3">
           <property name="currentIndex">
-           <number>1</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="tab_5">
            <attribute name="title">
@@ -1692,7 +1692,10 @@
              </layout>
             </item>
             <item>
-             <layout class="QVBoxLayout" name="verticalLayout_7">
+             <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,0,0,0,0,0,0,0">
+              <property name="spacing">
+               <number>5</number>
+              </property>
               <item>
                <widget class="QLabel" name="label_5">
                 <property name="maximumSize">
@@ -1716,7 +1719,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="labelSpatialShowing">
+               <widget class="QLabel" name="labelCardSpatialPass">
                 <property name="text">
                  <string/>
                 </property>
@@ -1727,6 +1730,48 @@
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>
                 </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_3">
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Plot X-Units</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_2">
+                <property name="flat">
+                 <bool>false</bool>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_9">
+                 <property name="topMargin">
+                  <number>8</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>8</number>
+                 </property>
+                 <item>
+                  <widget class="QRadioButton" name="radioButtonSpatialFt">
+                   <property name="text">
+                    <string>Feet</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="radioButtonSpatialM">
+                   <property name="text">
+                    <string>Meters</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </widget>
               </item>
               <item>

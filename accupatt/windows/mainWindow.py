@@ -2,6 +2,7 @@ from datetime import datetime
 import os
 from pathlib import Path
 
+import accupatt.config as cfg
 from accupatt.helpers.cardPlotter import CardPlotter
 from accupatt.helpers.dataFileImporter import convert_xlsx_to_db, load_from_accupatt_1_file
 from accupatt.helpers.dBBridge import load_from_db, save_to_db
@@ -24,7 +25,7 @@ from PyQt6.QtWidgets import (QComboBox, QFileDialog, QLabel,
                              QListWidgetItem, QMenu, QMessageBox)
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'mainWindow.ui'))
-testing = False
+testing = True
 class MainWindow(baseclass):
 
     def __init__(self, *args, **kwargs):
@@ -75,6 +76,7 @@ class MainWindow(baseclass):
         # --> Setup Card Analysis Tab
         self.ui.listWidgetSprayCardPass.itemSelectionChanged.connect(self.sprayCardPassSelectionChanged)
         self.ui.listWidgetSprayCard.itemSelectionChanged.connect(self.sprayCardSelectionChanged)
+        self.ui.listWidgetSprayCard.itemChanged[QListWidgetItem].connect(self.sprayCardItemChanged)
         self.ui.buttonEditCards.clicked.connect(self.editSprayCardList)
         self.ui.buttonEditThreshold.clicked.connect(self.editThreshold)
         self.ui.buttonEditSpreadFactors.clicked.connect(self.editSpreadFactors)
@@ -84,6 +86,7 @@ class MainWindow(baseclass):
         # --> | --> Stup Droplet Distribution Tab
         self.ui.comboBoxSprayCardDist.currentIndexChanged[int].connect(self.sprayCardDistModeChanged)
         # --> | --> Setup Spatial Tab
+        self.ui.radioButtonSpatialFt.toggled[bool].connect(self.spatialUnitsChanged)
         self.ui.checkBoxColorByDSC.stateChanged[int].connect(self.colorByDSCChanged)
         # --> | --> Setup Simulations Tab 
         
@@ -243,6 +246,9 @@ class MainWindow(baseclass):
     def update_all_ui(self):
         #Populate AppInfo tab
         self.ui.widgetSeriesInfo.fill_from_info(self.seriesData.info)
+
+        #Update Controls
+        self.ui.radioButtonSpatialFt.setChecked(self.seriesData.info.swath_units == cfg.UNIT_FT)
 
         #Refresh ListWidgets
         self.updatePassListWidgets(string=True, cards=True)
@@ -501,57 +507,62 @@ class MainWindow(baseclass):
         with QSignalBlocker(self.ui.listWidgetSprayCard):
             # Clear Spray Card List
             self.ui.listWidgetSprayCard.clear()
-            if (passIndex := self.ui.listWidgetSprayCardPass.currentRow()) != -1:
-                p: Pass = self.seriesData.passes[passIndex]
+            passData, _ = self.getCurrentPassAndCard()
+            if passData:
                 # Repopulate Spray Card List
-                for card in p.spray_cards:
+                for card in passData.spray_cards:
                     item = QListWidgetItem(card.name,self.ui.listWidgetSprayCard)
-                    #self.ui.listWidgetSprayCard.addItem(item)
                     if card.has_image:
                         if card.include_in_composite: 
                             item.setCheckState(Qt.CheckState.Checked)
                         else:
                             item.setCheckState(Qt.CheckState.PartiallyChecked)
+                        item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsUserCheckable)
                     else:
                         item.setCheckState(Qt.CheckState.Unchecked)
-                    item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
-                # Spatial plot
-                self.plotSpatial()
+                        item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
         self.sprayCardSelectionChanged()
-        
+        self.updateCardPlots(spatial=True)
 
     @pyqtSlot()
     def sprayCardSelectionChanged(self):
-        # Update input ui
-        self.setSprayCardProcessingButtonsEnable(False)
-        cb: QComboBox = self.ui.comboBoxSprayCardDist
-        with QSignalBlocker(cb):
-            cb.clear()
-            if (passIndex := self.ui.listWidgetSprayCardPass.currentRow()) != -1:
-                passData: Pass = self.seriesData.passes[passIndex]
-                if (cardIndex := self.ui.listWidgetSprayCard.currentRow()) != -1:
-                    # Get a handle on selected card
-                    sprayCard: SprayCard = passData.spray_cards[cardIndex]
-                    cb.addItem(sprayCard.name)
-                    if sprayCard.has_image:
-                        self.setSprayCardProcessingButtonsEnable(True)
-                else:
-                    cb.addItem('')
-                cb.addItems([passData.name,'Series'])
-                cb.setCurrentIndex(0)
+        passData, sprayCard = self.getCurrentPassAndCard()
+        # Update dist input ui
+        cb_dist: QComboBox = self.ui.comboBoxSprayCardDist
+        with QSignalBlocker(cb_dist):
+            cb_dist.clear()
+            cb_dist.addItem((sprayCard.name if sprayCard else ''))
+            cb_dist.addItem((passData.name if passData else ''))
+            cb_dist.addItem(('Series'))
+        # Processing Buttons visibility
+        self.setSprayCardProcessingButtonsEnable(bool(sprayCard and sprayCard.has_image))
         # Update plot/image ui
         self.updateCardPlots(images=True, distributions=True)
+
+    @pyqtSlot(QListWidgetItem)
+    def sprayCardItemChanged(self, item: QListWidgetItem):
+        # Checkstate on item changed
+        # If new state is unchecked, make it partial
+        if item.checkState() == Qt.CheckState.Unchecked:
+            with QSignalBlocker(self.ui.listWidgetSprayCard):
+                item.setCheckState(Qt.CheckState.PartiallyChecked)
+        # Update Card Object
+        passData, _ = self.getCurrentPassAndCard()
+        sprayCard: SprayCard = passData.spray_cards[self.ui.listWidgetSprayCard.row(item)]
+        sprayCard.include_in_composite = (item.checkState() == Qt.CheckState.Checked)
+        # Replot
+        self.updateCardPlots(distributions=True, spatial=True)
 
     @pyqtSlot()
     def editSprayCardList(self):
         #Get a handle on the currently selected pass
-        p = self.seriesData.passes[self.ui.listWidgetSprayCardPass.currentRow()]
+        passData, _ = self.getCurrentPassAndCard()
         #Trigger file save if filapath needed
         if self.currentFile == None or self.currentFile == '':
             if not self.saveFile():
                 return
         #Open the Edit Card List window for currently selected pass
-        e = CardManager(passData=p, filepath=self.currentFile, parent=self)
+        e = CardManager(passData=passData, filepath=self.currentFile, parent=self)
         #Connect Slot to retrieve Vals back from popup
         e.accepted.connect(self.editSprayCardListFinished)
         e.passDataChanged.connect(self.saveFile)
@@ -567,35 +578,25 @@ class MainWindow(baseclass):
 
     @pyqtSlot()
     def editThreshold(self):
-         # Check if a card is selected
-        if (passIndex := self.ui.listWidgetSprayCardPass.currentRow()) != -1:
-            passData: Pass = self.seriesData.passes[passIndex]
-            if (cardIndex := self.ui.listWidgetSprayCard.currentRow()) != -1:
-                # Get a handle on selected card
-                sprayCard: SprayCard = self.seriesData.passes[passIndex].spray_cards[cardIndex]
-                if sprayCard.has_image:
-                    #Open the Edit SF window for currently selected card
-                    e = EditThreshold(sprayCard=sprayCard, passData=passData, seriesData=self.seriesData, parent=self)
-                    #Connect Slot to retrieve Vals back from popup
-                    e.accepted.connect(self.saveAndUpdateSprayCardView)
-                    #Start Loop
-                    e.exec()
+        passData, sprayCard = self.getCurrentPassAndCard()
+        if sprayCard and sprayCard.has_image:
+            #Open the Edit SF window for currently selected card
+            e = EditThreshold(sprayCard=sprayCard, passData=passData, seriesData=self.seriesData, parent=self)
+            #Connect Slot to retrieve Vals back from popup
+            e.accepted.connect(self.saveAndUpdateSprayCardView)
+            #Start Loop
+            e.exec()
     
     @pyqtSlot()
     def editSpreadFactors(self):
-         # Check if a card is selected
-        if (passIndex := self.ui.listWidgetSprayCardPass.currentRow()) != -1:
-            passData: Pass = self.seriesData.passes[passIndex]
-            if (cardIndex := self.ui.listWidgetSprayCard.currentRow()) != -1:
-                # Get a handle on selected card
-                sprayCard: SprayCard = self.seriesData.passes[passIndex].spray_cards[cardIndex]
-                if sprayCard.has_image:
-                    #Open the Edit SF window for currently selected card
-                    e = EditSpreadFactors(sprayCard=sprayCard, passData=passData, seriesData=self.seriesData, parent=self)
-                    #Connect Slot to retrieve Vals back from popup
-                    e.accepted.connect(self.saveAndUpdateSprayCardView)
-                    #Start Loop
-                    e.exec()
+        passData, sprayCard = self.getCurrentPassAndCard()
+        if sprayCard and sprayCard.has_image:
+            #Open the Edit SF window for currently selected card
+            e = EditSpreadFactors(sprayCard=sprayCard, passData=passData, seriesData=self.seriesData, parent=self)
+            #Connect Slot to retrieve Vals back from popup
+            e.accepted.connect(self.saveAndUpdateSprayCardView)
+            #Start Loop
+            e.exec()
 
     @pyqtSlot(bool)
     def updateSprayCardFitMode(self, newBool):
@@ -603,67 +604,59 @@ class MainWindow(baseclass):
 
     @pyqtSlot(int)
     def sprayCardDistModeChanged(self, mode):
+        print('distmodechanged')
         self.updateCardPlots(distributions=True)
+    
+    @pyqtSlot(bool)
+    def spatialUnitsChanged(self, newBool):
+        self.updateCardPlots(spatial=True)
     
     @pyqtSlot(int)
     def colorByDSCChanged(self, checkstate):
-        self.plotSpatial()
+        self.updateCardPlots(spatial=True)
     
     @pyqtSlot()
     def saveAndUpdateSprayCardView(self):
         self.saveFile()
-        self.updateCardPlots(images = True, distributions = True)
-        self.plotSpatial()
+        self.updateCardPlots(images = True, distributions = True, spatial = True)
 
-    def updateCardPlots(self, images = False, distributions = False):
-        # Clear
+    def updateCardPlots(self, images = False, distributions = False, spatial = False):
+        passData, sprayCard, cvImg1, cvImg2 = [None] * 4
+        passData, sprayCard = self.getCurrentPassAndCard()
         if images:
-            self.ui.splitCardWidget.clearSprayCardView()
+            if sprayCard and sprayCard.has_image:
+                cvImg1, cvImg2 = sprayCard.images_processed()
+            fitMode = 'horizontal' if self.ui.radioButtonSprayCardFitH.isChecked() else 'vertical'
+            self.ui.splitCardWidget.updateSprayCardView(cvImg1, cvImg2, fitMode)
         if distributions:
-            CardPlotter.clearDropletDistributionPlots(mplWidget1=self.ui.plotWidgetDropDist1, mplWidget2=self.ui.plotWidgetDropDist2)
-            CardPlotter.clearCardStatTable(tableWidget=self.ui.tableWidgetSprayCardStats)
-        # Check if a card is selected
-        if (passIndex := self.ui.listWidgetSprayCardPass.currentRow()) != -1:
-            passData: Pass = self.seriesData.passes[passIndex]
-            if (cardIndex := self.ui.listWidgetSprayCard.currentRow()) != -1:
-                # Get a handle on selected card
-                sprayCard: SprayCard = passData.spray_cards[cardIndex]
-                # Show original and binary image if available
-                if sprayCard.has_image:
-                    if images:
-                        cvImg1, cvImg2 = sprayCard.images_processed()
-                        if self.ui.radioButtonSprayCardFitH.isChecked():
-                            fitMode = 'horizontal'
-                        else:
-                            fitMode = 'vertical'
-                        self.ui.splitCardWidget.updateSprayCardView(cvImg1, cvImg2, fitMode)
-                    if distributions:
-                        self.plotDropletDistributions(sprayCard, passData)
-            else:
-                if distributions:
-                    self.plotDropletDistributions(passData = passData)
-                        
-    def plotDropletDistributions(self, sprayCard: SprayCard = None, passData: Pass = None):
-        index = self.ui.comboBoxSprayCardDist.currentIndex()
-        if index == 1:
-            composite = CardPlotter.createRepresentativeComposite(passData=passData)
-        elif index == 2:
-            composite = CardPlotter.createRepresentativeComposite(seriesData=self.seriesData)
-        else:
-            composite = CardPlotter.createRepresentativeComposite(sprayCard=sprayCard)
-        CardPlotter.showCardStatTable(self.ui.tableWidgetSprayCardStats, composite)
-        CardPlotter.plotDropletDistribution(self.ui.plotWidgetDropDist1, self.ui.plotWidgetDropDist2, composite)
-    
-    def plotSpatial(self):
-        # Check if a card is selected
-        if (passIndex := self.ui.listWidgetSprayCardPass.currentRow()) != -1:
-            passData = self.seriesData.passes[passIndex]
+            spc = [sprayCard, passData, self.seriesData]
+            spc = [spc[i] if i == self.ui.comboBoxSprayCardDist.currentIndex() else None for i in range(len(spc))]
+            CardPlotter.plotDistribution(mplWidget1=self.ui.plotWidgetDropDist1,
+                                         mplWidget2=self.ui.plotWidgetDropDist2,
+                                         tableWidget=self.ui.tableWidgetSprayCardStats,
+                                         sprayCard=spc[0],
+                                         passData=spc[1],
+                                         seriesData=spc[2])
+        if spatial:
+            self.ui.labelCardSpatialPass.setText(passData.name if passData else '')
+            spray_cards = passData.spray_cards if passData else []
+            loc_units = cfg.UNIT_FT if self.ui.radioButtonSpatialFt.isChecked() else cfg.UNIT_M
             CardPlotter.plotSpatial(mplWidget1=self.ui.mplWidgetCardSpatial1,
                                     mplWidget2=self.ui.mplWidgetCardSpatial2,
-                                    sprayCards=passData.spray_cards,
+                                    sprayCards=spray_cards,
+                                    loc_units=loc_units,
                                     colorize=self.ui.checkBoxColorByDSC.isChecked())
-            self.ui.labelSpatialShowing.setText(passData.name)
         
+    def getCurrentPassAndCard(self) -> tuple:
+        passData, sprayCard = [None] * 2
+         # Check if a pass is selected
+        if (passIndex := self.ui.listWidgetSprayCardPass.currentRow()) != -1:
+            passData: Pass = self.seriesData.passes[passIndex]
+            # Check if a card is selected
+            if (cardIndex := self.ui.listWidgetSprayCard.currentRow()) != -1:
+                sprayCard: SprayCard = passData.spray_cards[cardIndex]
+        return passData, sprayCard
+    
     def setSprayCardProcessingButtonsEnable(self, enable = False):
         self.ui.buttonEditThreshold.setEnabled(enable)
         self.ui.buttonEditSpreadFactors.setEnabled(enable)

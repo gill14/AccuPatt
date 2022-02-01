@@ -32,7 +32,7 @@ class SeriesData:
         #apply individual pattern modifications
         for p in self.passes:
             if p.data.empty or not p.include_in_composite: continue
-            p.modifyData(isCenter=self.string_center, isSmooth=self.string_smooth_individual)
+            p.modifyData(isCenter=self.string_center, isSmooth=self.string_smooth_individual, loc_units=self.info.swath_units)
         #apply cross-pattern modifications
         if self.string_equalize_integrals:
             self._equalizePatterns()

@@ -40,19 +40,16 @@ def load_from_db(file: str, s: SeriesData, load_only_info=False):
 
 def _load_table_series(c: sqlite3.Cursor, s: SeriesData):
     i = s.info
-    # Series Table
     c.execute('''SELECT id, series, created, modified, notes_setup, notes_analyst FROM series''')
     s.id, i.series, i.created, i.modified, i.notes_setup, i.notes_analyst = c.fetchone()
 
 def _load_table_series_string(c: sqlite3.Cursor, s: SeriesData):
     i = s.info
-    # Series String Table
     c.execute('''SELECT smooth_individual, smooth_average, equalize_integrals, center, simulated_adjascent_passes FROM series_string WHERE series_id = ?''', (s.id,))
     s.string_smooth_individual, s.string_smooth_average, s.string_equalize_integrals, s.string_center, s.string_simulated_adjascent_passes = c.fetchone()
 
 def _load_table_flyin(c: sqlite3.Cursor, s: SeriesData):
     i = s.info
-    #Flyin Table
     c.execute('''SELECT flyin_name, flyin_location, flyin_date, flyin_analyst FROM flyin WHERE series_id = ?''', (s.id,))
     i.flyin_name, i.flyin_location, i.flyin_date, i.flyin_analyst = c.fetchone()
     
@@ -62,7 +59,6 @@ def _load_table_applicator(c: sqlite3.Cursor, s: SeriesData, alt_id: str = ''):
     else:
         id = alt_id
     i = s.info
-    #Applicator Table
     c.execute('''SELECT pilot, business, street, city, state, zip, phone, email FROM applicator WHERE series_id = ?''',(id,))
     i.pilot, i.business, i.street, i.city, i.state, i.zip, i.phone, i.email = c.fetchone()
 
@@ -72,7 +68,6 @@ def _load_table_aircraft(c: sqlite3.Cursor, s: SeriesData, alt_id: str = ''):
     else:
         id = alt_id
     i = s.info
-    #Aircraft Table
     c.execute('''SELECT regnum, make, model, wingspan, wingspan_units, winglets FROM aircraft WHERE series_id = ?''', (id,))
     i.regnum, i.make, i.model, i.wingspan, i.wingspan_units, i.winglets = c.fetchone()
     
@@ -82,7 +77,6 @@ def _load_table_spray_system(c: sqlite3.Cursor, s: SeriesData, alt_id: str = '')
     else:
         id = alt_id
     i = s.info
-    #Spray System Table
     c.execute('''SELECT swath, swath_adjusted, swath_units, rate, rate_units, pressure, pressure_units, boom_width, boom_width_units, boom_drop, boom_drop_units, nozzle_spacing, nozzle_spacing_units FROM spray_system WHERE series_id = ?''',(id,))
     i.swath, i.swath_adjusted, i.swath_units, i.rate, i.rate_units, i.pressure, i.pressure_units, i.boom_width, i.boom_width_units, i.boom_drop, i.boom_drop_units, i.nozzle_spacing, i.nozzle_spacing_units = c.fetchone()
 
@@ -102,18 +96,22 @@ def _load_table_nozzles(c: sqlite3.Cursor, s: SeriesData, alt_id: str = ''):
                                 quantity=row[4]))
 
 def _load_table_passes(c: sqlite3.Cursor, s: SeriesData, file: str):
-    #Passes Table
-    c.execute('''SELECT id, pass_name, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity, include_in_composite, excitation_wav, emission_wav, trim_left, trim_right, trim_vertical, excitation_data, emission_data, data_loc_units FROM passes WHERE series_id = ?''',(s.id,))
+    c.execute('''SELECT id, pass_name, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity, include_in_composite FROM passes WHERE series_id = ?''',(s.id,))
     data = c.fetchall()
     for row in data:
         p = Pass(id=row[0], number=row[2])
-        _, p.name, _, p.ground_speed, p.ground_speed_units, p.spray_height, p.spray_height_units, p.pass_heading, p.wind_direction, p.wind_speed, p.wind_speed_units, p.temperature, p.temperature_units, p.humidity, p.include_in_composite, p.excitation_wav, p.emission_wav, p.trim_l, p.trim_r, p.trim_v, d_ex, d_em, p.data_loc_units = row
-        p.data_ex = pd.read_json(d_ex)
-        p.data = pd.read_json(d_em)
+        _, p.name, _, p.ground_speed, p.ground_speed_units, p.spray_height, p.spray_height_units, p.pass_heading, p.wind_direction, p.wind_speed, p.wind_speed_units, p.temperature, p.temperature_units, p.humidity, p.include_in_composite = row
         
+        _load_table_pass_string(c,p)
         _load_table_spray_cards(c,p,file)
         
         s.passes.append(p)
+
+def _load_table_pass_string(c: sqlite3.Cursor, p: Pass):
+    c.execute('''SELECT excitation_wav, emission_wav, integration_time_ms, trim_left, trim_right, trim_vertical, data_loc_units, excitation_data, emission_data FROM pass_string WHERE pass_id = ?''',(p.id,))
+    p.excitation_wav, p.emission_wav, p.integration_time_ms, p.trim_l, p.trim_r, p.trim_v, p.data_loc_units, d_ex, d_em = c.fetchone()
+    p.data_ex = pd.read_json(d_ex)
+    p.data = pd.read_json(d_em)
 
 def _load_table_spray_cards(c: sqlite3.Cursor, p: Pass, file: str):
     #Spray Cards Table
@@ -220,10 +218,11 @@ def _update_table_nozzles(c: sqlite3.Cursor, s: SeriesData):
 def _update_table_passes(c: sqlite3.Cursor, s: SeriesData):
     p: Pass
     for p in s.passes:
-        c.execute('''INSERT INTO passes (id, series_id, pass_name, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity, include_in_composite, excitation_wav, emission_wav, trim_left, trim_right, trim_vertical, excitation_data, emission_data, data_loc_units) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        c.execute('''INSERT INTO passes (id, series_id, pass_name, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity, include_in_composite) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(id) DO UPDATE SET
-                    pass_name = excluded.pass_name, pass_number = excluded.pass_number, ground_speed = excluded.ground_speed, ground_speed_units = excluded.ground_speed_units, spray_height = excluded.spray_height, spray_height_units = excluded.spray_height_units, pass_heading = excluded.pass_heading, wind_direction = excluded.wind_direction, wind_speed = excluded.wind_speed, wind_speed_units = excluded.wind_speed_units, temperature = excluded.temperature, temperature_units = excluded.temperature_units, humidity = excluded.humidity, include_in_composite = excluded.include_in_composite, excitation_wav = excluded.excitation_wav, emission_wav = excluded.emission_wav, trim_left = excluded.trim_left, trim_right = excluded.trim_right, trim_vertical = excluded.trim_vertical, excitation_data = excluded.excitation_data, emission_data = excluded.emission_data, data_loc_units = excluded.data_loc_units''',
-                    (p.id, s.id, p.name, p.number, p.ground_speed, p.ground_speed_units, p.spray_height, p.spray_height_units, p.pass_heading, p.wind_direction, p.wind_speed, p.wind_speed_units, p.temperature, p.temperature_units, p.humidity, p.include_in_composite, p.excitation_wav, p.emission_wav, p.trim_l, p.trim_r, p.trim_v, p.data_ex.to_json(), p.data.to_json(), p.data_loc_units))
+                    pass_name = excluded.pass_name, pass_number = excluded.pass_number, ground_speed = excluded.ground_speed, ground_speed_units = excluded.ground_speed_units, spray_height = excluded.spray_height, spray_height_units = excluded.spray_height_units, pass_heading = excluded.pass_heading, wind_direction = excluded.wind_direction, wind_speed = excluded.wind_speed, wind_speed_units = excluded.wind_speed_units, temperature = excluded.temperature, temperature_units = excluded.temperature_units, humidity = excluded.humidity, include_in_composite = excluded.include_in_composite''',
+                    (p.id, s.id, p.name, p.number, p.ground_speed, p.ground_speed_units, p.spray_height, p.spray_height_units, p.pass_heading, p.wind_direction, p.wind_speed, p.wind_speed_units, p.temperature, p.temperature_units, p.humidity, p.include_in_composite))
+        _update_table_pass_string(c, p)
         _update_table_spray_cards(c, p)
     # Loop through passes on db, delete any not in series object
     current_ids = [p.id for p in s.passes]
@@ -238,7 +237,14 @@ def _update_table_passes(c: sqlite3.Cursor, s: SeriesData):
                 in_query += f", '{id}'"
         in_query += ')'
         c.execute(f'DELETE FROM passes WHERE id NOT IN {in_query}')
+        c.execute(f'DELETE FROM pass_string WHERE pass_id NOT IN {in_query}')
         c.execute(f'DELETE FROM spray_cards WHERE pass_id NOT IN {in_query}')
+
+def _update_table_pass_string(c: sqlite3.Cursor, p: Pass):
+    c.execute('''INSERT INTO pass_string (pass_id, excitation_wav, emission_wav, integration_time_ms, trim_left, trim_right, trim_vertical, data_loc_units, excitation_data, emission_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(pass_id) DO UPDATE SET
+                    excitation_wav = excluded.excitation_wav, emission_wav = excluded.emission_wav, integration_time_ms = excluded.integration_time_ms, trim_left = excluded.trim_left, trim_right = excluded.trim_right, trim_vertical = excluded.trim_vertical, data_loc_units = excluded.data_loc_units, excitation_data = excluded.excitation_data, emission_data = excluded.emission_data''',
+                    (p.id, p.excitation_wav, p.emission_wav, p.integration_time_ms, p.trim_l, p.trim_r, p.trim_v, p.data_loc_units, p.data_ex.to_json(), p.data.to_json()))
 
 def _update_table_spray_cards(c: sqlite3.Cursor, p: Pass):
     card: SprayCard
