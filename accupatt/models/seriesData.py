@@ -2,6 +2,7 @@ import uuid
 
 import numpy as np
 import pandas as pd
+import accupatt.config as cfg
 from accupatt.helpers.atomizationModel import AtomizationModelMulti
 from accupatt.models.appInfo import AppInfo
 from accupatt.models.passData import Pass
@@ -18,10 +19,9 @@ class SeriesData:
         self.info = AppInfo()
         self.passes = []
         #String Options
-        self.string_smooth_individual = True
-        self.string_smooth_average = True
+        self.string_average_smooth = True
         self.string_equalize_integrals = True
-        self.string_center = True
+        self.string_average_center_method = cfg.CENTER_METHOD_CENTROID
         self.string_simulated_adjascent_passes = 2
         #Convenience Runtime Placeholders
         self.patternAverage = Pass(name='Average')
@@ -29,17 +29,20 @@ class SeriesData:
     def modifyPatterns(self):
         if all(p.data.empty for p in self.passes):
             return
-        #apply individual pattern modifications
+        # Apply individual pattern modifications
         for p in self.passes:
-            if p.data.empty or not p.include_in_composite: continue
-            p.modifyData(isCenter=self.string_center, isSmooth=self.string_smooth_individual, loc_units=self.info.swath_units)
-        #apply cross-pattern modifications
+            if not p.data.empty and p.include_in_composite:
+                p.modifyData(loc_units=self.info.swath_units)
+        # Apply cross-pattern modifications
         if self.string_equalize_integrals:
             self._equalizePatterns()
-        #Generate Average Pattern
+        # Assign series string options to average Pass
+        self.patternAverage.string_smooth = self.string_average_smooth
+        self.patternAverage.string_center_method = self.string_average_center_method
+        # Generate and assign data to average Pass
         self._averagePattern()
         #Apply avearge pattern modifications
-        self.patternAverage.modifyData(isCenter=self.string_center, isSmooth=self.string_smooth_average)
+        self.patternAverage.modifyData()
 
     def _equalizePatterns(self):
         areas = []

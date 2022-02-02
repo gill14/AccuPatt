@@ -45,8 +45,8 @@ def _load_table_series(c: sqlite3.Cursor, s: SeriesData):
 
 def _load_table_series_string(c: sqlite3.Cursor, s: SeriesData):
     i = s.info
-    c.execute('''SELECT smooth_individual, smooth_average, equalize_integrals, center, simulated_adjascent_passes FROM series_string WHERE series_id = ?''', (s.id,))
-    s.string_smooth_individual, s.string_smooth_average, s.string_equalize_integrals, s.string_center, s.string_simulated_adjascent_passes = c.fetchone()
+    c.execute('''SELECT average_center, average_smooth, equalize_integrals, simulated_adjascent_passes FROM series_string WHERE series_id = ?''', (s.id,))
+    s.string_average_center_method, s.string_average_smooth, s.string_equalize_integrals, s.string_simulated_adjascent_passes = c.fetchone()
 
 def _load_table_flyin(c: sqlite3.Cursor, s: SeriesData):
     i = s.info
@@ -108,8 +108,8 @@ def _load_table_passes(c: sqlite3.Cursor, s: SeriesData, file: str):
         s.passes.append(p)
 
 def _load_table_pass_string(c: sqlite3.Cursor, p: Pass):
-    c.execute('''SELECT excitation_wav, emission_wav, integration_time_ms, trim_left, trim_right, trim_vertical, data_loc_units, excitation_data, emission_data FROM pass_string WHERE pass_id = ?''',(p.id,))
-    p.excitation_wav, p.emission_wav, p.integration_time_ms, p.trim_l, p.trim_r, p.trim_v, p.data_loc_units, d_ex, d_em = c.fetchone()
+    c.execute('''SELECT excitation_wav, emission_wav, integration_time_ms, trim_left, trim_right, trim_vertical, center, smooth, data_loc_units, excitation_data, emission_data FROM pass_string WHERE pass_id = ?''',(p.id,))
+    p.excitation_wav, p.emission_wav, p.integration_time_ms, p.trim_l, p.trim_r, p.trim_v, p.string_center_method, p.string_smooth, p.data_loc_units, d_ex, d_em = c.fetchone()
     p.data_ex = pd.read_json(d_ex)
     p.data = pd.read_json(d_em)
 
@@ -160,10 +160,10 @@ def _update_table_series(c: sqlite3.Cursor, s: SeriesData):
                     (s.id, i.series, i.created, i.modified, i.notes_setup, i.notes_analyst))
         
 def _update_table_series_string(c: sqlite3.Cursor, s: SeriesData):
-    c.execute('''INSERT INTO series_string (series_id, smooth_individual, smooth_average, equalize_integrals, center, simulated_adjascent_passes) VALUES (?, ?, ?, ?, ?, ?)
+    c.execute('''INSERT INTO series_string (series_id, average_center, average_smooth,  equalize_integrals, simulated_adjascent_passes) VALUES (?, ?, ?, ?, ?)
                     ON CONFLICT(series_id) DO UPDATE SET
-                    smooth_individual = excluded.smooth_individual, smooth_average = excluded.smooth_average, equalize_integrals = excluded.equalize_integrals, center = excluded.center, simulated_adjascent_passes = excluded.simulated_adjascent_passes''',
-                    (s.id, s.string_smooth_individual, s.string_smooth_average, s.string_equalize_integrals, s.string_center, s.string_simulated_adjascent_passes))
+                    average_center = excluded.average_center, average_smooth = excluded.average_smooth, equalize_integrals = excluded.equalize_integrals, simulated_adjascent_passes = excluded.simulated_adjascent_passes''',
+                    (s.id, s.string_average_center_method, s.string_average_smooth, s.string_equalize_integrals, s.string_simulated_adjascent_passes))
 
 def _update_table_flyin(c: sqlite3.Cursor, s: SeriesData):
     i = s.info
@@ -241,10 +241,10 @@ def _update_table_passes(c: sqlite3.Cursor, s: SeriesData):
         c.execute(f'DELETE FROM spray_cards WHERE pass_id NOT IN {in_query}')
 
 def _update_table_pass_string(c: sqlite3.Cursor, p: Pass):
-    c.execute('''INSERT INTO pass_string (pass_id, excitation_wav, emission_wav, integration_time_ms, trim_left, trim_right, trim_vertical, data_loc_units, excitation_data, emission_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    c.execute('''INSERT INTO pass_string (pass_id, excitation_wav, emission_wav, integration_time_ms, trim_left, trim_right, trim_vertical, center, smooth, data_loc_units, excitation_data, emission_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(pass_id) DO UPDATE SET
-                    excitation_wav = excluded.excitation_wav, emission_wav = excluded.emission_wav, integration_time_ms = excluded.integration_time_ms, trim_left = excluded.trim_left, trim_right = excluded.trim_right, trim_vertical = excluded.trim_vertical, data_loc_units = excluded.data_loc_units, excitation_data = excluded.excitation_data, emission_data = excluded.emission_data''',
-                    (p.id, p.excitation_wav, p.emission_wav, p.integration_time_ms, p.trim_l, p.trim_r, p.trim_v, p.data_loc_units, p.data_ex.to_json(), p.data.to_json()))
+                    excitation_wav = excluded.excitation_wav, emission_wav = excluded.emission_wav, integration_time_ms = excluded.integration_time_ms, trim_left = excluded.trim_left, trim_right = excluded.trim_right, trim_vertical = excluded.trim_vertical, center = excluded.center, smooth = excluded.smooth, data_loc_units = excluded.data_loc_units, excitation_data = excluded.excitation_data, emission_data = excluded.emission_data''',
+                    (p.id, p.excitation_wav, p.emission_wav, p.integration_time_ms, p.trim_l, p.trim_r, p.trim_v, p.string_center_method, p.string_smooth, p.data_loc_units, p.data_ex.to_json(), p.data.to_json()))
 
 def _update_table_spray_cards(c: sqlite3.Cursor, p: Pass):
     card: SprayCard

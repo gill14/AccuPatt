@@ -2,6 +2,7 @@ import copy
 
 import numpy as np
 import pandas as pd
+import accupatt.config as cfg
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
 from accupatt.widgets.mplwidget import MplWidget
@@ -58,12 +59,15 @@ class StringPlotter:
         if passData.data.empty: return
         #Plot raw data
         d = copy.copy(passData)
-        d.modifyData(isCenter=False, isSmooth=False)
+        d.string_center_method=cfg.CENTER_METHOD_NONE
+        d.string_smooth=False
+        d.modifyData()
         x = np.array(d.data['loc'].values, dtype=float)
         y = np.array(d.data_mod[d.name].values, dtype=float)
         pyqtplotwidget.plot(name='Emission', pen='w').setData(x, y)
         #Plot smooth data on top of raw data
-        d.modifyData(isCenter=False, isSmooth=True)
+        d.string_smooth=True
+        d.modifyData()
         y_smooth = np.array(d.data_mod[d.name].values, dtype=float)
         pyqtplotwidget.plot(name='Smooth', pen=mkPen('y', width=3)).setData(x, y_smooth)
 

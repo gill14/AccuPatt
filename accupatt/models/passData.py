@@ -56,10 +56,12 @@ class Pass:
         self.data_mod = data_mod #Holds data with all requested modifications
         self.data_ex = data_ex #Holds Excitation Data
         self.data_loc_units = data_loc_units
+        self.string_center_method = cfg.CENTER_METHOD_CENTROID
+        self.string_smooth = True
         #Cards
         self.spray_cards = []
 
-    def modifyData(self, isCenter=True, isSmooth=True, loc_units=None):
+    def modifyData(self, loc_units=None):
         if self.data.empty: return
         d = self.data.copy()
         # If loc_units provided, ensure we use them
@@ -69,14 +71,9 @@ class Pass:
         d,_ = self.trimLR(d)
         d = self.trimV(d)
         #Center it
-        centerMethod = cfg.CENTER_METHOD_NONE
-        if isCenter:
-            #Testing centroid vs cod
-            #centerMethod = cfg.CENTER_METHOD_COD
-            centerMethod = cfg.CENTER_METHOD_CENTROID
-        d = self.centerify(d, centerMethod)
+        d = self.centerify(d, self.string_center_method)
         #Smooth it
-        if isSmooth:
+        if self.string_smooth:
             d = self.smooth(d)
         #Set data_mod for plot use
         self.data_mod = d.copy()

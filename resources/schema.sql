@@ -10,10 +10,9 @@ CREATE TABLE IF NOT EXISTS series (
 );
 CREATE TABLE IF NOT EXISTS series_string (
     series_id                   TEXT PRIMARY KEY REFERENCES series(id),
-    smooth_individual           INTEGER,
-    smooth_average              INTEGER,
+    average_center              TEXT,
+    average_smooth              INTEGER,
     equalize_integrals          INTEGER,
-    center                      INTEGER,
     simulated_adjascent_passes  INTEGER
 );
 CREATE TABLE IF NOT EXISTS flyin (
@@ -93,9 +92,11 @@ CREATE TABLE IF NOT EXISTS pass_string (
     trim_left               INTEGER,
     trim_right              INTEGER,
     trim_vertical           REAL,
+    center                  TEXT,
+    smooth                  INTEGER,
+    data_loc_units          TEXT,
     excitation_data         TEXT,
-    emission_data           TEXT,
-    data_loc_units          TEXT
+    emission_data           TEXT
 );
 CREATE TABLE IF NOT EXISTS spray_cards (
     id                              TEXT PRIMARY KEY,

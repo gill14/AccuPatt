@@ -21,6 +21,7 @@ from accupatt.windows.readString import ReadString
 from accupatt.widgets import mplwidget, seriesinfowidget, singleCVImageWidget, splitcardwidget
 from PyQt6 import uic
 from PyQt6.QtCore import QSettings, QSignalBlocker, Qt, pyqtSlot
+from PyQt6.QtGui import QAction, QActionGroup
 from PyQt6.QtWidgets import (QComboBox, QFileDialog, QLabel,
                              QListWidgetItem, QMenu, QMessageBox)
 
@@ -48,6 +49,11 @@ class MainWindow(baseclass):
         self.ui.action_import_accupatt_legacy.triggered.connect(self.importAccuPatt)
         # --> Setup Options Menu
         self.ui.action_pass_manager.triggered.connect(self.openPassManager)
+        center_actions = QActionGroup(self.ui.menuString_Center_Method)
+        center_actions.addAction(self.ui.actionCentroid)
+        center_actions.addAction(self.ui.actionCenter_of_Distribution)
+        center_actions.setExclusive(True)
+        center_actions.triggered[QAction].connect(self.toggleActionCenter)
         # --> Setup Export to Excel Menu
         self.ui.action_safe_report.triggered.connect(self.exportSAFEAttendeeLog)
         self.ui.action_detailed_report.triggered.connect(self.exportAllRawData)
@@ -62,10 +68,11 @@ class MainWindow(baseclass):
         self.ui.listWidgetStringPass.itemSelectionChanged.connect(self.stringPassSelectionChanged)
         self.ui.listWidgetStringPass.itemChanged[QListWidgetItem].connect(self.stringPassItemChanged)
         self.ui.buttonReadString.clicked.connect(self.readString)
-        self.ui.checkBoxAlignCentroid.stateChanged[int].connect(self.alignCentroidChanged)
-        self.ui.checkBoxEqualizeArea.stateChanged[int].connect(self.equalizeIntegralsChanged)
-        self.ui.checkBoxSmoothIndividual.stateChanged[int].connect(self.smoothIndividualChanged)
-        self.ui.checkBoxSmoothAverage.stateChanged[int].connect(self.smoothAverageChanged)
+        self.ui.checkBoxStringPassCenter.stateChanged[int].connect(self.stringPassCenterChanged)
+        self.ui.checkBoxStringPassSmooth.stateChanged[int].connect(self.stringPassSmoothChanged)
+        self.ui.checkBoxStringSeriesCenter.stateChanged[int].connect(self.stringSeriesCenterChanged)
+        self.ui.checkBoxStringSeriesSmooth.stateChanged[int].connect(self.stringSeriesSmoothChanged)
+        self.ui.checkBoxStringSeriesEqualize.stateChanged[int].connect(self.stringSeriesEqualizeChanged)
         self.ui.spinBoxSwathAdjusted.valueChanged[int].connect(self.swathAdjustedChanged)
         self.ui.horizontalSliderSimulatedSwath.valueChanged[int].connect(self.swathAdjustedChanged)
         # --> | --> Setup Individual Passes Tab
@@ -248,7 +255,16 @@ class MainWindow(baseclass):
         self.ui.widgetSeriesInfo.fill_from_info(self.seriesData.info)
 
         #Update Controls
-        self.ui.radioButtonSpatialFt.setChecked(self.seriesData.info.swath_units == cfg.UNIT_FT)
+        with QSignalBlocker(self.ui.checkBoxStringSeriesCenter):
+            self.ui.checkBoxStringSeriesCenter.setChecked(self.seriesData.string_average_center_method!=cfg.CENTER_METHOD_NONE)
+        with QSignalBlocker(self.ui.checkBoxStringSeriesSmooth):
+            self.ui.checkBoxStringSeriesSmooth.setChecked(self.seriesData.string_average_smooth)
+        with QSignalBlocker(self.ui.checkBoxStringSeriesEqualize):
+            self.ui.checkBoxStringSeriesEqualize.setChecked(self.seriesData.string_equalize_integrals)
+        with QSignalBlocker(self.ui.spinBoxSimulatedSwathPasses):
+            self.ui.spinBoxSimulatedSwathPasses.setValue(self.seriesData.string_simulated_adjascent_passes)
+        with QSignalBlocker(self.ui.radioButtonSpatialFt):
+            self.ui.radioButtonSpatialFt.setChecked(self.seriesData.info.swath_units == cfg.UNIT_FT)
 
         #Refresh ListWidgets
         self.updatePassListWidgets(string=True, cards=True)
@@ -306,6 +322,18 @@ class MainWindow(baseclass):
                 if cards_index != -1:
                     lwpc.setCurrentRow(cards_index)
 
+    @pyqtSlot(QAction)
+    def toggleActionCenter(self, action):
+        if self.status_label_file.text() == 'No Current Datafile':
+            return
+        if self.seriesData.string_average_center_method != cfg.CENTER_METHOD_NONE:
+            self.seriesData.string_average_center_method = cfg.CENTER_METHOD_CENTROID if self.ui.actionCentroid.isChecked() else cfg.CENTER_METHOD_COD
+        p: Pass
+        for p in self.seriesData.passes:
+            if p.string_center_method != cfg.CENTER_METHOD_NONE:
+                p.string_center_method = cfg.CENTER_METHOD_CENTROID if self.ui.actionCentroid.isChecked() else cfg.CENTER_METHOD_COD
+        self.updateStringPlots(modify=True, individuals=True, composites=True, simulations=True)
+    
     @pyqtSlot()
     def exportSAFEAttendeeLog(self):
         files, _ = QFileDialog.getOpenFileNames(parent=self,
@@ -352,13 +380,16 @@ class MainWindow(baseclass):
     
     @pyqtSlot()    
     def stringPassSelectionChanged(self):
-        passIndex = self.ui.listWidgetStringPass.currentRow()
-        self.updateStringPlots(individuals=True)
-        #Update the info labels on the individual pass tab
-        if not (p := self.seriesData.passes[passIndex]).data.empty:
-            self.ui.buttonReadString.setText(f'Edit {p.name}')
-        else:
-            self.ui.buttonReadString.setText(f'Capture {p.name}')
+        if (passIndex := self.ui.listWidgetStringPass.currentRow()) != -1:
+            passData: Pass = self.seriesData.passes[passIndex]
+            self.ui.checkBoxStringPassCenter.setChecked(passData.string_center_method!=cfg.CENTER_METHOD_NONE)
+            self.ui.checkBoxStringPassSmooth.setChecked(passData.string_smooth)
+            self.updateStringPlots(individuals=True)
+            #Update the info labels on the individual pass tab
+            if passData.data.empty:
+                self.ui.buttonReadString.setText(f'Capture {passData.name}')
+            else:
+                self.ui.buttonReadString.setText(f'Edit {passData.name}')
         
     @pyqtSlot(QListWidgetItem)
     def stringPassItemChanged(self, item: QListWidgetItem):
@@ -393,22 +424,33 @@ class MainWindow(baseclass):
         self.stringPassSelectionChanged()
 
     @pyqtSlot(int)
-    def alignCentroidChanged(self, checkstate):
-        self.seriesData.string_center = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
-        self.updateStringPlots(modify=True, composites=True, simulations=True)
+    def stringPassCenterChanged(self, checkstate):
+        if (passIndex := self.ui.listWidgetStringPass.currentRow()) != -1:
+            passData: Pass = self.seriesData.passes[passIndex]
+            center_method = cfg.CENTER_METHOD_CENTROID if self.ui.actionCentroid.isChecked() else cfg.CENTER_METHOD_COD
+            passData.string_center_method = center_method if (Qt.CheckState(checkstate) == Qt.CheckState.Checked) else cfg.CENTER_METHOD_NONE
+            self.updateStringPlots(modify=True, composites=True, simulations=True)
     
     @pyqtSlot(int) 
-    def smoothIndividualChanged(self, checkstate):
-        self.seriesData.string_smooth_individual = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
+    def stringPassSmoothChanged(self, checkstate):
+        if (passIndex := self.ui.listWidgetStringPass.currentRow()) != -1:
+            passData: Pass = self.seriesData.passes[passIndex]
+            passData.string_smooth = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
+            self.updateStringPlots(modify=True, composites=True, simulations=True)
+    
+    @pyqtSlot(int)
+    def stringSeriesCenterChanged(self, checkstate):
+        center_method = cfg.CENTER_METHOD_CENTROID if self.ui.actionCentroid.isChecked() else cfg.CENTER_METHOD_COD
+        self.seriesData.string_average_center_method = center_method if (Qt.CheckState(checkstate) == Qt.CheckState.Checked) else cfg.CENTER_METHOD_NONE
         self.updateStringPlots(modify=True, composites=True, simulations=True)
         
     @pyqtSlot(int)
-    def smoothAverageChanged(self, checkstate):
-        self.seriesData.string_smooth_average = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
+    def stringSeriesSmoothChanged(self, checkstate):
+        self.seriesData.string_average_smooth = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
         self.updateStringPlots(modify=True, composites=True, simulations=True)
         
     @pyqtSlot(int)
-    def equalizeIntegralsChanged(self, checkstate):
+    def stringSeriesEqualizeChanged(self, checkstate):
         self.seriesData.string_equalize_integrals = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
         self.updateStringPlots(modify = True, composites = True, simulations = True)
     

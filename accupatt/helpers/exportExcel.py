@@ -93,8 +93,8 @@ def export_all_to_excel(series: SeriesData, saveFile: str):
         labels.extend([f'Nozzle {n.id} type',f'Nozzle {n.id} size',f'Nozzle {n.id} deflection',f'Nozzle {n.id} quantity'])
         vals.extend([n.type,n.size,n.deflection,n.quantity])
     # Table Series String
-    labels.extend(['smooth_individual','smooth_average','equalize_integrals','center','simulated_adjascent_passes'])
-    vals.extend([s.string_smooth_individual,s.string_smooth_average,s.string_equalize_integrals,s.string_center,s.string_simulated_adjascent_passes])
+    labels.extend(['center_average','smooth_average','equalize_integrals','simulated_adjascent_passes'])
+    vals.extend([s.string_average_center_method,s.string_average_smooth,s.string_equalize_integrals,s.string_simulated_adjascent_passes])
     # plot it 
     for i, (label, val) in enumerate(zip(labels,vals)):
         ws.cell(i+1, 1, label)
@@ -104,12 +104,12 @@ def export_all_to_excel(series: SeriesData, saveFile: str):
     
     # Passes Sheet
     ws = wb.create_sheet('Passes')
-    labels = ['pass_name','pass_number','ground_speed','ground_speed_units','spray_height','spray_height_units','pass_heading','wind_direction','wind_speed','wind_speed_units','temperature','temperature_units','humidity','include_in_composite','excitation_wav','emission_wav','trim_left','trim_right','trim_vertical']
+    labels = ['pass_name','pass_number','ground_speed','ground_speed_units','spray_height','spray_height_units','pass_heading','wind_direction','wind_speed','wind_speed_units','temperature','temperature_units','humidity','include_in_composite','excitation_wav','emission_wav','trim_left','trim_right','trim_vertical', 'center', 'smooth', 'data_loc_units']
     for i, label in enumerate(labels):
         ws.cell(i+1,1,label)
     p: Pass
     for j, p in enumerate(s.passes):
-        vals = [p.name,p.number,p.ground_speed,p.ground_speed_units,p.spray_height,p.spray_height_units,p.pass_heading,p.wind_direction,p.wind_speed,p.wind_speed_units,p.temperature,p.temperature_units,p.humidity,p.include_in_composite,p.excitation_wav,p.emission_wav,p.trim_l,p.trim_r,p.trim_v]
+        vals = [p.name,p.number,p.ground_speed,p.ground_speed_units,p.spray_height,p.spray_height_units,p.pass_heading,p.wind_direction,p.wind_speed,p.wind_speed_units,p.temperature,p.temperature_units,p.humidity,p.include_in_composite,p.excitation_wav,p.emission_wav,p.trim_l,p.trim_r,p.trim_v,p.string_center_method, p.string_smooth, p.data_loc_units]
         for i, val in enumerate(vals):
             ws.cell(i+1, j+2, val)
     for cell in ws['A'] + ws[1]:
