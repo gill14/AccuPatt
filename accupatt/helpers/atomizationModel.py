@@ -8,7 +8,7 @@ using hard-coded data herein. Adapted by Matt Gill from previous work by Bradley
 
 import math
 
-class AtomizationModel():
+class AtomizationModel:
     '''
     Items from this list are used internally to determine droplet spectrum categories
     '''
@@ -487,31 +487,16 @@ class AtomizationModel():
     if needed. It is the heavy lifter, but is wrapped in convenience methods below
     '''
     def _calc(self, nozzle=None, orifice=None, airspeed=None, pressure=None, angle=None, param=None):
-        if nozzle==None:
-            nozzle = self.nozzle
-        if orifice==None:
-            orifice = self.orifice
-        if airspeed==None:
-            airspeed = self.airspeed
-        if pressure==None:
-            pressure = self.pressure
-        if angle==None:
-            angle = self.angle
         #shorthand helpers
-        n = nozzle
-        o = orifice
-        a = airspeed
-        p = pressure
-        an = angle
-        #Ensure we're matching up nozzle name correctly to models
-        n = self._parseNozzleName(n, a, an)
-        #Ensure we are in bounds
-        if not self._checkBounds(n, o, a, p, an):
+        n = self.nozzle if nozzle==None else nozzle
+        o = self.orifice if orifice==None else orifice
+        a = self.airspeed if airspeed==None else airspeed
+        p = self.pressure if pressure==None else pressure
+        an = self.angle if angle==None else angle
+        # Run a pre-check, coerces strings, checks bounds and finds correct model
+        n, o, a, p, an, dict = self._calcPreCheck(n, o, a, p, an)
+        if any([n==None,o==None,a==None,p==None,an==None,not dict]):
             return -1
-        #choose model used based on Airspeed
-        dict = self.hs_dict
-        if a < 120:
-            dict = self.ls_dict
         #Catch if special GPM calculation and return that value
         if param=='GPM':
             #find gpm at 40 PSI
@@ -547,38 +532,82 @@ class AtomizationModel():
         return round(calc)
 
     '''
-    This method is designed to be called internally, but may be called externally
-    if needed. It accounts for differences in nozzle names in the LS and HS models.
-    Nozzles without differences have thier names passed, Nozzles with differences
-    have their names altered to reflect which model (LS or HS) their airspeed
-    corresponds to.
+    This method is designed to be called internally. It will attempt to match args to correct model,
+    coerce orif and defl if given as str, check that all values either fall within model bounds or 
+    are explicitly in the model. A tuple is returned with a positional None value if an arg is outside
+    the model. If no model is found, an empty dict is returned in the last item of the tuple.
     '''
-    def _parseNozzleName(self, nozzle, airspeed, angle):
-        # Check if nozzle has alternate ss/def models
-        if nozzle=='CP09':
-            nozzle = 'CP09 SS' if int(angle)==0 else 'CP09 Deflection'
-        if nozzle=='Davidon TriSet':
-            nozzle = 'Davidon TriSet SS' if int(angle)==0 else 'Davidon TriSet Deflection'
-        if airspeed >= 120:
-            #High Speed corrections
-            if nozzle=='CP11TT 110°FF':
-                return '' #Model Data does not exist
-            if (nozzle=='CP09 Deflection') or (nozzle=='CP09 SS'):
-                return 'CP09' #Same Model Data used for both
-            if (nozzle=='Davidon TriSet Deflection') or (nozzle=='Davidon TriSet SS'):
-                return 'Davidon TriSet' #Same Model Data used for both
-            if (nozzle=='Steel Disc Core SS') or (nozzle=='Ceramic Disc Core SS'):
-                return 'Disc Core Straight Stream'
+    def _calcPreCheck(self, nozzle, orifice, airspeed, pressure, angle) -> tuple:
+        # Differences between hs and ls model
+        nozzle = self._parseNozzle(nozzle, airspeed, angle)
+        # Is the nozzle/airspeed combo in either model?
+        if not (model := self._getApplicableModel(nozzle, airspeed)):
+            return None, orifice, None, pressure, angle, model
+        # Coerce orifice if string
+        if type(orifice) is str:
+            orif_str_list = [str(o) for o in model[nozzle]['Orifice']]
+            if orifice in orif_str_list:
+                orifice = model[nozzle]['Orifice'][orif_str_list.index(orifice)]
+        # Coerce angle if string
+        if type(angle) is str:
+            angle_str_list = [str(o) for o in model[nozzle]['Angle']]
+            if angle in angle_str_list:
+                angle = model[nozzle]['Angle'][angle_str_list.index(angle)]
+        # Is orifice explicitly in applicable model?
+        if orifice not in model[nozzle]['Orifice']:
+            return nozzle, None, airspeed, pressure, angle, model
+        # Is angle explicitly in applicable model?
+        if angle not in model[nozzle]['Angle']:
+            return nozzle, orifice, airspeed, pressure, None, model
+        # Is pressure within range of applicable model?
+        if model==self.ls_dict:
+            if not (30 <= pressure <= 60):
+                return nozzle, orifice, airspeed, None, angle, model
         else:
-            #Low Speed corrections
-            if nozzle=='CP11TT 60°FF':
-                return '' #Model Data does not exist
-        #If none of the above, nozzle exists in both models, pass value
-        if nozzle in self.nozzles:
-            return nozzle
-        #If nozzle is not listed in either model pass empty string so no calcs are tried
-        return ''
+            if not (30 <= pressure <= 90):
+                return nozzle, orifice, airspeed, None, angle, model
+        #All good, notify
+        return nozzle, orifice, airspeed, pressure, angle, model
+    
+    '''
+    This method is designed to be called internally. It accounts for differences
+    in nozzle names in the LS and HS models. Nozzles without differences have thier 
+    names passed, Nozzles with differences have their names altered to reflect which 
+    model (LS or HS) their airspeed corresponds to.
+    '''
+    def _parseNozzle(self, nozzle, airspeed, angle):
+        print(f'pre: {nozzle}')
+        if nozzle=='CP09':
+            _nozzle = 'CP09 SS' if int(angle)==0 else 'CP09 Deflection'
+            if self.ls_dict[_nozzle]['Speed'][0] <= airspeed < self.ls_dict[_nozzle]['Speed'][1]:
+                nozzle = 'CP09 SS' if int(angle)==0 else 'CP09 Deflection'
+        if nozzle=='Davidon TriSet':
+            _nozzle = 'Davidon TriSet SS' if int(angle)==0 else 'Davidon TriSet Deflection'
+            if self.ls_dict[_nozzle]['Speed'][0] <= airspeed < self.ls_dict[_nozzle]['Speed'][1]:
+                nozzle = 'Davidon TriSet SS' if int(angle)==0 else 'Davidon TriSet Deflection'
+        print(f'post: {nozzle}')
+        return nozzle
+    
+    '''
+    This method is designed to be called internally. It will return either a ref to
+    the applicable xs_dict or an empty dict, based on input nozzle and airspeed.
+    '''
+    def _getApplicableModel(self, nozzle, airspeed) -> dict:
+        # Is airspeed within range in either model?
+        if nozzle in self.hs_dict.keys():
+            if self.hs_dict[nozzle]['Speed'][0] <= airspeed < self.hs_dict[nozzle]['Speed'][1]:
+                return self.hs_dict
+        if nozzle in self.ls_dict.keys():
+            if self.ls_dict[nozzle]['Speed'][0] <= airspeed < self.ls_dict[nozzle]['Speed'][1]:
+                return self.ls_dict
+        # Not in either model
+        return {}
 
+    '''
+    This method is designed to be called internally, returning a list of available
+    options for a requested parameter. This is used for external convenience methods
+    of gettings lists of available orifice size and deflection.
+    '''
     def _params_for_nozzle(self, nozzle, param):
         nozzles = [nozzle]
         # Check if nozzle has alternate ss/def models
@@ -593,36 +622,6 @@ class AtomizationModel():
             if n in self.ls_dict.keys():
                 vals.extend(self.ls_dict[n][param])
         return sorted(set(vals))
-
-    '''
-    This method is designed to be called internally, but may be called externally
-    if needed. It will return a boolean based on whether the supplied args fall
-    within the model bounds.
-    '''
-    def _checkBounds(self, nozzle, orifice, airspeed, pressure, angle):
-        #If we're operating a nozzle outside the model, return -1
-        if nozzle=='':
-            return False
-        #Check whether speed is in range
-        dict = self.hs_dict
-        if airspeed < 120:
-            dict = self.ls_dict
-        if airspeed < dict[nozzle]['Speed'][0] or airspeed > dict[nozzle]['Speed'][1]:
-            return False
-        #Check whether pressure is in range
-        if pressure < 30:
-            return False
-        if airspeed < 120:
-            if pressure > 60:
-                return False
-        else:
-            if pressure > 90:
-                return False
-        #Check whether angle is in dict
-        if angle not in dict[nozzle]['Angle']:
-            return False
-        #All good, notify
-        return True
 
     '''
     This method is designed to be called internally, but may be called externally
@@ -662,19 +661,20 @@ class AtomizationModel():
     an integer for dV and %V calculations
     '''
     def dv01(self):
-        return self._calc('DV10')
+        return self._calc(param='DV10')
 
     def dv05(self):
-        return self._calc('DV50')
+        print('start calc')
+        return self._calc(param='DV50')
 
     def dv09(self):
-        return self._calc('DV90')
+        return self._calc(param='DV90')
 
     def p_lt_100(self):
-        return self._calc('V100')
+        return self._calc(param='V100')
 
     def p_lt_200(self):
-        return self._calc('V200')
+        return self._calc(param='V200')
 
     '''
     This method is used to call externally. It will return a string
@@ -694,7 +694,7 @@ class AtomizationModel():
     mean droplet spectrum data as an estimate for composite spray setups.
     '''
     def calc_gpm(self):
-        return self._calc(self, 'GPM')
+        return self._calc(param='GPM')
     
     '''
     These methods are used to call externally to get available nozzle options. This

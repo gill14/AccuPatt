@@ -430,7 +430,7 @@ class SeriesInfoWidget(baseclass):
         cBSize.clear()
         cBDef.clear()
         # Populate Comboboxes
-        orifices = AtomizationModel().get_deflections_for_nozzle(nozzle)
+        orifices = AtomizationModel().get_orifices_for_nozzle(nozzle)
         cBSize.addItems([str(o) for o in orifices])
         deflections = AtomizationModel().get_deflections_for_nozzle(nozzle)
         cBDef.addItems([str(d) for d in deflections])
