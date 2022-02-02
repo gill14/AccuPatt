@@ -13,23 +13,42 @@ from accupatt.models.sprayCard import SprayCard
 from openpyxl_image_loader import SheetImageLoader
 
 
-def convert_xlsx_to_db(file, s: SeriesData = None) -> str:
+def convert_xlsx_to_db(file, s: SeriesData = None, prog=None) -> str:
+    if prog != None:
+        prog.setRange(0,3)
+        prog.setValue(0)
+        prog.setLabelText('Loading in Series Data')
     # Only load in series data from xlsx if no series passed in
     if s == None:
         s = load_from_accupatt_1_file(file)
+    if prog != None: 
+        prog.setLabelText('Creating Local Database')
+        prog.setValue(1)
     #Write to DB (same dir as original xlsx)
     file_db = os.path.splitext(file)[0]+'.db'
     save_to_db(file=file_db, s=s)
+    if prog != None: 
+        prog.setLabelText('Checking for Spray Cards')
+        prog.setValue(2)
     #Append Images
     wb = openpyxl.load_workbook(file)
     if not 'Card Data' in wb.sheetnames:
         return s
+    if prog != None:
+        prog.setValue(3)
     sh = wb['Card Data']
     on_pass = int(sh['B2'].value)
     # Loop over declard cards and save images to db if has_image
     p: Pass = s.passes[on_pass-1]
     c: SprayCard
-    for c in p.spray_cards:
+    if prog != None:
+        prog.setRange(0,len(p.spray_cards))
+        prog.setValue(0)
+        prog.setLabelText('Loading in Series Data')
+    for i, c in enumerate(p.spray_cards):
+        if prog != None:
+            prog.setValue(i+1)
+            prog.setLabelText(f'Copying image for {c.name}')
         c.filepath = file_db
         if c.has_image:
             # Get the image from applicable sheet

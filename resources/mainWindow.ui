@@ -1900,8 +1900,6 @@
     <addaction name="separator"/>
     <addaction name="action_save"/>
     <addaction name="action_open"/>
-    <addaction name="separator"/>
-    <addaction name="action_import_accupatt_legacy"/>
    </widget>
    <widget class="QMenu" name="menu_options">
     <property name="title">

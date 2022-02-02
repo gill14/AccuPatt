@@ -23,7 +23,7 @@ from PyQt6 import uic
 from PyQt6.QtCore import QSettings, QSignalBlocker, Qt, pyqtSlot
 from PyQt6.QtGui import QAction, QActionGroup
 from PyQt6.QtWidgets import (QComboBox, QFileDialog, QLabel,
-                             QListWidgetItem, QMenu, QMessageBox)
+                             QListWidgetItem, QMenu, QMessageBox, QProgressDialog)
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'mainWindow.ui'))
 testing = False
@@ -46,7 +46,6 @@ class MainWindow(baseclass):
         self.ui.menu_file_aircraft.triggered.connect(self.newSeriesFileAircraftMenuAction)
         self.ui.action_save.triggered.connect(self.saveFile)
         self.ui.action_open.triggered.connect(self.openFile)
-        self.ui.action_import_accupatt_legacy.triggered.connect(self.importAccuPatt)
         # --> Setup Options Menu
         self.ui.action_pass_manager.triggered.connect(self.openPassManager)
         center_actions = QActionGroup(self.ui.menuString_Center_Method)
@@ -164,31 +163,6 @@ class MainWindow(baseclass):
         self.ui.tabWidget.setEnabled(True)
 
     @pyqtSlot()
-    def importAccuPatt(self):
-        try:
-            self.currentDirectory
-        except NameError:
-            self.currentDirectory = Path.home()
-        if testing:
-            file = '/Users/gill14/Library/CloudStorage/OneDrive-UniversityofIllinois-Urbana/AccuProjects/AccuPatt/testing/N802BK 01.xlsx'
-        else:
-            file, _ = QFileDialog.getOpenFileName(parent=self, 
-                                            caption='Open File',
-                                            directory=self.currentDirectory,
-                                            filter='AccuPatt Legacy(*.xlsx)')
-        if file == '':
-            return
-        #Load in the values
-        self.seriesData = load_from_accupatt_1_file(file=file)
-        self.currentFile = file
-        self.currentDirectory = os.path.dirname(self.currentFile)
-        self.settings.setValue('dir',self.currentDirectory)
-        self.update_all_ui()
-        self.status_label_file.setText(f'Current File: {file}')
-        self.status_label_modified.setText('View-Only Mode')
-        self.ui.tabWidget.setEnabled(True)
-
-    @pyqtSlot()
     def saveFile(self):
         # If viewing from XLSX, Prompt to convert
         if self.currentFile != '' and self.currentFile[-1] == 'x':
@@ -233,21 +207,41 @@ class MainWindow(baseclass):
             self.currentDirectory = Path.home()
         if testing:
             file = '/Users/gill14/Library/CloudStorage/OneDrive-UniversityofIllinois-Urbana/AccuProjects/AccuPatt/testing/N802BK 01.db'
+            #file = '/Users/gill14/Library/CloudStorage/OneDrive-UniversityofIllinois-Urbana/AccuProjects/AccuPatt/testing/N802BK 01.xlsx'
         else:
             file, _ = QFileDialog.getOpenFileName(parent=self, 
                                             caption='Open File',
                                             directory=self.currentDirectory,
-                                            filter='AccuPatt (*.db)')
+                                            filter='AccuPatt (*.db *.xlsx)')
         if file == '':
             return
+        if file[-1]=='x':
+            msg = QMessageBox(QMessageBox.Icon.Question,
+                              'Convert to Compatible Version?',
+                              'Would you like to open this file in View-Only mode or create a compatible (*.db) copy?')
+            button_read_only = msg.addButton('View-Only',QMessageBox.ButtonRole.ActionRole)
+            button_convert = msg.addButton('Create Compatible Copy',QMessageBox.ButtonRole.ActionRole)
+            msg.exec()
+            if msg.clickedButton() == button_read_only:
+                self.seriesData = load_from_accupatt_1_file(file=file)
+            elif msg.clickedButton() == button_convert:
+                prog = QProgressDialog(self)
+                prog.setMinimumDuration(0)
+                prog.setWindowModality(Qt.WindowModality.WindowModal)
+                file = convert_xlsx_to_db(file, prog=prog)
+            else:
+                return 
         self.currentFile = file
-        self.seriesData = SeriesData()
-        load_from_db(file=self.currentFile, s=self.seriesData)
         self.currentDirectory = os.path.dirname(self.currentFile)
         self.settings.setValue('dir',self.currentDirectory)
+        last_modified = 'View-Only Mode'
+        if self.currentFile[-1]=='b':
+            self.seriesData = SeriesData()
+            load_from_db(file=self.currentFile, s=self.seriesData)
+            last_modified = f'Last Save: {datetime.fromtimestamp(self.seriesData.info.modified)}'
         self.update_all_ui()
         self.status_label_file.setText(f'Current File: {self.currentFile}')
-        self.status_label_modified.setText(f'Last Save: {datetime.fromtimestamp(self.seriesData.info.modified)}')
+        self.status_label_modified.setText(last_modified)
         self.ui.tabWidget.setEnabled(True)
                 
     def update_all_ui(self):
