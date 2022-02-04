@@ -5,7 +5,6 @@ from superqt import QLabeledRangeSlider, QLabeledSlider
 import accupatt.config as cfg
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSlot
-from PyQt6.QtWidgets import QGroupBox, QVBoxLayout
 
 from accupatt.models.sprayCard import SprayCard
 

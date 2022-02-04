@@ -1,3 +1,4 @@
+from email.policy import default
 import math
 import sqlite3
 import uuid
@@ -13,23 +14,24 @@ from PyQt6.QtCore import QSettings
 
 class SprayCard:
 
-    def __init__(self, id = '', name = '', filepath = None, dpi=600):
+    def __init__(self, id = '', name = '', filepath = None):
+        # Use id if passed, else create one
         self.id = id
         if self.id == '':
             self.id = str(uuid.uuid4())
-        self.filepath = filepath
         self.name = name
+        # filepath (either .db or .xlsx) needed for image load/save
+        self.filepath = filepath
         self.location = None
         self.location_units = None
         self.has_image = False
         self.include_in_composite = False
-
-        self.dpi = dpi
+        # Initialize all optionals
+        self._load_defaults()
+        # Initialize stain stats
         self.area_px2 = 0.0
         self.stain_areas_all_px2 = []
         self.stain_areas_valid_px2 = []
-
-        self._load_defaults()
     
     def image_original(self):
         return sprayCardImageFileHandler.read_image_from_file(self)
@@ -121,29 +123,23 @@ class SprayCard:
         return stain_dia
 
     def _load_defaults(self):
-        self.threshold_type = cfg.THRESHOLD_TYPE__DEFAULT
-        self.threshold_method_color = cfg.THRESHOLD_HSB_METHOD__DEFAULT
-        self.threshold_method_grayscale = cfg.THRESHOLD_GRAYSCALE_METHOD__DEFAULT
-        self.threshold_grayscale = cfg.THRESHOLD_GRAYSCALE__DEFAULT
-        self.threshold_color_hue = cfg.THRESHOLD_HSB_HUE__DEFAULT
-        self.threshold_color_saturation = cfg.THRESHOLD_HSB_SATURATION__DEFAULT
-        self.threshold_color_brightness = cfg.THRESHOLD_HSB_BRIGHTNESS__DEFAULT
-        self.watershed = True
-        self.min_stain_area_px = 4
-        self.spread_method = cfg.SPREAD_METHOD__DEFAULT
-        self.spread_factor_a = cfg.SPREAD_FACTOR_A__DEFAULT
-        self.spread_factor_b = cfg.SPREAD_FACTOR_B__DEFAULT
-        self.spread_factor_c = cfg.SPREAD_FACTOR_C__DEFAULT
         # Load in Settings
         self.settings = QSettings('accupatt','AccuPatt')
-        if self.spread_method == None:
-            self.spread_method = self.settings.value('spread_factor_method', defaultValue=cfg.SPREAD_METHOD_ADAPTIVE, type=int)
-        if self.spread_factor_a == None:
-            self.spread_factor_a = self.settings.value('spread_factor_a', defaultValue=0.0, type=float)
-        if self.spread_factor_b == None:
-            self.spread_factor_b = self.settings.value('spread_factor_b', defaultValue=0.0009, type=float)
-        if self.spread_factor_c == None:
-            self.spread_factor_c = self.settings.value('spread_factor_c', defaultValue=1.6333, type=float)
+        # Use settings values if available, else use config defaults
+        self.dpi = self.settings.value(cfg._DPI, defaultValue=cfg.DPI__DEFAULT, type=int)
+        self.threshold_type = self.settings.value(cfg._THRESHOLD_TYPE, defaultValue=cfg.THRESHOLD_TYPE__DEFAULT, type=str)
+        self.threshold_method_grayscale = self.settings.value(cfg._THRESHOLD_GRAYSCALE_METHOD, defaultValue=cfg.THRESHOLD_GRAYSCALE__DEFAULT, type=str)
+        self.threshold_grayscale = self.settings.value(cfg._THRESHOLD_GRAYSCALE, defaultValue=cfg.THRESHOLD_GRAYSCALE__DEFAULT, type=int)
+        self.threshold_method_color = self.settings.value(cfg._THRESHOLD_HSB_METHOD, defaultValue=cfg.THRESHOLD_HSB_METHOD__DEFAULT, type=str)
+        self.threshold_color_hue = self.settings.value(cfg._THRESHOLD_HSB_HUE, defaultValue=cfg.THRESHOLD_HSB_HUE__DEFAULT, type=tuple[int,int])
+        self.threshold_color_saturation = self.settings.value(cfg._THRESHOLD_HSB_SATURATION, defaultValue=cfg.THRESHOLD_HSB_SATURATION__DEFAULT, type=tuple[int,int])
+        self.threshold_color_brightness = self.settings.value(cfg._THRESHOLD_HSB_BRIGHTNESS, defaultValue=cfg.THRESHOLD_HSB_BRIGHTNESS__DEFAULT, type=tuple[int,int])
+        self.watershed = self.settings.value(cfg._WATERSHED, defaultValue=cfg.WATERSHED__DEFAULT, type=bool)
+        self.min_stain_area_px = self.settings.value(cfg._MIN_STAIN_AREA_PX, defaultValue=cfg.MIN_STAIN_AREA_PX, type=int)
+        self.spread_method = self.settings.value(cfg._SPREAD_METHOD, defaultValue=cfg.SPREAD_METHOD__DEFAULT, type=int)
+        self.spread_factor_a = self.settings.value(cfg._SPREAD_FACTOR_A, defaultValue=cfg.SPREAD_FACTOR_A__DEFAULT, type=float)
+        self.spread_factor_b = self.settings.value(cfg._SPREAD_FACTOR_B, defaultValue=cfg.SPREAD_FACTOR_B__DEFAULT, type=float)
+        self.spread_factor_c = self.settings.value(cfg._SPREAD_FACTOR_C, defaultValue=cfg.SPREAD_FACTOR_C__DEFAULT, type=float)
     
     def save_image_to_file(self, image):
         return sprayCardImageFileHandler.save_image_to_file(self, image)

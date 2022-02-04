@@ -66,7 +66,7 @@ class CardManager(baseclass):
         self.tv = self.ui.tableView
         self.tv.setModel(self.tm)
         self.tv.setItemDelegateForColumn(4, ComboBoxDelegate(self, cfg.UNITS_LENGTH_LARGE))
-        self.tv.setItemDelegateForColumn(5, ComboBoxDelegate(self, cfg.DPI_OPTIONS))
+        self.tv.setItemDelegateForColumn(5, ComboBoxDelegate(self, [str(dpi) for dpi in cfg.DPI_OPTIONS]))
         self.tv.setColumnWidth(5,100)
 
         self.selection_changed()
@@ -262,7 +262,7 @@ class CardTable(QAbstractTableModel):
                 if role == Qt.ItemDataRole.DisplayRole:
                     return str(card.dpi)
                 elif role == Qt.ItemDataRole.EditRole:
-                    return cfg.DPI_OPTIONS.index(str(card.dpi))
+                    return cfg.DPI_OPTIONS.index(card.dpi)
         return QVariant()
     
     def setData(self, index, value, role = Qt.ItemDataRole.EditRole) -> bool:
@@ -305,7 +305,7 @@ class CardTable(QAbstractTableModel):
             self.dataChanged.emit(index,index)
         elif j == 5:
             # PPI
-            card.dpi = int(cfg.DPI_OPTIONS[value])
+            card.dpi = cfg.DPI_OPTIONS[value]
             self.dataChanged.emit(index,index)
             return True
         return False

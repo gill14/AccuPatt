@@ -12,10 +12,6 @@ from PyQt6.QtGui import QImageReader, QPixmap
 from PyQt6.QtWidgets import QGraphicsPixmapItem
 from pyqtgraph.functions import mkPen
 
-orientation_options = ['Horizontal','Vertical']
-order_options = ['Increasing','Decreasing']
-scale_options = ['10%','20%','30%','40%','50%','60%','70%','80%','90%','100%']
-
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'loadCards.ui'))
 
 class LoadCards(baseclass):
@@ -29,20 +25,20 @@ class LoadCards(baseclass):
         
         #Import Settings
         self.settings = QSettings('accupatt','AccuPatt')
-        self.dpi = self.settings.value('image_dpi', defaultValue='600', type=str)
-        self.orientation = self.settings.value('roi_acquisition_orientation', defaultValue=orientation_options[0], type=str)
-        self.order = self.settings.value('roi_acquisition_order', defaultValue=order_options[0], type=str)
-        self.scale = self.settings.value('roi_scale', defaultValue='70%', type=str)
+        self.dpi = self.settings.value(cfg._DPI, defaultValue=cfg.DPI__DEFAULT, type=int)
+        self.orientation = self.settings.value(cfg._ROI_ACQUISITION_ORIENTATION, defaultValue=cfg.ROI_ACQUISITION_ORIENTATION__DEFAULT, type=str)
+        self.order = self.settings.value(cfg._ROI_ACQUISITION_ORDER, defaultValue=cfg.ROI_ACQUISITION_ORDER__DEFAULT, type=str)
+        self.scale = self.settings.value(cfg._ROI_SCALE, defaultValue=cfg.ROI_SCALE__DEFAULT, type=int)
         
         # Populate controls with static options, selections from settings
-        self.ui.comboBoxDPI.addItems(cfg.DPI_OPTIONS)
+        self.ui.comboBoxDPI.addItems([str(dpi) for dpi in cfg.DPI_OPTIONS])
         self.ui.comboBoxDPI.setCurrentIndex(cfg.DPI_OPTIONS.index(self.dpi))
-        self.ui.comboBoxOrientation.addItems(orientation_options)
-        self.ui.comboBoxOrientation.setCurrentIndex(orientation_options.index(self.orientation))
-        self.ui.comboBoxOrder.addItems(order_options)
-        self.ui.comboBoxOrder.setCurrentIndex(order_options.index(self.order))
-        self.ui.comboBoxScale.addItems(scale_options)
-        self.ui.comboBoxScale.setCurrentIndex(scale_options.index(self.scale))
+        self.ui.comboBoxOrientation.addItems(cfg.ROI_ACQUISITION_ORIENTATIONS)
+        self.ui.comboBoxOrientation.setCurrentIndex(cfg.ROI_ACQUISITION_ORIENTATIONS.index(self.orientation))
+        self.ui.comboBoxOrder.addItems(cfg.ROI_ACQUISITION_ORDERS)
+        self.ui.comboBoxOrder.setCurrentIndex(cfg.ROI_ACQUISITION_ORDERS.index(self.order))
+        self.ui.comboBoxScale.addItems([f'{s}%' for s in cfg.ROI_SCALES])
+        self.ui.comboBoxScale.setCurrentIndex(cfg.ROI_SCALES.index(self.scale))
         
         #List of cards
         self.card_list = card_list
@@ -89,7 +85,7 @@ class LoadCards(baseclass):
         self.show_image_characteristics()
         
     def show_image_characteristics(self):
-        dpi = int(self.dpi)
+        dpi = self.dpi
         h_px = self.img.pixmap().height()
         w_px = self.img.pixmap().width()
         self.ui.label_size.setText(f'{(w_px/dpi):.1f}"x{(h_px/dpi):.1f}"')
@@ -128,17 +124,17 @@ class LoadCards(baseclass):
             
     @pyqtSlot(int)
     def orientation_changed(self, newIndex):
-        self.orientation = orientation_options[newIndex]
+        self.orientation = cfg.ROI_ACQUISITION_ORIENTATIONS[newIndex]
         self.draw_rois()
        
     @pyqtSlot(int)
     def order_changed(self, newIndex):
-        self.order = order_options[newIndex]
+        self.order = cfg.ROI_ACQUISITION_ORDERS[newIndex]
         self.draw_rois()
         
     @pyqtSlot(int)
     def scale_changed(self, newIndex):
-        self.scale = scale_options[newIndex]
+        self.scale = cfg.ROI_SCALES[newIndex]
         self.draw_rois()
         
     @pyqtSlot(object)
@@ -150,10 +146,10 @@ class LoadCards(baseclass):
         
     @pyqtSlot()
     def accept(self):
-        self.settings.setValue('image_dpi', self.ui.comboBoxDPI.currentText())
-        self.settings.setValue('roi_acquisition_orientation', self.ui.comboBoxOrientation.currentText())
-        self.settings.setValue('roi_acquisition_order', self.ui.comboBoxOrder.currentText())
-        self.settings.setValue('roi_scale', self.ui.comboBoxScale.currentText())
+        self.settings.setValue(cfg._DPI, int(self.ui.comboBoxDPI.currentText()))
+        self.settings.setValue(cfg._ROI_ACQUISITION_ORIENTATION, self.ui.comboBoxOrientation.currentText())
+        self.settings.setValue(cfg._ROI_ACQUISITION_ORDER, self.ui.comboBoxOrder.currentText())
+        self.settings.setValue(cfg._ROI_SCALE, cfg.ROI_SCALES[self.ui.comboBoxScale.currentIndex()])
         
         for i, roi in enumerate(self.rois):
             roi: pg.RectROI
@@ -213,7 +209,7 @@ class LoadCards(baseclass):
     
     def _scale_rois(self, rois, scale):
         rois_scaled = []
-        percent = float(scale[0:len(scale)-1])/100
+        percent = float(scale)/100
         print(percent)
         for r in rois:
             x, y, w, h = r
