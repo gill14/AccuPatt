@@ -10,7 +10,7 @@ import subprocess
 import sys
 from setuptools import setup
 
-VERSION = '2.0.2'
+VERSION = '2.0.3'
 
 OPTIONS = {
     'iconfile':'./resources/illini.icns',
