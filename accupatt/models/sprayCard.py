@@ -1,16 +1,11 @@
-from email.policy import default
 import math
-import sqlite3
 import uuid
 
 import accupatt.config as cfg
 import cv2
 import numpy as np
 from accupatt.helpers.atomizationModel import AtomizationModel
-from openpyxl import load_workbook
-from openpyxl_image_loader import SheetImageLoader
 from PyQt6.QtCore import QSettings
-
 
 class SprayCard:
 
@@ -26,8 +21,36 @@ class SprayCard:
         self.location_units = None
         self.has_image = False
         self.include_in_composite = False
-        # Initialize all optionals
-        self._load_defaults()
+        # Init optionals, use settings values if available, else use config defaults
+        settings = QSettings('accupatt','AccuPatt')
+        self.dpi = settings.value(cfg._DPI, 
+                                  defaultValue=cfg.DPI__DEFAULT)
+        self.threshold_type = settings.value(cfg._THRESHOLD_TYPE, 
+                                             defaultValue=cfg.THRESHOLD_TYPE__DEFAULT)
+        self.threshold_method_grayscale = settings.value(cfg._THRESHOLD_GRAYSCALE_METHOD, 
+                                                         defaultValue=cfg.THRESHOLD_GRAYSCALE__DEFAULT)
+        self.threshold_grayscale = settings.value(cfg._THRESHOLD_GRAYSCALE, 
+                                                  defaultValue=cfg.THRESHOLD_GRAYSCALE__DEFAULT)
+        self.threshold_method_color = settings.value(cfg._THRESHOLD_HSB_METHOD, 
+                                                     defaultValue=cfg.THRESHOLD_HSB_METHOD__DEFAULT)
+        self.threshold_color_hue = settings.value(cfg._THRESHOLD_HSB_HUE, 
+                                                  defaultValue=cfg.THRESHOLD_HSB_HUE__DEFAULT)
+        self.threshold_color_saturation = settings.value(cfg._THRESHOLD_HSB_SATURATION, 
+                                                         defaultValue=cfg.THRESHOLD_HSB_SATURATION__DEFAULT)
+        self.threshold_color_brightness = settings.value(cfg._THRESHOLD_HSB_BRIGHTNESS, 
+                                                         defaultValue=cfg.THRESHOLD_HSB_BRIGHTNESS__DEFAULT)
+        self.watershed = settings.value(cfg._WATERSHED, 
+                                        defaultValue=cfg.WATERSHED__DEFAULT, type=bool)
+        self.min_stain_area_px = settings.value(cfg._MIN_STAIN_AREA_PX, 
+                                                defaultValue=cfg.MIN_STAIN_AREA_PX, type=int)
+        self.spread_method = settings.value(cfg._SPREAD_METHOD, 
+                                            defaultValue=cfg.SPREAD_METHOD__DEFAULT, type=int)
+        self.spread_factor_a = settings.value(cfg._SPREAD_FACTOR_A, 
+                                              defaultValue=cfg.SPREAD_FACTOR_A__DEFAULT, type=float)
+        self.spread_factor_b = settings.value(cfg._SPREAD_FACTOR_B, 
+                                              defaultValue=cfg.SPREAD_FACTOR_B__DEFAULT, type=float)
+        self.spread_factor_c = settings.value(cfg._SPREAD_FACTOR_C, 
+                                              defaultValue=cfg.SPREAD_FACTOR_C__DEFAULT, type=float)
         # Initialize stain stats
         self.area_px2 = 0.0
         self.stain_areas_all_px2 = []
@@ -122,25 +145,6 @@ class SprayCard:
         # DD = DS
         return stain_dia
 
-    def _load_defaults(self):
-        # Load in Settings
-        self.settings = QSettings('accupatt','AccuPatt')
-        # Use settings values if available, else use config defaults
-        self.dpi = self.settings.value(cfg._DPI, defaultValue=cfg.DPI__DEFAULT, type=int)
-        self.threshold_type = self.settings.value(cfg._THRESHOLD_TYPE, defaultValue=cfg.THRESHOLD_TYPE__DEFAULT, type=str)
-        self.threshold_method_grayscale = self.settings.value(cfg._THRESHOLD_GRAYSCALE_METHOD, defaultValue=cfg.THRESHOLD_GRAYSCALE__DEFAULT, type=str)
-        self.threshold_grayscale = self.settings.value(cfg._THRESHOLD_GRAYSCALE, defaultValue=cfg.THRESHOLD_GRAYSCALE__DEFAULT, type=int)
-        self.threshold_method_color = self.settings.value(cfg._THRESHOLD_HSB_METHOD, defaultValue=cfg.THRESHOLD_HSB_METHOD__DEFAULT, type=str)
-        self.threshold_color_hue = self.settings.value(cfg._THRESHOLD_HSB_HUE, defaultValue=cfg.THRESHOLD_HSB_HUE__DEFAULT, type=tuple[int,int])
-        self.threshold_color_saturation = self.settings.value(cfg._THRESHOLD_HSB_SATURATION, defaultValue=cfg.THRESHOLD_HSB_SATURATION__DEFAULT, type=tuple[int,int])
-        self.threshold_color_brightness = self.settings.value(cfg._THRESHOLD_HSB_BRIGHTNESS, defaultValue=cfg.THRESHOLD_HSB_BRIGHTNESS__DEFAULT, type=tuple[int,int])
-        self.watershed = self.settings.value(cfg._WATERSHED, defaultValue=cfg.WATERSHED__DEFAULT, type=bool)
-        self.min_stain_area_px = self.settings.value(cfg._MIN_STAIN_AREA_PX, defaultValue=cfg.MIN_STAIN_AREA_PX, type=int)
-        self.spread_method = self.settings.value(cfg._SPREAD_METHOD, defaultValue=cfg.SPREAD_METHOD__DEFAULT, type=int)
-        self.spread_factor_a = self.settings.value(cfg._SPREAD_FACTOR_A, defaultValue=cfg.SPREAD_FACTOR_A__DEFAULT, type=float)
-        self.spread_factor_b = self.settings.value(cfg._SPREAD_FACTOR_B, defaultValue=cfg.SPREAD_FACTOR_B__DEFAULT, type=float)
-        self.spread_factor_c = self.settings.value(cfg._SPREAD_FACTOR_C, defaultValue=cfg.SPREAD_FACTOR_C__DEFAULT, type=float)
-    
     def save_image_to_file(self, image):
         return sprayCardImageFileHandler.save_image_to_file(self, image)
 
@@ -182,56 +186,32 @@ class sprayCardImageFileHandler:
             return sprayCardImageFileHandler._write_image_to_db(sprayCard=sprayCard, image=image)
     
     def _read_image_from_xlsx(sprayCard: SprayCard):
-        wb = load_workbook(sprayCard.filepath)
+        from accupatt.helpers.dataFileImporter import \
+            load_image_from_accupatt_1
+
         # Get Image from applicable sheet
-        image_PIL = SheetImageLoader(wb[sprayCard.name]).get('A1')
+        image_PIL = load_image_from_accupatt_1(sprayCard.filepath, sprayCard.name)
+        #Convert to numpy array
+        image_array = np.asarray(image_PIL)
         #Convert PIL Image to CVImage
-        return cv2.cvtColor(np.array(image_PIL), cv2.COLOR_RGB2BGR)
+        return cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR)
     
     def _read_image_from_db(sprayCard: SprayCard):
-        img = None
-        try:
-            # Opens a file connection to the db
-            conn = sqlite3.connect(sprayCard.filepath)
-            # Get a cursor object
-            c = conn.cursor()
-            # SprayCard Table
-            c.execute('''SELECT image FROM spray_cards WHERE id = ?''',(sprayCard.id,))
-            # Convert the image to a numpy array
-            image = np.asarray(bytearray(c.fetchone()[0]), dtype="uint8")
-            # Decode the image to a cv2 image
-            img = cv2.imdecode(image, cv2.IMREAD_COLOR)
-        # Catch the exception
-        except Exception as e:
-            # Roll back any change if something goes wrong
-            conn.rollback()
-            raise e
-        finally:
-            # Close the db connection
-            conn.close()
-        return img
+        from accupatt.helpers.dBBridge import load_image_from_db
+
+        # Get byte array of image from db
+        byte_array = load_image_from_db(sprayCard.filepath, sprayCard.id)
+        # Convert to numpy array
+        image_array = np.asarray(byte_array, dtype="uint8")
+        # Decode the image to a cv2 image
+        return cv2.imdecode(image_array, cv2.IMREAD_COLOR)
     
     def _write_image_to_db(sprayCard: SprayCard, image):
-        success = False
-        try:
-            # Opens a file connection to the db
-            db = sqlite3.connect(sprayCard.filepath)
-            # Request update of card record in table spray_cards by sprayCard.id
-            db.cursor().execute('''UPDATE spray_cards SET image = ? WHERE id = ?''',
-                                (sqlite3.Binary(image), sprayCard.id))
-            # Commit the change
-            db.commit()
+        from accupatt.helpers.dBBridge import save_image_to_db
+        if (success := save_image_to_db(sprayCard.filepath, sprayCard.id, image)):
             sprayCard.has_image = True
-            success = True
-        # Catch the exception
-        except Exception as e:
-            # Roll back any change if something goes wrong
-            db.rollback()
-            raise e
-        finally:
-            # Close the db connection
-            db.close()
         return success
+    
 class SprayCardImageProcessor:
 
     def __init__(self, sprayCard):

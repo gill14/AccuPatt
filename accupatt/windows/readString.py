@@ -5,6 +5,7 @@ import numpy as np
 import pyqtgraph
 import serial
 from accupatt.models.passData import Pass
+from accupatt.widgets.passinfowidget import PassInfoWidget
 from accupatt.windows.editSpectrometer import EditSpectrometer
 from accupatt.windows.editStringDrive import EditStringDrive
 from PyQt6 import uic
@@ -20,35 +21,30 @@ class ReadString(baseclass):
         super().__init__(parent = parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
-        #Import Settings
-        self.settings = QSettings('accupatt','AccuPatt')
+
         #Make ref to seriesData/passData for later updating in on_applied
         self.passData = passData
-        #Populate Pass Info fields
+        #Populate Pass Info Widget fields
         self.ui.labelPass.setText(passData.name)
-        self.ui.lineEditGS.setText(passData.str_ground_speed())
-        self.ui.comboBoxUnitsGS.addItems(cfg.UNITS_GS)
-        self.ui.comboBoxUnitsGS.setCurrentText(passData.ground_speed_units)
-        self.ui.lineEditSH.setText(passData.str_spray_height())
-        self.ui.comboBoxUnitsSH.addItems(cfg.UNITS_SH)
-        self.ui.comboBoxUnitsSH.setCurrentText(passData.spray_height_units)
-        self.ui.lineEditPH.setText(passData.str_pass_heading())
-        self.ui.lineEditWD.setText(passData.str_wind_direction())
-        self.ui.lineEditWS.setText(passData.str_wind_speed())
-        self.ui.comboBoxUnitsWS.addItems(cfg.UNITS_WS)
-        self.ui.comboBoxUnitsWS.setCurrentText(passData.wind_speed_units)
-        self.ui.lineEditT.setText(passData.str_temperature())
-        self.ui.comboBoxUnitsT.addItems(cfg.UNITS_T)
-        self.ui.comboBoxUnitsT.setCurrentText(passData.temperature_units)
-        self.ui.lineEditH.setText(passData.str_humidity())
+        self.passInfoWidget: PassInfoWidget = self.ui.passInfoWidget
+        self.passInfoWidget.fill_from_pass(passData)
+
+        # Use values from Pass Object
+        self.wav_ex = self.passData.wav_ex
+        self.wav_em = self.passData.wav_em
+        self.integration_time_ms = self.passData.integration_time_ms
+        self.string_length_units = self.passData.data_loc_units
+        
+        # Load other values from settings/defaults
+        self.load_defaults()
 
         #Setup Spectrometer
         self.spec = None
         self.spec_connected = False
-        self.ser_connected = False
         self.setupSpectrometer()
 
         #Setup String Drive serial port
+        self.ser_connected = False
         self.setupStringDrive()
         
         #Enable/Disable Start and Abort buttons as applicable
@@ -70,8 +66,7 @@ class ReadString(baseclass):
         pyqtgraph.setConfigOption('background', 'k')
         pyqtgraph.setConfigOption('foreground', 'w')
         self.p = self.ui.plotWidget
-        x_units = self.settings.value('flightline_length_units', defaultValue='ft', type=str)
-        self.p.setLabel(axis='bottom',text='Location', units=x_units)
+        self.p.setLabel(axis='bottom',text='Location', units=self.string_length_units)
         self.p.setLabel(axis='left', text = 'Relative Dye Intensity')
         self.p.showGrid(x=True, y=True)
 
@@ -89,6 +84,20 @@ class ReadString(baseclass):
 
         self.show()
 
+    def load_defaults(self):
+        # Load in Settings
+        settings = QSettings('accupatt','AccuPatt')
+        # Use settings values if available, else use config defaults
+        self.string_drive_port = settings.value(cfg._STRING_DRIVE_PORT,
+                                                defaultValue=cfg.STRING_DRIVE_PORT__DEFAULT)
+        self.string_length = settings.value(cfg._STRING_LENGTH,
+                                            defaultValue=cfg.STRING_LENGTH__DEFAULT)
+        self.string_speed = settings.value(cfg._STRING_SPEED,
+                                           defaultValue=cfg.STRING_SPEED__DEFAULT)
+        # Calculate from all above
+        self.len_per_frame = self.integration_time_ms * self.string_speed / 1000
+        
+
     def set_plotdata(self, name, data_x, data_y):
         if name in self.traces:
             self.traces[name].setData(data_x, data_y)
@@ -101,10 +110,10 @@ class ReadString(baseclass):
     def plotFrame(self):
         #get Location
         if len(self.x) == 0:
-            location = -self.fl/2
+            location = -self.string_length/2
         else:
             location = self.x[len(self.x)-1] + self.len_per_frame
-        if location <= self.fl/2:
+        if location <= self.string_length/2:
             #Capture and record one frame
             #record x_val (location)
             self.x = np.append(self.x, location)
@@ -112,10 +121,10 @@ class ReadString(baseclass):
             intensities = self.spec.intensities(correct_dark_counts=True,
                 correct_nonlinearity=True)
             #record y_val (emission amplitute) and request plot update
-            self.y = np.append(self.y, intensities[self.emissionPix])
+            self.y = np.append(self.y, intensities[self.pix_em])
             self.set_plotdata(name='emission', data_x=self.x, data_y=self.y)
             #record y_ex_val (excitation amplitude) and request plot update
-            self.y_ex = np.append(self.y_ex, intensities[self.excitationPix])
+            self.y_ex = np.append(self.y_ex, intensities[self.pix_ex])
             #self.set_plotdata(name='excitation', data_x=self.x, data_y=self.y_ex)
         else:
             #After recording entire fl, stop timer and and stop string drive
@@ -129,16 +138,8 @@ class ReadString(baseclass):
     def click_start(self):
         if not self.marked:
             #clear plot and re-initialize np arrays
-            if not self.clear(showPopup=True): return
-            #Initialize needed values for plotting
-            self.fl = self.settings.value('flightline_length', defaultValue=150.0, type=float)
-            it_sec = self.settings.value('integration_time_ms', defaultValue=100.0, type=float) / 1000
-            len_per_sec = self.settings.value('advance_speed', defaultValue=1.70, type=float)
-            self.len_per_frame = it_sec * len_per_sec
-            self.emissionPix = np.abs(self.spec.wavelengths()-self.settings.value(
-                'target_emission_wavelength', defaultValue=575, type=int)).argmin()
-            self.excitationPix = np.abs(self.spec.wavelengths()-self.settings.value(
-                'target_excitation_wavelength', defaultValue=525, type=int)).argmin()
+            if not self.clear(showPopup=True): 
+                return
             #Start String Drive (forward)
             self.ser.write(cfg.STRING_DRIVE_FWD_START.encode())
             self.ui.buttonStart.setText('Mark')
@@ -149,7 +150,7 @@ class ReadString(baseclass):
             #Set the timeout action
             self.timer.timeout.connect(self.plotFrame)
             self.plotFrame()
-            self.timer.start(int(self.settings.value('integration_time_ms', defaultValue=100.0, type=float)))
+            self.timer.start(int(self.integration_time_ms))
             self.ui.buttonStart.setEnabled(False)
         #Enable abort button
         self.ui.buttonAbort.setEnabled(True)
@@ -190,43 +191,16 @@ class ReadString(baseclass):
 
     def accept(self):
         p = self.passData
-        excepts = []
-        #Ground Speed
-        if not p.set_ground_speed(self.ui.lineEditGS.text()):
-            excepts.append('-GROUND SPEED cannot be converted to a NUMBER')
-        p.ground_speed_units = self.ui.comboBoxUnitsGS.currentText()
-        #Spray Height
-        if not p.set_spray_height(self.ui.lineEditSH.text()):
-            excepts.append('-SPRAY HEIGHT cannot be converted to a NUMBER')
-        p.spray_height_units = self.ui.comboBoxUnitsSH.currentText()
-        #Pass Heading
-        if not p.set_pass_heading(self.ui.lineEditPH.text()):
-            excepts.append('-PASS HEADING cannot be converted to an INTEGER')
-        #Wind Direction
-        if not p.set_wind_direction(self.ui.lineEditWD.text()):
-            excepts.append('-WIND DIRECTION cannot be converted to a NUMBER')
-        #Wind Speed
-        if not p.set_wind_speed(self.ui.lineEditWS.text()):
-            excepts.append('-WIND SPEED cannot be converted to a NUMBER')
-        p.wind_speed_units = self.ui.comboBoxUnitsWS.currentText()
-        #Temperature
-        if not p.set_temperature(self.ui.lineEditT.text()):
-            excepts.append('-TEMPERATURE cannot be converted to a NUMBER')
-        p.temperature_units = self.ui.comboBoxUnitsT.currentText()
-        #Humidity
-        if not p.set_humidity(self.ui.lineEditH.text()):
-            excepts.append('-HUMIDITY cannot be converted to a NUMBER')
-        # If any invalid, show user and return to current window
-        if len(excepts) > 0:
+        # Validate fields will set values to the pass object if valid
+        # If any passInfo fields invalid, show user and return to current window
+        if len(excepts := self.passInfoWidget.validate_fields(p)) > 0:
             QMessageBox.warning(self, 'Invalid Data', '\n'.join(excepts))
             return
-        #data_loc_units
-        p.data_loc_units = self.settings.value('flightline_length_units', defaultValue='ft', type=str)
-        # String Params
-        p.excitation_wav = self.settings.value('target_excitation_wavelength', defaultValue=cfg.SPEC_WAV_EX__DEFAULT, type=int)
-        p.emission_wav = self.settings.value('target_emission_wavelength', defaultValue=cfg.SPEC_WAV_EM__DEFAULT, type=int)
-        p.integration_time_ms = self.settings.value('integration_time_ms', defaultValue=cfg.SPEC_INT_TIME_MS__DEFAULT, type=int)
         #Pattern
+        p.wav_ex = self.wav_ex
+        p.wav_em = self.wav_em
+        p.integration_time_ms = self.integration_time_ms
+        p.data_loc_units = self.string_length_units
         if len(self.x) > 0:
             p.setData(self.x, self.y, self.y_ex)
         # If all checks out, notify requestor and close
@@ -255,15 +229,15 @@ class ReadString(baseclass):
     #Open String Drive Editor
     @pyqtSlot()
     def editStringDrive(self):
-        e = EditStringDrive(parent=self)
-        e.accepted.connect(self.setupStringDrive)
+        e = EditStringDrive(string_length_units=self.string_length_units, parent=self)
+        e.string_length_units_changed.connect(self.string_length_units_changed)
+        e.accepted.connect(self.reSetupStringDrive)
         e.exec()
 
     def setupStringDrive(self):
         #Get a handle to the serial object, else return "Disconnected" status label
         try:
-            self.ser = serial.Serial(self.settings.value('serial_port_device', defaultValue='', type=str),
-                baudrate=9600, timeout=1)
+            self.ser = serial.Serial(self.string_drive_port, baudrate=9600, timeout=1)
             self.ser_connected = True
         except:
             self.ui.labelStringDrive.setText('String Drive: DISCONNECTED')
@@ -271,16 +245,23 @@ class ReadString(baseclass):
             return
         #Setup String Drive labels
         self.ui.labelStringDrive.setText(f'String Drive Port: {self.ser.name}')
-        self.ui.labelStringLength.setText("String Length: "
-            f"{self.strip_num(self.settings.value('flightline_length', defaultValue=150, type=float))} "
-            f"{self.settings.value('flightline_length_units', defaultValue='ft', type=str)}")
-        self.ui.labelStringVelocity.setText(f"String Velocity: "
-            f"{self.strip_num(self.settings.value('advance_speed', defaultValue=1.70, type=float))} "
-            f"{self.settings.value('flightline_length_units', defaultValue = 'ft', type=str)}/sec")
+        self.ui.labelStringLength.setText(f'String Length: {self.strip_num(self.string_length)} {self.string_length_units}')
+        self.ui.labelStringVelocity.setText(f'String Velocity: {self.strip_num(self.string_speed)} {self.string_length_units}/sec')
         #Enale/Disable manual drive buttons
         self.ui.buttonManualReverse.setEnabled(self.ser_connected)
         self.ui.buttonManualForward.setEnabled(self.ser_connected)
         self.checkReady()
+    
+    @pyqtSlot(str)
+    def string_length_units_changed(self, units: str):
+        self.string_length_units = units
+        self.p.setLabel(axis='bottom',text='Location', units=units)
+        pass
+    
+    @pyqtSlot()
+    def reSetupStringDrive(self):
+        self.load_defaults()
+        self.setupStringDrive()
         
     @pyqtSlot()
     def string_drive_manual_reverse(self):
@@ -306,12 +287,12 @@ class ReadString(baseclass):
     #Open Spectrometer Editor
     @pyqtSlot()
     def editSpectrometer(self):
-        e = EditSpectrometer(self.spec, parent=self)
-        e.accepted.connect(self.setupSpectrometer)
+        e = EditSpectrometer(self.spec, self.wav_ex, self.wav_em, self.integration_time_ms, parent=self)
+        e.accepted.connect(self.reSetupSpectrometer)
         e.exec()
         
     def setupSpectrometer(self):
-        #Get a handle to the spec object, else return "Disconnected" status
+        # Get a handle to the spec object, else return "Disconnected" status
         if self.spec == None:
             try:
                 self.spec = Spectrometer.from_first_available()
@@ -320,15 +301,36 @@ class ReadString(baseclass):
                 self.ui.labelSpec.setText('Spectrometer: DISCONNECTED')
                 self.spec_connected = False
                 return
-        #Inform spectrometer of new int time
-        self.spec.integration_time_micros(self.settings.value(
-            'integration_time_ms', defaultValue=cfg.SPEC_INT_TIME_MS__DEFAULT, type=int) * 1000)
-        #Populate Spectrometer labels
+        # Inform spectrometer of new int time
+        self.spec.integration_time_micros(self.integration_time_ms * 1000)
+        # Get a handle on pixels for chosen wavelengths
+        wavelengths = self.spec.wavelengths()
+        self.pix_ex = np.abs(wavelengths-self.wav_ex).argmin()
+        self.pix_em = np.abs(wavelengths-self.wav_em).argmin()
+        # Populate Spectrometer labels
         self.ui.labelSpec.setText(f"Spectrometer: {self.spec.model}")
         self.ui.labelExcitation.setText(
-            f"Excitation: {self.settings.value('target_excitation_wavelength', defaultValue=cfg.SPEC_WAV_EX__DEFAULT, type=int)} nm")
+            f"Excitation: {self.wav_ex} nm")
         self.ui.labelEmission.setText(
-            f"Emission: {self.settings.value('target_emission_wavelength', defaultValue=cfg.SPEC_WAV_EM__DEFAULT, type=int)} nm")
+            f"Emission: {self.wav_em} nm")
         self.ui.labelIntegrationTime.setText(
-            f"Integration Time: {self.settings.value('integration_time_ms', defaultValue=cfg.SPEC_INT_TIME_MS__DEFAULT, type=int)} ms")
+            f"Integration Time: {self.integration_time_ms} ms")
         self.checkReady()
+        
+    @pyqtSlot()
+    def reSetupSpectrometer(self):
+        self.load_defaults() # To re-calc len_per_frame w/ new int time
+        self.setupSpectrometer()
+        
+    @pyqtSlot(int)
+    def wav_ex_changed(self, wav: int):
+        self.wav_ex = wav
+        
+    @pyqtSlot(int)
+    def wav_em_changed(self, wav: int):
+        self.wav_em = wav
+        
+    @pyqtSlot(int)
+    def integration_time_ms_changed(self, time_ms: int):
+        self.integration_time_ms = time_ms
+    

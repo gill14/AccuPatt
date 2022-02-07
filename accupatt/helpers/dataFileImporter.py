@@ -246,3 +246,8 @@ def translateNozzle(id, type, size, defl, quant) -> Nozzle:
     except:
         pass
     return Nozzle(id, type, str(size), str(defl), quant)
+
+def load_image_from_accupatt_1(file, spray_card_name):
+    wb = openpyxl.load_workbook(file)
+    # Get (PIL) Image from applicable sheet
+    return SheetImageLoader(wb[spray_card_name]).get('A1')

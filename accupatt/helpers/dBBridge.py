@@ -3,7 +3,7 @@ import sqlite3
 from datetime import datetime
 
 import pandas as pd
-from accupatt.models.appInfo import AppInfo, Nozzle
+from accupatt.models.appInfo import Nozzle
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
 from accupatt.models.sprayCard import SprayCard
@@ -124,7 +124,18 @@ def _load_table_spray_cards(c: sqlite3.Cursor, p: Pass, file: str):
         sc.set_threshold_color_saturation((smin, smax))
         sc.set_threshold_color_brightness((bmin, bmax))
         p.spray_cards.append(sc)
-        
+
+def load_image_from_db(file: str, spray_card_id: str) -> bytearray:
+    byte_array = None
+    with sqlite3.connect(file) as conn:
+        # Get a cursor object
+        c = conn.cursor()
+        # SprayCard Table entry matching supplied card id
+        c.execute('''SELECT image FROM spray_cards WHERE id = ?''',(spray_card_id,))
+        # blob to byte array
+        byte_array = bytearray(c.fetchone()[0])
+    return byte_array
+           
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 Saving
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''        
@@ -266,3 +277,14 @@ def _update_table_spray_cards(c: sqlite3.Cursor, p: Pass):
                 in_query += f", '{id}'"
         in_query += ')'
         c.execute(f'DELETE FROM spray_cards WHERE pass_id = "{p.id}" AND id NOT IN {in_query}')
+
+def save_image_to_db(file: str, spray_card_id: str, image) -> bool:
+    success = False
+    with sqlite3.connect(file) as conn:
+        # Get a cursor object
+        c = conn.cursor()
+        # Request update of card record in table spray_cards by sprayCard.id
+        c.execute('''UPDATE spray_cards SET image = ? WHERE id = ?''',
+                  (sqlite3.Binary(image), spray_card_id))
+        success = True
+    return success

@@ -5,25 +5,13 @@ import numpy as np
 import pandas as pd
 import scipy.signal as sig
 
-
+from PyQt6.QtCore import QSettings
 class Pass:
 
     c = {'kph_mph': cfg.MPH_PER_KPH,
         'kn_mph': cfg.MPH_PER_KN}
 
-    def __init__(self, id = '', number=0, name='',
-            ground_speed=0, ground_speed_units='mph',
-            spray_height=0, spray_height_units='ft',
-            pass_heading=0, wind_direction=0,
-            wind_speed=0, wind_speed_units='mph',
-            temperature = 0, temperature_units='°F',
-            humidity=0, include_in_composite=True,
-            excitation_wav=cfg.SPEC_WAV_EX__DEFAULT, 
-            emission_wav=cfg.SPEC_WAV_EM__DEFAULT,
-            integration_time_ms=cfg.SPEC_INT_TIME_MS__DEFAULT,
-            trim_l=0, trim_r=0, trim_v=0.0,
-            data_ex=pd.DataFrame(), data=pd.DataFrame(), data_mod=pd.DataFrame(),
-            data_loc_units=cfg.UNIT_FT):
+    def __init__(self, id = '', number=0, name=''):
         #Info Stuff
         self.id = id
         if self.id == '':
@@ -32,33 +20,47 @@ class Pass:
         self.name = name
         if self.name=='':
             self.name = 'Pass ' + str(self.number)
-        self.ground_speed = ground_speed
-        self.ground_speed_units =  ground_speed_units
-        self.spray_height = spray_height
-        self.spray_height_units = spray_height_units
-        self.pass_heading = pass_heading
-        self.wind_direction = wind_direction
-        self.wind_speed = wind_speed
-        self.wind_speed_units = wind_speed_units
-        self.temperature = temperature
-        self.temperature_units = temperature_units
-        self.humidity = humidity
         #Include in Composite by default
-        self.include_in_composite = include_in_composite
-        #String stuff
-        self.excitation_wav = excitation_wav
-        self.emission_wav = emission_wav
-        self.integration_time_ms = integration_time_ms
-        self.trim_l = trim_l
-        self.trim_r = trim_r
-        self.trim_v = trim_v
-        self.data = data #Holds original Data
-        self.data_mod = data_mod #Holds data with all requested modifications
-        self.data_ex = data_ex #Holds Excitation Data
-        self.data_loc_units = data_loc_units
-        self.string_center_method = cfg.CENTER_METHOD_CENTROID
+        self.include_in_composite = True
+         # Load in Settings
+        settings = QSettings('accupatt','AccuPatt')
+        # Pass Info
+        self.ground_speed = 0
+        self.ground_speed_units = settings.value(cfg._UNIT_GROUND_SPEED, 
+                                           defaultValue=cfg.UNIT_GROUND_SPEED__DEFAULT)
+        self.spray_height = 0
+        self.spray_height_units = settings.value(cfg._UNIT_SPRAY_HEIGHT,
+                                                 defaultValue=cfg.UNIT_SPRAY_HEIGHT__DEFAULT)
+        self.pass_heading = 0
+        self.wind_direction = 0
+        self.wind_speed = 0
+        self.wind_speed_units = settings.value(cfg._UNIT_WIND_SPEED,
+                                               defaultValue=cfg.UNIT_WIND_SPEED__DEFAULT)
+        self.temperature = 0
+        self.temperature_units = settings.value(cfg._UNIT_TEMPERATURE,
+                                                defaultValue=cfg.UNIT_TEMPERATURE__DEFAULT)
+        self.humidity = 0
+        # String Data Collection 
+        self.wav_ex = settings.value(cfg._SPEC_WAV_EX,
+                                     defaultValue=cfg.SPEC_WAV_EX__DEFAULT)
+        self.wav_em = settings.value(cfg._SPEC_WAV_EM,
+                                     defaultValue=cfg.SPEC_WAV_EM__DEFAULT)
+        self.integration_time_ms = settings.value(cfg._SPEC_INT_TIME_MS,
+                                                  defaultValue=cfg.SPEC_INT_TIME_MS__DEFAULT)
+        # String Data
+        self.data_ex = pd.DataFrame() #Holds Excitation Data
+        self.data = pd.DataFrame() #Holds original Data
+        self.data_mod = pd.DataFrame() #Holds data with all requested modifications
+        self.data_loc_units = settings.value(cfg._UNIT_DATA_LOCATION,
+                                             defaultValue=cfg.UNIT_DATA_LOCATION__DEFAULT)
+        # String Data Mod Options
+        self.trim_l = 0
+        self.trim_r = 0
+        self.trim_V = 0.0
+        self.string_center_method = settings.value(cfg._CENTER_METHOD,
+                                                   defaultValue=cfg.CENTER_METHOD__DEFAULT)
         self.string_smooth = True
-        #Cards
+        # Spray Card List
         self.spray_cards = []
 
     def modifyData(self, loc_units=None):
@@ -169,9 +171,7 @@ class Pass:
         return d
 
     def setData(self, x_data, y_data, y_ex_data):
-        #pattern = np.array(x_data, y_data)
         self.data = pd.DataFrame(data=list(zip(x_data,y_data)), columns=['loc', self.name])
-        #pattern_ex = np.array([x_data, y_ex_data])
         self.data_ex = pd.DataFrame(data=list(zip(x_data, y_ex_data)), columns=['loc', self.name])
 
     def setTrims(self, trim_l = None, trim_r = None, trim_v = None):

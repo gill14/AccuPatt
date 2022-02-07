@@ -1,9 +1,8 @@
 import os
 
-import accupatt.config as cfg
 import numpy as np
 from PyQt6 import uic
-from PyQt6.QtCore import QSettings
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QMessageBox
 from seabreeze.spectrometers import Spectrometer
@@ -13,36 +12,21 @@ Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'edit
 icon_file = os.path.join(os.getcwd(), 'resources', 'refresh.png')
 
 class EditSpectrometer(baseclass):
+    
+    wav_ex_changed = pyqtSignal(int)
+    wav_em_changed = pyqtSignal(int)
+    integration_time_ms_changed = pyqtSignal(int)
 
-    def __init__(self, spectrometer=None, parent=None):
+    def __init__(self, spectrometer, wav_ex, wav_em, integration_time_ms, parent=None):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
-        #Load in Settings or use defaults
-        self.settings = QSettings('accupatt','AccuPatt')
-        #Excitation Wavelength
-        if self.settings.contains('target_excitation_wavelength'):
-            self.target_excitation_wavelength = self.settings.value('target_excitation_wavelength', type=int)
-        else:
-            self.target_excitation_wavelength = cfg.SPEC_WAV_EX__DEFAULT
-        #Emission Wavelength
-        if self.settings.contains('target_emission_wavelength'):
-            self.target_emission_wavelength = self.settings.value('target_emission_wavelength', type=int)
-        else:
-            self.target_emission_wavelength = cfg.SPEC_WAV_EM__DEFAULT
-        #Integration Time
-        if self.settings.contains('integration_time_ms'):
-            self.integration_time_ms = self.settings.value('integration_time_ms', type=int)
-        else:
-            self.integration_time_ms = cfg.SPEC_INT_TIME_MS__DEFAULT
-
         self.spec = spectrometer
         
-        
-        self.ui.lineEditEx.setText(str(self.target_excitation_wavelength))
-        self.ui.lineEditEm.setText(str(self.target_emission_wavelength))
-        self.ui.lineEditIntegrationTime.setText(str(self.integration_time_ms))
+        self.ui.lineEditEx.setText(str(wav_ex))
+        self.ui.lineEditEm.setText(str(wav_em))
+        self.ui.lineEditIntegrationTime.setText(str(integration_time_ms))
 
         #Hook up signals
         self.ui.buttonRefresh.setIcon(QIcon(icon_file))
@@ -67,19 +51,19 @@ class EditSpectrometer(baseclass):
         self.ui.labelSerialNumber.setText(f'Spectrometer Serial Number: {self.spec.serial_number}')
         self.ui.labelSpec.setText(f'Spectrometer: {self.spec.model}')
         wav = self.spec.wavelengths()
-        #Check that target_excitation_wavelength is a number
+        #Check that wav_ex is a number
         try:
-            self.excitationPix = np.abs(wav-float(self.ui.lineEditEx.text())).argmin()
-            self.actual_excitation_wavelength = wav[self.excitationPix]
-            self.ui.labelEx.setText(f'Actual Excitation is {self.strip_num(self.actual_excitation_wavelength)}nm at pixel #{self.excitationPix}')
+            pix_ex = np.abs(wav-float(self.ui.lineEditEx.text())).argmin()
+            wav_ex = wav[pix_ex]
+            self.ui.labelEx.setText(f'Actual Excitation is {self.strip_num(wav_ex)}nm at pixel #{pix_ex}')
         except:
             self.ui.labelEx.setText('Invalid Target Excitation Wavelength')
             print('Invalid Excitation Wavelength')
-        #Check that target_emission_wavelength is a number
+        #Check that wav_em is a number
         try:
-            self.emissionPix = np.abs(wav-int(self.ui.lineEditEm.text())).argmin()
-            self.actual_emission_wavelength = wav[self.emissionPix]
-            self.ui.labelEm.setText(f'Actual Emission is {self.strip_num(self.actual_emission_wavelength)}nm at pixel #{self.emissionPix}')
+            pix_em = np.abs(wav-int(self.ui.lineEditEm.text())).argmin()
+            wav_em = wav[pix_em]
+            self.ui.labelEm.setText(f'Actual Emission is {self.strip_num(wav_em)}nm at pixel #{pix_em}')
         except:
             self.ui.labelEm.setText('Invalid Target Emission Wavelength')
             print('Invalid Emission Wavelength')
@@ -97,15 +81,15 @@ class EditSpectrometer(baseclass):
         excepts = []
         # Save Excitation Wavelength
         try:
-            self.settings.setValue('target_excitation_wavelength', int(self.ui.lineEditEx.text()))
+            self.wav_ex_changed.emit(int(self.ui.lineEditEx.text()))
         except:
             excepts.append('-TARGET EXCITATION WAVELENGTH cannot be converted to an INTEGER')
         try:
-            self.settings.setValue('target_emission_wavelength', int(self.ui.lineEditEm.text()))
+            self.wav_em_changed.emit(int(self.ui.lineEditEm.text()))
         except:
             excepts.append('-TARGET EMISSION WAVELENGTH cannot be converted to an INTEGER')
         try:
-            self.settings.setValue('integration_time_ms', int(self.ui.lineEditIntegrationTime.text()))
+            self.integration_time_ms_changed.emit(int(self.ui.lineEditIntegrationTime.text()))
         except:
             excepts.append('-INTEGRATION TIME cannot be converted to an INTEGER')
         # If any invalid, show user and return to current window

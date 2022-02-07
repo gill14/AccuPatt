@@ -3,7 +3,7 @@ import os
 import accupatt.config as cfg
 from accupatt.windows.calculateStringSpeed import CalculateStringSpeed
 from PyQt6 import uic
-from PyQt6.QtCore import QSettings, pyqtSlot
+from PyQt6.QtCore import QSettings, pyqtSlot, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QMessageBox
 from serial.tools import list_ports
@@ -14,7 +14,9 @@ icon_file = os.path.join(os.getcwd(), 'resources', 'refresh.png')
 
 class EditStringDrive(baseclass):
 
-    def __init__(self, parent=None):
+    string_length_units_changed = pyqtSignal(str)
+
+    def __init__(self, string_length_units, parent=None):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -33,17 +35,17 @@ class EditStringDrive(baseclass):
 
         #Init flightline Length
         self.ui.comboBoxFlightlineLengthUnits.currentTextChanged[str].connect(self.on_fl_units_selected)
-        self.ui.lineEditFlightlineLength.setText(self.strip_num(
-            self.settings.value('flightline_length', defaultValue=150.0, type=float)
+        self.ui.lineEditFlightlineLength.setText(
+            self.strip_num(
+            self.settings.value(cfg._STRING_LENGTH, 
+                                defaultValue=cfg.STRING_LENGTH__DEFAULT)
         ))
         self.ui.comboBoxFlightlineLengthUnits.addItems(cfg.UNITS_LENGTH_LARGE)
-        self.ui.comboBoxFlightlineLengthUnits.setCurrentText(
-            self.settings.value('flightline_length_units', defaultValue='ft', type=str)
-        )
+        self.ui.comboBoxFlightlineLengthUnits.setCurrentText(string_length_units)
 
         #Init advance Speed
         self.ui.lineEditSpeed.setText(self.strip_num(
-            self.settings.value('advance_speed', defaultValue=1.70, type=float)
+            self.settings.value(cfg._STRING_SPEED, defaultValue=1.70, type=float)
         ))
         
         #Init calc string speed button
@@ -57,7 +59,8 @@ class EditStringDrive(baseclass):
             self.ui.comboBoxSerialPort.addItems([port.device])
         #Check if saved port in box
         index = self.ui.comboBoxSerialPort.findText(
-            self.settings.value('serial_port_device', defaultValue='', type=str)
+            self.settings.value(cfg._STRING_DRIVE_PORT,
+                                defaultValue=cfg.STRING_DRIVE_PORT__DEFAULT)
         )
         self.ui.comboBoxSerialPort.setCurrentIndex(index)
 
@@ -101,16 +104,17 @@ class EditStringDrive(baseclass):
         # Save Serial Port
         port = self.ui.comboBoxSerialPort.currentText()
         if not port == '':
-            self.settings.setValue('serial_port_device', port)
-        # Save String Length & Units
+            self.settings.setValue(cfg._STRING_DRIVE_PORT, port)
+        # Save String Length
         try:
-            self.settings.setValue('flightline_length',float(self.ui.lineEditFlightlineLength.text()))
+            self.settings.setValue(cfg._STRING_LENGTH,float(self.ui.lineEditFlightlineLength.text()))
         except:
             excepts.append('-STRING LENGTH cannot be converted to a NUMBER')
-        self.settings.setValue('flightline_length_units', self.ui.comboBoxFlightlineLengthUnits.currentText())
+        # Signal to change string length units (not handled via settings)
+        self.string_length_units_changed.emit(self.ui.comboBoxFlightlineLengthUnits.currentText())
         # Save String Speed
         try:
-            self.settings.setValue('advance_speed',float(self.ui.lineEditSpeed.text()))
+            self.settings.setValue(cfg._STRING_SPEED,float(self.ui.lineEditSpeed.text()))
         except:
             excepts.append('-STRING SPEED cannot be converted to a NUMBER')
         # If any invalid, show user and return to current window

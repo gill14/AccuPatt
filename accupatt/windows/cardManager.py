@@ -3,6 +3,8 @@ from typing import List
 
 import accupatt.config as cfg
 from accupatt.models.sprayCard import SprayCard
+from accupatt.models.passData import Pass
+from accupatt.widgets.passinfowidget import PassInfoWidget
 from accupatt.windows.loadCards import LoadCards
 from PyQt6 import uic
 from PyQt6.QtCore import (QAbstractTableModel, QItemSelectionModel,
@@ -33,7 +35,7 @@ class CardManager(baseclass):
 
     passDataChanged = pyqtSignal()
 
-    def __init__(self, passData=None, filepath=None, parent=None):
+    def __init__(self, passData: Pass = None, filepath=None, parent=None):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -43,8 +45,14 @@ class CardManager(baseclass):
        
         # File path for creating new cards
         self.filepath = filepath
+        
+        # Pass Info Fields
+        self.passData = passData
+        self.ui.labelPass.setText(passData.name)
+        self.passInfoWidget: PassInfoWidget = self.ui.passInfoWidget
+        self.passInfoWidget.fill_from_pass(passData)
        
-       #Load in defined sets to combobox
+        #Load in defined sets to combobox
         for key in defined_sets.keys():
            self.ui.comboBoxDefinedSet.addItem(key)
 
@@ -176,6 +184,15 @@ class CardManager(baseclass):
         e.accepted.connect(self.update_table)
         #Start Loop
         e.exec()
+        
+    def accept(self):
+        p = self.passData
+        # If any passInfo fields invalid, show user and return to current window
+        if len(excepts := self.passInfoWidget.validate_fields(p)) > 0:
+            QMessageBox.warning(self, 'Invalid Data', '\n'.join(excepts))
+            return
+        # If all checks out, notify requestor and close
+        super().accept()  
 
 class ComboBoxDelegate(QItemDelegate):
     def __init__(self, owner, itemList):
