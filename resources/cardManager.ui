@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1019</width>
-    <height>451</height>
+    <width>1076</width>
+    <height>439</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,143 +19,31 @@
   <property name="modal">
    <bool>true</bool>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout">
+  <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
-    <layout class="QVBoxLayout" name="verticalLayout">
+    <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QTableView" name="tableView">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="dragDropMode">
-        <enum>QAbstractItemView::InternalMove</enum>
-       </property>
-       <property name="defaultDropAction">
-        <enum>Qt::MoveAction</enum>
-       </property>
-       <property name="alternatingRowColors">
-        <bool>true</bool>
-       </property>
-       <property name="selectionBehavior">
-        <enum>QAbstractItemView::SelectRows</enum>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <widget class="CardTableWidget" name="cardTableWidget" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>700</width>
+           <height>0</height>
+          </size>
+         </property>
+        </widget>
+       </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_4">
          <item>
-          <widget class="QPushButton" name="buttonAddCard">
-           <property name="font">
-            <font>
-             <pointsize>13</pointsize>
-             <weight>50</weight>
-             <bold>false</bold>
-            </font>
-           </property>
-           <property name="toolTip">
-            <string>Add Single Card</string>
-           </property>
-           <property name="toolTipDuration">
-            <number>5000</number>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset>
-             <normaloff>icon_add.png</normaloff>icon_add.png</iconset>
-           </property>
-           <property name="checkable">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="buttonRemoveCard">
-           <property name="font">
-            <font>
-             <pointsize>13</pointsize>
-             <weight>50</weight>
-             <bold>false</bold>
-            </font>
-           </property>
-           <property name="toolTip">
-            <string>Remove Selected Card(s)</string>
-           </property>
-           <property name="toolTipDuration">
-            <number>5000</number>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset>
-             <normaloff>icon_remove.png</normaloff>icon_remove.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="buttonUp">
-           <property name="font">
-            <font>
-             <pointsize>13</pointsize>
-             <weight>50</weight>
-             <bold>false</bold>
-            </font>
-           </property>
-           <property name="toolTip">
-            <string>Shift Selection Up</string>
-           </property>
-           <property name="toolTipDuration">
-            <number>5000</number>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset>
-             <normaloff>icon_up.png</normaloff>icon_up.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="buttonDown">
-           <property name="font">
-            <font>
-             <pointsize>13</pointsize>
-             <weight>50</weight>
-             <bold>false</bold>
-            </font>
-           </property>
-           <property name="toolTip">
-            <string>Shift Selection Down</string>
-           </property>
-           <property name="toolTipDuration">
-            <number>5000</number>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset>
-             <normaloff>icon_down.png</normaloff>icon_down.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="Line" name="line">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer">
+          <spacer name="horizontalSpacer_6">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
@@ -168,9 +56,13 @@
           </spacer>
          </item>
          <item>
-          <widget class="QLabel" name="label_2">
+          <widget class="QPushButton" name="buttonEditSet">
            <property name="text">
-            <string>Defined Set:</string>
+            <string>Define/Edit Sets</string>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>icon_adjust.png</normaloff>icon_adjust.png</iconset>
            </property>
           </widget>
          </item>
@@ -203,12 +95,12 @@
            <property name="text">
             <string>Add Set to Pass</string>
            </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>icon_add.png</normaloff>icon_add.png</iconset>
+           </property>
           </widget>
          </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
           <spacer name="horizontalSpacer_2">
            <property name="orientation">
@@ -222,43 +114,136 @@
            </property>
           </spacer>
          </item>
+        </layout>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="Line" name="line_2">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="QLabel" name="labelPass">
+         <property name="text">
+          <string>PassLabel</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="PassInfoWidget" name="passInfoWidget" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="line">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_2">
-           <item>
-            <widget class="QLabel" name="label">
-             <property name="font">
-              <font>
-               <pointsize>13</pointsize>
-               <weight>50</weight>
-               <bold>false</bold>
-              </font>
-             </property>
-             <property name="text">
-              <string>Image Upload Method: </string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QComboBox" name="comboBoxLoadMethod">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>13</pointsize>
-               <weight>50</weight>
-               <bold>false</bold>
-              </font>
-             </property>
-             <property name="sizeAdjustPolicy">
-              <enum>QComboBox::AdjustToContents</enum>
-             </property>
-            </widget>
-           </item>
-          </layout>
+          <spacer name="horizontalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="font">
+            <font>
+             <pointsize>13</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Image Upload Method: </string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboBoxLoadMethod">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>13</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="sizeAdjustPolicy">
+            <enum>QComboBox::AdjustToContents</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_5">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
          </item>
          <item>
           <widget class="QPushButton" name="buttonLoad">
@@ -293,62 +278,35 @@
            </property>
           </widget>
          </item>
+         <item>
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
         </layout>
        </item>
+       <item>
+        <widget class="QDialogButtonBox" name="buttonBox">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="standardButtons">
+          <set>QDialogButtonBox::Ok</set>
+         </property>
+         <property name="centerButtons">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
       </layout>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <widget class="Line" name="line_2">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <layout class="QVBoxLayout" name="verticalLayout_3">
-     <item>
-      <widget class="QLabel" name="labelPass">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>PassLabel</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="PassInfoWidget" name="passInfoWidget" native="true">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>270</width>
-         <height>0</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QDialogButtonBox" name="buttonBox">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="standardButtons">
-        <set>QDialogButtonBox::Ok</set>
-       </property>
-       <property name="centerButtons">
-        <bool>false</bool>
-       </property>
-      </widget>
      </item>
     </layout>
    </item>
@@ -359,6 +317,12 @@
    <class>PassInfoWidget</class>
    <extends>QWidget</extends>
    <header>accupatt/widgets/passinfowidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CardTableWidget</class>
+   <extends>QWidget</extends>
+   <header>accupatt/widgets/cardtablewidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

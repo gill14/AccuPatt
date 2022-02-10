@@ -109,7 +109,7 @@ def _load_table_passes(c: sqlite3.Cursor, s: SeriesData, file: str):
 
 def _load_table_pass_string(c: sqlite3.Cursor, p: Pass):
     c.execute('''SELECT excitation_wav, emission_wav, integration_time_ms, trim_left, trim_right, trim_vertical, center, smooth, data_loc_units, excitation_data, emission_data FROM pass_string WHERE pass_id = ?''',(p.id,))
-    p.excitation_wav, p.emission_wav, p.integration_time_ms, p.trim_l, p.trim_r, p.trim_v, p.string_center_method, p.string_smooth, p.data_loc_units, d_ex, d_em = c.fetchone()
+    p.wav_ex, p.wav_em, p.integration_time_ms, p.trim_l, p.trim_r, p.trim_v, p.string_center_method, p.string_smooth, p.data_loc_units, d_ex, d_em = c.fetchone()
     p.data_ex = pd.read_json(d_ex)
     p.data = pd.read_json(d_em)
 
@@ -255,7 +255,7 @@ def _update_table_pass_string(c: sqlite3.Cursor, p: Pass):
     c.execute('''INSERT INTO pass_string (pass_id, excitation_wav, emission_wav, integration_time_ms, trim_left, trim_right, trim_vertical, center, smooth, data_loc_units, excitation_data, emission_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(pass_id) DO UPDATE SET
                     excitation_wav = excluded.excitation_wav, emission_wav = excluded.emission_wav, integration_time_ms = excluded.integration_time_ms, trim_left = excluded.trim_left, trim_right = excluded.trim_right, trim_vertical = excluded.trim_vertical, center = excluded.center, smooth = excluded.smooth, data_loc_units = excluded.data_loc_units, excitation_data = excluded.excitation_data, emission_data = excluded.emission_data''',
-                    (p.id, p.excitation_wav, p.emission_wav, p.integration_time_ms, p.trim_l, p.trim_r, p.trim_v, p.string_center_method, p.string_smooth, p.data_loc_units, p.data_ex.to_json(), p.data.to_json()))
+                    (p.id, p.wav_ex, p.wav_em, p.integration_time_ms, p.trim_l, p.trim_r, p.trim_v, p.string_center_method, p.string_smooth, p.data_loc_units, p.data_ex.to_json(), p.data.to_json()))
 
 def _update_table_spray_cards(c: sqlite3.Cursor, p: Pass):
     card: SprayCard

@@ -1,14 +1,8 @@
 import os
 
 import accupatt.config as cfg
-import numpy as np
-import pandas as pd
-from accupatt.helpers.atomizationModel import AtomizationModel
-from accupatt.models.appInfo import AppInfo, Nozzle
 from accupatt.models.passData import Pass
 from PyQt6 import uic
-from PyQt6.QtCore import QDate, QDateTime, pyqtSignal, pyqtSlot, QSignalBlocker
-from PyQt6.QtWidgets import QComboBox, QMessageBox
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'passInfo.ui'))
 

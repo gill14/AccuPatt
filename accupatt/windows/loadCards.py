@@ -28,6 +28,9 @@ class LoadCards(baseclass):
         self.dpi = self.settings.value(cfg._DPI, defaultValue=cfg.DPI__DEFAULT, type=int)
         self.orientation = self.settings.value(cfg._ROI_ACQUISITION_ORIENTATION, defaultValue=cfg.ROI_ACQUISITION_ORIENTATION__DEFAULT, type=str)
         self.order = self.settings.value(cfg._ROI_ACQUISITION_ORDER, defaultValue=cfg.ROI_ACQUISITION_ORDER__DEFAULT, type=str)
+        # for other beta users temp
+        if type(self.settings.value(cfg._ROI_SCALE, defaultValue=cfg.ROI_SCALE__DEFAULT)) is str:
+            self.settings.setValue(cfg._ROI_SCALE, cfg.ROI_SCALE__DEFAULT)
         self.scale = self.settings.value(cfg._ROI_SCALE, defaultValue=cfg.ROI_SCALE__DEFAULT, type=int)
         
         # Populate controls with static options, selections from settings
@@ -109,7 +112,7 @@ class LoadCards(baseclass):
                             handlePen=mkPen('r',width=3),
                             handleHoverPen=mkPen('r',width=5),
                             removable=True, centered=True, sideScalers=True)
-                roi.scale(s=float(self.scale[0:-1])/100,center=[0.5,0.5])
+                roi.scale(s=float(self.scale)/100,center=[0.5,0.5])
                 text = self.card_list[i].name
                 label = pg.TextItem(text=text, color='m')
                 label.setParentItem(roi)
@@ -167,6 +170,7 @@ class LoadCards(baseclass):
             sprayCard.save_image_to_file(buffer)
             sprayCard.has_image = True
             sprayCard.include_in_composite = True
+            sprayCard.dpi = self.dpi
         
         super().accept()
     

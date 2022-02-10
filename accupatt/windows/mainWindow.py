@@ -26,7 +26,7 @@ from PyQt6.QtWidgets import (QComboBox, QFileDialog, QLabel,
                              QListWidgetItem, QMenu, QMessageBox, QProgressDialog)
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'mainWindow.ui'))
-testing = False
+testing = True
 class MainWindow(baseclass):
 
     def __init__(self, *args, **kwargs):

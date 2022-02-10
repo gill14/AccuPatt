@@ -56,7 +56,7 @@ class Pass:
         # String Data Mod Options
         self.trim_l = 0
         self.trim_r = 0
-        self.trim_V = 0.0
+        self.trim_v = 0.0
         self.string_center_method = settings.value(cfg._CENTER_METHOD,
                                                    defaultValue=cfg.CENTER_METHOD__DEFAULT)
         self.string_smooth = True

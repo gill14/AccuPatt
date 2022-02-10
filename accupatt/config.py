@@ -73,6 +73,9 @@ _SPEC_INT_TIME_MS = 'spectrometer_integration_time_ms'
 SPEC_INT_TIME_MS__DEFAULT = 100
 
 # SprayCard Load
+_IMAGE_LOAD_METHOD = 'image_load_method'
+IMAGE_LOAD_METHODS = ['One File Per Card', 'One File, Multiple Cards']
+IMAGE_LOAD_METHOD__DEFAULT = IMAGE_LOAD_METHODS[1]
 _ROI_ACQUISITION_ORIENTATION = 'roi_acquisition_orientation'
 ROI_ACQUISITION_ORIENTATIONS = ['Horizontal', 'Vertical']
 ROI_ACQUISITION_ORIENTATION__DEFAULT = ROI_ACQUISITION_ORIENTATIONS[0]
@@ -141,4 +144,24 @@ SPREAD_METHOD_ADAPTIVE = 'Adaptive'
 SPREAD_METHODS = [SPREAD_METHOD_NONE,SPREAD_METHOD_DIRECT,SPREAD_METHOD_ADAPTIVE]
 SPREAD_METHOD__DEFAULT = SPREAD_METHODS[2]
 
-    
+# SprayCard Prefab Sets
+_CARD_DEFINED_SETS = 'card_defined_sets'
+CARD_SET_SAFE_WSP = {
+    'set_name': 'SAFE Fly-In (WSP)',
+    'card_name': ['L-32', 'L-24', 'L-16', 'L-8', 'Center', 'R-8', 'R-16', 'R-24', 'R-32'],
+    'location': [-32, -24, -16, -8, 0, 8, 16, 24, 32],
+    'location_unit': [UNIT_FT] * 9,
+    'threshold_type': [THRESHOLD_TYPE_GRAYSCALE] * 9,
+    'dpi': [1200] * 9
+}
+CARD_SET_SAFE_WHITE = {
+    'set_name': 'SAFE Fly-In (White Cards)',
+    'card_name': ['L-32', 'L-24', 'L-16', 'L-8', 'Center', 'R-8', 'R-16', 'R-24', 'R-32'],
+    'location': [-32, -24, -16, -8, 0, 8, 16, 24, 32],
+    'location_unit': [UNIT_FT] * 9,
+    'threshold_type': [THRESHOLD_TYPE_HSB] * 9,
+    'dpi': [1200] * 9
+}
+CARD_DEFINED_SETS__DEFAULT = [CARD_SET_SAFE_WSP, CARD_SET_SAFE_WHITE]
+_CARD_DEFINED_SET = 'card_defined_set'
+CARD_DEFINED_SET__DEFAULT = CARD_SET_SAFE_WHITE['set_name']

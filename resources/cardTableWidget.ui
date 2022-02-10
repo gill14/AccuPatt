@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>CardTableWidget</class>
+ <widget class="QWidget" name="CardTableWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>935</width>
+    <height>380</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QTableView" name="tableView">
+     <property name="alternatingRowColors">
+      <bool>true</bool>
+     </property>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
+     </property>
+     <property name="gridStyle">
+      <enum>Qt::DashLine</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buttonAddCard">
+       <property name="font">
+        <font>
+         <pointsize>13</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string>Add Single Card</string>
+       </property>
+       <property name="toolTipDuration">
+        <number>5000</number>
+       </property>
+       <property name="text">
+        <string>Add</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>icon_add.png</normaloff>icon_add.png</iconset>
+       </property>
+       <property name="checkable">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buttonRemoveCard">
+       <property name="font">
+        <font>
+         <pointsize>13</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string>Remove Selected Card(s)</string>
+       </property>
+       <property name="toolTipDuration">
+        <number>5000</number>
+       </property>
+       <property name="text">
+        <string>Remove</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>icon_remove.png</normaloff>icon_remove.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buttonUp">
+       <property name="font">
+        <font>
+         <pointsize>13</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string>Shift Selection Up</string>
+       </property>
+       <property name="toolTipDuration">
+        <number>5000</number>
+       </property>
+       <property name="text">
+        <string>Move Up</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>icon_up.png</normaloff>icon_up.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buttonDown">
+       <property name="font">
+        <font>
+         <pointsize>13</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string>Shift Selection Down</string>
+       </property>
+       <property name="toolTipDuration">
+        <number>5000</number>
+       </property>
+       <property name="text">
+        <string>Move Down</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>icon_down.png</normaloff>icon_down.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
