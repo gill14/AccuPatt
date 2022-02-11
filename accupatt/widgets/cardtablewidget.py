@@ -107,7 +107,7 @@ class ComboBoxDelegate(QStyledItemDelegate):
 
 class CardTable(QAbstractTableModel):
     def __init__(self, parent=None, *args): 
-        super(CardTable, self).__init__()
+        super(CardTable, self).__init__(parent)
         self.headers = ['Name','Has Image?','In Composite','Location','Units','Px Per In','Threshold Type']
         self.card_list = []
     
@@ -161,7 +161,7 @@ class CardTable(QAbstractTableModel):
                 return cfg.UNITS_LENGTH_LARGE.index(card.location_units)
         elif col==5:
             if role==Qt.ItemDataRole.DisplayRole:
-                return str(card.dpi)
+                return str(card.dpi) if card.has_image else ''
             elif role==Qt.ItemDataRole.EditRole:
                 return cfg.DPI_OPTIONS.index(card.dpi)
         elif col==6:
@@ -182,7 +182,8 @@ class CardTable(QAbstractTableModel):
         elif col==1:
             pass
         elif col==2:
-            card.include_in_composite = (Qt.CheckState(value) == Qt.CheckState.Checked)
+            if card.has_image:
+                card.include_in_composite = (Qt.CheckState(value) == Qt.CheckState.Checked)
         elif col==3:
             try:
                 card.location = float(value)
@@ -249,5 +250,7 @@ class CardTable(QAbstractTableModel):
             return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
         elif col==2:
             return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsUserCheckable
+        elif col==5 and not self.card_list[index.row()].has_image:
+            return Qt.ItemFlag.NoItemFlags
         else:
             return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEditable

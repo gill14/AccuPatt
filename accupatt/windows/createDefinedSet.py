@@ -1,11 +1,9 @@
-from email.mime import base
 import os
 
 import accupatt.config as cfg
 from accupatt.models.sprayCard import SprayCard
-from accupatt.widgets.cardtablewidget import CardTableWidget
 from PyQt6 import uic
-from PyQt6.QtCore import QAbstractListModel, Qt, QItemSelectionModel, QModelIndex, QSettings, pyqtSlot, pyqtSignal
+from PyQt6.QtCore import pyqtSlot, pyqtSignal
 from PyQt6.QtWidgets import QComboBox, QLineEdit, QMessageBox, QRadioButton
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'createDefinedSet.ui'))
@@ -93,14 +91,17 @@ class CreateDefinedSet(baseclass):
                 self.final = float(self.final_le.text())
             except ValueError:
                 return False
-            self.step = (self.final - self.initial) / (self.quantity-1)
+            try:
+                self.step = (self.final - self.initial) / (self.quantity-1)
+            except ZeroDivisionError:
+                return False
             self.step_le.setText(str(self.step))
             return True
     
     def accept(self):
         if not self.process_location():
             msg = QMessageBox.warning(self, 'Invalid Input',
-                                       'Cannot create a card cist from given inputs.')
+                                       'Cannot create a card list from given inputs.')
             if msg == QMessageBox.StandardButton.Ok:
                 return
         

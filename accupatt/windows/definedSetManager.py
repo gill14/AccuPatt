@@ -34,17 +34,15 @@ class DefinedSetManager(baseclass):
         
         # Shortcut handles
         self.lv: QListView = self.ui.listView
-        self.lm = DefinedSetListModel(self)
+        self.lm = DefinedSetListModel(load_defined_sets(), self)
         self.lv.setModel(self.lm)
         self.cardTable: CardTableWidget = self.ui.cardTableWidget
         self.cardTable.tv.hideColumn(1)
         self.cardTable.tv.hideColumn(2)
         self.cardTable.tv.hideColumn(5)
-        # Load in defined sets to list widget
-        self.lm.loadSets(load_defined_sets())
         # Set and select initial value for listview
-        self.lv.selectionModel().currentRowChanged[QModelIndex,QModelIndex].connect(self.set_selection_changed)
-        self.lv.selectionModel().select(self.lm.index(0), QItemSelectionModel.SelectionFlag.Select)
+        self.lv.selectionModel().currentChanged[QModelIndex,QModelIndex].connect(self.current_set_changed)
+        self.lv.setCurrentIndex(self.lm.index(0,0))
         # Wire up slots
         self.ui.buttonAddSet.clicked.connect(self.add_set)
         self.ui.buttonRemoveSet.clicked.connect(self.remove_set)
@@ -55,8 +53,7 @@ class DefinedSetManager(baseclass):
     @pyqtSlot()
     def add_set(self):
         self.lm.addSet()
-        self.lv.selectionModel().clear()
-        self.lv.selectionModel().select(self.lm.index(self.lm.rowCount()-1,0),QItemSelectionModel.SelectionFlag.Select)
+        self.lv.selectionModel().setCurrentIndex(self.lm.index(self.lm.rowCount()-1,0),QItemSelectionModel.SelectionFlag.ClearAndSelect)
         
     @pyqtSlot()
     def remove_set(self):
@@ -67,10 +64,9 @@ class DefinedSetManager(baseclass):
             return
         self.lm.removeSet(selected_set)
         
-    @pyqtSlot(QModelIndex,QModelIndex)
-    def set_selection_changed(self, current: QModelIndex, previous: QModelIndex = QModelIndex()):
+    @pyqtSlot(QModelIndex, QModelIndex)
+    def current_set_changed(self, current: QModelIndex, previous: QModelIndex):
         self.cardTable.assign_card_list(self.lm.sets[current.row()].cards)
-        
         
     @pyqtSlot()
     def add_regularly_spaced(self):
@@ -83,6 +79,7 @@ class DefinedSetManager(baseclass):
         
     @pyqtSlot(list)
     def add_from_regularly_spaced(self, cards: list):
+        # Send directly to method in CardTable, changes flow back to lm.sets
         self.cardTable.add_cards_to_table(cards)
         
     def accept(self):
@@ -118,13 +115,9 @@ class DefinedSet:
         return d
 
 class DefinedSetListModel(QAbstractListModel):
-    def __init__(self, parent=None, *args):
-        super(DefinedSetListModel, self).__init__()
-        self.sets: list[DefinedSet] = []
-        
-    def loadSets(self, set_list):
-        self.sets = set_list
-        self.dataChanged.emit(self.index(0,0),self.index(self.rowCount(),0))
+    def __init__(self, data, parent=None, *args):
+        super(DefinedSetListModel, self).__init__(parent)
+        self.sets: list[DefinedSet] = data
         
     def rowCount(self, parent=QModelIndex()) -> int:
         return len(self.sets)
@@ -144,7 +137,7 @@ class DefinedSetListModel(QAbstractListModel):
             
     def addSet(self):
         self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
-        self.sets.append(DefinedSet())
+        self.sets.append(DefinedSet(name=f'Defined Set {self.rowCount()+1}',cards=[]))
         self.endInsertRows()
         
     def removeSet(self, selected_index: QModelIndex):
@@ -158,9 +151,4 @@ class DefinedSetListModel(QAbstractListModel):
             return None
         return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEditable
     
-    def get_row_for_name(self, name) -> int:
-        names = [s.name for s in self.sets]
-        if name not in names:
-            return -1
-        return names.index(name)
         
