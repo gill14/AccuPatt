@@ -73,6 +73,8 @@ _SPEC_INT_TIME_MS = 'spectrometer_integration_time_ms'
 SPEC_INT_TIME_MS__DEFAULT = 100
 
 # SprayCard Load
+_IMAGE_LOAD_DIR = 'image_load_dir'
+IMAGE_LOAD_DIR__DEFAULT = 'home'
 _IMAGE_LOAD_METHOD = 'image_load_method'
 IMAGE_LOAD_METHODS = ['One File Per Card', 'One File, Multiple Cards']
 IMAGE_LOAD_METHOD__DEFAULT = IMAGE_LOAD_METHODS[1]

@@ -44,7 +44,7 @@ class SprayCard:
         self.min_stain_area_px = settings.value(cfg._MIN_STAIN_AREA_PX, 
                                                 defaultValue=cfg.MIN_STAIN_AREA_PX, type=int)
         self.spread_method = settings.value(cfg._SPREAD_METHOD, 
-                                            defaultValue=cfg.SPREAD_METHOD__DEFAULT, type=int)
+                                            defaultValue=cfg.SPREAD_METHOD__DEFAULT, type=str)
         self.spread_factor_a = settings.value(cfg._SPREAD_FACTOR_A, 
                                               defaultValue=cfg.SPREAD_FACTOR_A__DEFAULT, type=float)
         self.spread_factor_b = settings.value(cfg._SPREAD_FACTOR_B, 
@@ -210,6 +210,7 @@ class sprayCardImageFileHandler:
         from accupatt.helpers.dBBridge import save_image_to_db
         if (success := save_image_to_db(sprayCard.filepath, sprayCard.id, image)):
             sprayCard.has_image = True
+            sprayCard.include_in_composite = True
         return success
     
 class SprayCardImageProcessor:

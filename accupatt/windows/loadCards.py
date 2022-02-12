@@ -7,18 +7,19 @@ import numpy as np
 import pyqtgraph as pg
 from accupatt.models.sprayCard import SprayCard
 from PyQt6 import uic
-from PyQt6.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QImageReader, QPixmap
-from PyQt6.QtWidgets import QGraphicsPixmapItem
+from PyQt6.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
+from PyQt6.QtWidgets import QApplication, QCheckBox, QGraphicsPixmapItem, QListWidget
 from pyqtgraph.functions import mkPen
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'loadCards.ui'))
+Ui_Form_Pre, baseclass_pre = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'loadCardsPreBatch.ui'))
 
 class LoadCards(baseclass):
 
     applied = pyqtSignal()
 
-    def __init__(self, image_file, card_list, parent=None):
+    def __init__(self, image_file: str, card_list: list[SprayCard], parent=None):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -45,8 +46,6 @@ class LoadCards(baseclass):
         
         #List of cards
         self.card_list = card_list
-        for card in self.card_list:
-            self.ui.listWidget.addItem(card.name)
         
         # Slots for controls
         self.ui.comboBoxDPI.currentIndexChanged[int].connect(self.dpi_changed)
@@ -54,18 +53,27 @@ class LoadCards(baseclass):
         self.ui.comboBoxOrder.currentIndexChanged[int].connect(self.order_changed)
         self.ui.comboBoxScale.currentIndexChanged[int].connect(self.scale_changed)
         
+        #self.ui.buttonAddCard.clicked.connect(self.clickDraw)
+        
         # Set pyqtgraph global options
         pg.setConfigOptions(antialias=True)
         
         # Lock pixels as square in image view to prevent distortion
         self.ui.plotWidget.getViewBox().setAspectLocked()
+       
+        self.plot_image()
         
+        self.show()
+        self.show_image_characteristics()
+    
+    def plot_image(self, index=0):
         # Load Image from File, invert vertically, add it to plotWidget
-        self.image_file = image_file
-        image_reader = QImageReader(image_file)
+        self.image_file = self.files[index]
+        image_reader = QImageReader(self.image_file)
         size_og = image_reader.size()
         size_mod = size_og
         if size_og.width() * size_og.height() > 33000000:
+            print('scaling')
             scale = 4000 / size_mod.width()
             size_mod = size_mod.scaled(int(size_mod.width()*scale),int(size_mod.height()*scale),Qt.AspectRatioMode.IgnoreAspectRatio)
         image_reader.setScaledSize(size_mod)
@@ -77,15 +85,12 @@ class LoadCards(baseclass):
         
         self.ui.plotWidget.addItem(self.img)
         self.ui.plotWidget.getPlotItem().invertY(True)
-       
+        
         # Only search image for ROIs once
-        self.roi_rectangles = self._find_rois(image_file)
+        self.roi_rectangles = self._find_rois(self.image_file)
         # Run initial drawing of ROIs
         self.rois = []
         self.draw_rois()
-        
-        self.show()
-        self.show_image_characteristics()
         
     def show_image_characteristics(self):
         dpi = self.dpi
@@ -99,7 +104,7 @@ class LoadCards(baseclass):
         self._sort_rois(self.orientation, self.order)
         # Clear any previous rois from ViewBox
         for r in self.rois:
-            self.ui.plotWidget.getViewBox().removeItem(r)
+           self.ui.plotWidget.getViewBox().removeItem(r)
         # Add rois to image with labels
         self.rois = []
         for i, r in enumerate(self.roi_rectangles):
@@ -111,7 +116,8 @@ class LoadCards(baseclass):
                             hoverPen=mkPen('r',width=5),
                             handlePen=mkPen('r',width=3),
                             handleHoverPen=mkPen('r',width=5),
-                            removable=True, centered=True, sideScalers=True)
+                            removable=True, centered=True, sideScalers=True,
+                            scaleSnap=True, translateSnap=True)
                 roi.scale(s=float(self.scale)/100,center=[0.5,0.5])
                 text = self.card_list[i].name
                 label = pg.TextItem(text=text, color='m')
@@ -146,6 +152,15 @@ class LoadCards(baseclass):
         del self.roi_rectangles[self.rois.index(roi)]
         #self.rois.remove(roi)
         self.draw_rois()
+        
+    @pyqtSlot()
+    def click_add_card(self):
+        
+        pass
+    
+    @pyqtSlot()
+    def click_remove_card(self):
+        pass
         
     @pyqtSlot()
     def accept(self):
@@ -211,17 +226,6 @@ class LoadCards(baseclass):
         # Once rois_sorted contains all original rois, re-assign the original rois
         self.roi_rectangles = rois_sorted 
     
-    def _scale_rois(self, rois, scale):
-        rois_scaled = []
-        percent = float(scale)/100
-        print(percent)
-        for r in rois:
-            x, y, w, h = r
-            w_scaled = int(w*percent)
-            h_scaled = int(h*percent)
-            rois_scaled.append((int(x+w_scaled/4),int(y+h_scaled/4),w_scaled,h_scaled))
-        return rois_scaled
-    
     def _find_rois(self, image_file):
         img = cv2.imread(image_file)
         
@@ -243,3 +247,51 @@ class LoadCards(baseclass):
                 continue
             roi_rectangles.append((x, y, w, h)) 
         return roi_rectangles
+
+    '''def clickDraw(self):
+        QApplication.setOverrideCursor(QCursor(Qt.CursorShape.CrossCursor))
+        pw: pg.PlotWidget = self.ui.plotWidget
+        pw.getPlotItem().getViewBox().setMouseMode(pg.ViewBox.RectMode)
+        pw.sceneObj.sigMouseClicked[object].connect(self.clicked)
+           
+    def clicked(self):
+        print('clickec')'''
+
+class LoadCardsPreBatch(baseclass_pre):
+    
+    def __init__(self, image_files: list[str], card_list: list[SprayCard], parent=None):
+        super().__init__(parent=parent)
+        self.ui = Ui_Form_Pre()
+        self.ui.setupUi(self)
+        
+        self.cards = card_list
+        self.files = image_files
+        
+        self.lwc: QListWidget = self.ui.listWidgetCard
+        self.lwf: QListWidget = self.ui.listWidgetFile
+        self.cbc: QCheckBox = self.ui.checkBoxCrop
+        
+        self.lwc.addItems([c.name for c in self.cards])
+        self.lwf.addItems(self.files)
+        
+        self.show()
+        
+    def accept(self):
+        if self.cbc.isChecked():
+            # TODO Send to Load Cards in loop
+            pass
+        else:
+            # Go ahead and load as is
+            for i in range(self.lwf.count()):
+                if i < len(self.cards):
+                    with open(self.lwf.item(i).text(), 'rb') as file:
+                        binary_data = file.read()
+                    c = self.cards[i]
+                    c.has_image = True
+                    c.include_in_composite = True
+                    c.save_image_to_file(image=binary_data)
+                
+        super().accept()
+
+    
+

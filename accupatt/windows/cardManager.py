@@ -6,7 +6,7 @@ from accupatt.models.sprayCard import SprayCard
 from accupatt.widgets.cardtablewidget import CardTableWidget
 from accupatt.widgets.passinfowidget import PassInfoWidget
 from accupatt.windows.definedSetManager import DefinedSet, DefinedSetManager, load_defined_sets
-from accupatt.windows.loadCards import LoadCards
+from accupatt.windows.loadCards import LoadCards, LoadCardsPreBatch
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, QSettings, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import QFileDialog, QMessageBox, QComboBox
@@ -46,6 +46,8 @@ class CardManager(baseclass):
         self.ui.comboBoxLoadMethod.setCurrentText(self.settings.value(cfg._IMAGE_LOAD_METHOD, 
                                                                       defaultValue=cfg.IMAGE_LOAD_METHOD__DEFAULT))
         self.ui.buttonLoad.clicked.connect(self.load_cards)
+        self.image_dir = self.settings.value(cfg._IMAGE_LOAD_DIR,
+                                        defaultValue=cfg.IMAGE_LOAD_DIR__DEFAULT)
         
         #Populate Table
         self.cardTable: CardTableWidget = self.ui.cardTableWidget
@@ -88,45 +90,36 @@ class CardManager(baseclass):
     
     @pyqtSlot()
     def load_cards(self):
-        #Check if any selected cards have images
-        selection = self.cardTable.ui.tableView.selectionModel().selectedRows()
-        already_have_image = [card.name for card in self.cardTable.tm.card_list if card.has_image]
-        if already_have_image:
+        selected_rows = [index.row() for index in self.cardTable.tv.selectionModel().selectedRows()]
+        selected_cards: list[SprayCard] = [self.cardTable.tm.card_list[i] for i in selected_rows]
+        # Check if any selected cards have images
+        if any([c.has_image for c in selected_cards]):
+            cards_with_images = ', '.join([c.name for c in selected_cards if c.has_image])
+            s = 's' if len(selected_cards)==1 else ''
             msg = QMessageBox.question(self, 'Are You Sure?',
-                                           f'{already_have_image} contain image data, overwrite?')
+                                           f'{cards_with_images} contain{s} image data, overwrite?')
             if msg == QMessageBox.StandardButton.No:
                 return
         # Use chosen load method
-        method = self.ui.comboBoxLoadMethod.currentText()
-        if method == cfg.IMAGE_LOAD_METHODS[0]:
+        if self.ui.comboBoxLoadMethod.currentText() == cfg.IMAGE_LOAD_METHODS[0]:
             #Single Images, Single Cards
-            self._load_cards_singles(selection)
+            self._load_cards_singles(selected_cards)
         else:
             #Single Image, Multiple Cards
-            self._load_cards_multi(selection)
+            self._load_cards_multi(selected_cards)
         
     
-    def _load_cards_singles(self, selection):
-        # TODO: migrate to singles batch method
-        card: SprayCard = self.cardTable.tm.card_list[selection[0].row()]
-        fname, _ = QFileDialog.getOpenFileName(self, 'Open file', 'home', "Image files (*.png)")
-        with open(fname, 'rb') as file:
-            binary_data = file.read()  
-        card.save_image_to_file(image=binary_data)
-        card.has_image = True
-        card.include_in_composite = True
-    
-    def _load_cards_multi(self, selection):
-        fname, _ = QFileDialog.getOpenFileName(self, 'Open file', 'home', "Image files (*.png)")
-        if fname == '': return
-        card_list = []
-        for row in selection:
-            card_list.append(self.cardTable.tm.card_list[row.row()])
-        #Create popup and send current appInfo vals to popup
-        e = LoadCards(image_file=fname, card_list=card_list, parent=self)
-        #Connect Slot to retrieve Vals back from popup
+    def _load_cards_singles(self, selected_cards):
+        fnames, _ = QFileDialog.getOpenFileNames(self, 'Open file', self.image_dir, "Image files (*.png)")
+        e = LoadCardsPreBatch(image_files=fnames, card_list=selected_cards, parent=self)
         e.accepted.connect(self.passDataChanged.emit)
-        #Start Loop
+        e.exec()
+    
+    def _load_cards_multi(self, card_list):
+        fname, _ = QFileDialog.getOpenFileName(self, 'Open file', self.image_dir, "Image files (*.png)")
+        if fname == '': return
+        e = LoadCards(image_files=fname, card_list=card_list, parent=self)
+        e.accepted.connect(self.passDataChanged.emit)
         e.exec()
         
     def accept(self):
