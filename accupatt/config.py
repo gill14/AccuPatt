@@ -125,6 +125,9 @@ _WATERSHED = 'watershed'
 WATERSHED__DEFAULT = False
 _MIN_STAIN_AREA_PX = 'min_stain_area_px'
 MIN_STAIN_AREA_PX = 4
+_STAIN_APPROXIMATION_METHOD = 'stain_approximation_method'
+STAIN_APPROXIMATION_METHODS = ['None','Minimum Enclosing Circle', 'Fit Ellipse', 'Convex Hull']
+STAIN_APPROXIMATION_METHOD__DEFAULT = STAIN_APPROXIMATION_METHODS[0]
 
 # SprayCard Processed Image Colors
 COLOR_STAIN_OUTLINE = (138, 43, 226) #Red-Pink

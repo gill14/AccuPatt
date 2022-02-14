@@ -62,6 +62,9 @@ class EditThreshold(baseclass):
         self.ui.checkBoxWatershed.stateChanged[int].connect(self.toggleWatershed)
         
         #Populate Stain Approx Method
+        self.ui.comboBoxApproximationMethod.addItems(cfg.STAIN_APPROXIMATION_METHODS)
+        self.ui.comboBoxApproximationMethod.setCurrentText(self.sprayCard.stain_approximation_method)
+        self.ui.comboBoxApproximationMethod.currentIndexChanged[int].connect(self.update_approx_method)
         
         #Populate Min Stain Size
         self.ui.spinBoxMinSize.setValue(self.sprayCard.min_stain_area_px)
@@ -133,6 +136,11 @@ class EditThreshold(baseclass):
         self.sprayCard.min_stain_area_px = val
         self.updateSprayCardView()
 
+    @pyqtSlot(int)
+    def update_approx_method(self, index):
+        self.sprayCard.stain_approximation_method = cfg.STAIN_APPROXIMATION_METHODS[index]
+        self.updateSprayCardView()
+
     def toggleApplyToAllSeries(self, boo:bool):
         if boo: 
             self.ui.checkBoxApplyToAllPass.setCheckState(Qt.CheckState.Checked)
@@ -169,5 +177,6 @@ class EditThreshold(baseclass):
                         #Set Additional Options
                         card.watershed = self.sprayCard.watershed
                         card.min_stain_area_px = self.sprayCard.min_stain_area_px
+                        card.stain_approximation_method = self.sprayCard.stain_approximation_method
         #Notify requestor
         super().accept()

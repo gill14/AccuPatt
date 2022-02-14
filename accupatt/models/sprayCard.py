@@ -43,6 +43,8 @@ class SprayCard:
                                         defaultValue=cfg.WATERSHED__DEFAULT, type=bool)
         self.min_stain_area_px = settings.value(cfg._MIN_STAIN_AREA_PX, 
                                                 defaultValue=cfg.MIN_STAIN_AREA_PX, type=int)
+        self.stain_approximation_method = settings.value(cfg._STAIN_APPROXIMATION_METHOD,
+                                                         defaultValue=cfg.STAIN_APPROXIMATION_METHOD__DEFAULT)
         self.spread_method = settings.value(cfg._SPREAD_METHOD, 
                                             defaultValue=cfg.SPREAD_METHOD__DEFAULT, type=str)
         self.spread_factor_a = settings.value(cfg._SPREAD_FACTOR_A, 
@@ -344,42 +346,78 @@ class SprayCardImageProcessor:
         color_stain_counted = cfg.COLOR_STAIN_FILL_VALID if fillShapes else cfg.COLOR_STAIN_OUTLINE
         color_stain_edge = cfg.COLOR_STAIN_FILL_EDGE if fillShapes else cfg.COLOR_STAIN_OUTLINE
         color_stain_not_counted = cfg.COLOR_STAIN_FILL_ALL if fillShapes else cfg.COLOR_STAIN_OUTLINE  
+        
+        # Image dims calc'd once to compare against:
+        max_stain_size = 0.90 * img.shape[0] * img.shape[1]
         # Iterate thorugh each contour to find includables
         contours_edge = []
         contours_include = []
         for c in contours:
-            #c = cv2.convexHull(c)
-            area = self._calc_contour_area(c)
+            # Determine if touching edge before morphing
             x, y, w, h = cv2.boundingRect(c)
+            is_edge = True if x<=0 or y <= 0 or (x+w) >= img.shape[1]-1 or (y+h) >= img.shape[0]-1 else False
+            
+            area = cv2.contourArea(c)
             # If contour is below the min pixel size, don't count it anywhere
             if area < self.sprayCard.min_stain_area_px:
                 continue
             # If contour is whole card, don't count it anywhere
-            if area >= 0.95 * w * h:
+            if area >= max_stain_size:
                 continue
-            # If contour above min area size, count it for coverage only
+            
+            # Ammend area based on chosen approximation option
+            if self.sprayCard.stain_approximation_method == cfg.STAIN_APPROXIMATION_METHODS[0]:
+                area = cv2.contourArea(c)
+            elif self.sprayCard.stain_approximation_method == cfg.STAIN_APPROXIMATION_METHODS[1]:
+                c = cv2.minEnclosingCircle(c)
+                (x,y),radius = c
+                center = (int(x), int(y))
+                area = np.pi * (radius ** 2)
+            elif self.sprayCard.stain_approximation_method == cfg.STAIN_APPROXIMATION_METHODS[2]:
+                c = cv2.fitEllipse(c)
+                (x,y), (MA, ma), angle = c
+                area = np.pi * MA * ma / 4
+            elif self.sprayCard.stain_approximation_method == cfg.STAIN_APPROXIMATION_METHODS[3]:
+                c = cv2.convexHull(c)
+                area = cv2.contourArea(c)
+            
+            # add stain to layer 1, count for coverage
             contours_edge.append(c)
             self.sprayCard.stain_areas_all_px2.append(area)
+            
             # If contour touches edge, count it for coverage only
-            if x <= 0 or y <= 0 or (x+w) >= img.shape[1]-1 or (y+h) >= img.shape[0]-1:
+            if is_edge:
                 continue
-            # Passes all checks, include in droplet analysis
+            
+            # add stain to layer 2, count for coverage and dd stats
             contours_include.append(c)
             self.sprayCard.stain_areas_valid_px2.append(area)   
+            
         if len(contours_include) > 0:
             # Draw all contours
             cv2.drawContours(img, contours, -1, color_stain_not_counted, thickness=thickness)
-            # Draw edge contours overlay (for cov only)
-            cv2.drawContours(img, contours_edge, -1, color_stain_edge, thickness=thickness)
-            # Draw record-worthy contour overlay (for cov and ds calcs)
-            cv2.drawContours(img, contours_include, -1, color_stain_counted, thickness=thickness)
-            if fillShapes:
-                cv2.drawContours(img, contours, -1, (255,255,255), thickness=1)
+            # Draw edge (layer 1) and include (layer 2) based on type
+            if self.sprayCard.stain_approximation_method == cfg.STAIN_APPROXIMATION_METHODS[1]:
+                for c in contours_edge:
+                    (x,y),radius = c
+                    center = (int(x), int(y))
+                    cv2.circle(img, center, int(radius), color_stain_edge, thickness)
+                for c in contours_include:
+                    (x,y),radius = c
+                    center = (int(x), int(y))
+                    cv2.circle(img, center, int(radius), color_stain_counted, thickness)
+            elif self.sprayCard.stain_approximation_method == cfg.STAIN_APPROXIMATION_METHODS[2]:
+                for c in contours_edge:
+                    cv2.ellipse(img, c, color_stain_edge, thickness)
+                for c in contours_include:
+                    cv2.ellipse(img, c, color_stain_counted, thickness)
+            else:
+                # Draw edge contours overlay (for cov only)
+                cv2.drawContours(img, contours_edge, -1, color_stain_edge, thickness=thickness)
+                # Draw record-worthy contour overlay (for cov and ds calcs)
+                cv2.drawContours(img, contours_include, -1, color_stain_counted, thickness=thickness)
+                if fillShapes:
+                    cv2.drawContours(img, contours_include, -1, (255,255,255), thickness=1)
         
         return img
-
-    def _calc_contour_area(self, contour):
-        # Default to simple Area
-        return cv2.contourArea(contour)
-        # ToDo include more area calculation options (mean feret, etc.)
     
