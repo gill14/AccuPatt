@@ -110,7 +110,10 @@ class CardManager(baseclass):
         
     
     def _load_cards_singles(self, selected_cards):
-        fnames, _ = QFileDialog.getOpenFileNames(self, 'Open file', self.image_dir, "Image files (*.png)")
+        fnames, _ = QFileDialog.getOpenFileNames(self, 'Open file(s)', self.image_dir, "Image files (*.png)")
+        if len(fnames) == 0:
+            return
+        self.settings.setValue(cfg._IMAGE_LOAD_DIR, os.path.dirname(fnames[0]))
         e = LoadCardsPreBatch(image_files=fnames, card_list=selected_cards, parent=self)
         e.accepted.connect(self.passDataChanged.emit)
         e.exec()
@@ -118,7 +121,8 @@ class CardManager(baseclass):
     def _load_cards_multi(self, card_list):
         fname, _ = QFileDialog.getOpenFileName(self, 'Open file', self.image_dir, "Image files (*.png)")
         if fname == '': return
-        e = LoadCards(image_files=fname, card_list=card_list, parent=self)
+        self.settings.setValue(cfg._IMAGE_LOAD_DIR, os.path.dirname(fname))
+        e = LoadCards(image_file=fname, card_list=card_list, parent=self)
         e.accepted.connect(self.passDataChanged.emit)
         e.exec()
         

@@ -6,10 +6,11 @@ import cv2
 import numpy as np
 import pyqtgraph as pg
 from accupatt.models.sprayCard import SprayCard
+from PIL import Image
 from PyQt6 import uic
 from PyQt6.QtGui import QImageReader, QPixmap
 from PyQt6.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
-from PyQt6.QtWidgets import QApplication, QCheckBox, QGraphicsPixmapItem, QListWidget
+from PyQt6.QtWidgets import QApplication, QCheckBox, QGraphicsPixmapItem, QListWidget, QProgressDialog
 from pyqtgraph.functions import mkPen
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'loadCards.ui'))
@@ -44,6 +45,9 @@ class LoadCards(baseclass):
         self.ui.comboBoxScale.addItems([f'{s}%' for s in cfg.ROI_SCALES])
         self.ui.comboBoxScale.setCurrentIndex(cfg.ROI_SCALES.index(self.scale))
         
+        #Image File
+        self.image_file = image_file
+        
         #List of cards
         self.card_list = card_list
         
@@ -66,9 +70,8 @@ class LoadCards(baseclass):
         self.show()
         self.show_image_characteristics()
     
-    def plot_image(self, index=0):
+    def plot_image(self):
         # Load Image from File, invert vertically, add it to plotWidget
-        self.image_file = self.files[index]
         image_reader = QImageReader(self.image_file)
         size_og = image_reader.size()
         size_mod = size_og
@@ -80,11 +83,15 @@ class LoadCards(baseclass):
         self.img = image_reader.read()
         self.img = self.img.scaled(size_og.width(),size_og.height())
         self.img_pixmap = QPixmap.fromImage(self.img)
-        
         self.img = QGraphicsPixmapItem(self.img_pixmap)
         
         self.ui.plotWidget.addItem(self.img)
         self.ui.plotWidget.getPlotItem().invertY(True)
+        
+        # Use PIL to get Image DPI
+        self.dpi = round(Image.open(self.image_file).info['dpi'][0])
+        self.ui.comboBoxDPI.setCurrentText(str(self.dpi))
+        self.show_image_characteristics()
         
         # Only search image for ROIs once
         self.roi_rectangles = self._find_rois(self.image_file)
@@ -109,7 +116,7 @@ class LoadCards(baseclass):
         self.rois = []
         for i, r in enumerate(self.roi_rectangles):
             # Only draw the ROI if supplied list supports it
-            if i < self.ui.listWidget.count():
+            if i < len(self.card_list):
                 x, y, w, h = r
                 roi = pg.RectROI([x, y],[w, h],
                             pen=mkPen('m',width=3),
@@ -169,7 +176,17 @@ class LoadCards(baseclass):
         self.settings.setValue(cfg._ROI_ACQUISITION_ORDER, self.ui.comboBoxOrder.currentText())
         self.settings.setValue(cfg._ROI_SCALE, cfg.ROI_SCALES[self.ui.comboBoxScale.currentIndex()])
         
+        prog = QProgressDialog(self)
+        prog.setMinimumDuration(0)
+        prog.setWindowModality(Qt.WindowModality.WindowModal)
+    
         for i, roi in enumerate(self.rois):
+            if i==0:
+                prog.setRange(0, len(self.rois))
+            prog.setValue(i)
+            prog.setLabelText(f'Cropping {self.card_list[i].name} and saving to the database')
+            if prog.wasCanceled():
+                return
             roi: pg.RectROI
             x = int(roi.pos()[0])
             y = int(roi.pos()[1])
@@ -186,6 +203,8 @@ class LoadCards(baseclass):
             sprayCard.has_image = True
             sprayCard.include_in_composite = True
             sprayCard.dpi = self.dpi
+            if i==len(self.rois)-1:
+                prog.setValue(i+1)
         
         super().accept()
     
@@ -289,6 +308,7 @@ class LoadCardsPreBatch(baseclass_pre):
                     c = self.cards[i]
                     c.has_image = True
                     c.include_in_composite = True
+                    c.dpi = round(Image.open(self.lwf.item(i).text()).info['dpi'][0])
                     c.save_image_to_file(image=binary_data)
                 
         super().accept()

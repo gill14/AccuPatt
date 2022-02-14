@@ -56,28 +56,6 @@
           </spacer>
          </item>
          <item>
-          <widget class="QPushButton" name="buttonEditSet">
-           <property name="text">
-            <string>Define/Edit Sets</string>
-           </property>
-           <property name="icon">
-            <iconset>
-             <normaloff>icon_adjust.png</normaloff>icon_adjust.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QComboBox" name="comboBoxDefinedSet">
-           <property name="font">
-            <font>
-             <pointsize>13</pointsize>
-             <weight>50</weight>
-             <bold>false</bold>
-            </font>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QPushButton" name="buttonAddSet">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -98,6 +76,28 @@
            <property name="icon">
             <iconset>
              <normaloff>icon_add.png</normaloff>icon_add.png</iconset>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboBoxDefinedSet">
+           <property name="font">
+            <font>
+             <pointsize>13</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="buttonEditSet">
+           <property name="text">
+            <string>Define/Edit Sets</string>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>icon_adjust.png</normaloff>icon_adjust.png</iconset>
            </property>
           </widget>
          </item>

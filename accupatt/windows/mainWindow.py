@@ -26,7 +26,7 @@ from PyQt6.QtWidgets import (QComboBox, QFileDialog, QLabel,
                              QListWidgetItem, QMenu, QMessageBox, QProgressDialog)
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'mainWindow.ui'))
-testing = True
+testing = False
 class MainWindow(baseclass):
 
     def __init__(self, *args, **kwargs):
@@ -607,6 +607,8 @@ class MainWindow(baseclass):
         
     @pyqtSlot()
     def editSprayCardListFinished(self):
+        # Save all changes
+        self.saveFile()
         # Handles checking of card pass list widget
         self.updatePassListWidgets(cards=True, cards_index=self.ui.listWidgetSprayCardPass.currentRow())
         # Repopulates card list widget, updates rest of ui

@@ -28,26 +28,23 @@ def convert_xlsx_to_db(file, s: SeriesData = None, prog=None) -> str:
     file_db = os.path.splitext(file)[0]+'.db'
     save_to_db(file=file_db, s=s)
     if prog != None: 
-        prog.setLabelText('Checking for Spray Cards')
+        prog.setLabelText('Checking XLSX for Spray Cards')
         prog.setValue(2)
-    #Append Images
     wb = openpyxl.load_workbook(file)
-    if not 'Card Data' in wb.sheetnames:
-        return s
     if prog != None:
         prog.setValue(3)
+    if not 'Card Data' in wb.sheetnames:
+        return s
     sh = wb['Card Data']
     on_pass = int(sh['B2'].value)
     # Loop over declard cards and save images to db if has_image
     p: Pass = s.passes[on_pass-1]
     c: SprayCard
-    if prog != None:
-        prog.setRange(0,len(p.spray_cards))
-        prog.setValue(0)
-        prog.setLabelText('Loading in Series Data')
     for i, c in enumerate(p.spray_cards):
         if prog != None:
-            prog.setValue(i+1)
+            if i == 0:
+                prog.setRange(0,len(p.spray_cards))
+            prog.setValue(i)
             prog.setLabelText(f'Copying image for {c.name}')
         c.filepath = file_db
         if c.has_image:
@@ -61,6 +58,8 @@ def convert_xlsx_to_db(file, s: SeriesData = None, prog=None) -> str:
             c.save_image_to_file(stream.getvalue())
             # Reclaim resources
             stream.close()
+        if i == len(p.spray_cards)-1:
+            prog.setValue(i+1)
             
     return file_db
 
