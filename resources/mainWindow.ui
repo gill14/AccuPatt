@@ -36,7 +36,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab_info">
        <attribute name="title">
@@ -1225,11 +1225,11 @@
         <item>
          <widget class="QTabWidget" name="tabWidget_3">
           <property name="currentIndex">
-           <number>2</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tab_5">
            <attribute name="title">
-            <string>Add/Edit Cards</string>
+            <string>Image</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_5">
             <property name="spacing">
@@ -2046,15 +2046,15 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>PlotWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>pyqtgraph</header>
+  </customwidget>
+  <customwidget>
    <class>SplitCardWidget</class>
    <extends>QWidget</extends>
    <header>accupatt/widgets/splitcardwidget.h</header>
    <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>PlotWidget</class>
-   <extends>QGraphicsView</extends>
-   <header>pyqtgraph</header>
   </customwidget>
   <customwidget>
    <class>MplWidget</class>

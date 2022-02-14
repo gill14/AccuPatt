@@ -147,7 +147,10 @@ class SprayCard:
 
     def save_image_to_file(self, image):
         return sprayCardImageFileHandler.save_image_to_file(self, image)
-
+    
+    def set_filepath(self, filepath):
+        self.filepath = filepath
+    
     def set_threshold_type(self, type=cfg.THRESHOLD_TYPE__DEFAULT):
         self.threshold_type = type
 
@@ -345,6 +348,7 @@ class SprayCardImageProcessor:
         contours_edge = []
         contours_include = []
         for c in contours:
+            #c = cv2.convexHull(c)
             area = self._calc_contour_area(c)
             x, y, w, h = cv2.boundingRect(c)
             # If contour is below the min pixel size, don't count it anywhere

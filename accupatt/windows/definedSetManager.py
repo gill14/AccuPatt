@@ -95,6 +95,17 @@ class DefinedSet:
         if set_dict is not None:
             self.load_from_dict(set_dict)
     
+    def get_fresh_card_list(self):
+        _cards = []
+        for card in self.cards:
+            c: SprayCard = SprayCard(name=card.name)
+            c.location = card.location
+            c.location_units = card.location_units
+            c.threshold_type = card.threshold_type
+            c.dpi = card.dpi
+            _cards.append(c)
+        return _cards
+    
     def load_from_dict(self, set_dict: dict):
         self.name = set_dict['set_name']
         self.cards = [SprayCard(name=name) for name in set_dict['card_name']]

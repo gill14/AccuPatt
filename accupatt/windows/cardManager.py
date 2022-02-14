@@ -81,8 +81,14 @@ class CardManager(baseclass):
     
     @pyqtSlot()
     def add_cards(self):
+        # Copy the cardlist from the chosen defined set
         selectedSet: DefinedSet = self.defined_sets[self.ui.comboBoxDefinedSet.currentIndex()]
-        self.cardTable.add_cards_to_table(selectedSet.cards)
+        cards = selectedSet.get_fresh_card_list()
+        # Set the db filepaths
+        for c in cards:
+            c.set_filepath(self.filepath)
+        # Add cards to tablemodel
+        self.cardTable.add_cards_to_table(cards)
     
     @pyqtSlot()
     def update_table(self):
