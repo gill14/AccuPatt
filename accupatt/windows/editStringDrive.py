@@ -22,7 +22,7 @@ class EditStringDrive(baseclass):
         self.ui.setupUi(self)
 
         #Load in Settings or use defaults
-        self.settings = QSettings('accupatt','AccuPatt')
+        self.settings = QSettings()
 
         #Hook up serial port combobox signal
         self.ui.comboBoxSerialPort.currentTextChanged[str].connect(self.on_sp_selected)

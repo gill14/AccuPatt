@@ -3,6 +3,7 @@ import sqlite3
 from datetime import datetime
 
 import pandas as pd
+import accupatt.config as cfg
 from accupatt.models.appInfo import Nozzle
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
@@ -165,10 +166,10 @@ def save_to_db(file: str, s: SeriesData):
         
 def _update_table_series(c: sqlite3.Cursor, s: SeriesData):
     i = s.info    
-    c.execute('''INSERT INTO series (id, series, created, modified, notes_setup, notes_analyst) VALUES (?, ?, ?, ?, ?, ?)
+    c.execute('''INSERT INTO series (id, series, created, modified, notes_setup, notes_analyst, version_major, version_minor, version_release) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(id) DO UPDATE SET
                     series = excluded.series, created = excluded.created, modified = excluded.modified, notes_setup = excluded.notes_setup, notes_analyst = excluded.notes_analyst''',
-                    (s.id, i.series, i.created, i.modified, i.notes_setup, i.notes_analyst))
+                    (s.id, i.series, i.created, i.modified, i.notes_setup, i.notes_analyst, cfg.VERSION_MAJOR, cfg.VERSION_MINOR, cfg.VERSION_RELEASE))
         
 def _update_table_series_string(c: sqlite3.Cursor, s: SeriesData):
     c.execute('''INSERT INTO series_string (series_id, average_center, average_smooth,  equalize_integrals, simulated_adjascent_passes) VALUES (?, ?, ?, ?, ?)

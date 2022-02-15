@@ -21,7 +21,7 @@ class EditSpreadFactors(baseclass):
         self.seriesData = seriesData
 
         # Load in Spray Card or use Settings
-        self.settings = QSettings('accupatt','AccuPatt')
+        self.settings = QSettings()
 
         #Setup UI to vals
         self.method = self.sprayCard.spread_method

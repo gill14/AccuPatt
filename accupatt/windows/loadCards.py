@@ -26,7 +26,7 @@ class LoadCards(baseclass):
         self.ui.setupUi(self)
         
         #Import Settings
-        self.settings = QSettings('accupatt','AccuPatt')
+        self.settings = QSettings()
         self.dpi = self.settings.value(cfg._DPI, defaultValue=cfg.DPI__DEFAULT, type=int)
         self.orientation = self.settings.value(cfg._ROI_ACQUISITION_ORIENTATION, defaultValue=cfg.ROI_ACQUISITION_ORIENTATION__DEFAULT, type=str)
         self.order = self.settings.value(cfg._ROI_ACQUISITION_ORDER, defaultValue=cfg.ROI_ACQUISITION_ORDER__DEFAULT, type=str)

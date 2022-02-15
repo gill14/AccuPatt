@@ -6,7 +6,10 @@ CREATE TABLE IF NOT EXISTS series (
     created         INTEGER,
     modified        INTEGER,
     notes_setup     TEXT,
-    notes_analyst   TEXT
+    notes_analyst   TEXT,
+    version_major   INTEGER,
+    version_minor   INTEGER,
+    version_release INTEGER
 );
 CREATE TABLE IF NOT EXISTS series_string (
     series_id                   TEXT PRIMARY KEY REFERENCES series(id),

@@ -23,7 +23,7 @@ class Pass:
         #Include in Composite by default
         self.include_in_composite = True
          # Load in Settings
-        settings = QSettings('accupatt','AccuPatt')
+        settings = QSettings()
         # Pass Info
         self.ground_speed = 0
         self.ground_speed_units = settings.value(cfg._UNIT_GROUND_SPEED, 

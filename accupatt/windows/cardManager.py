@@ -23,7 +23,7 @@ class CardManager(baseclass):
         self.ui.setupUi(self)
         
         #Load in Settings
-        self.settings = QSettings('accupatt','AccuPatt')
+        self.settings = QSettings()
        
         # File path for creating new cards
         self.filepath = filepath

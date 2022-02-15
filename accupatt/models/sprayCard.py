@@ -22,7 +22,7 @@ class SprayCard:
         self.has_image = False
         self.include_in_composite = False
         # Init optionals, use settings values if available, else use config defaults
-        settings = QSettings('accupatt','AccuPatt')
+        settings = QSettings()
         self.dpi = settings.value(cfg._DPI, 
                                   defaultValue=cfg.DPI__DEFAULT)
         self.threshold_type = settings.value(cfg._THRESHOLD_TYPE, 
@@ -394,8 +394,6 @@ class SprayCardImageProcessor:
             self.sprayCard.stain_areas_valid_px2.append(area)   
             
         if len(contours_include) > 0:
-            # Draw all contours
-            cv2.drawContours(img, contours, -1, color_stain_not_counted, thickness=thickness)
             # Draw edge (layer 1) and include (layer 2) based on type
             if self.sprayCard.stain_approximation_method == cfg.STAIN_APPROXIMATION_METHODS[1]:
                 for c in contours_edge:
@@ -412,6 +410,8 @@ class SprayCardImageProcessor:
                 for c in contours_include:
                     cv2.ellipse(img, c, color_stain_counted, thickness)
             else:
+                # Draw all contours
+                cv2.drawContours(img, contours, -1, color_stain_not_counted, thickness=thickness)
                 # Draw edge contours overlay (for cov only)
                 cv2.drawContours(img, contours_edge, -1, color_stain_edge, thickness=thickness)
                 # Draw record-worthy contour overlay (for cov and ds calcs)

@@ -86,7 +86,7 @@ class ReadString(baseclass):
 
     def load_defaults(self):
         # Load in Settings
-        settings = QSettings('accupatt','AccuPatt')
+        settings = QSettings()
         # Use settings values if available, else use config defaults
         self.string_drive_port = settings.value(cfg._STRING_DRIVE_PORT,
                                                 defaultValue=cfg.STRING_DRIVE_PORT__DEFAULT)

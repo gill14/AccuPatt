@@ -26,18 +26,18 @@ from PyQt6.QtWidgets import (QComboBox, QFileDialog, QLabel,
                              QListWidgetItem, QMenu, QMessageBox, QProgressDialog)
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'mainWindow.ui'))
+Ui_Form_About, baseclass_about = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'about.ui'))
 testing = False
 class MainWindow(baseclass):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Your code will go here
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
-        #Load in Settings or use defaults
-        self.settings = QSettings('accupatt','AccuPatt')
-        self.currentDirectory = self.settings.value('dir', defaultValue=str(Path.home()), type=str)
+        self.setWindowTitle(f'AccuPatt {cfg.VERSION_MAJOR}.{cfg.VERSION_MINOR}.{cfg.VERSION_RELEASE}')
+
+        self.currentDirectory = QSettings().value(cfg._DATA_FILE_DIR, defaultValue=str(Path.home()))
 
         # Setup MenuBar
         # --> Setup File Menu
@@ -58,6 +58,8 @@ class MainWindow(baseclass):
         self.ui.action_detailed_report.triggered.connect(self.exportAllRawData)
         # --> Setup Report Menu
         self.ui.actionCreate_Report.triggered.connect(self.makeReport)
+        # --> Setup Help Menu
+        self.ui.actionAbout.triggered.connect(self.about)
         
         # Setup Tab Widget
         self.ui.tabWidget.setEnabled(False)
@@ -138,12 +140,12 @@ class MainWindow(baseclass):
         self.seriesData = SeriesData()
         # Load in Fly-In Info from saved settings
         info = self.seriesData.info
-        info.flyin_name = self.settings.value('flyin_name', defaultValue='', type=str)
-        info.flyin_location = self.settings.value('flyin_location', defaultValue='', type=str)
-        info.flyin_date = self.settings.value('flyin_date', defaultValue='', type=str)
-        info.flyin_analyst = self.settings.value('flyin_analyst', defaultValue='', type=str)
+        info.flyin_name = QSettings().value(cfg._FLYIN_NAME, defaultValue='', type=str)
+        info.flyin_location = QSettings().value(cfg._FLYIN_LOCATION, defaultValue='', type=str)
+        info.flyin_date = QSettings().value(cfg._FLYIN_DATE, defaultValue='', type=str)
+        info.flyin_analyst = QSettings().value(cfg._FLYIN_ANALYST, defaultValue='', type=str)
         # Create empty passes based (# of passes from saved settings)
-        for i in range(self.settings.value('initial_number_of_passes', defaultValue=3, type=int)):
+        for i in range(QSettings().value(cfg._NUMBER_OF_PASSES, defaultValue=cfg.NUMBER_OF_PASSES__DEFAULT, type=int)):
             self.seriesData.passes.append(Pass(number=i+1))
         # File Aircraft
         if useFileAircraft:
@@ -187,12 +189,12 @@ class MainWindow(baseclass):
                 return False
             self.currentFile = fname
             self.currentDirectory = os.path.dirname(self.currentFile)
-            self.settings.setValue('dir',self.currentDirectory)
+            QSettings().setValue(cfg._DATA_FILE_DIR, self.currentDirectory)
         # If db file exists, or a new one has been created, update QSettings for Flyin
-        self.settings.setValue('flyin_name', self.seriesData.info.flyin_name)
-        self.settings.setValue('flyin_location', self.seriesData.info.flyin_location)
-        self.settings.setValue('flyin_date', self.seriesData.info.flyin_date)
-        self.settings.setValue('flyin_analyst', self.seriesData.info.flyin_analyst)
+        QSettings().setValue(cfg._FLYIN_NAME, self.seriesData.info.flyin_name)
+        QSettings().setValue(cfg._FLYIN_LOCATION, self.seriesData.info.flyin_location)
+        QSettings().setValue(cfg._FLYIN_DATE, self.seriesData.info.flyin_date)
+        QSettings().setValue(cfg._FLYIN_ANALYST, self.seriesData.info.flyin_analyst)
         # If db file exists, or a new one has been created, save all SeriesData to the db
         save_to_db(file=self.currentFile, s=self.seriesData)
         self.status_label_file.setText(f'Current File: {self.currentFile}')
@@ -233,7 +235,7 @@ class MainWindow(baseclass):
                 return 
         self.currentFile = file
         self.currentDirectory = os.path.dirname(self.currentFile)
-        self.settings.setValue('dir',self.currentDirectory)
+        QSettings().setValue(cfg._DATA_FILE_DIR, self.currentDirectory)
         last_modified = 'View-Only Mode'
         if self.currentFile[-1]=='b':
             self.seriesData = SeriesData()
@@ -368,6 +370,10 @@ class MainWindow(baseclass):
                 mplCanvasBF=self.ui.plotWidgetBackAndForth.canvas,
                 tableView=self.ui.tableWidgetCV)
         
+    @pyqtSlot()
+    def about(self):
+        About(parent=self).exec()
+    
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     String Analysis
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -699,3 +705,11 @@ class MainWindow(baseclass):
         self.ui.buttonEditThreshold.setEnabled(enable)
         self.ui.buttonEditSpreadFactors.setEnabled(enable)
         
+class About(baseclass_about):
+    def __init__(self, parent = None):
+        super().__init__(parent = parent)
+        # Your code will go here
+        self.ui = Ui_Form_About()
+        self.ui.setupUi(self)
+        self.ui.label_version.setText(f'AccuPatt Version:  {cfg.VERSION_MAJOR}.{cfg.VERSION_MINOR}.{cfg.VERSION_RELEASE}')
+        self.show()

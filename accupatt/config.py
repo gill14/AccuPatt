@@ -1,3 +1,7 @@
+VERSION_MAJOR = 2
+VERSION_MINOR = 0
+VERSION_RELEASE = 4
+
 #Unit Labels
 UNIT_MPH = 'mph'
 UNIT_KPH = 'kph'
@@ -27,7 +31,18 @@ FT_PER_M = 3.28084
 MPH_PER_KPH = 0.621371
 MPH_PER_KN = 1.15078
 
+# Data File
+_DATA_FILE_DIR = 'data_file_dir'
+
+# Flyin Headers
+_FLYIN_NAME = 'flyin_name'
+_FLYIN_LOCATION = 'flyin_location'
+_FLYIN_DATE = 'flyin_date'
+_FLYIN_ANALYST = 'flyin_analyst'
+
 # Pass Data
+_NUMBER_OF_PASSES = 'number_of_passes'
+NUMBER_OF_PASSES__DEFAULT = 3
 UNITS_GROUND_SPEED = [UNIT_MPH, UNIT_KPH]
 _UNIT_GROUND_SPEED = 'unit_ground_speed'
 UNIT_GROUND_SPEED__DEFAULT = UNITS_GROUND_SPEED[0]
