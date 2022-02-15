@@ -68,25 +68,32 @@ class AtomizationModel:
         'Steel Disc Core SS',                #11
         'Ceramic Disc Core SS',              #12
         'Standard 40°FF',                    #13
-        'Standard 80°FF']                    #14
+        'Standard 80°FF']                    #14                   
+
+    '''
+    The below defines some common nozzles excluded from the models
+    '''
+    excluded_dict = {
+        'CP01': {
+            'Orifice': [0.062,0.078,0.125,0.172],
+            'Angle': [30,55,90]
+            },
+        'CP07': {
+            'Orifice': [0.062,0.078,0.125,0.172],
+            'Angle': [0,5,30]
+            },
+        'AccuFlo': {
+            'Orifice': [0.016,0.078,0.125],
+            'Angle': [0]
+            },
+        'Micronair': {
+            'Orifice': ['AU4000','AU5000','AU6539','AU7000'],
+            'Angle': [0]
+        }
+    }
     
-    nozzles_internal = ['CP11TT 20°FF',      #0
-        'CP11TT 40°FF',                      #1
-        'CP11TT 60°FF',                      #2
-        'CP11TT 80°FF',                      #3
-        'CP11TT 110°FF',                     #4
-        'CP11TT SS',                         #5
-        'CP03',                              #6
-        'CP09 Deflection',                   #7
-        'CP09 SS',                           #8
-        'Davidon TriSet Deflection',         #9
-        'Davidon TriSet SS',                 #10
-        'Steel Disc Core 45',                #11
-        'Ceramic Disc Core 45',              #12
-        'Steel Disc Core SS',                #13
-        'Ceramic Disc Core SS',              #14
-        'Standard 40°FF',                    #15
-        'Standard 80°FF']                    #16
+    #nozzles_extended = nozzles + ['CP01','CP07','AccuFlo','Micronair']
+    nozzles_extended = nozzles + list(excluded_dict.keys())
 
     '''
     The below defines the models for both low-speed (<120 mph) and high-speed (>120 mph) conditions as well
@@ -621,6 +628,9 @@ class AtomizationModel:
                 vals.extend(self.hs_dict[n][param])
             if n in self.ls_dict.keys():
                 vals.extend(self.ls_dict[n][param])
+            if n in self.excluded_dict.keys():
+                if param == 'Orifice' or param == 'Angle':
+                    vals.extend(self.excluded_dict[n][param])
         return sorted(set(vals))
 
     '''
@@ -701,7 +711,7 @@ class AtomizationModel:
     is primarily needed to get over the quirks of the hs/ls model differences
     '''
     def get_nozzles(self) -> list[str]:
-        return self.nozzles
+        return self.nozzles_extended
 
     def get_orifices_for_nozzle(self, nozzle: str) -> list[str]:
         return self._params_for_nozzle(nozzle, 'Orifice')

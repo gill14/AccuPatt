@@ -373,7 +373,7 @@ class SeriesInfoWidget(baseclass):
         self.ui.pushButtonNozzleSetAdd.pressed.connect(self._on_nozzle_set_add)
         self.ui.pushButtonNozzleSetRemove.pressed.connect(self._on_nozzle_set_remove)
         # Populate Nozzle Type ComboBox Items
-        self.ui.comboBoxNT.addItems(AtomizationModel.nozzles)
+        self.ui.comboBoxNT.addItems(sorted(AtomizationModel.nozzles_extended))
         self.ui.comboBoxNT.setCurrentIndex(-1)
         self.ui.comboBoxNT.currentTextChanged[str].connect(self._on_nozzle_selected)
         
