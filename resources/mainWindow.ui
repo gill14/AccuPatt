@@ -1934,7 +1934,20 @@
     <property name="title">
      <string>Help</string>
     </property>
+    <widget class="QMenu" name="menuWorksheets">
+     <property name="title">
+      <string>Worksheets</string>
+     </property>
+     <addaction name="actionWorksheetWRK"/>
+     <addaction name="actionWorksheetGillColor"/>
+     <addaction name="actionWorksheetGillBW"/>
+    </widget>
     <addaction name="actionAbout"/>
+    <addaction name="actionUserManual"/>
+    <addaction name="separator"/>
+    <addaction name="menuWorksheets"/>
+    <addaction name="separator"/>
+    <addaction name="actionCPCatalog"/>
    </widget>
    <addaction name="menu_file"/>
    <addaction name="menu_options"/>
@@ -2050,6 +2063,31 @@
   <action name="actionAbout">
    <property name="text">
     <string>About</string>
+   </property>
+  </action>
+  <action name="actionUserManual">
+   <property name="text">
+    <string>User Manual</string>
+   </property>
+  </action>
+  <action name="actionWorksheetWRK">
+   <property name="text">
+    <string>WRK</string>
+   </property>
+  </action>
+  <action name="actionWorksheetGillColor">
+   <property name="text">
+    <string>Gill - Color</string>
+   </property>
+  </action>
+  <action name="actionWorksheetGillBW">
+   <property name="text">
+    <string>Gill - B/W</string>
+   </property>
+  </action>
+  <action name="actionCPCatalog">
+   <property name="text">
+    <string>CP Nozzles Catalog</string>
    </property>
   </action>
  </widget>

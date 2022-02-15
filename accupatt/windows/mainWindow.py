@@ -1,6 +1,7 @@
 from datetime import datetime
 import os
 from pathlib import Path
+import subprocess
 
 import accupatt.config as cfg
 from accupatt.helpers.cardPlotter import CardPlotter
@@ -60,6 +61,11 @@ class MainWindow(baseclass):
         self.ui.actionCreate_Report.triggered.connect(self.makeReport)
         # --> Setup Help Menu
         self.ui.actionAbout.triggered.connect(self.about)
+        self.ui.actionUserManual.triggered.connect(self.openResourceUserManual)
+        self.ui.actionWorksheetWRK.triggered.connect(self.openResourceWSWRK)
+        self.ui.actionWorksheetGillColor.triggered.connect(self.openResourceWSGillColor)
+        self.ui.actionWorksheetGillBW.triggered.connect(self.openResourceWSGillBW)
+        self.ui.actionCPCatalog.triggered.connect(self.openResourceCPCatalog)
         
         # Setup Tab Widget
         self.ui.tabWidget.setEnabled(False)
@@ -373,6 +379,31 @@ class MainWindow(baseclass):
     @pyqtSlot()
     def about(self):
         About(parent=self).exec()
+    
+    @pyqtSlot()
+    def openResourceUserManual(self):
+        #self.openResourceDocument('UserManual.pdf')
+        pass
+    
+    @pyqtSlot()
+    def openResourceWSWRK(self):
+        self.openResourceDocument('WRK_SpraySheet_V3.pdf')
+        
+    @pyqtSlot()
+    def openResourceWSGillColor(self):
+        self.openResourceDocument('Gill_SpraySheet_Color.pdf')
+        
+    @pyqtSlot()
+    def openResourceWSGillBW(self):
+        self.openResourceDocument('Gill_SpraySheet_BW.pdf')
+        
+    @pyqtSlot()
+    def openResourceCPCatalog(self):
+        self.openResourceDocument('CP_Catalog.pdf')
+    
+    def openResourceDocument(self, file):
+        file = os.path.join(os.getcwd(), 'resources', 'documents', file)
+        subprocess.call(["open", file])
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     String Analysis
