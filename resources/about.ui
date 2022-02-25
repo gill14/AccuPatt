@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>474</width>
-    <height>271</height>
+    <width>506</width>
+    <height>303</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -62,8 +62,9 @@
      <property name="text">
       <string>Developed by Matt Gill, standing on the shoulders of:
 Dr. Richard Whitney (WRK of Oklahoma)
+Phil Jank (USDA-ARS Aerial Applciation Technology Research Unit)
 Dr. Scott Bretthauer (National Agricultural Aviation Association)
-Dr. Brad Fritz (USDA Aerial Applciation Technology Research Unit)</string>
+Dr. Brad Fritz (USDA-ARS Aerial Applciation Technology Research Unit)</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
