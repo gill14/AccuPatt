@@ -92,7 +92,7 @@ class Pass:
 
     def trimLR(self, dataIntermediate):
         name = self.name
-        d = dataIntermediate
+        d: pd.DataFrame = dataIntermediate
         #Trim Left
         d.loc[d.index[:self.trim_l],name] = -1
         #Trim Right
@@ -109,7 +109,7 @@ class Pass:
     def trimV(self, dataIntermediate):
         #print(f'trim vert = {self.trim_v}')
         name = self.name
-        d = dataIntermediate
+        d: pd.DataFrame = dataIntermediate
         #Trim Vertical
         d[name] = d[name].sub(self.trim_v)
         #clip all negative values (from trimmed areas) to 0
@@ -119,7 +119,7 @@ class Pass:
 
     def centerify(self, dataIntermediate, centerMethod):
         name = self.name
-        d = dataIntermediate
+        d: pd.DataFrame = dataIntermediate
         #Need min for shifts out of x range
         min = d[name].min(skipna=True)
         c = 0
@@ -133,22 +133,21 @@ class Pass:
             #Use Center of Distribution
             c = self.calcCenterOfDistribution(d)
         #convert calculated center to integer points to shift plot
-        sampleLength = d['loc'][1] - d['loc'][0]
-        centerPoints = -round(c / sampleLength)
+        shift_points = d['loc'].abs().idxmin() - d['loc'].sub(c).abs().idxmin()
         #shift pattern by centroidPoints
-        d[name] = d[name].shift(periods = centerPoints, fill_value=min)
+        d[name] = d[name].shift(periods = shift_points, fill_value=min)
         #return the modified data
         return d
 
     def calcCentroid(self, dataIntermediate):
         name = self.name
-        d = dataIntermediate
+        d: pd.DataFrame = dataIntermediate
         return (d[name] * d['loc']).sum() / d[name].sum()
 
     def calcCenterOfDistribution(self, dataIntermediate):
         #Alt method using Center of Distribution
         name = self.name
-        d = dataIntermediate
+        d: pd.DataFrame = dataIntermediate
         sumNumerator = 0.0
         sumDenominator = 0.0
         for i in range(0,len(d.index)-1, 1):
@@ -163,7 +162,7 @@ class Pass:
         return sumNumerator / sumDenominator
 
     def smooth(self, dataIntermediate):
-        d = dataIntermediate
+        d: pd.DataFrame = dataIntermediate
         window = 21
         order = 3
         d[self.name] = sig.savgol_filter(d[self.name], window, order)
