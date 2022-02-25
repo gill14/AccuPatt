@@ -8,7 +8,7 @@ from accupatt.models.seriesData import SeriesData
 from accupatt.widgets.mplwidget import MplWidget
 from PyQt6.QtWidgets import QTableWidget
 from pyqtgraph import InfiniteLine, PlotWidget, setConfigOptions
-from pyqtgraph.functions import mkPen
+from pyqtgraph.functions import mkPen, mkBrush
 from scipy.stats import variation
 
 
@@ -31,6 +31,8 @@ class StringPlotter:
         pyqtplotwidget.setLabel(axis='bottom',text='Location', units=passData.data_loc_units)
         pyqtplotwidget.setLabel(axis='left', text = 'Relative Dye Intensity')
         pyqtplotwidget.showGrid(x=True, y=True)
+        # Add Legend
+        pyqtplotwidget.plotItem.addLegend(offset=(5,5))
         #Check if data exists
         if passData.data.empty: return None, None, None
         #Plot data
@@ -55,6 +57,8 @@ class StringPlotter:
         pyqtplotwidget.setLabel(axis='bottom',text='Location', units=passData.data_loc_units)
         pyqtplotwidget.setLabel(axis='left', text = 'Relative Dye Intensity')
         pyqtplotwidget.showGrid(x=True, y=True)
+        # Add Legend
+        pyqtplotwidget.plotItem.addLegend(offset=(5,5))
         #Check if data exists
         if passData.data.empty: return
         #Plot raw data
@@ -64,12 +68,13 @@ class StringPlotter:
         d.modifyData()
         x = np.array(d.data['loc'].values, dtype=float)
         y = np.array(d.data_mod[d.name].values, dtype=float)
-        pyqtplotwidget.plot(name='Emission', pen='w').setData(x, y)
+        pyqtplotwidget.plot(name='Trimmed', pen='w').setData(x, y)
         #Plot smooth data on top of raw data
         d.string_smooth=True
         d.modifyData()
         y_smooth = np.array(d.data_mod[d.name].values, dtype=float)
-        pyqtplotwidget.plot(name='Smooth', pen=mkPen('y', width=3)).setData(x, y_smooth)
+        pyqtplotwidget.plot(name='Raw, Trimmed, Smoothed', pen=mkPen('y', width=3)).setData(x, y_smooth)
+        
 
     def drawOverlay(mplWidget, series):
         ax = mplWidget.canvas.ax
@@ -152,7 +157,7 @@ class StringPlotter:
                 #print(pattern)
                 ax.fill_between(pattern['loc'], 0, pattern['Average'], label='Center')
                 # Sum counter to always draw on top of
-                sum = pattern['Average'].copy()
+                sum: pd.DataFrame = pattern['Average'].copy()
                 # Plot adjascent passes
                 for i in range(int(series.string_simulated_adjascent_passes)):
                     p = pattern
@@ -173,6 +178,7 @@ class StringPlotter:
                 ax.set_xlim(-sw/2,sw/2)
                 ax.set_ylim(ymin=0)
                 # Draw Average Line for CV reference
+                avg = sum.mean()
                 m, = ax.plot([-sw/2,sw/2], [avg,avg], color='black', dashes=[5,5])
                 m.set_label('Mean Dep.')
                 # Plot Beautification
