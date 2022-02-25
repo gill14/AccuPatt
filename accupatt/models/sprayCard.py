@@ -130,6 +130,11 @@ class SprayCard:
         # Return rounded representative vol frac diameters as ints, rel span as float
         return round(dv01), round(dv05), round(dv09), rs, dsc
 
+    def minimum_detectable_droplet_diameter(self):
+        min_stain_area = self._px2_to_um2(self.min_stain_area_px)
+        min_stain_dia = math.sqrt((4.0 * min_stain_area) / math.pi)
+        return round(self._stain_dia_to_drop_dia(min_stain_dia))
+    
     def _px2_to_um2(self, area_px2):
         um_per_px = cfg.UM_PER_IN / self.dpi
         return area_px2 * um_per_px * um_per_px
@@ -374,13 +379,15 @@ class SprayCardImageProcessor:
                 center = (int(x), int(y))
                 area = np.pi * (radius ** 2)
             elif self.sprayCard.stain_approximation_method == cfg.STAIN_APPROXIMATION_METHODS[2]:
-                c = cv2.fitEllipse(c)
-                (x,y), (MA, ma), angle = c
-                area = np.pi * MA * ma / 4
+                if len(c) >= 5:
+                    c = cv2.fitEllipse(c)
+                    (x,y), (MA, ma), angle = c
+                    area = np.pi * MA * ma / 4
+                else: 
+                    area = cv2.contourArea(c)
             elif self.sprayCard.stain_approximation_method == cfg.STAIN_APPROXIMATION_METHODS[3]:
                 c = cv2.convexHull(c)
                 area = cv2.contourArea(c)
-            
             # add stain to layer 1, count for coverage
             contours_edge.append(c)
             self.sprayCard.stain_areas_all_px2.append(area)
@@ -405,10 +412,14 @@ class SprayCardImageProcessor:
                     center = (int(x), int(y))
                     cv2.circle(img, center, int(radius), color_stain_counted, thickness)
             elif self.sprayCard.stain_approximation_method == cfg.STAIN_APPROXIMATION_METHODS[2]:
-                for c in contours_edge:
-                    cv2.ellipse(img, c, color_stain_edge, thickness)
-                for c in contours_include:
-                    cv2.ellipse(img, c, color_stain_counted, thickness)
+                for i, c in enumerate(contours_edge):
+                    if type(c) is tuple:
+                        cv2.ellipse(img, c, color_stain_edge, thickness)
+                    else: cv2.drawContours(img, contours_edge, i, color_stain_edge, thickness)
+                for i, c in enumerate(contours_include):
+                    if type(c) is tuple:
+                        cv2.ellipse(img, c, color_stain_counted, thickness)
+                    else: cv2.drawContours(img, contours_include, i, color_stain_counted, thickness)
             else:
                 # Draw all contours
                 cv2.drawContours(img, contours, -1, color_stain_not_counted, thickness=thickness)
