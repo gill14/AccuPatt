@@ -15,7 +15,6 @@ class SeriesData:
         self.id = id
         if self.id == '':
             self.id = str(uuid.uuid4())
-        self.filePath = ''
         self.info = AppInfo()
         self.passes = []
         #String Options
