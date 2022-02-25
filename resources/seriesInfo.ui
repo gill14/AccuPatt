@@ -339,6 +339,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="focusPolicy">
+               <enum>Qt::ClickFocus</enum>
+              </property>
               <property name="sizeAdjustPolicy">
                <enum>QComboBox::AdjustToContents</enum>
               </property>
@@ -436,6 +439,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="focusPolicy">
+               <enum>Qt::ClickFocus</enum>
+              </property>
               <property name="sizeAdjustPolicy">
                <enum>QComboBox::AdjustToContents</enum>
               </property>
@@ -493,6 +499,9 @@
                 <width>70</width>
                 <height>16777215</height>
                </size>
+              </property>
+              <property name="focusPolicy">
+               <enum>Qt::ClickFocus</enum>
               </property>
               <property name="sizeAdjustPolicy">
                <enum>QComboBox::AdjustToContents</enum>
@@ -552,6 +561,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="focusPolicy">
+               <enum>Qt::ClickFocus</enum>
+              </property>
               <property name="sizeAdjustPolicy">
                <enum>QComboBox::AdjustToContents</enum>
               </property>
@@ -609,6 +621,9 @@
                 <width>70</width>
                 <height>16777215</height>
                </size>
+              </property>
+              <property name="focusPolicy">
+               <enum>Qt::ClickFocus</enum>
               </property>
               <property name="sizeAdjustPolicy">
                <enum>QComboBox::AdjustToContents</enum>
@@ -668,6 +683,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="focusPolicy">
+               <enum>Qt::ClickFocus</enum>
+              </property>
               <property name="sizeAdjustPolicy">
                <enum>QComboBox::AdjustToContents</enum>
               </property>
@@ -725,6 +743,9 @@
                 <width>70</width>
                 <height>16777215</height>
                </size>
+              </property>
+              <property name="focusPolicy">
+               <enum>Qt::ClickFocus</enum>
               </property>
               <property name="sizeAdjustPolicy">
                <enum>QComboBox::AdjustToContents</enum>
@@ -1055,10 +1076,16 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="focusPolicy">
+               <enum>Qt::ClickFocus</enum>
+              </property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="pushButtonNozzleSetAdd">
+              <property name="focusPolicy">
+               <enum>Qt::ClickFocus</enum>
+              </property>
               <property name="text">
                <string>+</string>
               </property>
@@ -1066,6 +1093,9 @@
             </item>
             <item>
              <widget class="QPushButton" name="pushButtonNozzleSetRemove">
+              <property name="focusPolicy">
+               <enum>Qt::ClickFocus</enum>
+              </property>
               <property name="text">
                <string>-</string>
               </property>
@@ -1300,6 +1330,49 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>lineEditRegNum</tabstop>
+  <tabstop>lineEditSeriesNum</tabstop>
+  <tabstop>pilotLineEdit</tabstop>
+  <tabstop>businessLineEdit</tabstop>
+  <tabstop>streetLineEdit</tabstop>
+  <tabstop>cityLineEdit</tabstop>
+  <tabstop>stateLineEdit</tabstop>
+  <tabstop>zipLineEdit</tabstop>
+  <tabstop>phoneLineEdit</tabstop>
+  <tabstop>emailLineEdit</tabstop>
+  <tabstop>comboBoxMake</tabstop>
+  <tabstop>comboBoxModel</tabstop>
+  <tabstop>lineEditWingspan</tabstop>
+  <tabstop>comboBoxWinglets</tabstop>
+  <tabstop>lineEditSwath</tabstop>
+  <tabstop>lineEditRate</tabstop>
+  <tabstop>lineEditPressure</tabstop>
+  <tabstop>lineEditBoomWidth</tabstop>
+  <tabstop>lineEditBoomDrop</tabstop>
+  <tabstop>lineEditNozzleSpacing</tabstop>
+  <tabstop>comboBoxNT</tabstop>
+  <tabstop>comboBoxNS</tabstop>
+  <tabstop>comboBoxND</tabstop>
+  <tabstop>lineEditNQ</tabstop>
+  <tabstop>plainTextEditNotesSetup</tabstop>
+  <tabstop>plainTextEditNotesAnalyst</tabstop>
+  <tabstop>lineEditName</tabstop>
+  <tabstop>lineEditLocation</tabstop>
+  <tabstop>lineEditDate</tabstop>
+  <tabstop>dateEdit</tabstop>
+  <tabstop>lineEditAnalyst</tabstop>
+  <tabstop>comboBoxWingspanUnits</tabstop>
+  <tabstop>comboBoxUnitsSwath</tabstop>
+  <tabstop>comboBoxUnitsRate</tabstop>
+  <tabstop>comboBoxUnitsPressure</tabstop>
+  <tabstop>comboBoxUnitsBoomWidth</tabstop>
+  <tabstop>comboBoxUnitsBoomDrop</tabstop>
+  <tabstop>comboBoxUnitsNozzleSpacing</tabstop>
+  <tabstop>comboBoxNozzleSet</tabstop>
+  <tabstop>pushButtonNozzleSetAdd</tabstop>
+  <tabstop>pushButtonNozzleSetRemove</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
