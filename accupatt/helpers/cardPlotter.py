@@ -79,10 +79,10 @@ class CardPlotter:
         # Setup Axes and Clear
         ax = mplWidget.canvas.ax
         ax.clear()
-        ax.set_xlabel('Droplet Diameter (microns')
+        ax.set_xlabel('Droplet Diameter (microns)')
         ax.set_xticks(bins)
         ax.yaxis.set_major_formatter(matplotlib.ticker.PercentFormatter(xmax=1.0, decimals=0))
-        ax.set_ylabel('Spray Vol. Contrib.')
+        ax.set_ylabel('Spray Volume')
         # Populate data
         ax.hist(bins, bins, weights=binned_cov, rwidth=0.8)
         for label in ax.get_xticklabels(which='major'):
@@ -96,8 +96,8 @@ class CardPlotter:
         ax = mplWidget.canvas.ax
         ax.clear()
         ax.set_xticks(bins)
-        ax.set_xlabel('Droplet Diameter (microns')
-        ax.set_ylabel('Quantity')
+        ax.set_xlabel('Droplet Diameter (microns)')
+        ax.set_ylabel('Number of Droplets')
         # Populate Data
         ax.hist(bins, bins, weights=binned_quant, rwidth=0.8)
         for label in ax.get_xticklabels(which='major'):
@@ -128,7 +128,7 @@ class CardPlotter:
             elif row == 5:
                 val = f'{val:.2f}%'
             elif row == 6:
-                val = f'{val:.2f} in2'
+                val = f'{val:.2f} in\u00B2'
             elif row >= 7 and row <= 8:
                 val = str(val)
             tableWidget.item(row,1).setText(val)
@@ -179,9 +179,9 @@ class CardPlotter:
         ax.set_ylabel('Droplet Size (microns)')
         # Populate data if available
         if x is not None:
-            ax.plot(x,y_09, label='Dv0.9')
-            ax.plot(x,y_05, label='VMD')
-            ax.plot(x,y_01, label='Dv0.1')
+            ax.plot(x,y_09, label='$D_{V0.9}$')
+            ax.plot(x,y_05, label='$VMD$')
+            ax.plot(x,y_01, label='$D_{V0.1}$')
             # Legend
             ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         # Draw the plots
