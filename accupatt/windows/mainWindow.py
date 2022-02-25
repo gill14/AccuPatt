@@ -26,6 +26,8 @@ from PyQt6.QtGui import QAction, QActionGroup
 from PyQt6.QtWidgets import (QComboBox, QFileDialog, QLabel,
                              QListWidgetItem, QMenu, QMessageBox, QProgressDialog)
 
+from accupatt.windows.reportManager import ReportManager
+
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'mainWindow.ui'))
 Ui_Form_About, baseclass_about = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'about.ui'))
 testing = False
@@ -59,6 +61,7 @@ class MainWindow(baseclass):
         self.ui.action_detailed_report.triggered.connect(self.exportAllRawData)
         # --> Setup Report Menu
         self.ui.actionCreate_Report.triggered.connect(self.makeReport)
+        self.ui.actionReportManager.triggered.connect(self.reportManager)
         # --> Setup Help Menu
         self.ui.actionAbout.triggered.connect(self.about)
         self.ui.actionUserManual.triggered.connect(self.openResourceUserManual)
@@ -169,6 +172,7 @@ class MainWindow(baseclass):
         self.status_label_file.setText('No Current Data File')
         self.status_label_modified.setText('')
         self.ui.tabWidget.setEnabled(True)
+        self.ui.tabWidget.setCurrentIndex(0)
 
     @pyqtSlot()
     def saveFile(self):
@@ -251,6 +255,7 @@ class MainWindow(baseclass):
         self.status_label_file.setText(f'Current File: {self.currentFile}')
         self.status_label_modified.setText(last_modified)
         self.ui.tabWidget.setEnabled(True)
+        self.ui.tabWidget.setCurrentIndex(0)
                 
     def update_all_ui(self):
         #Populate AppInfo tab
@@ -306,7 +311,7 @@ class MainWindow(baseclass):
                         if p.include_in_composite:
                             item.setCheckState(Qt.CheckState.Checked)
                         else:
-                            item.setCheckstate(Qt.CheckState.PartiallyChecked)
+                            item.setCheckState(Qt.CheckState.PartiallyChecked)
                     lwps.setCurrentItem(item)
                 if string_index != -1:
                     lwps.setCurrentRow(string_index)
@@ -367,14 +372,39 @@ class MainWindow(baseclass):
                                                    directory=self.currentDirectory + os.path.sep + f'{self.seriesData.info.string_reg_series()}.pdf',
                                                    filter='PDF Files (*.pdf)')
         if savefile:
-            ReportMaker().makeReport(
-                seriesData=self.seriesData,
-                saveFile=savefile,
-                mplCanvasOverlay=self.ui.plotWidgetOverlay.canvas,
-                mplCanvasAverage=self.ui.plotWidgetAverage.canvas,
-                mplCanvasRT=self.ui.plotWidgetRacetrack.canvas,
-                mplCanvasBF=self.ui.plotWidgetBackAndForth.canvas,
+            reportMaker = ReportMaker(file=savefile, seriesData=self.seriesData)
+            reportMaker.report_safe_string(
+                overlayWidget=self.ui.plotWidgetOverlay,
+                averageWidget=self.ui.plotWidgetAverage,
+                racetrackWidget=self.ui.plotWidgetRacetrack,
+                backAndForthWidget=self.ui.plotWidgetBackAndForth,
                 tableView=self.ui.tableWidgetCV)
+            for row, p in enumerate(self.seriesData.passes):
+                if p.spray_cards and any([sc.include_in_composite for sc in p.spray_cards]):
+                    # Select the pass to update plots
+                    self.ui.listWidgetSprayCardPass.setCurrentRow(row)
+                    # Select the pass for droplet dist
+                    self.ui.comboBoxSprayCardDist.setCurrentIndex(1)
+                    reportMaker.report_safe_cards(
+                        spatialDVWidget=self.ui.mplWidgetCardSpatial1,
+                        spatialCoverageWidget=self.ui.mplWidgetCardSpatial2,
+                        histogramNumberWidget=self.ui.plotWidgetDropDist1,
+                        histogramCoverageWidget=self.ui.plotWidgetDropDist2,
+                        tableView=self.ui.tableWidgetSprayCardStats,
+                        passData=p
+                    )
+            reportMaker.save()
+            # Redraw plots with defaults
+            self.update_all_ui()
+    
+    @pyqtSlot()
+    def reportManager(self):
+        #Create popup and send current appInfo vals to popup
+        e = ReportManager(self)
+        #Connect Slot to retrieve Vals back from popup
+        #e.pass_list_updated[list].connect(self.updateFromPassManager)
+        #Start Loop
+        e.exec()
         
     @pyqtSlot()
     def about(self):

@@ -33,7 +33,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_info">
        <attribute name="title">
@@ -174,6 +174,16 @@
               </property>
               <property name="checked">
                <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="checkBox">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="text">
+               <string>Rebase to X-Trim</string>
               </property>
              </widget>
             </item>
@@ -1919,8 +1929,7 @@
     </property>
     <addaction name="actionCreate_Report"/>
     <addaction name="separator"/>
-    <addaction name="actionEdit_Headers"/>
-    <addaction name="actionEdit_Logo"/>
+    <addaction name="actionReportManager"/>
    </widget>
    <widget class="QMenu" name="menuExport_to_Excel">
     <property name="title">
@@ -2088,6 +2097,14 @@
   <action name="actionCPCatalog">
    <property name="text">
     <string>CP Nozzles Catalog</string>
+   </property>
+  </action>
+  <action name="actionReportManager">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Report Manager</string>
    </property>
   </action>
  </widget>
