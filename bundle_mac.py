@@ -9,8 +9,9 @@ Usage:
 import subprocess
 import sys
 from setuptools import setup
+import accupatt.config as cfg
 
-VERSION = '2.0.3'
+VERSION = f'{cfg.VERSION_MAJOR}.{cfg.VERSION_MINOR}.{cfg.VERSION_RELEASE}'
 
 OPTIONS = {
     'iconfile':'./resources/illini.icns',
