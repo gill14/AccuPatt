@@ -9,3 +9,4 @@ testing/
 .eggs*
 user_manual/*
 !user_manual/accupatt_2_user_manual.tex
+!user_manual/images
