@@ -1,13 +1,11 @@
 __pycache__/
 .DS_Store
 .vscode/
-build/
-dist/
 ~*
 *.pdf
-*.sh
 *.dmg
-accupatt_logo.png
+*.exe
 testing/
 .eggs*
-user_manual/
+user_manual/*
+!user_manual/accupatt_2_user_manual.tex

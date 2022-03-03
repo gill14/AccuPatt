@@ -3,4 +3,4 @@ GUI tool for agricultural aircraft spray pattern testing. Combines Fluorescent t
 
 Pure python (3.10+) project utilizing Qt (PyQt 6) as the GUI layer.
 
-Uses poetry for dependency management. Create a Python 3.10 shell with Poetry, then run the application using 'poetry run python -m accupatt'
+Uses poetry for environment/dependency management. Using poetry, craete a Python 3.10+ virtual environment, install dependencies and run the application using 'poetry run python -m accupatt'
