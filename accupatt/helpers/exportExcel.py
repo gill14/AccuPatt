@@ -1,5 +1,3 @@
-from typing import List
-
 import pandas as pd
 from accupatt.helpers.dBBridge import load_from_db
 from accupatt.models.passData import Pass
@@ -9,7 +7,7 @@ from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 
 
-def safe_report(filesToInclude: List[str], saveFile: str):
+def safe_report(filesToInclude: list[str], saveFile: str):
     wb = Workbook()
     # Sheet created by default
     ws = wb.active

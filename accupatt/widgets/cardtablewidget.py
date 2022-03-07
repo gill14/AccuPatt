@@ -1,5 +1,4 @@
 import os
-from typing import List
 
 import accupatt.config as cfg
 from accupatt.models.sprayCard import SprayCard
@@ -226,7 +225,7 @@ class CardTable(QAbstractTableModel):
         self.card_list.append(SprayCard(name=f'Card {self.rowCount()}', filepath = filepath))
         self.endInsertRows()
     
-    def addCards(self, new_cards: List[SprayCard]):
+    def addCards(self, new_cards: list[SprayCard]):
         self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount()+len(new_cards)-1)
         new_indices = []
         for card in new_cards:
@@ -235,7 +234,7 @@ class CardTable(QAbstractTableModel):
         self.endInsertRows()
         return new_indices
         
-    def removeCards(self, selection: List[QModelIndex]):
+    def removeCards(self, selection: list[QModelIndex]):
         for index in reversed(selection):
             row = index.row()
             self.beginRemoveRows(QModelIndex(), row, row)

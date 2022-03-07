@@ -1,5 +1,3 @@
-from typing import List
-
 import accupatt.config as cfg
 import matplotlib.ticker
 import numpy as np
@@ -134,7 +132,7 @@ class CardPlotter:
             tableWidget.item(row,1).setText(val)
         tableWidget.resizeColumnsToContents()
         
-    def plotSpatial(mplWidget1: MplWidget, mplWidget2: MplWidget, sprayCards: List[SprayCard], loc_units, colorize = False):
+    def plotSpatial(mplWidget1: MplWidget, mplWidget2: MplWidget, sprayCards: list[SprayCard], loc_units, colorize = False):
         # Units for plot
         
         # Init vals as none
