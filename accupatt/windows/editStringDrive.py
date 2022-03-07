@@ -38,7 +38,7 @@ class EditStringDrive(baseclass):
         self.ui.lineEditFlightlineLength.setText(
             self.strip_num(
             self.settings.value(cfg._STRING_LENGTH, 
-                                defaultValue=cfg.STRING_LENGTH__DEFAULT)
+                                defaultValue=cfg.STRING_LENGTH__DEFAULT, type=float)
         ))
         self.ui.comboBoxFlightlineLengthUnits.addItems(cfg.UNITS_LENGTH_LARGE)
         self.ui.comboBoxFlightlineLengthUnits.setCurrentText(string_length_units)
@@ -60,7 +60,7 @@ class EditStringDrive(baseclass):
         #Check if saved port in box
         index = self.ui.comboBoxSerialPort.findText(
             self.settings.value(cfg._STRING_DRIVE_PORT,
-                                defaultValue=cfg.STRING_DRIVE_PORT__DEFAULT)
+                                defaultValue=cfg.STRING_DRIVE_PORT__DEFAULT, type=str)
         )
         self.ui.comboBoxSerialPort.setCurrentIndex(index)
 

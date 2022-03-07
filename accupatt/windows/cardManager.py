@@ -36,7 +36,7 @@ class CardManager(baseclass):
        
         #Load in defined sets to combobox
         self.defined_set_default = self.settings.value(cfg._CARD_DEFINED_SET,
-                                                defaultValue=cfg.CARD_DEFINED_SET__DEFAULT)
+                                                defaultValue=cfg.CARD_DEFINED_SET__DEFAULT, type=str)
         self.defined_sets_changed()
         
         self.ui.buttonAddSet.clicked.connect(self.add_cards)
@@ -44,10 +44,10 @@ class CardManager(baseclass):
         
         self.ui.comboBoxLoadMethod.addItems(cfg.IMAGE_LOAD_METHODS)
         self.ui.comboBoxLoadMethod.setCurrentText(self.settings.value(cfg._IMAGE_LOAD_METHOD, 
-                                                                      defaultValue=cfg.IMAGE_LOAD_METHOD__DEFAULT))
+                                                                      defaultValue=cfg.IMAGE_LOAD_METHOD__DEFAULT, type=str))
         self.ui.buttonLoad.clicked.connect(self.load_cards)
         self.image_dir = self.settings.value(cfg._IMAGE_LOAD_DIR,
-                                        defaultValue=cfg.IMAGE_LOAD_DIR__DEFAULT)
+                                        defaultValue=cfg.IMAGE_LOAD_DIR__DEFAULT, type=str)
         
         #Populate Table
         self.cardTable: CardTableWidget = self.ui.cardTableWidget

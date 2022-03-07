@@ -31,8 +31,8 @@ class LoadCards(baseclass):
         self.orientation = self.settings.value(cfg._ROI_ACQUISITION_ORIENTATION, defaultValue=cfg.ROI_ACQUISITION_ORIENTATION__DEFAULT, type=str)
         self.order = self.settings.value(cfg._ROI_ACQUISITION_ORDER, defaultValue=cfg.ROI_ACQUISITION_ORDER__DEFAULT, type=str)
         # for other beta users temp
-        if type(self.settings.value(cfg._ROI_SCALE, defaultValue=cfg.ROI_SCALE__DEFAULT)) is str:
-            self.settings.setValue(cfg._ROI_SCALE, cfg.ROI_SCALE__DEFAULT)
+        #if type(self.settings.value(cfg._ROI_SCALE, defaultValue=cfg.ROI_SCALE__DEFAULT)) is str:
+        #    self.settings.setValue(cfg._ROI_SCALE, cfg.ROI_SCALE__DEFAULT)
         self.scale = self.settings.value(cfg._ROI_SCALE, defaultValue=cfg.ROI_SCALE__DEFAULT, type=int)
         
         # Populate controls with static options, selections from settings

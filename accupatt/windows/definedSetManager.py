@@ -14,7 +14,7 @@ Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'edit
 
 def load_defined_sets():
     settings = QSettings()
-    sets = settings.value(cfg._CARD_DEFINED_SETS, defaultValue=cfg.CARD_DEFINED_SETS__DEFAULT)
+    sets = settings.value(cfg._CARD_DEFINED_SETS, defaultValue=cfg.CARD_DEFINED_SETS__DEFAULT, type=str)
     if type(sets) is str:
         # came from settings JSON -> parse json string to list
         sets = json.loads(sets)

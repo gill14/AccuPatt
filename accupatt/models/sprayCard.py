@@ -24,27 +24,27 @@ class SprayCard:
         # Init optionals, use settings values if available, else use config defaults
         settings = QSettings()
         self.dpi = settings.value(cfg._DPI, 
-                                  defaultValue=cfg.DPI__DEFAULT)
+                                  defaultValue=cfg.DPI__DEFAULT, type=int)
         self.threshold_type = settings.value(cfg._THRESHOLD_TYPE, 
-                                             defaultValue=cfg.THRESHOLD_TYPE__DEFAULT)
+                                             defaultValue=cfg.THRESHOLD_TYPE__DEFAULT, type=str)
         self.threshold_method_grayscale = settings.value(cfg._THRESHOLD_GRAYSCALE_METHOD, 
-                                                         defaultValue=cfg.THRESHOLD_GRAYSCALE__DEFAULT)
+                                                         defaultValue=cfg.THRESHOLD_GRAYSCALE__DEFAULT, type=str)
         self.threshold_grayscale = settings.value(cfg._THRESHOLD_GRAYSCALE, 
-                                                  defaultValue=cfg.THRESHOLD_GRAYSCALE__DEFAULT)
+                                                  defaultValue=cfg.THRESHOLD_GRAYSCALE__DEFAULT, type=str)
         self.threshold_method_color = settings.value(cfg._THRESHOLD_HSB_METHOD, 
-                                                     defaultValue=cfg.THRESHOLD_HSB_METHOD__DEFAULT)
+                                                     defaultValue=cfg.THRESHOLD_HSB_METHOD__DEFAULT, type=str)
         self.threshold_color_hue = settings.value(cfg._THRESHOLD_HSB_HUE, 
-                                                  defaultValue=cfg.THRESHOLD_HSB_HUE__DEFAULT)
+                                                  defaultValue=cfg.THRESHOLD_HSB_HUE__DEFAULT, type=int)
         self.threshold_color_saturation = settings.value(cfg._THRESHOLD_HSB_SATURATION, 
-                                                         defaultValue=cfg.THRESHOLD_HSB_SATURATION__DEFAULT)
+                                                         defaultValue=cfg.THRESHOLD_HSB_SATURATION__DEFAULT, type=int)
         self.threshold_color_brightness = settings.value(cfg._THRESHOLD_HSB_BRIGHTNESS, 
-                                                         defaultValue=cfg.THRESHOLD_HSB_BRIGHTNESS__DEFAULT)
+                                                         defaultValue=cfg.THRESHOLD_HSB_BRIGHTNESS__DEFAULT, type=int)
         self.watershed = settings.value(cfg._WATERSHED, 
                                         defaultValue=cfg.WATERSHED__DEFAULT, type=bool)
         self.min_stain_area_px = settings.value(cfg._MIN_STAIN_AREA_PX, 
                                                 defaultValue=cfg.MIN_STAIN_AREA_PX, type=int)
         self.stain_approximation_method = settings.value(cfg._STAIN_APPROXIMATION_METHOD,
-                                                         defaultValue=cfg.STAIN_APPROXIMATION_METHOD__DEFAULT)
+                                                         defaultValue=cfg.STAIN_APPROXIMATION_METHOD__DEFAULT, type=str)
         self.spread_method = settings.value(cfg._SPREAD_METHOD, 
                                             defaultValue=cfg.SPREAD_METHOD__DEFAULT, type=str)
         self.spread_factor_a = settings.value(cfg._SPREAD_FACTOR_A, 

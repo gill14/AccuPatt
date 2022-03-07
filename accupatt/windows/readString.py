@@ -38,13 +38,11 @@ class ReadString(baseclass):
         # Load other values from settings/defaults
         self.load_defaults()
 
-        #Setup Spectrometer
+        #Setup Spectrometer and String Drive
         self.spec = None
         self.spec_connected = False
-        self.setupSpectrometer()
-
-        #Setup String Drive serial port
         self.ser_connected = False
+        self.setupSpectrometer()
         self.setupStringDrive()
         
         #Enable/Disable Start and Abort buttons as applicable
@@ -89,11 +87,11 @@ class ReadString(baseclass):
         settings = QSettings()
         # Use settings values if available, else use config defaults
         self.string_drive_port = settings.value(cfg._STRING_DRIVE_PORT,
-                                                defaultValue=cfg.STRING_DRIVE_PORT__DEFAULT)
+                                                defaultValue=cfg.STRING_DRIVE_PORT__DEFAULT, type=str)
         self.string_length = settings.value(cfg._STRING_LENGTH,
-                                            defaultValue=cfg.STRING_LENGTH__DEFAULT)
+                                            defaultValue=cfg.STRING_LENGTH__DEFAULT, type=float)
         self.string_speed = settings.value(cfg._STRING_SPEED,
-                                           defaultValue=cfg.STRING_SPEED__DEFAULT)
+                                           defaultValue=cfg.STRING_SPEED__DEFAULT, type=float)
         # Calculate from all above
         self.len_per_frame = self.integration_time_ms * self.string_speed / 1000
         
