@@ -124,11 +124,11 @@ THRESHOLD_GRAYSCALE_METHODS = [THRESHOLD_GRAYSCALE_METHOD_AUTO,THRESHOLD_GRAYSCA
 THRESHOLD_GRAYSCALE_METHOD__DEFAULT = THRESHOLD_GRAYSCALE_METHODS[0]
 # SprayCard Thresholding Constants (HSB)
 _THRESHOLD_HSB_HUE = 'threshold_hsb_hue'
-THRESHOLD_HSB_HUE__DEFAULT = (140,200)
+THRESHOLD_HSB_HUE__DEFAULT = [140,200] # Used internally as tuple, delared as list for QSettings Compat
 _THRESHOLD_HSB_SATURATION = 'threshold_hsb_saturation'
-THRESHOLD_HSB_SATURATION__DEFAULT = (18,255)
+THRESHOLD_HSB_SATURATION__DEFAULT = [18,255] # Used internally as tuple, delared as list for QSettings Compat
 _THRESHOLD_HSB_BRIGHTNESS = 'threshold_hsb_brightness'
-THRESHOLD_HSB_BRIGHTNESS__DEFAULT = (0,255)
+THRESHOLD_HSB_BRIGHTNESS__DEFAULT = [0,255] # Used internally as tuple, delared as list for QSettings Compat
 _THRESHOLD_HSB_METHOD = 'threshold_hsb_method'
 THRESHOLD_HSB_METHOD_INCLUDE = 'Include'
 THRESHOLD_HSB_METHOD_EXCLUDE = 'Exclude'
