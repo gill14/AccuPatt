@@ -8,7 +8,7 @@ from accupatt.widgets.passinfowidget import PassInfoWidget
 from accupatt.windows.definedSetManager import DefinedSet, DefinedSetManager, load_defined_sets
 from accupatt.windows.loadCards import LoadCards, LoadCardsPreBatch
 from PyQt6 import uic
-from PyQt6.QtCore import Qt, QSettings, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import QFileDialog, QMessageBox, QComboBox
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'cardManager.ui'))
@@ -21,9 +21,6 @@ class CardManager(baseclass):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
-        
-        #Load in Settings
-        self.settings = QSettings()
        
         # File path for creating new cards
         self.filepath = filepath
@@ -35,19 +32,16 @@ class CardManager(baseclass):
         self.passInfoWidget.fill_from_pass(passData)
        
         #Load in defined sets to combobox
-        self.defined_set_default = self.settings.value(cfg._CARD_DEFINED_SET,
-                                                defaultValue=cfg.CARD_DEFINED_SET__DEFAULT, type=str)
+        self.defined_set_default = cfg.get_card_defined_set()
         self.defined_sets_changed()
         
         self.ui.buttonAddSet.clicked.connect(self.add_cards)
         self.ui.buttonEditSet.clicked.connect(self.edit_sets)
         
         self.ui.comboBoxLoadMethod.addItems(cfg.IMAGE_LOAD_METHODS)
-        self.ui.comboBoxLoadMethod.setCurrentText(self.settings.value(cfg._IMAGE_LOAD_METHOD, 
-                                                                      defaultValue=cfg.IMAGE_LOAD_METHOD__DEFAULT, type=str))
+        self.ui.comboBoxLoadMethod.setCurrentText(cfg.get_image_load_method())
         self.ui.buttonLoad.clicked.connect(self.load_cards)
-        self.image_dir = self.settings.value(cfg._IMAGE_LOAD_DIR,
-                                        defaultValue=cfg.IMAGE_LOAD_DIR__DEFAULT, type=str)
+        self.image_dir = cfg.get_image_load_dir()
         
         #Populate Table
         self.cardTable: CardTableWidget = self.ui.cardTableWidget
@@ -119,7 +113,7 @@ class CardManager(baseclass):
         fnames, _ = QFileDialog.getOpenFileNames(self, 'Open file(s)', self.image_dir, "Image files (*.png)")
         if len(fnames) == 0:
             return
-        self.settings.setValue(cfg._IMAGE_LOAD_DIR, os.path.dirname(fnames[0]))
+        cfg.set_image_load_dir(os.path.dirname(fnames[0]))
         e = LoadCardsPreBatch(image_files=fnames, card_list=selected_cards, parent=self)
         e.accepted.connect(self.passDataChanged.emit)
         e.exec()
@@ -127,7 +121,7 @@ class CardManager(baseclass):
     def _load_cards_multi(self, card_list):
         fname, _ = QFileDialog.getOpenFileName(self, 'Open file', self.image_dir, "Image files (*.png)")
         if fname == '': return
-        self.settings.setValue(cfg._IMAGE_LOAD_DIR, os.path.dirname(fname))
+        cfg.set_image_load_dir(os.path.dirname(fname))
         e = LoadCards(image_file=fname, card_list=card_list, parent=self)
         e.accepted.connect(self.passDataChanged.emit)
         e.exec()
@@ -138,7 +132,7 @@ class CardManager(baseclass):
         if len(excepts := self.passInfoWidget.validate_fields(p)) > 0:
             QMessageBox.warning(self, 'Invalid Data', '\n'.join(excepts))
             return
-        self.settings.setValue(cfg._CARD_DEFINED_SET, self.ui.comboBoxDefinedSet.currentText())
-        self.settings.setValue(cfg._IMAGE_LOAD_METHOD, self.ui.comboBoxLoadMethod.currentText())
+        cfg.set_card_defined_set(self.ui.comboBoxDefinedSet.currentText())
+        cfg.set_image_load_method(self.ui.comboBoxLoadMethod.currentText())
         # If all checks out, notify requestor and close
         super().accept()  

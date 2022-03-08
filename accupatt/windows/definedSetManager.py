@@ -5,7 +5,7 @@ import accupatt.config as cfg
 from accupatt.models.sprayCard import SprayCard
 from accupatt.widgets.cardtablewidget import CardTableWidget
 from PyQt6 import uic
-from PyQt6.QtCore import QAbstractListModel, Qt, QItemSelectionModel, QModelIndex, QSettings, pyqtSlot
+from PyQt6.QtCore import QAbstractListModel, Qt, QItemSelectionModel, QModelIndex, pyqtSlot
 from PyQt6.QtWidgets import QListView, QMessageBox
 
 from accupatt.windows.createDefinedSet import CreateDefinedSet
@@ -13,17 +13,15 @@ from accupatt.windows.createDefinedSet import CreateDefinedSet
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'editDefinedSets.ui'))
 
 def load_defined_sets():
-    settings = QSettings()
-    sets = settings.value(cfg._CARD_DEFINED_SETS, defaultValue=json.dumps(cfg.CARD_DEFINED_SETS__DEFAULT), type=str)
+    sets = cfg.get_card_defined_sets()
     if type(sets) is str:
         # came from settings JSON -> parse json string to list
         sets = json.loads(sets)
     return [DefinedSet(set_dict=s) for s in sets]
 
 def save_defined_sets(sets):
-    settings = QSettings()
     sets_json = json.dumps([set.toJSON() for set in sets])
-    settings.setValue(cfg._CARD_DEFINED_SETS, sets_json)
+    cfg.set_card_defined_sets(sets_json)
 
 class DefinedSetManager(baseclass):
 

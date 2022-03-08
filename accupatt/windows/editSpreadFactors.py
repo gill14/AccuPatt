@@ -3,7 +3,7 @@ import os
 import accupatt.config as cfg
 from accupatt.models.sprayCard import SprayCard
 from PyQt6 import uic
-from PyQt6.QtCore import QSettings, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMessageBox
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'editSpreadFactors.ui'))
@@ -19,9 +19,6 @@ class EditSpreadFactors(baseclass):
         self.sprayCard: SprayCard = sprayCard
         self.passData = passData
         self.seriesData = seriesData
-
-        # Load in Spray Card or use Settings
-        self.settings = QSettings()
 
         #Setup UI to vals
         self.method = self.sprayCard.spread_method
@@ -99,21 +96,21 @@ class EditSpreadFactors(baseclass):
         b = self.ui.spreadFactorBLineEdit.text()
         c = self.ui.spreadFactorCLineEdit.text()
         try: 
-            self.settings.setValue('spread_factor_a', float(a)) 
+            cfg.set_spread_factor_a(float(a))
         except:
             excepts.append('-SPREAD FACTOR A cannot be converted to a NUMBER')
         try: 
-            self.settings.setValue('spread_factor_b', float(b))
+            cfg.set_spread_factor_b(float(b))
         except:
             excepts.append('-SPREAD FACTOR B cannot be converted to a NUMBER')
         try: 
-            self.settings.setValue('spread_factor_c', float(c))
+            cfg.set_spread_factor_c(float(c))
         except:
             excepts.append('-SPREAD FACTOR C cannot be converted to a NUMBER')
         if len(excepts) > 0:
             QMessageBox.warning(self, 'Invalid Data', '\n'.join(excepts))
             return
-        self.settings.setValue('spread_factor_method',self.method)
+        cfg.set_spread_factor_equation(self.method)
         
         # Apply to multiple cards if requested
         # Cycle through passes

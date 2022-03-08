@@ -21,7 +21,7 @@ from accupatt.windows.passManager import PassManager
 from accupatt.windows.readString import ReadString
 from accupatt.widgets import mplwidget, seriesinfowidget, singleCVImageWidget, splitcardwidget
 from PyQt6 import uic
-from PyQt6.QtCore import QSettings, QSignalBlocker, Qt, pyqtSlot
+from PyQt6.QtCore import QSignalBlocker, Qt, pyqtSlot
 from PyQt6.QtGui import QAction, QActionGroup
 from PyQt6.QtWidgets import (QComboBox, QFileDialog, QLabel,
                              QListWidgetItem, QMenu, QMessageBox, QProgressDialog)
@@ -40,7 +40,7 @@ class MainWindow(baseclass):
 
         self.setWindowTitle(f'AccuPatt {cfg.VERSION_MAJOR}.{cfg.VERSION_MINOR}.{cfg.VERSION_RELEASE}')
 
-        self.currentDirectory = QSettings().value(cfg._DATA_FILE_DIR, defaultValue=str(Path.home()))
+        self.currentDirectory = cfg.get_datafile_dir()
 
         # Setup MenuBar
         # --> Setup File Menu
@@ -149,12 +149,12 @@ class MainWindow(baseclass):
         self.seriesData = SeriesData()
         # Load in Fly-In Info from saved settings
         info = self.seriesData.info
-        info.flyin_name = QSettings().value(cfg._FLYIN_NAME, defaultValue='', type=str)
-        info.flyin_location = QSettings().value(cfg._FLYIN_LOCATION, defaultValue='', type=str)
-        info.flyin_date = QSettings().value(cfg._FLYIN_DATE, defaultValue='', type=str)
-        info.flyin_analyst = QSettings().value(cfg._FLYIN_ANALYST, defaultValue='', type=str)
+        info.flyin_name = cfg.get_flyin_name()
+        info.flyin_location = cfg.get_flyin_location()
+        info.flyin_date = cfg.get_flyin_date()
+        info.flyin_analyst = cfg.get_flyin_analyst()
         # Create empty passes based (# of passes from saved settings)
-        for i in range(QSettings().value(cfg._NUMBER_OF_PASSES, defaultValue=cfg.NUMBER_OF_PASSES__DEFAULT, type=int)):
+        for i in range(cfg.get_number_of_passes()):
             self.seriesData.passes.append(Pass(number=i+1))
         # File Aircraft
         if useFileAircraft:
@@ -199,12 +199,12 @@ class MainWindow(baseclass):
                 return False
             self.currentFile = fname
             self.currentDirectory = os.path.dirname(self.currentFile)
-            QSettings().setValue(cfg._DATA_FILE_DIR, self.currentDirectory)
-        # If db file exists, or a new one has been created, update QSettings for Flyin
-        QSettings().setValue(cfg._FLYIN_NAME, self.seriesData.info.flyin_name)
-        QSettings().setValue(cfg._FLYIN_LOCATION, self.seriesData.info.flyin_location)
-        QSettings().setValue(cfg._FLYIN_DATE, self.seriesData.info.flyin_date)
-        QSettings().setValue(cfg._FLYIN_ANALYST, self.seriesData.info.flyin_analyst)
+            cfg.set_datafile_dir(self.currentDirectory)
+        # If db file exists, or a new one has been created, update persistent vals for Flyin
+        cfg.set_flyin_name(self.seriesData.info.flyin_name)
+        cfg.set_flyin_location(self.seriesData.info.flyin_location)
+        cfg.set_flyin_date(self.seriesData.info.flyin_date)
+        cfg.set_flyin_analyst(self.seriesData.info.flyin_analyst)
         # If db file exists, or a new one has been created, save all SeriesData to the db
         save_to_db(file=self.currentFile, s=self.seriesData)
         self.status_label_file.setText(f'Current File: {self.currentFile}')
@@ -245,7 +245,7 @@ class MainWindow(baseclass):
                 return 
         self.currentFile = file
         self.currentDirectory = os.path.dirname(self.currentFile)
-        QSettings().setValue(cfg._DATA_FILE_DIR, self.currentDirectory)
+        cfg.set_datafile_dir(self.currentDirectory)
         last_modified = 'View-Only Mode'
         if self.currentFile[-1]=='b':
             self.seriesData = SeriesData()

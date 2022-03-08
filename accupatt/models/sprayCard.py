@@ -5,7 +5,6 @@ import accupatt.config as cfg
 import cv2
 import numpy as np
 from accupatt.helpers.atomizationModel import AtomizationModel
-from PyQt6.QtCore import QSettings
 
 class SprayCard:
 
@@ -21,38 +20,22 @@ class SprayCard:
         self.location_units = None
         self.has_image = False
         self.include_in_composite = False
-        # Init optionals, use settings values if available, else use config defaults
-        settings = QSettings()
-        self.dpi = settings.value(cfg._DPI, 
-                                  defaultValue=cfg.DPI__DEFAULT, type=int)
-        self.threshold_type = settings.value(cfg._THRESHOLD_TYPE, 
-                                             defaultValue=cfg.THRESHOLD_TYPE__DEFAULT, type=str)
-        self.threshold_method_grayscale = settings.value(cfg._THRESHOLD_GRAYSCALE_METHOD, 
-                                                         defaultValue=cfg.THRESHOLD_GRAYSCALE__DEFAULT, type=str)
-        self.threshold_grayscale = settings.value(cfg._THRESHOLD_GRAYSCALE, 
-                                                  defaultValue=cfg.THRESHOLD_GRAYSCALE__DEFAULT, type=str)
-        self.threshold_method_color = settings.value(cfg._THRESHOLD_HSB_METHOD, 
-                                                     defaultValue=cfg.THRESHOLD_HSB_METHOD__DEFAULT, type=str)
-        self.threshold_color_hue = settings.value(cfg._THRESHOLD_HSB_HUE, 
-                                                  defaultValue=cfg.THRESHOLD_HSB_HUE__DEFAULT, type=int)
-        self.threshold_color_saturation = settings.value(cfg._THRESHOLD_HSB_SATURATION, 
-                                                         defaultValue=cfg.THRESHOLD_HSB_SATURATION__DEFAULT, type=int)
-        self.threshold_color_brightness = settings.value(cfg._THRESHOLD_HSB_BRIGHTNESS, 
-                                                         defaultValue=cfg.THRESHOLD_HSB_BRIGHTNESS__DEFAULT, type=int)
-        self.watershed = settings.value(cfg._WATERSHED, 
-                                        defaultValue=cfg.WATERSHED__DEFAULT, type=bool)
-        self.min_stain_area_px = settings.value(cfg._MIN_STAIN_AREA_PX, 
-                                                defaultValue=cfg.MIN_STAIN_AREA_PX, type=int)
-        self.stain_approximation_method = settings.value(cfg._STAIN_APPROXIMATION_METHOD,
-                                                         defaultValue=cfg.STAIN_APPROXIMATION_METHOD__DEFAULT, type=str)
-        self.spread_method = settings.value(cfg._SPREAD_METHOD, 
-                                            defaultValue=cfg.SPREAD_METHOD__DEFAULT, type=str)
-        self.spread_factor_a = settings.value(cfg._SPREAD_FACTOR_A, 
-                                              defaultValue=cfg.SPREAD_FACTOR_A__DEFAULT, type=float)
-        self.spread_factor_b = settings.value(cfg._SPREAD_FACTOR_B, 
-                                              defaultValue=cfg.SPREAD_FACTOR_B__DEFAULT, type=float)
-        self.spread_factor_c = settings.value(cfg._SPREAD_FACTOR_C, 
-                                              defaultValue=cfg.SPREAD_FACTOR_C__DEFAULT, type=float)
+        # Init optionals using persistent values/defaults from config if available
+        self.dpi = cfg.get_image_dpi()
+        self.threshold_type = cfg.get_threshold_type()
+        self.threshold_method_grayscale = cfg.get_threshold_grayscale_method()
+        self.threshold_grayscale = cfg.get_threshold_grayscale()
+        self.threshold_method_color = cfg.get_threshold_hsb_method()
+        self.threshold_color_hue = cfg.get_threshold_hsb_hue()
+        self.threshold_color_saturation = cfg.get_threshold_hsb_saturation()
+        self.threshold_color_brightness = cfg.get_threshold_hsb_brightness()
+        self.watershed = cfg.get_watershed()
+        self.min_stain_area_px = cfg.get_min_stain_area_px()
+        self.stain_approximation_method = cfg.get_stain_approximation_method()
+        self.spread_method = cfg.get_spread_factor_equation()
+        self.spread_factor_a = cfg.get_spread_factor_a()
+        self.spread_factor_b = cfg.get_spread_factor_b()
+        self.spread_factor_c = cfg.get_spread_factor_c()
         # Initialize stain stats
         self.area_px2 = 0.0
         self.stain_areas_all_px2 = []

@@ -9,8 +9,8 @@ from accupatt.models.sprayCard import SprayCard
 from PIL import Image
 from PyQt6 import uic
 from PyQt6.QtGui import QImageReader, QPixmap
-from PyQt6.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
-from PyQt6.QtWidgets import QApplication, QCheckBox, QGraphicsPixmapItem, QListWidget, QProgressDialog
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
+from PyQt6.QtWidgets import QCheckBox, QGraphicsPixmapItem, QListWidget, QProgressDialog
 from pyqtgraph.functions import mkPen
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'loadCards.ui'))
@@ -25,19 +25,15 @@ class LoadCards(baseclass):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         
-        #Import Settings
-        self.settings = QSettings()
-        self.dpi = self.settings.value(cfg._DPI, defaultValue=cfg.DPI__DEFAULT, type=int)
-        self.orientation = self.settings.value(cfg._ROI_ACQUISITION_ORIENTATION, defaultValue=cfg.ROI_ACQUISITION_ORIENTATION__DEFAULT, type=str)
-        self.order = self.settings.value(cfg._ROI_ACQUISITION_ORDER, defaultValue=cfg.ROI_ACQUISITION_ORDER__DEFAULT, type=str)
-        # for other beta users temp
-        #if type(self.settings.value(cfg._ROI_SCALE, defaultValue=cfg.ROI_SCALE__DEFAULT)) is str:
-        #    self.settings.setValue(cfg._ROI_SCALE, cfg.ROI_SCALE__DEFAULT)
-        self.scale = self.settings.value(cfg._ROI_SCALE, defaultValue=cfg.ROI_SCALE__DEFAULT, type=int)
+        # Import persistent config
+        self.dpi = cfg.get_image_dpi()
+        self.orientation = cfg.get_image_roi_acquisition_orientation()
+        self.order = cfg.get_image_roi_acquisition_order()
+        self.scale = cfg.get_image_roi_scale()
         
-        # Populate controls with static options, selections from settings
-        self.ui.comboBoxDPI.addItems([str(dpi) for dpi in cfg.DPI_OPTIONS])
-        self.ui.comboBoxDPI.setCurrentIndex(cfg.DPI_OPTIONS.index(self.dpi))
+        # Populate controls with static options, selections from persistent config
+        self.ui.comboBoxDPI.addItems([str(dpi) for dpi in cfg.IMAGE_DPI_OPTIONS])
+        self.ui.comboBoxDPI.setCurrentIndex(cfg.IMAGE_DPI_OPTIONS.index(self.dpi))
         self.ui.comboBoxOrientation.addItems(cfg.ROI_ACQUISITION_ORIENTATIONS)
         self.ui.comboBoxOrientation.setCurrentIndex(cfg.ROI_ACQUISITION_ORIENTATIONS.index(self.orientation))
         self.ui.comboBoxOrder.addItems(cfg.ROI_ACQUISITION_ORDERS)
@@ -45,10 +41,10 @@ class LoadCards(baseclass):
         self.ui.comboBoxScale.addItems([f'{s}%' for s in cfg.ROI_SCALES])
         self.ui.comboBoxScale.setCurrentIndex(cfg.ROI_SCALES.index(self.scale))
         
-        #Image File
+        # Image File
         self.image_file = image_file
         
-        #List of cards
+        # List of cards
         self.card_list = card_list
         
         # Slots for controls
@@ -135,7 +131,7 @@ class LoadCards(baseclass):
          
     @pyqtSlot(int)
     def dpi_changed(self, newIndex):
-        self.dpi = cfg.DPI_OPTIONS[newIndex]
+        self.dpi = cfg.IMAGE_DPI_OPTIONS[newIndex]
         self.show_image_characteristics()
             
     @pyqtSlot(int)
@@ -171,10 +167,10 @@ class LoadCards(baseclass):
         
     @pyqtSlot()
     def accept(self):
-        self.settings.setValue(cfg._DPI, int(self.ui.comboBoxDPI.currentText()))
-        self.settings.setValue(cfg._ROI_ACQUISITION_ORIENTATION, self.ui.comboBoxOrientation.currentText())
-        self.settings.setValue(cfg._ROI_ACQUISITION_ORDER, self.ui.comboBoxOrder.currentText())
-        self.settings.setValue(cfg._ROI_SCALE, cfg.ROI_SCALES[self.ui.comboBoxScale.currentIndex()])
+        cfg.set_image_dpi(int(self.ui.comboBoxDPI.currentText()))
+        cfg.set_image_roi_acquisition_orientation(self.ui.comboBoxOrientation.currentText())
+        cfg.set_image_roi_acquisition_order(self.ui.comboBoxOrder.currentText())
+        cfg.set_image_roi_scale(cfg.ROI_SCALES[self.ui.comboBoxScale.currentIndex()])
         
         prog = QProgressDialog(self)
         prog.setMinimumDuration(0)

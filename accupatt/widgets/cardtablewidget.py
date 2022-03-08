@@ -29,7 +29,7 @@ class CardTableWidget(baseclass):
         self.tv: QTableView = self.ui.tableView
         self.tv.setModel(self.tm)
         self.tv.setItemDelegateForColumn(4, ComboBoxDelegate(self, cfg.UNITS_LENGTH_LARGE))
-        self.tv.setItemDelegateForColumn(5, ComboBoxDelegate(self, [str(dpi) for dpi in cfg.DPI_OPTIONS]))
+        self.tv.setItemDelegateForColumn(5, ComboBoxDelegate(self, [str(dpi) for dpi in cfg.IMAGE_DPI_OPTIONS]))
         self.tv.setItemDelegateForColumn(6, ComboBoxDelegate(self, cfg.THRESHOLD_TYPES))
 
         self.selection_changed()
@@ -162,7 +162,7 @@ class CardTable(QAbstractTableModel):
             if role==Qt.ItemDataRole.DisplayRole:
                 return str(card.dpi) if card.has_image else ''
             elif role==Qt.ItemDataRole.EditRole:
-                return cfg.DPI_OPTIONS.index(card.dpi)
+                return cfg.IMAGE_DPI_OPTIONS.index(card.dpi)
         elif col==6:
             if role==Qt.ItemDataRole.DisplayRole:
                 return card.threshold_type
@@ -191,7 +191,7 @@ class CardTable(QAbstractTableModel):
         elif col==4:
             card.location_units = cfg.UNITS_LENGTH_LARGE[value]
         elif col==5:
-            card.dpi = cfg.DPI_OPTIONS[value]
+            card.dpi = cfg.IMAGE_DPI_OPTIONS[value]
         elif col==6:
             if role==Qt.ItemDataRole.EditRole:
                 card.threshold_type = cfg.THRESHOLD_TYPES[value]

@@ -9,7 +9,7 @@ from accupatt.widgets.passinfowidget import PassInfoWidget
 from accupatt.windows.editSpectrometer import EditSpectrometer
 from accupatt.windows.editStringDrive import EditStringDrive
 from PyQt6 import uic
-from PyQt6.QtCore import QSettings, QTimer, pyqtSlot
+from PyQt6.QtCore import QTimer, pyqtSlot
 from PyQt6.QtWidgets import QMessageBox
 from seabreeze.spectrometers import Spectrometer
 
@@ -35,7 +35,7 @@ class ReadString(baseclass):
         self.integration_time_ms = self.passData.integration_time_ms
         self.string_length_units = self.passData.data_loc_units
         
-        # Load other values from settings/defaults
+        # Load other values from persistent config
         self.load_defaults()
 
         #Setup Spectrometer and String Drive
@@ -83,15 +83,9 @@ class ReadString(baseclass):
         self.show()
 
     def load_defaults(self):
-        # Load in Settings
-        settings = QSettings()
-        # Use settings values if available, else use config defaults
-        self.string_drive_port = settings.value(cfg._STRING_DRIVE_PORT,
-                                                defaultValue=cfg.STRING_DRIVE_PORT__DEFAULT, type=str)
-        self.string_length = settings.value(cfg._STRING_LENGTH,
-                                            defaultValue=cfg.STRING_LENGTH__DEFAULT, type=float)
-        self.string_speed = settings.value(cfg._STRING_SPEED,
-                                           defaultValue=cfg.STRING_SPEED__DEFAULT, type=float)
+        self.string_drive_port = cfg.get_string_drive_port()
+        self.string_length = cfg.get_string_length()
+        self.string_speed = cfg.get_string_speed()
         # Calculate from all above
         self.len_per_frame = self.integration_time_ms * self.string_speed / 1000
         

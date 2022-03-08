@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import scipy.signal as sig
 
-from PyQt6.QtCore import QSettings
 class Pass:
 
     c = {'kph_mph': cfg.MPH_PER_KPH,
@@ -22,43 +21,32 @@ class Pass:
             self.name = 'Pass ' + str(self.number)
         #Include in Composite by default
         self.include_in_composite = True
-         # Load in Settings
-        settings = QSettings()
         # Pass Info
         self.ground_speed = 0
-        self.ground_speed_units = settings.value(cfg._UNIT_GROUND_SPEED, 
-                                           defaultValue=cfg.UNIT_GROUND_SPEED__DEFAULT, type=str)
+        self.ground_speed_units = cfg.get_unit_ground_speed()
         self.spray_height = 0
-        self.spray_height_units = settings.value(cfg._UNIT_SPRAY_HEIGHT,
-                                                 defaultValue=cfg.UNIT_SPRAY_HEIGHT__DEFAULT, type=str)
+        self.spray_height_units = cfg.get_unit_spray_height()
         self.pass_heading = 0
         self.wind_direction = 0
         self.wind_speed = 0
-        self.wind_speed_units = settings.value(cfg._UNIT_WIND_SPEED,
-                                               defaultValue=cfg.UNIT_WIND_SPEED__DEFAULT, type=str)
+        self.wind_speed_units = cfg.get_unit_wind_speed()
         self.temperature = 0
-        self.temperature_units = settings.value(cfg._UNIT_TEMPERATURE,
-                                                defaultValue=cfg.UNIT_TEMPERATURE__DEFAULT, type=str)
+        self.temperature_units = cfg.get_unit_temperature()
         self.humidity = 0
         # String Data Collection 
-        self.wav_ex = settings.value(cfg._SPEC_WAV_EX,
-                                     defaultValue=cfg.SPEC_WAV_EX__DEFAULT, type=int)
-        self.wav_em = settings.value(cfg._SPEC_WAV_EM,
-                                     defaultValue=cfg.SPEC_WAV_EM__DEFAULT, type=int)
-        self.integration_time_ms = settings.value(cfg._SPEC_INT_TIME_MS,
-                                                  defaultValue=cfg.SPEC_INT_TIME_MS__DEFAULT, type=int)
+        self.wav_ex = cfg.get_spec_wav_em()
+        self.wav_em = cfg.get_spec_wav_ex()
+        self.integration_time_ms = cfg.get_spec_int_time_millis()
         # String Data
         self.data_ex = pd.DataFrame() #Holds Excitation Data
         self.data = pd.DataFrame() #Holds original Data
         self.data_mod = pd.DataFrame() #Holds data with all requested modifications
-        self.data_loc_units = settings.value(cfg._UNIT_DATA_LOCATION,
-                                             defaultValue=cfg.UNIT_DATA_LOCATION__DEFAULT, type=str)
+        self.data_loc_units = cfg.get_unit_data_location()
         # String Data Mod Options
         self.trim_l = 0
         self.trim_r = 0
         self.trim_v = 0.0
-        self.string_center_method = settings.value(cfg._CENTER_METHOD,
-                                                   defaultValue=cfg.CENTER_METHOD__DEFAULT, type=str)
+        self.string_center_method = cfg.get_center_method()
         self.string_smooth = True
         # Spray Card List
         self.spray_cards = []

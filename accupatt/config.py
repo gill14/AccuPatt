@@ -1,3 +1,7 @@
+import json
+from pathlib import Path
+from PyQt6.QtCore import QSettings
+
 VERSION_MAJOR = 2
 VERSION_MINOR = 0
 VERSION_RELEASE = 4
@@ -32,139 +36,332 @@ MPH_PER_KPH = 0.621371
 MPH_PER_KN = 1.15078
 
 # Data File
+
 _DATA_FILE_DIR = 'data_file_dir'
+DATA_FILE_DIR__DEFAULT = str(Path.home())
+def get_datafile_dir() -> str:
+    return QSettings().value(_DATA_FILE_DIR, defaultValue=DATA_FILE_DIR__DEFAULT, type=str)
+def set_datafile_dir(value: str):
+    QSettings().setValue(_DATA_FILE_DIR, value)
 
 # Flyin Headers
-_FLYIN_NAME = 'flyin_name'
-_FLYIN_LOCATION = 'flyin_location'
-_FLYIN_DATE = 'flyin_date'
-_FLYIN_ANALYST = 'flyin_analyst'
 
-# Pass Data
+_FLYIN_NAME = 'flyin_name'
+def get_flyin_name() -> str:
+    return QSettings().value(_FLYIN_NAME, defaultValue='', type=str)
+def set_flyin_name(value: str):
+    QSettings().setValue(_FLYIN_NAME, value)
+    
+_FLYIN_LOCATION = 'flyin_location'
+def get_flyin_location() -> str:
+    return QSettings().value(_FLYIN_LOCATION, defaultValue='', type=str)
+def set_flyin_location(value: str):
+    QSettings().setValue(_FLYIN_LOCATION, value)
+    
+_FLYIN_DATE = 'flyin_date'
+def get_flyin_date() -> str:
+    return QSettings().value(_FLYIN_DATE, defaultValue='', type=str)
+def set_flyin_date(value: str):
+    QSettings().setValue(_FLYIN_DATE, value)
+
+_FLYIN_ANALYST = 'flyin_analyst'
+def get_flyin_analyst() -> str:
+    return QSettings().value(_FLYIN_ANALYST, defaultValue='', type=str)
+def set_flyin_analyst(value: str):
+    QSettings().setValue(_FLYIN_ANALYST, value)
+
+# Pass Observable Data
+
 _NUMBER_OF_PASSES = 'number_of_passes'
 NUMBER_OF_PASSES__DEFAULT = 3
-UNITS_GROUND_SPEED = [UNIT_MPH, UNIT_KPH]
+def get_number_of_passes() -> int:
+    return QSettings().value(_NUMBER_OF_PASSES, defaultValue=NUMBER_OF_PASSES__DEFAULT, type=int)
+def set_number_of_passes(value: int):
+    QSettings().setValue(_NUMBER_OF_PASSES, value)
+
 _UNIT_GROUND_SPEED = 'unit_ground_speed'
+UNITS_GROUND_SPEED = [UNIT_MPH, UNIT_KPH]
 UNIT_GROUND_SPEED__DEFAULT = UNITS_GROUND_SPEED[0]
-UNITS_SPRAY_HEIGHT = UNITS_LENGTH_LARGE
+def get_unit_ground_speed() -> str:
+    return QSettings().value(_UNIT_GROUND_SPEED, defaultValue=UNIT_GROUND_SPEED__DEFAULT, type=str)
+def set_unit_ground_speed(value: str):
+    QSettings().setValue(_UNIT_GROUND_SPEED, value)
+
 _UNIT_SPRAY_HEIGHT = 'unit_spray_height'
+UNITS_SPRAY_HEIGHT = UNITS_LENGTH_LARGE
 UNIT_SPRAY_HEIGHT__DEFAULT = UNITS_SPRAY_HEIGHT[0]
-UNITS_WIND_SPEED = [UNIT_MPH, UNIT_KPH]
+def get_unit_spray_height() -> str:
+    return QSettings().value(_UNIT_SPRAY_HEIGHT, defaultValue=UNIT_SPRAY_HEIGHT__DEFAULT, type=str)
+def set_unit_spray_height(value: str):
+    QSettings().setValue(_UNIT_SPRAY_HEIGHT, value)
+
 _UNIT_WIND_SPEED = 'unit_wind_speed'
+UNITS_WIND_SPEED = [UNIT_MPH, UNIT_KPH]
 UNIT_WIND_SPEED__DEFAULT = UNITS_WIND_SPEED[0]
-UNITS_TEMPERATURE = [UNIT_DEG_F, UNIT_DEG_C]
+def get_unit_wind_speed() -> str:
+    return QSettings().value(_UNIT_WIND_SPEED, defaultValue=UNIT_WIND_SPEED__DEFAULT, type=str)
+def set_unit_wind_speed(value: str):
+    QSettings().setValue(_UNIT_WIND_SPEED, value)
+
 _UNIT_TEMPERATURE = 'unit_temperature'
+UNITS_TEMPERATURE = [UNIT_DEG_F, UNIT_DEG_C]
 UNIT_TEMPERATURE__DEFAULT = UNITS_TEMPERATURE[0]
+def get_unit_temperature() -> str:
+    return QSettings().value(_UNIT_TEMPERATURE, defaultValue=UNIT_TEMPERATURE__DEFAULT, type=str)
+def set_unit_temperature(value: str):
+    QSettings().setValue(_UNIT_TEMPERATURE, value)
+
 _UNIT_DATA_LOCATION = 'unit_data_location'
 UNIT_DATA_LOCATION__DEFAULT = UNIT_FT
+def get_unit_data_location() -> str:
+    return QSettings().value(_UNIT_DATA_LOCATION, defaultValue=UNIT_DATA_LOCATION__DEFAULT, type=str)
+def set_unit_data_location(value: str):
+    QSettings().setValue(_UNIT_DATA_LOCATION, value)
 
 # Pattern Centering
+
 _CENTER_METHOD = 'center_method'
 CENTER_METHOD_NONE = 'None'
 CENTER_METHOD_CENTROID = 'Centroid'
 CENTER_METHOD_COD = 'Center of Distribution'
 CENTER_METHOD__DEFAULT = CENTER_METHOD_CENTROID
+def get_center_method() -> str:
+    return QSettings().value(_CENTER_METHOD, defaultValue=CENTER_METHOD__DEFAULT, type=str)
+def set_center_method(value: str):
+    QSettings().setValue(_CENTER_METHOD, value)
 
 # String Drive
+
 STRING_DRIVE_FWD_START = 'AD+\r'
 STRING_DRIVE_FWD_STOP = 'AD\r'
 STRING_DRIVE_REV_START = 'BD-\r'
 STRING_DRIVE_REV_STOP = 'BD\r'
+
 _STRING_DRIVE_PORT = 'string_drive_port'
 STRING_DRIVE_PORT__DEFAULT = ''
+def get_string_drive_port() -> str:
+    return QSettings().value(_STRING_DRIVE_PORT, defaultValue=STRING_DRIVE_PORT__DEFAULT, type=str)
+def set_string_drive_port(value: str):
+    QSettings().setValue(_STRING_DRIVE_PORT, value)
+
 _STRING_LENGTH = 'string_length'
 STRING_LENGTH__DEFAULT = 150.0
+def get_string_length() -> float:
+    return QSettings().value(_STRING_LENGTH, defaultValue=STRING_LENGTH__DEFAULT, type=float)
+def set_string_length(value: float):
+    QSettings().setValue(_STRING_LENGTH, value)
+
 _STRING_SPEED = 'string_speed'
 STRING_SPEED__DEFAULT = 1.71
+def get_string_speed() -> float:
+    return QSettings().value(_STRING_SPEED, defaultValue=STRING_SPEED__DEFAULT, type=float)
+def set_string_speed(value: float):
+    QSettings().setValue(_STRING_SPEED, value)
 
 # Spectrometer
+
 SPEC_WAV_EX_RHODAMINE = 525
 SPEC_WAV_EM_RHODAMINE = 575
+
 _SPEC_WAV_EX = 'spectrometer_wavelength_excitation_nm'
 SPEC_WAV_EX__DEFAULT = SPEC_WAV_EX_RHODAMINE
+def get_spec_wav_ex() -> int:
+    return QSettings().value(_SPEC_WAV_EX, defaultValue=SPEC_WAV_EX__DEFAULT, type=int)
+def set_spec_wav_ex(value: int):
+    QSettings().setValue(_SPEC_WAV_EX, value)
+
 _SPEC_WAV_EM = 'spectrometer_wavelength_emission_nm'
 SPEC_WAV_EM__DEFAULT = SPEC_WAV_EM_RHODAMINE
+def get_spec_wav_em() -> int:
+    return QSettings().value(_SPEC_WAV_EM, defaultValue=SPEC_WAV_EM__DEFAULT, type=int)
+def set_spec_wav_em(value: int):
+    QSettings().setValue(_SPEC_WAV_EM, value)
+
 _SPEC_INT_TIME_MS = 'spectrometer_integration_time_ms'
 SPEC_INT_TIME_MS__DEFAULT = 100
+def get_spec_int_time_millis() -> int:
+    return QSettings().value(_SPEC_INT_TIME_MS, defaultValue=SPEC_INT_TIME_MS__DEFAULT, type=int)
+def set_spec_int_time_millis(value: int):
+    QSettings().setValue(_SPEC_INT_TIME_MS, value)
 
-# SprayCard Load
+
+# SprayCard Image Loading Operations / Attributes
+
 _IMAGE_LOAD_DIR = 'image_load_dir'
-IMAGE_LOAD_DIR__DEFAULT = 'home'
+IMAGE_LOAD_DIR__DEFAULT = str(Path.home())
+def get_image_load_dir() -> str:
+    return QSettings().value(_IMAGE_LOAD_DIR, defaultValue=IMAGE_LOAD_DIR__DEFAULT, type=str)
+def set_image_load_dir(value: str):
+    QSettings().setValue(_IMAGE_LOAD_DIR, value)
+
 _IMAGE_LOAD_METHOD = 'image_load_method'
 IMAGE_LOAD_METHODS = ['One File Per Card', 'One File, Multiple Cards']
 IMAGE_LOAD_METHOD__DEFAULT = IMAGE_LOAD_METHODS[1]
+def get_image_load_method() -> str:
+    return QSettings().value(_IMAGE_LOAD_METHOD, defaultValue=IMAGE_LOAD_METHOD__DEFAULT, type=str)
+def set_image_load_method(value: str):
+    QSettings().setValue(_IMAGE_LOAD_METHOD, value)
+
 _ROI_ACQUISITION_ORIENTATION = 'roi_acquisition_orientation'
 ROI_ACQUISITION_ORIENTATIONS = ['Horizontal', 'Vertical']
 ROI_ACQUISITION_ORIENTATION__DEFAULT = ROI_ACQUISITION_ORIENTATIONS[0]
+def get_image_roi_acquisition_orientation() -> str:
+    return QSettings().value(_ROI_ACQUISITION_ORIENTATION, defaultValue=ROI_ACQUISITION_ORIENTATION__DEFAULT, type=str)
+def set_image_roi_acquisition_orientation(value: str):
+    QSettings().setValue(_ROI_ACQUISITION_ORIENTATION, value)
+
+
 _ROI_ACQUISITION_ORDER = 'roi_acquisition_order'
 ROI_ACQUISITION_ORDERS = ['Increasing', 'Decreasing']
 ROI_ACQUISITION_ORDER__DEFAULT = ROI_ACQUISITION_ORDERS[0]
+def get_image_roi_acquisition_order() -> str:
+    return QSettings().value(_ROI_ACQUISITION_ORDER, defaultValue=ROI_ACQUISITION_ORDER__DEFAULT, type=str)
+def set_image_roi_acquisition_order(value: str):
+    QSettings().setValue(_ROI_ACQUISITION_ORDER, value)
+
 _ROI_SCALE = 'roi_scale'
 ROI_SCALES = [10,20,30,40,50,60,70,80,90,100]
 ROI_SCALE__DEFAULT = ROI_SCALES[6]
+def get_image_roi_scale() -> int:
+    return QSettings().value(_ROI_SCALE, defaultValue=ROI_SCALE__DEFAULT, type=int)
+def set_image_roi_scale(value: int):
+    QSettings().setValue(_ROI_SCALE, value)
 
-# SprayCard DPI
-_DPI = 'dpi'
-DPI__DEFAULT = 600
-DPI_OPTIONS = [300, 600, 1200, 2400]
+_IMAGE_DPI = 'image_dpi'
+IMAGE_DPI_OPTIONS = [300, 600, 1200, 2400]
+IMAGE_DPI__DEFAULT = 600
+def get_image_dpi() -> int:
+    return QSettings().value(_IMAGE_DPI, defaultValue=IMAGE_DPI__DEFAULT, type=int)
+def set_image_dpi(value: int):
+    QSettings().setValue(_IMAGE_DPI, value)
 
-# SprayCard Thresholding Constants
+# SprayCard Image Processing - Thresholding
+
 _THRESHOLD_TYPE = 'threshold_type'
 THRESHOLD_TYPE_GRAYSCALE = 'Grayscale'
 THRESHOLD_TYPE_HSB = 'HSB'
 THRESHOLD_TYPES = [THRESHOLD_TYPE_GRAYSCALE, THRESHOLD_TYPE_HSB]
 THRESHOLD_TYPE__DEFAULT = THRESHOLD_TYPES[0]
-# SprayCard Thresholding Constants (Grayscale)
+def get_threshold_type() -> str:
+    return QSettings().value(_THRESHOLD_TYPE, defaultValue=THRESHOLD_TYPE__DEFAULT, type=str)
+def set_threshold_type(value: str):
+    QSettings().setValue(_THRESHOLD_TYPE, value)
+
 _THRESHOLD_GRAYSCALE = 'threshold_grayscale'
 THRESHOLD_GRAYSCALE__DEFAULT = 152
+def get_threshold_grayscale() -> int:
+    return QSettings().value(_THRESHOLD_GRAYSCALE, defaultValue=THRESHOLD_GRAYSCALE__DEFAULT, type=int)
+def set_threshold_grayscale(value: int):
+    QSettings().setValue(_THRESHOLD_GRAYSCALE, value)
+
 _THRESHOLD_GRAYSCALE_METHOD = 'threshold_grayscale_method'
 THRESHOLD_GRAYSCALE_METHOD_AUTO = 'Auto'
 THRESHOLD_GRAYSCALE_METHOD_MANUAL = 'Manual'
 THRESHOLD_GRAYSCALE_METHODS = [THRESHOLD_GRAYSCALE_METHOD_AUTO,THRESHOLD_GRAYSCALE_METHOD_MANUAL]
 THRESHOLD_GRAYSCALE_METHOD__DEFAULT = THRESHOLD_GRAYSCALE_METHODS[0]
-# SprayCard Thresholding Constants (HSB)
+def get_threshold_grayscale_method() -> str:
+    return QSettings().value(_THRESHOLD_GRAYSCALE_METHOD, defaultValue=THRESHOLD_GRAYSCALE_METHOD__DEFAULT, type=str)
+def set_threshold_grayscale_method(value: str):
+    QSettings().setValue(_THRESHOLD_GRAYSCALE_METHOD, value)
+
 _THRESHOLD_HSB_HUE = 'threshold_hsb_hue'
 THRESHOLD_HSB_HUE__DEFAULT = [140,200] # Used internally as tuple, delared as list for QSettings Compat
+def get_threshold_hsb_hue() -> list[int]:
+    return QSettings().value(_THRESHOLD_HSB_HUE, defaultValue=THRESHOLD_HSB_HUE__DEFAULT, type=int)
+def set_threshold_hsb_hue(value: list[int]):
+    QSettings().setValue(_THRESHOLD_HSB_HUE, value)
+
 _THRESHOLD_HSB_SATURATION = 'threshold_hsb_saturation'
 THRESHOLD_HSB_SATURATION__DEFAULT = [18,255] # Used internally as tuple, delared as list for QSettings Compat
+def get_threshold_hsb_saturation() -> list[int]:
+    return QSettings().value(_THRESHOLD_HSB_SATURATION, defaultValue=THRESHOLD_HSB_SATURATION__DEFAULT, type=int)
+def set_threshold_hsb_saturation(value: list[int]):
+    QSettings().setValue(_THRESHOLD_HSB_SATURATION, value)
+
 _THRESHOLD_HSB_BRIGHTNESS = 'threshold_hsb_brightness'
 THRESHOLD_HSB_BRIGHTNESS__DEFAULT = [0,255] # Used internally as tuple, delared as list for QSettings Compat
+def get_threshold_hsb_brightness() -> list[int]:
+    return QSettings().value(_THRESHOLD_HSB_BRIGHTNESS, defaultValue=THRESHOLD_HSB_BRIGHTNESS__DEFAULT, type=int)
+def set_threshold_hsb_brightness(value: list[int]):
+    QSettings().setValue(_THRESHOLD_HSB_BRIGHTNESS, value)
+
 _THRESHOLD_HSB_METHOD = 'threshold_hsb_method'
 THRESHOLD_HSB_METHOD_INCLUDE = 'Include'
 THRESHOLD_HSB_METHOD_EXCLUDE = 'Exclude'
 THRESHOLD_HSB_METHODS = [THRESHOLD_HSB_METHOD_INCLUDE,THRESHOLD_HSB_METHOD_EXCLUDE]
 THRESHOLD_HSB_METHOD__DEFAULT = THRESHOLD_HSB_METHODS[1]
+def get_threshold_hsb_method() -> str:
+    return QSettings().value(_THRESHOLD_HSB_METHOD, defaultValue=THRESHOLD_HSB_METHOD__DEFAULT, type=str)
+def set_threshold_hsb_method(value: str):
+    QSettings().setValue(_THRESHOLD_HSB_METHOD, value)
 
-# SprayCard Processing Options
+# SprayCard Image Processing - Options
+
 _WATERSHED = 'watershed'
 WATERSHED__DEFAULT = False
+def get_watershed() -> bool:
+    return QSettings().value(_WATERSHED, defaultValue=WATERSHED__DEFAULT, type=bool)
+def set_watershed(value: bool):
+    QSettings().setValue(_WATERSHED, value)
+
 _MIN_STAIN_AREA_PX = 'min_stain_area_px'
 MIN_STAIN_AREA_PX = 4
+def get_min_stain_area_px() -> int:
+    return QSettings().value(_MIN_STAIN_AREA_PX, defaultValue=MIN_STAIN_AREA_PX, type=int)
+def set_min_stain_area_px(value: int):
+    QSettings().setValue(_MIN_STAIN_AREA_PX, value)
+
 _STAIN_APPROXIMATION_METHOD = 'stain_approximation_method'
 STAIN_APPROXIMATION_METHODS = ['None','Minimum Enclosing Circle', 'Fit Ellipse', 'Convex Hull']
 STAIN_APPROXIMATION_METHOD__DEFAULT = STAIN_APPROXIMATION_METHODS[0]
+def get_stain_approximation_method() -> str:
+    return QSettings().value(_STAIN_APPROXIMATION_METHOD, defaultValue=STAIN_APPROXIMATION_METHOD__DEFAULT, type=str)
+def set_stain_approximation_method(value: str):
+    QSettings().setValue(_STAIN_APPROXIMATION_METHOD, value)
 
 # SprayCard Processed Image Colors
+
 COLOR_STAIN_OUTLINE = (138, 43, 226) #Red-Pink
 COLOR_STAIN_FILL_ALL = (0, 0, 255) #Red
 COLOR_STAIN_FILL_EDGE = (238, 130, 238) #Violet
 COLOR_STAIN_FILL_VALID = (255, 0, 0) #Blue
 
-# SprayCard Spread Factor Methods
+# SprayCard Spread Factors
+
 _SPREAD_FACTOR_A = 'spread_factor_a'
 SPREAD_FACTOR_A__DEFAULT = 0.0000
+def get_spread_factor_a() -> float:
+    return QSettings().value(_SPREAD_FACTOR_A, defaultValue=SPREAD_FACTOR_A__DEFAULT, type=float)
+def set_spread_factor_a(value: float):
+    QSettings().setValue(_SPREAD_FACTOR_A, value)
+
 _SPREAD_FACTOR_B = 'spread_factor_b'
 SPREAD_FACTOR_B__DEFAULT = 0.0009
+def get_spread_factor_b() -> float:
+    return QSettings().value(_SPREAD_FACTOR_B, defaultValue=SPREAD_FACTOR_B__DEFAULT, type=float)
+def set_spread_factor_b(value: float):
+    QSettings().setValue(_SPREAD_FACTOR_B, value)
+
 _SPREAD_FACTOR_C = 'spread_factor_c'
 SPREAD_FACTOR_C__DEFAULT = 1.6333
-_SPREAD_METHOD = 'spread_factor_method'
+def get_spread_factor_c() -> float:
+    return QSettings().value(_SPREAD_FACTOR_C, defaultValue=SPREAD_FACTOR_C__DEFAULT, type=float)
+def set_spread_factor_c(value: float):
+    QSettings().setValue(_SPREAD_FACTOR_C, value)
+
+_SPREAD_METHOD = 'spread_factor_equation'
 SPREAD_METHOD_NONE = 'None'
 SPREAD_METHOD_DIRECT = 'Direct'
 SPREAD_METHOD_ADAPTIVE = 'Adaptive'
 SPREAD_METHODS = [SPREAD_METHOD_NONE,SPREAD_METHOD_DIRECT,SPREAD_METHOD_ADAPTIVE]
 SPREAD_METHOD__DEFAULT = SPREAD_METHODS[2]
+def get_spread_factor_equation() -> str:
+    return QSettings().value(_SPREAD_METHOD, defaultValue=SPREAD_METHOD__DEFAULT, type=str)
+def set_spread_factor_equation(value: str):
+    QSettings().setValue(_SPREAD_METHOD, value)
 
 # SprayCard Prefab Sets
+
 _CARD_DEFINED_SETS = 'card_defined_sets'
 CARD_SET_SAFE_WSP = {
     'set_name': 'SAFE Fly-In (WSP)',
@@ -183,5 +380,14 @@ CARD_SET_SAFE_WHITE = {
     'dpi': [1200] * 9
 }
 CARD_DEFINED_SETS__DEFAULT = [CARD_SET_SAFE_WSP, CARD_SET_SAFE_WHITE]
+def get_card_defined_sets() -> str:
+    return QSettings().value(_CARD_DEFINED_SETS, defaultValue=json.dumps(CARD_DEFINED_SETS__DEFAULT), type=str)
+def set_card_defined_sets(value: str):
+    QSettings().setValue(_CARD_DEFINED_SETS, value)
+
 _CARD_DEFINED_SET = 'card_defined_set'
 CARD_DEFINED_SET__DEFAULT = CARD_SET_SAFE_WHITE['set_name']
+def get_card_defined_set() -> str:
+    return QSettings().value(_CARD_DEFINED_SET, defaultValue=CARD_DEFINED_SET__DEFAULT, type=str)
+def set_card_defined_set(value: str):
+    QSettings().setValue(_CARD_DEFINED_SET, value)

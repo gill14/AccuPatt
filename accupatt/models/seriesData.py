@@ -20,7 +20,7 @@ class SeriesData:
         #String Options
         self.string_average_smooth = True
         self.string_equalize_integrals = True
-        self.string_average_center_method = cfg.CENTER_METHOD_CENTROID
+        self.string_average_center_method = cfg.get_center_method()
         self.string_simulated_adjascent_passes = 2
         #Convenience Runtime Placeholders
         self.patternAverage = Pass(name='Average')
