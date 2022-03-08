@@ -70,10 +70,11 @@ class StringPlotter:
         y = np.array(d.data_mod[d.name].values, dtype=float)
         pyqtplotwidget.plot(name='Trimmed', pen='w').setData(x, y)
         #Plot smooth data on top of raw data
-        d.string_smooth=True
-        d.modifyData()
-        y_smooth = np.array(d.data_mod[d.name].values, dtype=float)
-        pyqtplotwidget.plot(name='Trimmed, Smoothed', pen=mkPen('y', width=3)).setData(x, y_smooth)
+        if passData.string_smooth:
+            d.string_smooth=True
+            d.modifyData()
+            y_smooth = np.array(d.data_mod[d.name].values, dtype=float)
+            pyqtplotwidget.plot(name='Trimmed, Smoothed', pen=mkPen('y', width=3)).setData(x, y_smooth)
         
 
     def drawOverlay(mplWidget, series):

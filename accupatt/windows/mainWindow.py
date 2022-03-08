@@ -497,7 +497,7 @@ class MainWindow(baseclass):
         if (passIndex := self.ui.listWidgetStringPass.currentRow()) != -1:
             passData: Pass = self.seriesData.passes[passIndex]
             passData.string_smooth = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
-            self.updateStringPlots(modify=True, composites=True, simulations=True)
+            self.updateStringPlots(modify=True, individuals=True, composites=True, simulations=True)
     
     @pyqtSlot(int)
     def stringSeriesCenterChanged(self, checkstate):
