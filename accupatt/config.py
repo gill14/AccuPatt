@@ -4,7 +4,7 @@ from PyQt6.QtCore import QSettings
 
 VERSION_MAJOR = 2
 VERSION_MINOR = 0
-VERSION_RELEASE = 4
+VERSION_RELEASE = 5
 
 #Unit Labels
 UNIT_MPH = 'mph'
