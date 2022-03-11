@@ -6,7 +6,9 @@ import pandas as pd
 import accupatt.config as cfg
 from accupatt.models.appInfo import Nozzle
 from accupatt.models.passData import Pass
+from accupatt.models.passStringData import PassStringData
 from accupatt.models.seriesData import SeriesData
+from accupatt.models.seriesStringData import SeriesStringData
 from accupatt.models.sprayCard import SprayCard
 
 schema_filename = os.path.join(os.getcwd(), 'resources', 'schema.sql')
@@ -45,9 +47,9 @@ def _load_table_series(c: sqlite3.Cursor, s: SeriesData):
     s.id, i.series, i.created, i.modified, i.notes_setup, i.notes_analyst = c.fetchone()
 
 def _load_table_series_string(c: sqlite3.Cursor, s: SeriesData):
-    i = s.info
-    c.execute('''SELECT average_center, average_smooth, equalize_integrals, simulated_adjascent_passes FROM series_string WHERE series_id = ?''', (s.id,))
-    s.string_average_center_method, s.string_average_smooth, s.string_equalize_integrals, s.string_simulated_adjascent_passes = c.fetchone()
+    ss: SeriesStringData = s.string
+    c.execute('''SELECT average_center, average_center_method, average_smooth, average_smooth_window, average_smooth_order, equalize_integrals, simulated_adjascent_passes FROM series_string WHERE series_id = ?''', (s.id,))
+    ss.center, ss.center_method, ss.smooth, ss.smooth_window, ss.smooth_order, ss.equalize_integrals, ss.simulated_adjascent_passes = c.fetchone()
 
 def _load_table_flyin(c: sqlite3.Cursor, s: SeriesData):
     i = s.info
@@ -109,10 +111,11 @@ def _load_table_passes(c: sqlite3.Cursor, s: SeriesData, file: str):
         s.passes.append(p)
 
 def _load_table_pass_string(c: sqlite3.Cursor, p: Pass):
-    c.execute('''SELECT excitation_wav, emission_wav, integration_time_ms, trim_left, trim_right, trim_vertical, center, smooth, data_loc_units, excitation_data, emission_data FROM pass_string WHERE pass_id = ?''',(p.id,))
-    p.wav_ex, p.wav_em, p.integration_time_ms, p.trim_l, p.trim_r, p.trim_v, p.string_center_method, p.string_smooth, p.data_loc_units, d_ex, d_em = c.fetchone()
-    p.data_ex = pd.read_json(d_ex)
-    p.data = pd.read_json(d_em)
+    c.execute('''SELECT excitation_wav, emission_wav, integration_time_ms, trim_left, trim_right, trim_vertical, rebase, center, center_method, smooth, smooth_window, smooth_order, data_loc_units, excitation_data, emission_data FROM pass_string WHERE pass_id = ?''',(p.id,))
+    ps: PassStringData = p.string
+    ps.wav_ex, ps.wav_em, ps.integration_time_ms, ps.trim_l, ps.trim_r, ps.trim_v, ps.rebase, ps.center, ps.center_method, ps.smooth, ps.smooth_window, ps.smooth_order, ps.data_loc_units, d_ex, d_em = c.fetchone()
+    ps.data_ex = pd.read_json(d_ex)
+    ps.data = pd.read_json(d_em)
 
 def _load_table_spray_cards(c: sqlite3.Cursor, p: Pass, file: str):
     #Spray Cards Table
@@ -172,10 +175,11 @@ def _update_table_series(c: sqlite3.Cursor, s: SeriesData):
                     (s.id, i.series, i.created, i.modified, i.notes_setup, i.notes_analyst, cfg.VERSION_MAJOR, cfg.VERSION_MINOR, cfg.VERSION_RELEASE))
         
 def _update_table_series_string(c: sqlite3.Cursor, s: SeriesData):
-    c.execute('''INSERT INTO series_string (series_id, average_center, average_smooth,  equalize_integrals, simulated_adjascent_passes) VALUES (?, ?, ?, ?, ?)
+    ss: SeriesStringData = s.string
+    c.execute('''INSERT INTO series_string (series_id, average_center, average_center_method, average_smooth, average_smooth_window, average_smooth_order, equalize_integrals, simulated_adjascent_passes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(series_id) DO UPDATE SET
-                    average_center = excluded.average_center, average_smooth = excluded.average_smooth, equalize_integrals = excluded.equalize_integrals, simulated_adjascent_passes = excluded.simulated_adjascent_passes''',
-                    (s.id, s.string_average_center_method, s.string_average_smooth, s.string_equalize_integrals, s.string_simulated_adjascent_passes))
+                    average_center = excluded.average_center, average_center_method = excluded.average_center_method, average_smooth = excluded.average_smooth, average_smooth_window = excluded.average_smooth_window, average_smooth_order = excluded.average_smooth_window, equalize_integrals = excluded.equalize_integrals, simulated_adjascent_passes = excluded.simulated_adjascent_passes''',
+                    (s.id, ss.center, ss.center_method, ss.smooth, ss.smooth_window, ss.smooth_order, ss.equalize_integrals, ss.simulated_adjascent_passes))
 
 def _update_table_flyin(c: sqlite3.Cursor, s: SeriesData):
     i = s.info
@@ -253,10 +257,11 @@ def _update_table_passes(c: sqlite3.Cursor, s: SeriesData):
         c.execute(f'DELETE FROM spray_cards WHERE pass_id NOT IN {in_query}')
 
 def _update_table_pass_string(c: sqlite3.Cursor, p: Pass):
-    c.execute('''INSERT INTO pass_string (pass_id, excitation_wav, emission_wav, integration_time_ms, trim_left, trim_right, trim_vertical, center, smooth, data_loc_units, excitation_data, emission_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ps: PassStringData = p.string
+    c.execute('''INSERT INTO pass_string (pass_id, excitation_wav, emission_wav, integration_time_ms, trim_left, trim_right, trim_vertical, rebase, center, center_method, smooth, smooth_window, smooth_order, data_loc_units, excitation_data, emission_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(pass_id) DO UPDATE SET
-                    excitation_wav = excluded.excitation_wav, emission_wav = excluded.emission_wav, integration_time_ms = excluded.integration_time_ms, trim_left = excluded.trim_left, trim_right = excluded.trim_right, trim_vertical = excluded.trim_vertical, center = excluded.center, smooth = excluded.smooth, data_loc_units = excluded.data_loc_units, excitation_data = excluded.excitation_data, emission_data = excluded.emission_data''',
-                    (p.id, p.wav_ex, p.wav_em, p.integration_time_ms, p.trim_l, p.trim_r, p.trim_v, p.string_center_method, p.string_smooth, p.data_loc_units, p.data_ex.to_json(), p.data.to_json()))
+                    excitation_wav = excluded.excitation_wav, emission_wav = excluded.emission_wav, integration_time_ms = excluded.integration_time_ms, trim_left = excluded.trim_left, trim_right = excluded.trim_right, trim_vertical = excluded.trim_vertical, rebase = excluded.rebase, center = excluded.center, center_method = excluded.center_method, smooth = excluded.smooth, smooth_window = excluded.smooth_window, smooth_order = excluded.smooth_order, data_loc_units = excluded.data_loc_units, excitation_data = excluded.excitation_data, emission_data = excluded.emission_data''',
+                    (p.id, ps.wav_ex, ps.wav_em, ps.integration_time_ms, ps.trim_l, ps.trim_r, ps.trim_v, ps.rebase, ps.center, ps.center_method, ps.smooth, ps.smooth_window, ps.smooth_order, ps.data_loc_units, ps.data_ex.to_json(), ps.data.to_json()))
 
 def _update_table_spray_cards(c: sqlite3.Cursor, p: Pass):
     card: SprayCard

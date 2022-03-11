@@ -13,8 +13,11 @@ CREATE TABLE IF NOT EXISTS series (
 );
 CREATE TABLE IF NOT EXISTS series_string (
     series_id                   TEXT PRIMARY KEY REFERENCES series(id),
-    average_center              TEXT,
+    average_center              INTEGER,
+    average_center_method       TEXT,
     average_smooth              INTEGER,
+    average_smooth_window       REAL,
+    average_smooth_order        INTEGER,
     equalize_integrals          INTEGER,
     simulated_adjascent_passes  INTEGER
 );
@@ -95,8 +98,12 @@ CREATE TABLE IF NOT EXISTS pass_string (
     trim_left               INTEGER,
     trim_right              INTEGER,
     trim_vertical           REAL,
-    center                  TEXT,
+    rebase                  INTEGER,
+    center                  INTEGER,
+    center_method           TEXT,
     smooth                  INTEGER,
+    smooth_window           REAL,
+    smooth_order            INTEGER,
     data_loc_units          TEXT,
     excitation_data         TEXT,
     emission_data           TEXT

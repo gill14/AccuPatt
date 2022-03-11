@@ -28,23 +28,23 @@ class StringPlotter:
         
     def drawIndividual(pyqtplotwidget: PlotWidget, passData: Pass):
         #Setup Plotter
-        pyqtplotwidget.setLabel(axis='bottom',text='Location', units=passData.data_loc_units)
+        pyqtplotwidget.setLabel(axis='bottom',text='Location', units=passData.string.data_loc_units)
         pyqtplotwidget.setLabel(axis='left', text = 'Relative Dye Intensity')
         pyqtplotwidget.showGrid(x=True, y=True)
         # Add Legend
         pyqtplotwidget.plotItem.addLegend(offset=(5,5))
         #Check if data exists
-        if passData.data.empty: return None, None, None
+        if passData.string.data.empty: return None, None, None
         #Plot data
-        d = passData.data
-        _,min = passData.trimLR(d.copy())
-        x = np.array(passData.data['loc'].values, dtype=float)
-        y = np.array(passData.data[passData.name].values, dtype=float)
+        d = passData.string.data.copy()
+        min = passData.string.findMin(d.copy(), passData.string.trim_l, passData.string.trim_r)
+        x = np.array(passData.string.data['loc'].values, dtype=float)
+        y = np.array(passData.string.data[passData.name].values, dtype=float)
         pyqtplotwidget.plot(name='Raw', pen='w').setData(x, y)
         #Create L, R and V Trim Handles
-        trim_left = InfiniteLine(pos=x[0+passData.trim_l], movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Trim L = {value:0.2f}', labelOpts={'color': 'y','position': 0.9})
-        trim_right = InfiniteLine(pos=x[-1-passData.trim_r], movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Trim R = {value:0.2f}', labelOpts={'color': 'y','position': 0.9})
-        trim_vertical = InfiniteLine(pos=(min+passData.trim_v), angle=0, movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Floor = {value:0.2f}', labelOpts={'color': 'y','position': 0.5})
+        trim_left = InfiniteLine(pos=x[0+passData.string.trim_l], movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Trim L = {value:0.2f}', labelOpts={'color': 'y','position': 0.9})
+        trim_right = InfiniteLine(pos=x[-1-passData.string.trim_r], movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Trim R = {value:0.2f}', labelOpts={'color': 'y','position': 0.9})
+        trim_vertical = InfiniteLine(pos=(min+passData.string.trim_v), angle=0, movable=True, pen='y', hoverPen=mkPen('y',width=3), label='Floor = {value:0.2f}', labelOpts={'color': 'y','position': 0.5})
         #Add Trim Handles
         pyqtplotwidget.addItem(trim_left)
         pyqtplotwidget.addItem(trim_right)
@@ -54,39 +54,41 @@ class StringPlotter:
         
     def drawIndividualTrim(pyqtplotwidget: PlotWidget, passData: Pass):
         #Setup Plotter
-        pyqtplotwidget.setLabel(axis='bottom',text='Location', units=passData.data_loc_units)
+        pyqtplotwidget.setLabel(axis='bottom',text='Location', units=passData.string.data_loc_units)
         pyqtplotwidget.setLabel(axis='left', text = 'Relative Dye Intensity')
         pyqtplotwidget.showGrid(x=True, y=True)
         # Add Legend
         pyqtplotwidget.plotItem.addLegend(offset=(5,5))
         #Check if data exists
-        if passData.data.empty: return
-        #Plot raw data
-        d = copy.copy(passData)
-        d.string_center_method=cfg.CENTER_METHOD_NONE
-        d.string_smooth=False
-        d.modifyData()
-        x = np.array(d.data['loc'].values, dtype=float)
-        y = np.array(d.data_mod[d.name].values, dtype=float)
-        pyqtplotwidget.plot(name='Trimmed', pen='w').setData(x, y)
+        if passData.string.data.empty: return
+        #Plot trimmed/rebased data
+        ps = copy.copy(passData.string)
+        ps.smooth=False
+        ps.modifyData()
+        x = np.array(ps.data_mod['loc'].values, dtype=float)
+        y = np.array(ps.data_mod[ps.name].values, dtype=float)
+        pyqtplotwidget.plot(name='Trimmed', pen='w').setData(x[y!=0], y[y!=0])
         #Plot smooth data on top of raw data
-        if passData.string_smooth:
-            d.string_smooth=True
-            d.modifyData()
-            y_smooth = np.array(d.data_mod[d.name].values, dtype=float)
-            pyqtplotwidget.plot(name='Trimmed, Smoothed', pen=mkPen('y', width=3)).setData(x, y_smooth)
+        if passData.string.smooth:
+            ps.smooth=True
+            ps.modifyData()
+            y_smooth = np.array(ps.data_mod[ps.name].values, dtype=float)
+            y_smooth[y_smooth==0] = np.nan
+            pyqtplotwidget.plot(name='Trimmed, Smoothed', pen=mkPen('y', width=3)).setData(x[y!=0], y_smooth[y!=0])
         
 
-    def drawOverlay(mplWidget, series):
+    def drawOverlay(mplWidget, series: SeriesData):
         ax = mplWidget.canvas.ax
         ax.clear()
 
         ax.set_yticks([])
         ax.set_xlabel(f'Location ({series.info.swath_units})')
         for p in series.passes:
-            if p.data_mod.empty: continue
+            if p.string.data_mod.empty: continue
             if p.include_in_composite:
-                l, = ax.plot(p.data_mod['loc'], p.data_mod[p.name])
+                x = np.array(p.string.data_mod['loc'], dtype=float)
+                y = np.array(p.string.data_mod[p.name], dtype=float)
+                l, = ax.plot(x[y!=0], y[y!=0])
                 l.set_label(p.name)
         ax.set_ylim(ymin=0)
         h,l = ax.get_legend_handles_labels()
@@ -101,7 +103,7 @@ class StringPlotter:
         series_with_data = False
         p: Pass
         for p in series.passes:
-           if not p.data.empty and p.include_in_composite:
+           if not p.string.data.empty and p.include_in_composite:
                 series_with_data = True
                 break
         if series_with_data:
@@ -111,7 +113,7 @@ class StringPlotter:
                 int(sw)
             except:
                 return
-            pattern: pd.DataFrame = series.patternAverage.data_mod
+            pattern: pd.DataFrame = series.string.average.string.data_mod
             # Find average deposition inside swath width
             pattern_c = pattern[(pattern['loc']>=-sw/2) & (pattern['loc']<=sw/2)]
             avg = pattern_c['Average'].mean(axis='rows')
@@ -119,7 +121,9 @@ class StringPlotter:
             m = ax.fill_between([-sw/2,sw/2], 0, avg/2, facecolor='black', alpha=0.25)
             m.set_label('Effective Swath')
             # Plot average data_mod
-            l, = ax.plot(pattern['loc'], pattern['Average'], color="black", linewidth=3)
+            x = np.array(pattern['loc'], dtype=float)
+            y = np.array(pattern['Average'], dtype=float)
+            l, = ax.plot(x[y!=0], y[y!=0], color="black", linewidth=3)
             l.set_label('Average')
             ax.legend()
         # Plot beautification
@@ -138,13 +142,13 @@ class StringPlotter:
         series_with_data = False
         p: Pass
         for p in series.passes:
-           if not p.data.empty and p.include_in_composite:
+           if not p.string.data.empty and p.include_in_composite:
                 series_with_data = True
                 break
         if series_with_data:
             # Get handles from series object
             sw = series.info.swath_adjusted
-            pattern: pd.DataFrame = series.patternAverage.data_mod
+            pattern: pd.DataFrame = series.string.average.string.data_mod
             # Create an inverted copy pattern for B & F odd passes
             pattern_i: pd.DataFrame = pattern.copy()
             pattern_i['Average'] = pattern_i['Average'].values[::-1]
@@ -160,7 +164,7 @@ class StringPlotter:
                 # Sum counter to always draw on top of
                 sum: pd.DataFrame = pattern['Average'].copy()
                 # Plot adjascent passes
-                for i in range(int(series.string_simulated_adjascent_passes)):
+                for i in range(int(series.string.simulated_adjascent_passes)):
                     p = pattern
                     # When B & F and odd pass, use inverted average
                     if (ax == mplWidgetBF.canvas.ax) & ((i%2)==0):
@@ -201,7 +205,7 @@ class StringPlotter:
         series_with_data = False
         p: Pass
         for p in series.passes:
-           if not p.data.empty and p.include_in_composite:
+           if not p.string.data.empty and p.include_in_composite:
                 series_with_data = True
                 break
         sw = series.info.swath_adjusted
@@ -221,15 +225,15 @@ class StringPlotter:
             _sw = sw - (tv.rowCount()-1) + (2*row)
             item_sw.setText(f"{_sw} {swath_units}")
             # Calc and Print RT CV
-            rt_cv = StringPlotter.calcCV(series, series.string_simulated_adjascent_passes, _sw, False)
+            rt_cv = StringPlotter.calcCV(series, series.string.simulated_adjascent_passes, _sw, False)
             item_rt.setText(f"{rt_cv} %")
             # Calc and Print BF CV
-            bf_cv = StringPlotter.calcCV(series, series.string_simulated_adjascent_passes, _sw, True)
+            bf_cv = StringPlotter.calcCV(series, series.string.simulated_adjascent_passes, _sw, True)
             item_bf.setText(f"{bf_cv} %")
 
-    def calcCV(series, numAdjascentPassesPerSide, swathWidth, isBackAndForth):
+    def calcCV(series: SeriesData, numAdjascentPassesPerSide: int, swathWidth: float, isBackAndForth: bool):
         # Get handles from series object
-        pattern: pd.DataFrame = series.patternAverage.data_mod
+        pattern: pd.DataFrame = series.string.average.string.data_mod
         # Create an inverted copy pattern for B & F odd passes
         if isBackAndForth:
             pattern_i: pd.DataFrame = pattern.copy()

@@ -51,11 +51,6 @@ class MainWindow(baseclass):
         self.ui.action_open.triggered.connect(self.openFile)
         # --> Setup Options Menu
         self.ui.action_pass_manager.triggered.connect(self.openPassManager)
-        center_actions = QActionGroup(self.ui.menuString_Center_Method)
-        center_actions.addAction(self.ui.actionCentroid)
-        center_actions.addAction(self.ui.actionCenter_of_Distribution)
-        center_actions.setExclusive(True)
-        center_actions.triggered[QAction].connect(self.toggleActionCenter)
         # --> Setup Export to Excel Menu
         self.ui.action_safe_report.triggered.connect(self.exportSAFEAttendeeLog)
         self.ui.action_detailed_report.triggered.connect(self.exportAllRawData)
@@ -80,6 +75,7 @@ class MainWindow(baseclass):
         self.ui.buttonReadString.clicked.connect(self.readString)
         self.ui.checkBoxStringPassCenter.stateChanged[int].connect(self.stringPassCenterChanged)
         self.ui.checkBoxStringPassSmooth.stateChanged[int].connect(self.stringPassSmoothChanged)
+        self.ui.checkBoxStringPassRebase.stateChanged[int].connect(self.stringPassRebaseChanged)
         self.ui.checkBoxStringSeriesCenter.stateChanged[int].connect(self.stringSeriesCenterChanged)
         self.ui.checkBoxStringSeriesSmooth.stateChanged[int].connect(self.stringSeriesSmoothChanged)
         self.ui.checkBoxStringSeriesEqualize.stateChanged[int].connect(self.stringSeriesEqualizeChanged)
@@ -218,8 +214,8 @@ class MainWindow(baseclass):
         except NameError:
             self.currentDirectory = Path.home()
         if testing:
-            file = '/Users/gill14/Library/CloudStorage/OneDrive-UniversityofIllinois-Urbana/AccuProjects/AccuPatt/testing/N802BK 01.db'
-            #file = '/Users/gill14/Library/CloudStorage/OneDrive-UniversityofIllinois-Urbana/AccuProjects/AccuPatt/testing/N802BK 01.xlsx'
+            file = '/Users/gill14/Library/Mobile Documents/com~apple~CloudDocs/Projects/AccuPatt/testing/N802BK 01.db'
+            #file = '/Users/gill14/Library/Mobile Documents/com~apple~CloudDocs/Projects/AccuPatt/testing/N802BK 01.xlsx'
         else:
             file, _ = QFileDialog.getOpenFileName(parent=self, 
                                             caption='Open File',
@@ -263,13 +259,13 @@ class MainWindow(baseclass):
 
         #Update Controls
         with QSignalBlocker(self.ui.checkBoxStringSeriesCenter):
-            self.ui.checkBoxStringSeriesCenter.setChecked(self.seriesData.string_average_center_method!=cfg.CENTER_METHOD_NONE)
+            self.ui.checkBoxStringSeriesCenter.setChecked(self.seriesData.string.center)
         with QSignalBlocker(self.ui.checkBoxStringSeriesSmooth):
-            self.ui.checkBoxStringSeriesSmooth.setChecked(self.seriesData.string_average_smooth)
+            self.ui.checkBoxStringSeriesSmooth.setChecked(self.seriesData.string.smooth)
         with QSignalBlocker(self.ui.checkBoxStringSeriesEqualize):
-            self.ui.checkBoxStringSeriesEqualize.setChecked(self.seriesData.string_equalize_integrals)
+            self.ui.checkBoxStringSeriesEqualize.setChecked(self.seriesData.string.equalize_integrals)
         with QSignalBlocker(self.ui.spinBoxSimulatedSwathPasses):
-            self.ui.spinBoxSimulatedSwathPasses.setValue(self.seriesData.string_simulated_adjascent_passes)
+            self.ui.spinBoxSimulatedSwathPasses.setValue(self.seriesData.string.simulated_adjascent_passes)
         with QSignalBlocker(self.ui.radioButtonSpatialFt):
             self.ui.radioButtonSpatialFt.setChecked(self.seriesData.info.swath_units == cfg.UNIT_FT)
 
@@ -306,7 +302,7 @@ class MainWindow(baseclass):
                     item = QListWidgetItem(p.name, lwps)
                     item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
                     item.setCheckState(Qt.CheckState.Unchecked)
-                    if not p.data.empty:
+                    if not p.string.data.empty:
                         item.setFlags(Qt.ItemFlag.ItemIsEnabled|Qt.ItemFlag.ItemIsSelectable|Qt.ItemFlag.ItemIsUserCheckable)
                         if p.include_in_composite:
                             item.setCheckState(Qt.CheckState.Checked)
@@ -328,18 +324,6 @@ class MainWindow(baseclass):
                     lwpc.setCurrentItem(item)
                 if cards_index != -1:
                     lwpc.setCurrentRow(cards_index)
-
-    @pyqtSlot(QAction)
-    def toggleActionCenter(self, action):
-        if self.status_label_file.text() == 'No Current Datafile':
-            return
-        if self.seriesData.string_average_center_method != cfg.CENTER_METHOD_NONE:
-            self.seriesData.string_average_center_method = cfg.CENTER_METHOD_CENTROID if self.ui.actionCentroid.isChecked() else cfg.CENTER_METHOD_COD
-        p: Pass
-        for p in self.seriesData.passes:
-            if p.string_center_method != cfg.CENTER_METHOD_NONE:
-                p.string_center_method = cfg.CENTER_METHOD_CENTROID if self.ui.actionCentroid.isChecked() else cfg.CENTER_METHOD_COD
-        self.updateStringPlots(modify=True, individuals=True, composites=True, simulations=True)
     
     @pyqtSlot()
     def exportSAFEAttendeeLog(self):
@@ -441,13 +425,14 @@ class MainWindow(baseclass):
     
     @pyqtSlot()    
     def stringPassSelectionChanged(self):
-        if (passIndex := self.ui.listWidgetStringPass.currentRow()) != -1:
-            passData: Pass = self.seriesData.passes[passIndex]
-            self.ui.checkBoxStringPassCenter.setChecked(passData.string_center_method!=cfg.CENTER_METHOD_NONE)
-            self.ui.checkBoxStringPassSmooth.setChecked(passData.string_smooth)
+        if (passData := self.getCurrentStringPass()):
+            self.ui.checkBoxStringPassCenter.setChecked(passData.string.center)
+            self.ui.checkBoxStringPassSmooth.setChecked(passData.string.smooth)
+            self.ui.checkBoxStringPassRebase.setChecked(passData.string.rebase)
+            self.ui.checkBoxStringPassCenter.setEnabled(not passData.string.rebase)
             self.updateStringPlots(individuals=True)
             #Update the info labels on the individual pass tab
-            if passData.data.empty:
+            if passData.string.data.empty:
                 self.ui.buttonReadString.setText(f'Capture {passData.name}')
             else:
                 self.ui.buttonReadString.setText(f'Edit {passData.name}')
@@ -466,8 +451,7 @@ class MainWindow(baseclass):
 
     @pyqtSlot()
     def readString(self):
-        if (passIndex := self.ui.listWidgetStringPass.currentRow()) != -1:
-            passData: Pass = self.seriesData.passes[passIndex]
+        if (passData := self.getCurrentStringPass()):
             #Create popup and send current appInfo vals to popup
             e = ReadString(passData=passData, parent=self)
             #Connect Slot to retrieve Vals back from popup
@@ -486,33 +470,39 @@ class MainWindow(baseclass):
 
     @pyqtSlot(int)
     def stringPassCenterChanged(self, checkstate):
-        if (passIndex := self.ui.listWidgetStringPass.currentRow()) != -1:
-            passData: Pass = self.seriesData.passes[passIndex]
-            center_method = cfg.CENTER_METHOD_CENTROID if self.ui.actionCentroid.isChecked() else cfg.CENTER_METHOD_COD
-            passData.string_center_method = center_method if (Qt.CheckState(checkstate) == Qt.CheckState.Checked) else cfg.CENTER_METHOD_NONE
+        if (passData := self.getCurrentStringPass()):
+            passData.string.center = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
             self.updateStringPlots(modify=True, composites=True, simulations=True)
     
     @pyqtSlot(int) 
     def stringPassSmoothChanged(self, checkstate):
-        if (passIndex := self.ui.listWidgetStringPass.currentRow()) != -1:
-            passData: Pass = self.seriesData.passes[passIndex]
-            passData.string_smooth = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
+        if (passData := self.getCurrentStringPass()):
+            passData.string.smooth = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
+            self.updateStringPlots(modify=True, individuals=True, composites=True, simulations=True)
+    
+    @pyqtSlot(int)
+    def stringPassRebaseChanged(self, checkstate):
+        if (passData := self.getCurrentStringPass()):
+            passData.string.rebase = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
+            if passData.string.rebase:
+                passData.string.center = True
+                self.ui.checkBoxStringPassCenter.setChecked(passData.string.center)
+            self.ui.checkBoxStringPassCenter.setEnabled(not passData.string.rebase)
             self.updateStringPlots(modify=True, individuals=True, composites=True, simulations=True)
     
     @pyqtSlot(int)
     def stringSeriesCenterChanged(self, checkstate):
-        center_method = cfg.CENTER_METHOD_CENTROID if self.ui.actionCentroid.isChecked() else cfg.CENTER_METHOD_COD
-        self.seriesData.string_average_center_method = center_method if (Qt.CheckState(checkstate) == Qt.CheckState.Checked) else cfg.CENTER_METHOD_NONE
+        self.seriesData.string.center = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
         self.updateStringPlots(modify=True, composites=True, simulations=True)
         
     @pyqtSlot(int)
     def stringSeriesSmoothChanged(self, checkstate):
-        self.seriesData.string_average_smooth = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
+        self.seriesData.string.smooth = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
         self.updateStringPlots(modify=True, composites=True, simulations=True)
         
     @pyqtSlot(int)
     def stringSeriesEqualizeChanged(self, checkstate):
-        self.seriesData.string_equalize_integrals = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
+        self.seriesData.string.equalize_integrals = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
         self.updateStringPlots(modify = True, composites = True, simulations = True)
     
     @pyqtSlot(int)
@@ -543,11 +533,9 @@ class MainWindow(baseclass):
     
     def updateStringPlots(self, modify = False, individuals = False, composites = False, simulations = False):
         if modify:
-            self.seriesData.modifyPatterns()
+            self.seriesData.string.modifyPatterns()
         if individuals:
-            passData: Pass = None
-            if self.ui.listWidgetStringPass.count() > 0:
-                passData = self.seriesData.passes[self.ui.listWidgetStringPass.currentRow()]
+            passData: Pass = self.getCurrentStringPass()
             line_left, line_right, line_vertical = StringPlotter.drawIndividuals(
                     pyqtplotwidget1=self.ui.plotWidgetIndividual,
                     pyqtplotwidget2=self.ui.plotWidgetIndividualTrim,
@@ -579,27 +567,34 @@ class MainWindow(baseclass):
         self.updateTrim(floor=value.value())
         
     def updateTrim(self, trim_left = None, trim_right = None, floor = None):
-        p = self.seriesData.passes[self.ui.listWidgetStringPass.currentRow()]
+        p = self.getCurrentStringPass()
         # Convert to Indices
         if trim_left is not None:
-            trim_left = int(abs(p.data['loc'] - trim_left).idxmin())
+            trim_left = int(abs(p.string.data['loc'] - trim_left).idxmin())
         if trim_right is not None:
-            trim_right = int(p.data['loc'].shape[0] -  abs(p.data['loc'] - trim_right).idxmin())
+            trim_right = int(p.string.data['loc'].shape[0] -  abs(p.string.data['loc'] - trim_right).idxmin())
         trim_vertical = None
         if floor is not None:
             #Check if requested floor is higher than lowest point between L/R Trims
-            _,min = p.trimLR(p.data.copy())
+            min = p.string.findMin(p.string.data.copy(), p.string.trim_l, p.string.trim_r)
             if min < floor:
                 # Add the difference in vertical trim
                 trim_vertical = float(floor - min)
-        p.setTrims(trim_left, trim_right, trim_vertical)
+        p.string.setTrims(trim_left, trim_right, trim_vertical)
         #ToDo - Slow...
         self.updateStringPlots(modify=True, individuals=True, composites=True, simulations=True)
 
     @pyqtSlot(int)
     def simulatedSwathPassesChanged(self, numAdjascentPasses):
-       self.seriesData.string_simulated_adjascent_passes = numAdjascentPasses
+       self.seriesData.string.simulated_adjascent_passes = numAdjascentPasses
        self.updateStringPlots(simulations=True)
+       
+    def getCurrentStringPass(self):
+        passData: Pass = None
+        # Check if a pass is selected
+        if (passIndex := self.ui.listWidgetStringPass.currentRow()) != -1:
+            passData = self.seriesData.passes[passIndex]
+        return passData
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     Spray Card Analysis
@@ -610,7 +605,7 @@ class MainWindow(baseclass):
         with QSignalBlocker(self.ui.listWidgetSprayCard):
             # Clear Spray Card List
             self.ui.listWidgetSprayCard.clear()
-            passData, _ = self.getCurrentPassAndCard()
+            passData, _ = self.getCurrentCardPassAndCard()
             if passData:
                 # Repopulate Spray Card List
                 for card in passData.spray_cards:
@@ -629,7 +624,7 @@ class MainWindow(baseclass):
 
     @pyqtSlot()
     def sprayCardSelectionChanged(self):
-        passData, sprayCard = self.getCurrentPassAndCard()
+        passData, sprayCard = self.getCurrentCardPassAndCard()
         # Update dist input ui
         cb_dist: QComboBox = self.ui.comboBoxSprayCardDist
         with QSignalBlocker(cb_dist):
@@ -650,7 +645,7 @@ class MainWindow(baseclass):
             with QSignalBlocker(self.ui.listWidgetSprayCard):
                 item.setCheckState(Qt.CheckState.PartiallyChecked)
         # Update Card Object
-        passData, _ = self.getCurrentPassAndCard()
+        passData, _ = self.getCurrentCardPassAndCard()
         sprayCard: SprayCard = passData.spray_cards[self.ui.listWidgetSprayCard.row(item)]
         sprayCard.include_in_composite = (item.checkState() == Qt.CheckState.Checked)
         # Replot
@@ -659,7 +654,7 @@ class MainWindow(baseclass):
     @pyqtSlot()
     def editSprayCardList(self):
         #Get a handle on the currently selected pass
-        passData, _ = self.getCurrentPassAndCard()
+        passData, _ = self.getCurrentCardPassAndCard()
         #Trigger file save if filapath needed
         if self.currentFile == None or self.currentFile == '':
             if not self.saveFile():
@@ -683,7 +678,7 @@ class MainWindow(baseclass):
 
     @pyqtSlot()
     def editThreshold(self):
-        passData, sprayCard = self.getCurrentPassAndCard()
+        passData, sprayCard = self.getCurrentCardPassAndCard()
         if sprayCard and sprayCard.has_image:
             #Open the Edit SF window for currently selected card
             e = EditThreshold(sprayCard=sprayCard, passData=passData, seriesData=self.seriesData, parent=self)
@@ -694,7 +689,7 @@ class MainWindow(baseclass):
     
     @pyqtSlot()
     def editSpreadFactors(self):
-        passData, sprayCard = self.getCurrentPassAndCard()
+        passData, sprayCard = self.getCurrentCardPassAndCard()
         if sprayCard and sprayCard.has_image:
             #Open the Edit SF window for currently selected card
             e = EditSpreadFactors(sprayCard=sprayCard, passData=passData, seriesData=self.seriesData, parent=self)
@@ -709,7 +704,6 @@ class MainWindow(baseclass):
 
     @pyqtSlot(int)
     def sprayCardDistModeChanged(self, mode):
-        print('distmodechanged')
         self.updateCardPlots(distributions=True)
     
     @pyqtSlot(bool)
@@ -727,7 +721,7 @@ class MainWindow(baseclass):
 
     def updateCardPlots(self, images = False, distributions = False, spatial = False):
         passData, sprayCard, cvImg1, cvImg2 = [None] * 4
-        passData, sprayCard = self.getCurrentPassAndCard()
+        passData, sprayCard = self.getCurrentCardPassAndCard()
         if images:
             if sprayCard and sprayCard.has_image:
                 cvImg1, cvImg2 = sprayCard.images_processed()
@@ -752,7 +746,7 @@ class MainWindow(baseclass):
                                     loc_units=loc_units,
                                     colorize=self.ui.checkBoxColorByDSC.isChecked())
         
-    def getCurrentPassAndCard(self) -> tuple:
+    def getCurrentCardPassAndCard(self) -> tuple:
         passData, sprayCard = [None] * 2
          # Check if a pass is selected
         if (passIndex := self.ui.listWidgetSprayCardPass.currentRow()) != -1:

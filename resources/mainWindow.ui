@@ -33,7 +33,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab_info">
        <attribute name="title">
@@ -58,7 +58,7 @@
        <attribute name="title">
         <string>String Analysis</string>
        </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout">
+       <layout class="QHBoxLayout" name="horizontalLayout_9">
         <property name="spacing">
          <number>5</number>
         </property>
@@ -110,18 +110,6 @@
           </item>
           <item>
            <widget class="QPushButton" name="buttonReadString">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>120</width>
-              <height>16777215</height>
-             </size>
-            </property>
             <property name="text">
              <string>Capture Pass</string>
             </property>
@@ -131,121 +119,176 @@
            </widget>
           </item>
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_19">
-            <item>
-             <widget class="QLabel" name="label_31">
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>Pass Options</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="checkBoxStringPassSmooth">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>Smooth</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="checkBoxStringPassCenter">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>Align Center</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="checkBox">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="text">
-               <string>Rebase to X-Trim</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_6">
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>Series Options</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="checkBoxStringSeriesSmooth">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>Smooth Average</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="checkBoxStringSeriesCenter">
-              <property name="text">
-               <string>Align Center Average</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="checkBoxStringSeriesEqualize">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>Equalize Integrals</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-              <property name="tristate">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <spacer name="verticalSpacer_4">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_31">
+            <property name="font">
+             <font>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Pass Options</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxStringPassSmooth">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Smooth</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxStringPassCenter">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Align Center</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxStringPassRebase">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="text">
+             <string>Rebase to X-Trim</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Advanced</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_6">
+            <property name="font">
+             <font>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Series Options</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxStringSeriesSmooth">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Smooth Average</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxStringSeriesCenter">
+            <property name="text">
+             <string>Align Center Average</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxStringSeriesEqualize">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Equalize Integrals</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+            <property name="tristate">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_2">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Advanced</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_6">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -305,19 +348,6 @@
             </property>
            </widget>
           </item>
-          <item>
-           <spacer name="verticalSpacer_14">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>40</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
          </layout>
         </item>
         <item>
@@ -361,7 +391,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget_2">
           <property name="currentIndex">
-           <number>2</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tab">
            <attribute name="title">
@@ -448,6 +478,9 @@
             </property>
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_17">
+              <property name="spacing">
+               <number>5</number>
+              </property>
               <item>
                <widget class="MplWidget" name="plotWidgetRacetrack" native="true">
                 <property name="sizePolicy">
@@ -1242,7 +1275,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget_3">
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tab_5">
            <attribute name="title">
@@ -1344,6 +1377,15 @@
             <string>Droplet Distribution</string>
            </attribute>
            <layout class="QHBoxLayout" name="horizontalLayout_6">
+            <property name="leftMargin">
+             <number>10</number>
+            </property>
+            <property name="rightMargin">
+             <number>10</number>
+            </property>
+            <property name="bottomMargin">
+             <number>5</number>
+            </property>
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_11">
               <item>
@@ -1707,6 +1749,15 @@
             <string>Spatial Distribution</string>
            </attribute>
            <layout class="QHBoxLayout" name="horizontalLayout_7">
+            <property name="leftMargin">
+             <number>10</number>
+            </property>
+            <property name="rightMargin">
+             <number>10</number>
+            </property>
+            <property name="bottomMargin">
+             <number>5</number>
+            </property>
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_8">
               <item>
@@ -1922,16 +1973,8 @@
     <property name="title">
      <string>Options</string>
     </property>
-    <widget class="QMenu" name="menuString_Center_Method">
-     <property name="title">
-      <string>String Center Method</string>
-     </property>
-     <addaction name="actionCentroid"/>
-     <addaction name="actionCenter_of_Distribution"/>
-    </widget>
     <addaction name="action_pass_manager"/>
     <addaction name="separator"/>
-    <addaction name="menuString_Center_Method"/>
    </widget>
    <widget class="QMenu" name="menuReport">
     <property name="title">
@@ -2008,6 +2051,9 @@
   <action name="action_save">
    <property name="text">
     <string>Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
    </property>
   </action>
   <action name="action_open">

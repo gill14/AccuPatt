@@ -118,10 +118,9 @@ def get_unit_data_location() -> str:
 def set_unit_data_location(value: str):
     QSettings().setValue(_UNIT_DATA_LOCATION, value)
 
-# Pattern Centering
+# String Pattern Manipulation
 
 _CENTER_METHOD = 'center_method'
-CENTER_METHOD_NONE = 'None'
 CENTER_METHOD_CENTROID = 'Centroid'
 CENTER_METHOD_COD = 'Center of Distribution'
 CENTER_METHOD__DEFAULT = CENTER_METHOD_CENTROID
@@ -129,6 +128,18 @@ def get_center_method() -> str:
     return QSettings().value(_CENTER_METHOD, defaultValue=CENTER_METHOD__DEFAULT, type=str)
 def set_center_method(value: str):
     QSettings().setValue(_CENTER_METHOD, value)
+
+_STRING_SMOOTH_WINDOW = 'string_smooth_window'
+def get_string_smooth_window() -> float:
+    return QSettings().value(_STRING_SMOOTH_WINDOW, defaultValue=4, type=float)
+def set_string_smooth_window(value: float):
+    QSettings().setValue(_STRING_SMOOTH_WINDOW, value)
+    
+_STRING_SMOOTH_ORDER = 'string_smooth_order'
+def get_string_smooth_order() -> int:
+    return QSettings().value(_STRING_SMOOTH_ORDER, defaultValue=3, type=int)
+def set_string_smooth_order(value: int):
+    QSettings().setValue(_STRING_SMOOTH_ORDER, value)
 
 # String Drive
 

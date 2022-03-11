@@ -135,12 +135,10 @@ def load_from_accupatt_1_file(file) -> SeriesData:
     #Pull data from Series Data tab
     df = df_map['Series Data'].fillna('')
     df.columns = df.iloc[0]
-    #Clear any stored individual passes
-    s.passes = []
     #Search for any active passes and create entries in seriesData.passes dict
-    for column in df.columns[1:]:
-        if not str(df.at[1,column]) == '':
-            p = Pass(number = df.columns.get_loc(column))
+    for i, column in enumerate(df.columns[1:]):
+        if str(df.at[1,column]) != '':
+            p = Pass(number = i+1)
             p.set_ground_speed(df.at[1,column], units=cfg.UNIT_KPH if isMetric else cfg.UNIT_MPH)
             p.set_spray_height(df.at[2,column], units=cfg.UNIT_M if isMetric else cfg.UNIT_FT)
             p.set_pass_heading(df.at[3,column])
@@ -148,7 +146,7 @@ def load_from_accupatt_1_file(file) -> SeriesData:
             p.set_wind_speed(df.at[5,column], units=cfg.UNIT_KPH if isMetric else cfg.UNIT_MPH)
             p.set_temperature(df.at[6,'Pass 1'], units=cfg.UNIT_DEG_C if isMetric else cfg.UNIT_DEG_F)
             p.set_humidity(df.at[7,'Pass 1'])
-            p.data_loc_units = cfg.UNIT_M if isMetric else cfg.UNIT_FT
+            p.string.data_loc_units = cfg.UNIT_M if isMetric else cfg.UNIT_FT
             s.passes.append(p)
 
     #Pull data from Pattern Data tab
@@ -159,9 +157,9 @@ def load_from_accupatt_1_file(file) -> SeriesData:
     cols = ['loc', 'Pass 1', 'Pass 2', 'Pass 3', 'Pass 4', 'Pass 5', 'Pass 6']
     trims = df.iloc[0:3,[2, 4, 6, 8, 10, 12]].reset_index(drop=True).astype(float)
     trims.columns = cols[1:]
-    params = df.iloc[3:4,[1, 3, 5, 7, 9, 11]].reset_index(drop=True)
-    params.append(df.iloc[4:4,[2, 4, 6, 8, 10, 12]].reset_index(drop=True))
-    params.columns = cols[1:]
+    params1 = pd.DataFrame(df.iloc[3:4,[1, 3, 5, 7, 9, 11]].reset_index(drop=True), columns=cols[1:])
+    params2 = pd.DataFrame(df.iloc[4:4,[2, 4, 6, 8, 10, 12]].reset_index(drop=True), columns=cols[1:])
+    params = pd.concat([params1, params2])
     df_em = df.iloc[5:,[0,2,4,6,8,10,12]].reset_index(drop=True).astype(float)
     df_em.columns = cols
     df_ex = df.iloc[5:,[0,1,3,5,7,9,11]].reset_index(drop=True).astype(float)
@@ -170,13 +168,13 @@ def load_from_accupatt_1_file(file) -> SeriesData:
     #Pull patterns and place them into seriesData.passes list by name (created above)
     p: Pass
     for p in s.passes:
-        p.trim_l = 0 if np.isnan(trims.at[0,p.name]) else int(trims.at[0,p.name])
-        p.trim_r = 0 if np.isnan(trims.at[1,p.name]) else int(trims.at[1,p.name])
-        p.trim_v = 0 if np.isnan(trims.at[2,p.name]) else trims.at[2,p.name]
+        p.string.trim_l = 0 if np.isnan(trims.at[0,p.name]) else int(trims.at[0,p.name])
+        p.string.trim_r = 0 if np.isnan(trims.at[1,p.name]) else int(trims.at[1,p.name])
+        p.string.trim_v = 0 if np.isnan(trims.at[2,p.name]) else trims.at[2,p.name]
         # TODO Integration Time is params row 0, must convert to int
         # TODO Ex/Em Wavs are params rows 1, 2 respective, must strip string
-        p.data = df_em[['loc',p.name]]
-        p.data_ex = df_ex[['loc',p.name]]                
+        p.string.data = df_em[['loc',p.name]]
+        p.string.data_ex = df_ex[['loc',p.name]]                
 
     #Create SprayCards if applicable
     if 'Card Data' in df_map.keys():
