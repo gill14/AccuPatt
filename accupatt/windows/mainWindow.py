@@ -21,7 +21,6 @@ from accupatt.windows.readString import ReadString
 from accupatt.widgets import mplwidget, seriesinfowidget, singleCVImageWidget, splitcardwidget
 from PyQt6 import uic
 from PyQt6.QtCore import QSignalBlocker, Qt, pyqtSlot
-from PyQt6.QtGui import QAction, QActionGroup
 from PyQt6.QtWidgets import (QComboBox, QFileDialog, QLabel,
                              QListWidgetItem, QMenu, QMessageBox, QProgressDialog)
 

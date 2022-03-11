@@ -583,7 +583,6 @@ class AtomizationModel:
     model (LS or HS) their airspeed corresponds to.
     '''
     def _parseNozzle(self, nozzle, airspeed, angle):
-        print(f'pre: {nozzle}')
         if nozzle=='CP09':
             _nozzle = 'CP09 SS' if int(angle)==0 else 'CP09 Deflection'
             if self.ls_dict[_nozzle]['Speed'][0] <= airspeed < self.ls_dict[_nozzle]['Speed'][1]:
@@ -592,7 +591,6 @@ class AtomizationModel:
             _nozzle = 'Davidon TriSet SS' if int(angle)==0 else 'Davidon TriSet Deflection'
             if self.ls_dict[_nozzle]['Speed'][0] <= airspeed < self.ls_dict[_nozzle]['Speed'][1]:
                 nozzle = 'Davidon TriSet SS' if int(angle)==0 else 'Davidon TriSet Deflection'
-        print(f'post: {nozzle}')
         return nozzle
     
     '''
@@ -674,7 +672,6 @@ class AtomizationModel:
         return self._calc(param='DV10')
 
     def dv05(self):
-        print('start calc')
         return self._calc(param='DV50')
 
     def dv09(self):

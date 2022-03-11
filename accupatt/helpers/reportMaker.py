@@ -29,7 +29,6 @@ class ReportMaker:
         self.bound_x_left = int(0.05*self.page_width)
         self.bound_x_right = int(0.95*self.page_width)
         self.bound_width = round(0.90*self.page_width)
-        print(self.bound_width)
         self.canvas.setLineCap(2)
         self.canvas.setFont('Helvetica', 8)
         

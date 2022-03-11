@@ -72,7 +72,6 @@ class LoadCards(baseclass):
         size_og = image_reader.size()
         size_mod = size_og
         if size_og.width() * size_og.height() > 33000000:
-            print('scaling')
             scale = 4000 / size_mod.width()
             size_mod = size_mod.scaled(int(size_mod.width()*scale),int(size_mod.height()*scale),Qt.AspectRatioMode.IgnoreAspectRatio)
         image_reader.setScaledSize(size_mod)

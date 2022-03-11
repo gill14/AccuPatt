@@ -123,7 +123,6 @@ class PassTable(QAbstractTableModel):
             try:
                 int(value)
             except ValueError:
-                print('L and R Trim must be integers')
                 return False
             p.trim_l = value
             self.dataChanged.emit(index,index)
@@ -132,7 +131,6 @@ class PassTable(QAbstractTableModel):
             try:
                 int(value)
             except ValueError:
-                print('L and R Trim must be integers')
                 return False
             p.trim_r = value
             self.dataChanged.emit(index,index)
@@ -140,7 +138,6 @@ class PassTable(QAbstractTableModel):
             try:
                 float(value)
             except ValueError:
-                print('V Trim must be a number')
                 return False
             p.trim_v = value
             self.dataChanged.emit(index,index)

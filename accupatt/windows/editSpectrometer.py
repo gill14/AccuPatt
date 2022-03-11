@@ -58,7 +58,6 @@ class EditSpectrometer(baseclass):
             self.ui.labelEx.setText(f'Actual Excitation is {self.strip_num(wav_ex)}nm at pixel #{pix_ex}')
         except:
             self.ui.labelEx.setText('Invalid Target Excitation Wavelength')
-            print('Invalid Excitation Wavelength')
         #Check that wav_em is a number
         try:
             pix_em = np.abs(wav-int(self.ui.lineEditEm.text())).argmin()
@@ -66,7 +65,6 @@ class EditSpectrometer(baseclass):
             self.ui.labelEm.setText(f'Actual Emission is {self.strip_num(wav_em)}nm at pixel #{pix_em}')
         except:
             self.ui.labelEm.setText('Invalid Target Emission Wavelength')
-            print('Invalid Emission Wavelength')
 
     def strip_num(self, x) -> str:
         if type(x) is str:

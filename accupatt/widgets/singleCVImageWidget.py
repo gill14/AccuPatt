@@ -32,7 +32,6 @@ class SingleCVImageWidget(QWidget):
     def updateSprayCardView(self, cvImg1=None):
         self.clearSprayCardView()
         if not cvImg1 is None:
-            print('updating image')
             self.pixmap_item_original.setPixmap(QPixmap.fromImage(SingleCVImageWidget.qImg_from_cvImg(cvImg1)))
         #Auto-resize to fit width of card to width of graphicsView
         scene1 = self.graphicsView1.scene()
