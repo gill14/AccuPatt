@@ -1,7 +1,11 @@
+import accupatt.config as cfg
 import numpy as np
 import pandas as pd
-import accupatt.config as cfg
 from accupatt.models.passData import Pass
+from accupatt.widgets.mplwidget import MplWidget
+from PyQt6.QtWidgets import QTableWidget
+from scipy.stats import variation
+
 
 class SeriesStringData:
     
@@ -22,7 +26,6 @@ class SeriesStringData:
         
     def modifyPatterns(self):
         active_passes = [p for p in self.passes if p.include_in_composite and not p.string.data.empty]
-        print(f'MODIFYING SERIES -- ACTIVE PASSES = {active_passes}')
         if len(active_passes)==0:
             return
         # Apply individual pattern modifications
@@ -63,6 +66,168 @@ class SeriesStringData:
         average_df.interpolate(limit_area='inside')
         average_df['Average'] = average_df.fillna(0).mean(axis='columns')
         average_df = average_df.reset_index()
-        print('CREATING AVERAGE')
-        print(average_df)
         return average_df
+    
+    '''
+    Plotting Methods
+    '''
+    
+    def plotOverlay(self, mplWidget: MplWidget):
+        # Setup and clear the plotter
+        self._config_mpl_plotter(mplWidget)
+        # Filter plottable passes
+        active_passes = [p for p in self.passes if p.include_in_composite and not p.string.data.empty]
+        # Iterate over plottable passes
+        for p in active_passes:
+            # Numpy-ize dataframe columns to plot
+            x = np.array(p.string.data_mod['loc'], dtype=float)
+            y = np.array(p.string.data_mod[p.name], dtype=float)
+            # Plot non-zero data, and label the series with the pass name
+            mplWidget.canvas.ax.plot(x[y!=0], y[y!=0], label=p.name)
+        # Add a legend if applicable     
+        if len(active_passes) > 1:
+            mplWidget.canvas.ax.legend()
+        # Must set ylim after plotting
+        mplWidget.canvas.ax.set_ylim(bottom=0, auto=None)
+        # Draw the plot regardless if passes were plotted to it
+        mplWidget.canvas.draw()
+    
+    def plotAverage(self, mplWidget: MplWidget, swath_width):
+        # Setup and clear the plotter
+        self._config_mpl_plotter(mplWidget)
+        # Convenience accessor to average string modified data
+        a = self.average.string.data_mod
+        if not a.empty:
+            # Find average deposition inside swath width
+            a_c = a[(a['loc']>=-swath_width/2) & (a['loc']<=swath_width/2)]
+            a_c_mean = a_c['Average'].mean(axis='rows')
+            # Plot rectangle, w = swath width, h = (1/2)* average dep inside swath width
+            mplWidget.canvas.ax.fill_between([-swath_width/2,swath_width/2], 0, a_c_mean/2, facecolor='black', alpha=0.25, label='Effective Swath')
+            # Numpy-ize dataframe columns to plot
+            x = np.array(a['loc'], dtype=float)
+            y = np.array(a['Average'], dtype=float)
+            # Plot non-zero data, and label the series
+            mplWidget.canvas.ax.plot(x[y!=0], y[y!=0], color="black", linewidth=3, label='Average')
+            # Add a legend
+            mplWidget.canvas.ax.legend()
+        # Must set ylim after plotting
+        mplWidget.canvas.ax.set_ylim(bottom=0, auto=None)
+        # Plot it
+        mplWidget.canvas.draw()  
+    
+    def plotRacetrack(self, mplWidget: MplWidget, swath_width: float, showEntireWindow=False):
+        self._plotSimulation(mplWidget, swath_width, showEntireWindow, label='Racetrack')
+        
+    def plotBackAndForth(self, mplWidget: MplWidget, swath_width: float, showEntireWindow=False):
+        self._plotSimulation(mplWidget, swath_width, showEntireWindow, mirrorAdjascent=True, label='Back & Forth')
+    
+    def _plotSimulation(self, mplWidget: MplWidget, swath_width: float, showEntireWindow=False, mirrorAdjascent=False, label=''):
+        # Setup and clear the plotter
+        self._config_mpl_plotter(mplWidget)
+        # Convenience accessor to average string modified data
+        a = self.average.string.data_mod
+        if not a.empty:
+            # Original average data
+            x0 = np.array(a['loc'], dtype=float)
+            y = np.array(a['Average'], dtype=float)
+            # Mirrored if needed
+            ym = y[::-1]
+            # create a shifted x array for each simulated pass with labels
+            x_arrays = [x0]
+            y_arrays = [y]
+            labels = ['Center']
+            for i in range(1, self.simulated_adjascent_passes):
+                x_arrays.append(x0 - (i * swath_width))
+                y_arrays.append(ym if mirrorAdjascent and i % 2 != 0 else y)
+                labels.append(f'Left {i}')
+                x_arrays.append(x0 + (i * swath_width))
+                y_arrays.append(ym if mirrorAdjascent and i % 2 != 0 else y)
+                labels.append(f'Right {i}')
+            # Unify the x-domain
+            xfill = np.sort(np.concatenate(x_arrays))
+            # Interpolate the original y-values to the new x-domain
+            y_fills = []
+            for i in range(len(x_arrays)):
+                y_fills.append(np.interp(xfill, x_arrays[i], y_arrays[i], left=0, right=0))
+            # Plot the fills cumulatively in order of generation: C, L1, R1, L2, R2, etc.
+            y_fill_cum = np.zeros(xfill.size)
+            for i in range(len(y_fills)):
+                mplWidget.canvas.ax.fill_between(xfill, y_fill_cum, y_fill_cum + y_fills[i], label=labels[i])
+                y_fill_cum = y_fill_cum + y_fills[i]
+            # Plot a solid line on the cumulative deposition
+            mplWidget.canvas.ax.plot(xfill, y_fill_cum, color='black')
+            # Find average deposition inside swath width
+            avg = np.mean(y_fill_cum[np.where(((xfill>=-swath_width/2) & (xfill<=swath_width/2)))])
+            mplWidget.canvas.ax.plot([-swath_width/2, swath_width/2], [avg, avg], color='black', dashes=[5,5], label='Mean Dep.')
+            # Legend
+            mplWidget.canvas.ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+            # Y Label
+            mplWidget.canvas.ax.set_ylabel(label)
+            # Whether to show the whole window or one swath width
+            if not showEntireWindow:
+                mplWidget.canvas.ax.set_xlim(-swath_width/2, swath_width/2)
+            # Must set ylim after plotting
+            mplWidget.canvas.ax.set_ylim(bottom=0, auto=None)
+            # Plot it
+            mplWidget.canvas.draw()            
+            
+    def _config_mpl_plotter(self, mplWidget: MplWidget):
+        mplWidget.canvas.ax.clear()
+        mplWidget.canvas.ax.set_xlabel(f'Location ({self.swath_units})')
+        mplWidget.canvas.ax.set_yticks([])
+        
+    def plotCVTable(self, tableWidget: QTableWidget, swath_width: float):
+        # Convenience accessor to average string modified data
+        a = self.average.string.data_mod
+        # Simulate various Swath Widths, incrimenting by 2 units (-/+) from the center
+        for row in range(tableWidget.rowCount()):
+            item_sw = tableWidget.item(row, 0)
+            item_rt = tableWidget.item(row, 1)
+            item_bf = tableWidget.item(row, 2)
+            if a.empty:
+                item_sw.setText('-')
+                item_rt.setText('-')
+                item_bf.setText('-')
+                continue
+            # Print swath width
+            _sw = swath_width - (tableWidget.rowCount()-1) + (2*row)
+            item_sw.setText(f"{_sw} {self.swath_units}")
+            # Calc and Print RT CV
+            rt_cv = self.calcCV(_sw, False)
+            item_rt.setText(f"{rt_cv} %")
+            # Calc and Print BF CV
+            bf_cv = self.calcCV(_sw, True)
+            item_bf.setText(f"{bf_cv} %")
+            
+    def calcCV(self, swath_width: float, mirrorAdjascent=False):
+       # Convenience accessor to average string modified data
+        a = self.average.string.data_mod
+        # Original average data
+        x0 = np.array(a['loc'], dtype=float)
+        y = np.array(a['Average'], dtype=float)
+        # Mirrored if needed
+        ym = y[::-1]
+        # create a shifted x array for each simulated pass with labels
+        x_arrays = [x0]
+        y_arrays = [y]
+        labels = ['Center']
+        for i in range(1, self.simulated_adjascent_passes):
+            x_arrays.append(x0 - (i * swath_width))
+            y_arrays.append(ym if mirrorAdjascent and i % 2 != 0 else y)
+            labels.append(f'Left {i}')
+            x_arrays.append(x0 + (i * swath_width))
+            y_arrays.append(ym if mirrorAdjascent and i % 2 != 0 else y)
+            labels.append(f'Right {i}')
+        # Unify the x-domain
+        xfill = np.sort(np.concatenate(x_arrays))
+        # Interpolate the original y-values to the new x-domain
+        y_fills = []
+        for i in range(len(x_arrays)):
+            y_fills.append(np.interp(xfill, x_arrays[i], y_arrays[i], left=0, right=0))
+        # Plot the fills cumulatively in order of generation: C, L1, R1, L2, R2, etc.
+        y_fill_cum = np.zeros(xfill.size)
+        for i in range(len(y_fills)):
+            y_fill_cum = y_fill_cum + y_fills[i]
+        # Find average deposition inside swath width
+        y_fill_cum_center = y_fill_cum[np.where(((xfill>=-swath_width/2) & (xfill<=swath_width/2)))]
+        return round(variation(y_fill_cum_center, axis=0) * 100)

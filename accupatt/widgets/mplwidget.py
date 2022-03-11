@@ -1,4 +1,5 @@
 import matplotlib
+from matplotlib.axes import Axes
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as Canvas
 from matplotlib.figure import Figure
 from PyQt6 import QtWidgets
@@ -9,11 +10,9 @@ matplotlib.use('QT5Agg')
 # Matplotlib canvas class to create figure
 class MplCanvas(Canvas):
     def __init__(self):
-        self.fig = Figure()
-        self.ax = self.fig.add_subplot(111)
+        self.fig = Figure(layout='tight')
+        self.ax: Axes = self.fig.add_subplot(111)
         Canvas.__init__(self, self.fig)
-        #Canvas.setSizePolicy(self, QtWidgets.QSizePolicy.horizontalStretch, QtWidgets.QSizePolicy.verticalStretch)
-        #Canvas.updateGeometry(self)
 
 # Matplotlib widget
 class MplWidget(QtWidgets.QWidget):

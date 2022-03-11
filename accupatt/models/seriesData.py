@@ -22,22 +22,22 @@ class SeriesData:
     The methods below are used to convert and calculate info values as needed
     '''
     def calc_airspeed_mean(self):
-        return int(np.mean([p.calc_airspeed() for p in self.passes if p.include_in_composite()]))
+        return int(np.mean([p.calc_airspeed() for p in self.passes if p.include_in_composite]))
 
     def calc_spray_height_mean(self):
-        return float(np.mean([p.spray_height for p in self.passes if p.include_in_composite()]))
+        return float(np.mean([p.spray_height for p in self.passes if p.include_in_composite]))
 
     def calc_wind_speed_mean(self):
-        return float(np.mean([p.wind_speed for p in self.passes if p.include_in_composite()]))
+        return float(np.mean([p.wind_speed for p in self.passes if p.include_in_composite]))
 
     def calc_crosswind_mean(self):
-        return float(np.mean([p.calc_crosswind() for p in self.passes if p.include_in_composite()]))
+        return float(np.mean([p.calc_crosswind() for p in self.passes if p.include_in_composite]))
 
     def calc_temperature_mean(self):
-        return int(np.mean([p.temperature for p in self.passes if p.include_in_composite()]))
+        return int(np.mean([p.temperature for p in self.passes if p.include_in_composite]))
 
     def calc_humidity_mean(self):
-        return int(np.mean([p.humidity for p in self.passes if p.include_in_composite()]))
+        return int(np.mean([p.humidity for p in self.passes if p.include_in_composite]))
 
     #Convience Accessor so that the model is only run once  
     def calc_droplet_stats(self):

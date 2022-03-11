@@ -9,7 +9,6 @@ from accupatt.helpers.dataFileImporter import convert_xlsx_to_db, load_from_accu
 from accupatt.helpers.dBBridge import load_from_db, save_to_db
 from accupatt.helpers.exportExcel import export_all_to_excel, safe_report
 from accupatt.helpers.reportMaker import ReportMaker
-from accupatt.helpers.stringPlotter import StringPlotter
 from accupatt.models.appInfo import AppInfo
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
@@ -378,6 +377,7 @@ class MainWindow(baseclass):
                         passData=p
                     )
             reportMaker.save()
+            subprocess.call(["open", savefile])
             # Redraw plots with defaults
             self.update_all_ui()
     
@@ -535,53 +535,37 @@ class MainWindow(baseclass):
         if modify:
             self.seriesData.string.modifyPatterns()
         if individuals:
-            passData: Pass = self.getCurrentStringPass()
-            line_left, line_right, line_vertical = StringPlotter.drawIndividuals(
-                    pyqtplotwidget1=self.ui.plotWidgetIndividual,
-                    pyqtplotwidget2=self.ui.plotWidgetIndividualTrim,
-                    passData=passData
-                )
-            if line_left is not None and line_right is not None and line_vertical is not None:
-                line_left.sigPositionChangeFinished.connect(self.updateTrimL)
-                line_right.sigPositionChangeFinished.connect(self.updateTrimR)
-                line_vertical.sigPositionChangeFinished.connect(self.updateTrimFloor)
+            if (passData := self.getCurrentStringPass()) != None:
+                # Plot Individual
+                line_left, line_right, line_vertical = passData.string.plotIndividual(self.ui.plotWidgetIndividual)
+                # Connect Individual trim handle signals to slots for updating
+                if line_left is not None and line_right is not None and line_vertical is not None:
+                    line_left.sigPositionChangeFinished.connect(self._updateTrimL)
+                    line_right.sigPositionChangeFinished.connect(self._updateTrimR)
+                    line_vertical.sigPositionChangeFinished.connect(self._updateTrimFloor)
+                # Plot Individual Trim
+                passData.string.plotIndividualTrim(self.ui.plotWidgetIndividualTrim)
         if composites:
-            StringPlotter.drawOverlay(mplWidget=self.ui.plotWidgetOverlay, series=self.seriesData)
-            StringPlotter.drawAverage(mplWidget=self.ui.plotWidgetAverage, series=self.seriesData)
+            self.seriesData.string.plotOverlay(self.ui.plotWidgetOverlay)
+            self.seriesData.string.plotAverage(self.ui.plotWidgetAverage, self.seriesData.info.swath_adjusted)
         if simulations:
-            StringPlotter.drawSimulations(mplWidgetRT=self.ui.plotWidgetRacetrack, 
-                                          mplWidgetBF=self.ui.plotWidgetBackAndForth, 
-                                          series=self.seriesData)
-            StringPlotter.showCVTable(tableView=self.ui.tableWidgetCV, series=self.seriesData)
+            self.seriesData.string.plotRacetrack(self.ui.plotWidgetRacetrack, self.seriesData.info.swath_adjusted, showEntireWindow=False)
+            self.seriesData.string.plotBackAndForth(self.ui.plotWidgetBackAndForth, self.seriesData.info.swath_adjusted, showEntireWindow=False)
+            self.seriesData.string.plotCVTable(self.ui.tableWidgetCV, self.seriesData.info.swath_adjusted)
 
     @pyqtSlot(object)
-    def updateTrimL(self, value):
-        self.updateTrim(trim_left=value.value())
+    def _updateTrimL(self, object):
+        self.getCurrentStringPass().string.user_set_trim_left(object.value())
+        self.updateStringPlots(modify=True, individuals=True, composites=True, simulations=True)
     
     @pyqtSlot(object)
-    def updateTrimR(self, value):
-        self.updateTrim(trim_right=value.value())
+    def _updateTrimR(self, object):
+        self.getCurrentStringPass().string.user_set_trim_right(object.value())
+        self.updateStringPlots(modify=True, individuals=True, composites=True, simulations=True)
        
     @pyqtSlot(object) 
-    def updateTrimFloor(self, value):
-        self.updateTrim(floor=value.value())
-        
-    def updateTrim(self, trim_left = None, trim_right = None, floor = None):
-        p = self.getCurrentStringPass()
-        # Convert to Indices
-        if trim_left is not None:
-            trim_left = int(abs(p.string.data['loc'] - trim_left).idxmin())
-        if trim_right is not None:
-            trim_right = int(p.string.data['loc'].shape[0] -  abs(p.string.data['loc'] - trim_right).idxmin())
-        trim_vertical = None
-        if floor is not None:
-            #Check if requested floor is higher than lowest point between L/R Trims
-            min = p.string.findMin(p.string.data.copy(), p.string.trim_l, p.string.trim_r)
-            if min < floor:
-                # Add the difference in vertical trim
-                trim_vertical = float(floor - min)
-        p.string.setTrims(trim_left, trim_right, trim_vertical)
-        #ToDo - Slow...
+    def _updateTrimFloor(self, object):
+        self.getCurrentStringPass().string.user_set_trim_floor(object.value())
         self.updateStringPlots(modify=True, individuals=True, composites=True, simulations=True)
 
     @pyqtSlot(int)
