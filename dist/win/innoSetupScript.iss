@@ -27,9 +27,9 @@ DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
-OutputDir=Z:\OneDrive-UniversityofIllinois-Urbana\AccuProjects\AccuPatt\dist\win
+OutputDir=Z:\Projects\AccuPatt\dist\win
 OutputBaseFilename=Install AccuPatt 2
-SetupIconFile=Z:\gill14 On My Mac\OneDrive - University of Illinois - Urbana\AccuProjects\AccuPatt\resources\illini.ico
+SetupIconFile=Z:\Projects\AccuPatt\resources\illini.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -41,8 +41,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "Z:\gill14 On My Mac\OneDrive - University of Illinois - Urbana\AccuProjects\AccuPatt\dist\win\dist\AccuPatt\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\OneDrive-UniversityofIllinois-Urbana\AccuProjects\AccuPatt\dist\win\dist\AccuPatt\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "Z:\Projects\AccuPatt\dist\win\dist\AccuPatt\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "Z:\Projects\AccuPatt\dist\win\dist\AccuPatt\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]

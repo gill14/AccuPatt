@@ -14,7 +14,7 @@ rm "$SCRIPTPATH"/*.dmg
 hdiutil create -volname AccuPatt -srcfolder "$SCRIPTPATH"/dist -ov -format UDZO "$SCRIPTPATH"/AccuPatt.dmg
 
 #Remove app file
-rm "$SCRIPTPATH"/dist/AccuPatt.app
+rm -r "$SCRIPTPATH"/dist/AccuPatt.app
 
 #Remove build dir
 rm -r "$SCRIPTPATH"/build
