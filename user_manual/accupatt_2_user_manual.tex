@@ -438,9 +438,12 @@
         \item \textbf{notes-analyst:} text, will not print on reports
         \item \textbf{string-settings:} 
         \begin{itemize}
-            \item \textbf{average-smooth:} true/false, apply smoothing filter to average pattern
             \item \textbf{equalize-integrals:} true/false, scale all passes to largest integrated area
-            \item \textbf{average-center-method:} text, option=[none, centroid, center-of-distribution]
+            \item \textbf{average-center:} true/false, apply average-center-method
+            \item \textbf{average-center-method:} text, option=[centroid, center-of-distribution]
+            \item \textbf{average-smooth:} true/false, apply smoothing filter to average pattern
+            \item \textbf{average-smooth-window} float, x-domain window over which to apply smoothing
+            \item \textbf{average-smooth-order} integer, polynomial order for smoothing filter
             \item \textbf{number-simulated-adjascent-passes:} integer, per-side basis
         \end{itemize}
         \item \textbf{passes:} [list]
@@ -469,8 +472,12 @@
                 \item \textbf{trim-left:} integer, number of sample points to set to floor value
                 \item \textbf{trim-right:} integer, number of sample points to set to floor value
                 \item \textbf{trim-vertical:} float, value to subtract from all points in addition to floor value
+                \item \textbf{rebase:} true/false, use trim-l/trim-r to scale x-domain 
+                \item \textbf{center:} true/false, apply average-center-method
                 \item \textbf{center-method:} text, option=[none, centroid, center-of-distribution]
                 \item \textbf{smooth:} true/false, apply smoothing filter to pass
+                \item \textbf{smooth-window} float, x-domain window over which to apply smoothing
+                \item \textbf{smooth-order} integer, polynomial order for smoothing filter
             \end{itemize}
             \item \textbf{spray-cards:} [list]
             \begin{itemize}
@@ -502,6 +509,18 @@
 
     \section{Changelog}
     \begin{itemize}
+        \item \textbf{2.0.5 - 11 Mar 2022}
+        \begin{itemize}
+            \item (fix) Replaced implicit dtypes on persistent settings with explicit dtypes for Windows
+            \item (fix) Multiple plot and table reformats 
+            \item (feature) String pattern x-mods now apply directly rather than using nearest point shift
+            \item (feature) String pattern rebase (allows adjustment of x-domain post-processing)
+            \item (feature) String pattern centering boolean and center-method replaces standalone method
+            \item (feature) String pattern smoothing window/order moved to persistent settings
+            \item (feature) String pattern smoothing window now x-domain-based rather than point-based 
+            \item (feature) String pattern smooth/rebase now affects individual trim plot
+            \item (feature) Auto-open report PDF upon generation
+        \end{itemize}
         \item \textbf{2.0.4 - 25 Feb 2022}
         \begin{itemize}
             \item (fix) String Simulation mean deposition line
