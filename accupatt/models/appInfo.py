@@ -1,3 +1,4 @@
+import accupatt.config as cfg
 from dataclasses import dataclass, field
 
 @dataclass
@@ -161,6 +162,24 @@ class AppInfo:
         else:
             return f'{round(float(x), 2):.{precision}f}'
 
+    def get_pressure(self, units: str = 'psi'):
+        p = self.pressure
+        u = self.pressure_units
+        if u == units:
+            return p
+        # Convert to PSI
+        if u == cfg.UNIT_BAR:
+            p = p * cfg.PSI_PER_BAR
+        elif u == cfg.UNIT_KPA:
+            p = p / cfg.KPA_PER_PSI
+        # Convert to requested unit
+        if units == cfg.UNIT_BAR:
+            p = p / cfg.PSI_PER_BAR
+        elif units == cfg.UNIT_KPA:
+            p = p * cfg.KPA_PER_PSI
+        # Return pressure in requested units (defaults to psi)
+        return p
+    
     def set_wingspan(self, string) -> bool:
         try:
             float(string)

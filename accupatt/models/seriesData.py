@@ -1,5 +1,5 @@
 import uuid
-
+import accupatt.config as cfg
 import numpy as np
 from accupatt.helpers.atomizationModel import AtomizationModelMulti
 from accupatt.models.appInfo import AppInfo
@@ -21,8 +21,8 @@ class SeriesData:
     '''
     The methods below are used to convert and calculate info values as needed
     '''
-    def calc_airspeed_mean(self):
-        return int(np.mean([p.calc_airspeed() for p in self.passes if p.include_in_composite]))
+    def calc_airspeed_mean(self, units: str = 'mph'):
+        return int(np.mean([p.calc_airspeed(units) for p in self.passes if p.include_in_composite]))
 
     def calc_spray_height_mean(self):
         return float(np.mean([p.spray_height for p in self.passes if p.include_in_composite]))
@@ -46,40 +46,33 @@ class SeriesData:
 
     #Individual accessors, model re-runs each time.
     def calc_dv01(self):
-        model = self._populate_model()
-        return model.dv01()
+        return self._populate_model().dv01()
 
     def calc_dv05(self):
-        model = self._populate_model()
-        return model.dv05()
+        return self._populate_model().dv05()
 
     def calc_dv09(self):
-        model = self._populate_model()
-        return model.dv09()
+        return self._populate_model().dv09()
 
     def calc_p_lt_100(self):
-        model = self._populate_model()
-        return model.p_lt_100()
+        return self._populate_model().p_lt_100()
 
     def calc_p_lt_200(self):
-        model = self._populate_model()
-        return model.p_lt_200()
+        return self._populate_model().p_lt_200()
 
     def calc_dsc(self):
-        model = self._populate_model()
-        return model.dsc()
+        return self._populate_model().dsc()
 
     def calc_rs(self):
-        model = self._populate_model()
-        return model.rs()
+        return self._populate_model().rs()
 
     def _populate_model(self):
         model = AtomizationModelMulti()
         for n in self.info.nozzles:
             model.addNozzleSet(name=n.type,
                                orifice=n.size,
-                               airspeed=self.calc_airspeed_mean(),
-                               pressure=self.info.pressure,
+                               airspeed=self.calc_airspeed_mean(units=cfg.UNIT_MPH),
+                               pressure=self.info.get_pressure(units=cfg.UNIT_PSI),
                                angle=n.deflection,
                                quantity=n.quantity)
         return model
