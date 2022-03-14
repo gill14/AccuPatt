@@ -30,10 +30,10 @@ class ReadString(baseclass):
         self.passInfoWidget.fill_from_pass(passData)
 
         # Use values from Pass Object
-        self.wav_ex = self.passData.wav_ex
-        self.wav_em = self.passData.wav_em
-        self.integration_time_ms = self.passData.integration_time_ms
-        self.string_length_units = self.passData.data_loc_units
+        self.wav_ex = self.passData.string.wav_ex
+        self.wav_em = self.passData.string.wav_em
+        self.integration_time_ms = self.passData.string.integration_time_ms
+        self.string_length_units = self.passData.string.data_loc_units
         
         # Load other values from persistent config
         self.load_defaults()
@@ -41,6 +41,7 @@ class ReadString(baseclass):
         #Setup Spectrometer and String Drive
         self.spec = None
         self.spec_connected = False
+        self.ser = None
         self.ser_connected = False
         self.setupSpectrometer()
         self.setupStringDrive()
@@ -71,10 +72,10 @@ class ReadString(baseclass):
         self.clear(showPopup=False)
 
         #Load in pattern data from pass object if available
-        if not passData.data.empty:
-            self.x = np.array(passData.data['loc'].values, dtype=float)
-            self.y = np.array(passData.data[passData.name].values, dtype=float)
-            self.y_ex = np.array(passData.data_ex[passData.name].values, dtype=float)
+        if not passData.string.data.empty:
+            self.x = np.array(passData.string.data['loc'].values, dtype=float)
+            self.y = np.array(passData.string.data[passData.name].values, dtype=float)
+            self.y_ex = np.array(passData.string.data_ex[passData.name].values, dtype=float)
             self.set_plotdata(name='emission', data_x=self.x, data_y=self.y)
             #self.set_plotdata(name='excitation', data_x=self.x, data_y=self.y_ex)
             self.set_plotdata(name='emission', data_x=self.x, data_y=self.y)
@@ -189,12 +190,12 @@ class ReadString(baseclass):
             QMessageBox.warning(self, 'Invalid Data', '\n'.join(excepts))
             return
         #Pattern
-        p.wav_ex = self.wav_ex
-        p.wav_em = self.wav_em
-        p.integration_time_ms = self.integration_time_ms
-        p.data_loc_units = self.string_length_units
+        p.string.wav_ex = self.wav_ex
+        p.string.wav_em = self.wav_em
+        p.string.integration_time_ms = self.integration_time_ms
+        p.string.data_loc_units = self.string_length_units
         if len(self.x) > 0:
-            p.setData(self.x, self.y, self.y_ex)
+            p.string.setData(self.x, self.y, self.y_ex)
         # If all checks out, notify requestor and close
         super().accept()
 
@@ -221,7 +222,7 @@ class ReadString(baseclass):
     #Open String Drive Editor
     @pyqtSlot()
     def editStringDrive(self):
-        e = EditStringDrive(string_length_units=self.string_length_units, parent=self)
+        e = EditStringDrive(ser=self.ser, string_length_units=self.string_length_units, parent=self)
         e.string_length_units_changed.connect(self.string_length_units_changed)
         e.accepted.connect(self.reSetupStringDrive)
         e.exec()

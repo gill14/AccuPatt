@@ -1,4 +1,5 @@
 import os
+import serial
 
 import accupatt.config as cfg
 from accupatt.windows.calculateStringSpeed import CalculateStringSpeed
@@ -16,10 +17,12 @@ class EditStringDrive(baseclass):
 
     string_length_units_changed = pyqtSignal(str)
 
-    def __init__(self, string_length_units, parent=None):
+    def __init__(self, ser: serial.Serial, string_length_units, parent=None):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
+        
+        self.ser = ser
 
         #Hook up serial port combobox signal
         self.ui.comboBoxSerialPort.currentTextChanged[str].connect(self.on_sp_selected)
@@ -54,12 +57,22 @@ class EditStringDrive(baseclass):
 
     def on_sp_selected(self):
         self.ui.buttonCalculateStringSpeed.setEnabled(False)
+        if self.ser is not None:
+            self.ser.close()
         for port in list_ports.comports():
             if port.device == self.ui.comboBoxSerialPort.currentText():
                 self.ui.labelSerialPort1.setText(f'Manufacturer: {port.manufacturer}, VID: {port.vid}')
                 self.ui.labelSerialPort2.setText(f'Product: {port.product}, PID: {port.pid}')
                 self.ui.labelSerialPort3.setText(f'Location: {port.location}')
-                self.ui.buttonCalculateStringSpeed.setEnabled(True)
+                # Open the port
+                if self.ser:
+                    self.ser.close()
+                    self.ser.setPort(port.device)
+                    self.ser.open()
+                else:
+                    self.ser = serial.Serial(port=port.device, timeout=1)
+                if self.ser.is_open:
+                    self.ui.buttonCalculateStringSpeed.setEnabled(True)
 
     def on_fl_units_selected(self):
         self.ui.labelSpeedUnits.setText(f'{self.ui.comboBoxFlightlineLengthUnits.currentText()}/sec')
@@ -71,7 +84,7 @@ class EditStringDrive(baseclass):
 
     @pyqtSlot()
     def click_calc_speed(self):
-        e = CalculateStringSpeed(port=self.ui.comboBoxSerialPort.currentText(),
+        e = CalculateStringSpeed(ser=self.ser,
                                  length=self.ui.lineEditFlightlineLength.text(),
                                  length_units=self.ui.comboBoxFlightlineLengthUnits.currentText(),
                                  parent=self)
@@ -89,6 +102,9 @@ class EditStringDrive(baseclass):
 
     def accept(self):
         excepts = []
+        # Disconnect serial
+        if self.ser:
+            self.ser.close()
         # Save Serial Port
         cfg.set_string_drive_port(self.ui.comboBoxSerialPort.currentText())
         # Save String Length

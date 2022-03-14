@@ -11,7 +11,7 @@ class CalculateStringSpeed(baseclass):
 
     speed_accepted = pyqtSignal(str,str)
 
-    def __init__(self, port, length, length_units, parent=None):
+    def __init__(self, ser: serial.Serial, length, length_units, parent=None):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -26,7 +26,9 @@ class CalculateStringSpeed(baseclass):
         self.ui.button.pressed.connect(self.button_pressed)
 
         # Serial Port
-        self.serialPort = serial.Serial(port=port,baudrate=9600,timeout=1)
+        self.serialPort = ser
+        if not self.serialPort.is_open:
+            self.serialPort.open()
         # State to know whether winding or not
         self.state = False
         
