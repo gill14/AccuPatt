@@ -6,6 +6,10 @@ VERSION_MAJOR = 2
 VERSION_MINOR = 0
 VERSION_RELEASE = 6
 
+# For clearning all QSettings
+def clear_all_settings():
+    QSettings().clear()
+
 #Unit Labels
 UNIT_MPH = 'mph'
 UNIT_KPH = 'kph'

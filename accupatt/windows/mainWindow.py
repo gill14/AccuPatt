@@ -50,6 +50,7 @@ class MainWindow(baseclass):
         self.ui.action_open.triggered.connect(self.openFile)
         # --> Setup Options Menu
         self.ui.action_pass_manager.triggered.connect(self.openPassManager)
+        self.ui.action_reset_defaults.triggered.connect(self.resetDefaults)
         # --> Setup Export to Excel Menu
         self.ui.action_safe_report.triggered.connect(self.exportSAFEAttendeeLog)
         self.ui.action_detailed_report.triggered.connect(self.exportAllRawData)
@@ -268,6 +269,12 @@ class MainWindow(baseclass):
             self.ui.checkBoxStringSeriesEqualize.setChecked(self.seriesData.string.equalize_integrals)
         with QSignalBlocker(self.ui.spinBoxSimulatedSwathPasses):
             self.ui.spinBoxSimulatedSwathPasses.setValue(self.seriesData.string.simulated_adjascent_passes)
+        if cfg.get_string_simulation_view_window() == cfg.STRING_SIMULATION_VIEW_WINDOW_ONE:
+            with QSignalBlocker(self.ui.radioButtonSimulationOne):
+                self.ui.radioButtonSimulationOne.setChecked(True)
+        else:
+            with QSignalBlocker(self.ui.radioButtonSimulationAll):
+                self.ui.radioButtonSimulationAll.setChecked(True)
         with QSignalBlocker(self.ui.radioButtonSimulationOne):
             self.ui.radioButtonSimulationOne.setChecked(cfg.get_string_simulation_view_window() == cfg.STRING_SIMULATION_VIEW_WINDOW_ONE)
         with QSignalBlocker(self.ui.radioButtonSpatialFt):
@@ -328,6 +335,10 @@ class MainWindow(baseclass):
                     lwpc.setCurrentItem(item)
                 if cards_index != -1:
                     lwpc.setCurrentRow(cards_index)
+    
+    @pyqtSlot()
+    def resetDefaults(self):
+        cfg.clear_all_settings()
     
     @pyqtSlot()
     def exportSAFEAttendeeLog(self):
@@ -611,6 +622,7 @@ class MainWindow(baseclass):
        
     @pyqtSlot(bool)
     def simulationViewWindowChanged(self, viewOneIsChecked):
+        cfg.set_String_simulation_view_window(cfg.STRING_SIMULATION_VIEW_WINDOW_ONE if viewOneIsChecked else cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL)
         self.updateStringPlots(simulations=True)
        
     def getCurrentStringPass(self):
