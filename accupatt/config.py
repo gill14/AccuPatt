@@ -141,6 +141,14 @@ def get_string_smooth_order() -> int:
 def set_string_smooth_order(value: int):
     QSettings().setValue(_STRING_SMOOTH_ORDER, value)
 
+_STRING_SIMULATION_VIEW_WINDOW = 'string_simulation_view_window'
+STRING_SIMULATION_VIEW_WINDOW_ONE = 'one'
+STRING_SIMULATINO_VIEW_WINDOW_ALL = 'all'
+def get_string_simulation_view_window() -> str:
+    return QSettings().value(_STRING_SIMULATION_VIEW_WINDOW, defaultValue=STRING_SIMULATION_VIEW_WINDOW_ONE, type=str)
+def set_String_simulation_view_window(value=str):
+    QSettings().setValue(_STRING_SIMULATION_VIEW_WINDOW, value)
+
 # String Drive
 
 STRING_DRIVE_FWD_START = 'AD+\r'
@@ -194,7 +202,6 @@ def get_spec_int_time_millis() -> int:
     return QSettings().value(_SPEC_INT_TIME_MS, defaultValue=SPEC_INT_TIME_MS__DEFAULT, type=int)
 def set_spec_int_time_millis(value: int):
     QSettings().setValue(_SPEC_INT_TIME_MS, value)
-
 
 # SprayCard Image Loading Operations / Attributes
 

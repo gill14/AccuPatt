@@ -25,6 +25,7 @@ from PyQt6.QtWidgets import (QComboBox, QFileDialog, QLabel,
                              QListWidgetItem, QMenu, QMessageBox, QProgressDialog)
 
 from accupatt.windows.reportManager import ReportManager
+from accupatt.windows.stringAdvancedOptions import StringAdvancedOptions
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'mainWindow.ui'))
 Ui_Form_About, baseclass_about = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'about.ui'))
@@ -74,15 +75,18 @@ class MainWindow(baseclass):
         self.ui.checkBoxStringPassCenter.stateChanged[int].connect(self.stringPassCenterChanged)
         self.ui.checkBoxStringPassSmooth.stateChanged[int].connect(self.stringPassSmoothChanged)
         self.ui.checkBoxStringPassRebase.stateChanged[int].connect(self.stringPassRebaseChanged)
+        self.ui.stringAdvancedOptionsPass.clicked.connect(self.stringAdvancedOptionsPass)
         self.ui.checkBoxStringSeriesCenter.stateChanged[int].connect(self.stringSeriesCenterChanged)
         self.ui.checkBoxStringSeriesSmooth.stateChanged[int].connect(self.stringSeriesSmoothChanged)
         self.ui.checkBoxStringSeriesEqualize.stateChanged[int].connect(self.stringSeriesEqualizeChanged)
+        self.ui.stringAdvancedOptionsSeries.clicked.connect(self.stringAdvancedOptionsSeries)
         self.ui.spinBoxSwathAdjusted.valueChanged[int].connect(self.swathAdjustedChanged)
         self.ui.horizontalSliderSimulatedSwath.valueChanged[int].connect(self.swathAdjustedChanged)
         # --> | --> Setup Individual Passes Tab
         # --> | --> Setup Composite Tab
         # --> | --> Setup Simulations Tab
         self.ui.spinBoxSimulatedSwathPasses.valueChanged[int].connect(self.simulatedSwathPassesChanged)
+        self.ui.radioButtonSimulationOne.toggled[bool].connect(self.simulationViewWindowChanged)
 
         # --> Setup Card Analysis Tab
         self.ui.listWidgetSprayCardPass.itemSelectionChanged.connect(self.sprayCardPassSelectionChanged)
@@ -264,6 +268,8 @@ class MainWindow(baseclass):
             self.ui.checkBoxStringSeriesEqualize.setChecked(self.seriesData.string.equalize_integrals)
         with QSignalBlocker(self.ui.spinBoxSimulatedSwathPasses):
             self.ui.spinBoxSimulatedSwathPasses.setValue(self.seriesData.string.simulated_adjascent_passes)
+        with QSignalBlocker(self.ui.radioButtonSimulationOne):
+            self.ui.radioButtonSimulationOne.setChecked(cfg.get_string_simulation_view_window() == cfg.STRING_SIMULATION_VIEW_WINDOW_ONE)
         with QSignalBlocker(self.ui.radioButtonSpatialFt):
             self.ui.radioButtonSpatialFt.setChecked(self.seriesData.info.swath_units == cfg.UNIT_FT)
 
@@ -504,6 +510,31 @@ class MainWindow(baseclass):
         self.seriesData.string.equalize_integrals = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
         self.updateStringPlots(modify = True, composites = True, simulations = True)
     
+    @pyqtSlot()
+    def stringAdvancedOptionsPass(self):
+        if (passData := self.getCurrentStringPass()):
+            e = StringAdvancedOptions(
+                passData=passData,
+                parent=self
+            )
+            e.accepted.connect(self.stringAdvancedOptionsPassUpdated)
+            e.exec()
+    
+    def stringAdvancedOptionsPassUpdated(self):
+        self.updateStringPlots(modify=True, individuals=False, composites=True, simulations=True)
+    
+    @pyqtSlot()
+    def stringAdvancedOptionsSeries(self):
+        e = StringAdvancedOptions(
+            seriesData=self.seriesData,
+            parent=self
+        )
+        e.accepted.connect(self.stringAdvancedOptionsSeriesUpdated)
+        e.exec()
+        
+    def stringAdvancedOptionsSeriesUpdated(self):
+        self.updateStringPlots(modify=True, composites=True, simulations=True)
+    
     @pyqtSlot(int)
     def swathAdjustedChanged(self, swath):
         self.seriesData.info.swath_adjusted = swath
@@ -548,8 +579,14 @@ class MainWindow(baseclass):
             self.seriesData.string.plotOverlay(self.ui.plotWidgetOverlay)
             self.seriesData.string.plotAverage(self.ui.plotWidgetAverage, self.seriesData.info.swath_adjusted)
         if simulations:
-            self.seriesData.string.plotRacetrack(self.ui.plotWidgetRacetrack, self.seriesData.info.swath_adjusted, showEntireWindow=False)
-            self.seriesData.string.plotBackAndForth(self.ui.plotWidgetBackAndForth, self.seriesData.info.swath_adjusted, showEntireWindow=False)
+            self.seriesData.string.plotRacetrack(
+                mplWidget=self.ui.plotWidgetRacetrack, 
+                swath_width=self.seriesData.info.swath_adjusted, 
+                showEntireWindow=self.ui.radioButtonSimulationAll.isChecked())
+            self.seriesData.string.plotBackAndForth(
+                mplWidget = self.ui.plotWidgetBackAndForth, 
+                swath_width = self.seriesData.info.swath_adjusted, 
+                showEntireWindow=self.ui.radioButtonSimulationAll.isChecked())
             self.seriesData.string.plotCVTable(self.ui.tableWidgetCV, self.seriesData.info.swath_adjusted)
 
     @pyqtSlot(object)
@@ -571,6 +608,10 @@ class MainWindow(baseclass):
     def simulatedSwathPassesChanged(self, numAdjascentPasses):
        self.seriesData.string.simulated_adjascent_passes = numAdjascentPasses
        self.updateStringPlots(simulations=True)
+       
+    @pyqtSlot(bool)
+    def simulationViewWindowChanged(self, viewOneIsChecked):
+        self.updateStringPlots(simulations=True)
        
     def getCurrentStringPass(self):
         passData: Pass = None
