@@ -136,7 +136,7 @@ class SeriesStringData:
             x_arrays = [x0]
             y_arrays = [y]
             labels = ['Center']
-            for i in range(1, self.simulated_adjascent_passes):
+            for i in range(1, self.simulated_adjascent_passes+1):
                 x_arrays.append(x0 - (i * swath_width))
                 y_arrays.append(ym if mirrorAdjascent and i % 2 != 0 else y)
                 labels.append(f'Left {i}')
@@ -211,7 +211,7 @@ class SeriesStringData:
         x_arrays = [x0]
         y_arrays = [y]
         labels = ['Center']
-        for i in range(1, self.simulated_adjascent_passes):
+        for i in range(1, self.simulated_adjascent_passes+1):
             x_arrays.append(x0 - (i * swath_width))
             y_arrays.append(ym if mirrorAdjascent and i % 2 != 0 else y)
             labels.append(f'Left {i}')
