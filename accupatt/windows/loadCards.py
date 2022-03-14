@@ -33,7 +33,7 @@ class LoadCards(baseclass):
         
         # Populate controls with static options, selections from persistent config
         self.ui.comboBoxDPI.addItems([str(dpi) for dpi in cfg.IMAGE_DPI_OPTIONS])
-        self.ui.comboBoxDPI.setCurrentIndex(cfg.IMAGE_DPI_OPTIONS.index(self.dpi))
+        self.ui.comboBoxDPI.setCurrentText(str(self.dpi))
         self.ui.comboBoxOrientation.addItems(cfg.ROI_ACQUISITION_ORIENTATIONS)
         self.ui.comboBoxOrientation.setCurrentIndex(cfg.ROI_ACQUISITION_ORIENTATIONS.index(self.orientation))
         self.ui.comboBoxOrder.addItems(cfg.ROI_ACQUISITION_ORDERS)
@@ -48,7 +48,7 @@ class LoadCards(baseclass):
         self.card_list = card_list
         
         # Slots for controls
-        self.ui.comboBoxDPI.currentIndexChanged[int].connect(self.dpi_changed)
+        self.ui.comboBoxDPI.currentTextChanged[str].connect(self.dpi_changed)
         self.ui.comboBoxOrientation.currentIndexChanged[int].connect(self.orientation_changed)
         self.ui.comboBoxOrder.currentIndexChanged[int].connect(self.order_changed)
         self.ui.comboBoxScale.currentIndexChanged[int].connect(self.scale_changed)
@@ -128,9 +128,14 @@ class LoadCards(baseclass):
                 roi.sigRemoveRequested.connect(self.remove_roi)
                 self.rois.append(roi)
          
-    @pyqtSlot(int)
-    def dpi_changed(self, newIndex):
-        self.dpi = cfg.IMAGE_DPI_OPTIONS[newIndex]
+    @pyqtSlot(str)
+    def dpi_changed(self, newString):
+        if newString == '':
+            return
+        try:
+            self.dpi = int(newString)
+        except:
+            return
         self.show_image_characteristics()
             
     @pyqtSlot(int)

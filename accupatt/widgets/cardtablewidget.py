@@ -29,7 +29,7 @@ class CardTableWidget(baseclass):
         self.tv: QTableView = self.ui.tableView
         self.tv.setModel(self.tm)
         self.tv.setItemDelegateForColumn(4, ComboBoxDelegate(self, cfg.UNITS_LENGTH_LARGE))
-        self.tv.setItemDelegateForColumn(5, ComboBoxDelegate(self, [str(dpi) for dpi in cfg.IMAGE_DPI_OPTIONS]))
+        self.tv.setItemDelegateForColumn(5, EditableComboBoxDelegate(self, [str(dpi) for dpi in cfg.IMAGE_DPI_OPTIONS]))
         self.tv.setItemDelegateForColumn(6, ComboBoxDelegate(self, cfg.THRESHOLD_TYPES))
 
         self.selection_changed()
@@ -93,6 +93,7 @@ class ComboBoxDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = QComboBox(parent)
         editor.addItems(self.itemList)
+        editor.setAutoFillBackground(True)
         return editor
     
     def setEditorData(self, comboBox, index):
@@ -100,6 +101,28 @@ class ComboBoxDelegate(QStyledItemDelegate):
         
     def setModelData(self, comboBox, model, index):
         model.setData(index, comboBox.currentIndex(), Qt.ItemDataRole.EditRole)
+        
+    def updateEditorGeometry(self, editor, option, index):
+        editor.setGeometry(option.rect)
+
+class EditableComboBoxDelegate(QStyledItemDelegate):
+    def __init__(self, owner, items):
+        QStyledItemDelegate.__init__(self, owner)
+        self.items = items
+        
+    def createEditor(self, widget, option, index):
+        editor = QComboBox(widget)
+        editor.addItems(self.items)
+        editor.setEditable(True)
+        return editor
+    
+    def setEditorData(self, editor: QComboBox, index):
+        value = index.model().data(index, Qt.ItemDataRole.EditRole)
+        if value:
+            editor.setCurrentText(value)
+            
+    def setModelData(self, comboBox, model, index):
+        model.setData(index, comboBox.currentText(), Qt.ItemDataRole.EditRole)
         
     def updateEditorGeometry(self, editor, option, index):
         editor.setGeometry(option.rect)
@@ -162,7 +185,7 @@ class CardTable(QAbstractTableModel):
             if role==Qt.ItemDataRole.DisplayRole:
                 return str(card.dpi) if card.has_image else ''
             elif role==Qt.ItemDataRole.EditRole:
-                return cfg.IMAGE_DPI_OPTIONS.index(card.dpi)
+                return str(card.dpi)
         elif col==6:
             if role==Qt.ItemDataRole.DisplayRole:
                 return card.threshold_type
@@ -191,7 +214,7 @@ class CardTable(QAbstractTableModel):
         elif col==4:
             card.location_units = cfg.UNITS_LENGTH_LARGE[value]
         elif col==5:
-            card.dpi = cfg.IMAGE_DPI_OPTIONS[value]
+            card.dpi = int(value)
         elif col==6:
             if role==Qt.ItemDataRole.EditRole:
                 card.threshold_type = cfg.THRESHOLD_TYPES[value]
