@@ -182,6 +182,15 @@ class ReadString(baseclass):
         self.traces = dict()
         return True
 
+    def reject(self):
+        # Ensure connections are severed
+        if self.ser and self.ser.is_open:
+            self.ser.close()
+        if self.spec:
+            self.spec.close()  
+        # Nofiy requestor and close
+        super().reject()
+    
     def accept(self):
         p = self.passData
         # Validate fields will set values to the pass object if valid
@@ -196,6 +205,11 @@ class ReadString(baseclass):
         p.string.data_loc_units = self.string_length_units
         if len(self.x) > 0:
             p.string.setData(self.x, self.y, self.y_ex)
+        # If all checks out, sever serial and spectrometer connections
+        if self.ser:
+            self.ser.close()
+        if self.spec:
+            self.spec.close()
         # If all checks out, notify requestor and close
         super().accept()
 
