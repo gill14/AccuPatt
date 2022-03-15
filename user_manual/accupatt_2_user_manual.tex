@@ -148,24 +148,38 @@
     \newpage
 
     \subsubsection{Options}
-    The \textbf{Card Analysis} tab contains \textbf{Pass Options} which affect only the selected pass:
+    The \textbf{String Analysis} tab contains \textbf{Pass Options} which affect only the selected pass:
     \begin{itemize}
         \item \textbf{Include In Composite:} Once a pass is recorded, a checkmark will appear adjascent to it in the pass list. This indicates that it is recorded and included in composite (series-wise) calculations and plots. Clicking the checkmark will turn it into a dash, indicating that it is recorded, but excluded ffom composite calculations and plots.
-        \item \textbf{Align Center:} Shift pattern left/right using chosen center method.
         \item \textbf{Smooth:} Apply smoothing filter to pass
+        \item \textbf{Align Center:} Shift pattern left/right using chosen center method.
+        \item \textbf{Rebase to X-Trim:} Recalculate each data point location such that the trimmed length is equal to the captured string length. If string speed is slightly faster than originally calibrated, this facilitates post-process correction to ensure accurate swath measurement.
+        \item \textbf{Advanced Options:} Opens a popup with the following options:
+        \begin{itemize}
+            \item \textbf{Smoothing Window:} X-domain based distance over which the sliding smoothing filter is fit and applied
+            \item \textbf{Smoothing Order:} Polynomial order for smoothing filter
+            \item \textbf{Center Method:} Choose whether to center the pattern with the centroid or Center of Distribution.
+        \end{itemize}
     \end{itemize}
-    The \textbf{Card Analysis} tab also contains \textbf{Series Options} which can apply to all passes and/or the average pattern:
+    The \textbf{String Analysis} tab also contains \textbf{Series Options} which can apply to all passes and/or the average pattern:
     \begin{itemize}
-        \item \textbf{Align Center Average:} Shift average pattern left/right using chosen center method.
         \item \textbf{Smooth Average:} Apply smoothing filter to average pattern
+        \item \textbf{Align Center Average:} Shift average pattern left/right using chosen center method.
         \item \textbf{Equalize Integrals:} Scale each pass to the same integrated area
+        \item \textbf{Advanced Options:} Opens a popup with the following options:
+        \begin{itemize}
+            \item \textbf{Smoothing Window:} X-domain based distance over which the sliding smoothing filter is fit and applied
+            \item \textbf{Smoothing Order:} Polynomial order for smoothing filter
+            \item \textbf{Center Method:} Choose whether to center the pattern with the centroid or Center of Distribution.
+        \end{itemize}
     \end{itemize}
-    The \textbf{Card Analysis} tab also contains controls for setting the \textbf{Adjusted Swath Width} which defaults to the target swath width, but is saved independently.
+    The \textbf{String Analysis} tab also contains controls for setting the \textbf{Adjusted Swath Width} which defaults to the target swath width, but is saved independently.
     \newpage
 
     \subsubsection{Simulations}
     The \textbf{Simulations} sub-tab contains two plots (Figure~\ref{fig:string_simulations}). Both plots simulate overlapping the measured pattern at intervals of the desired swath width. The upper plot simulates use of a racetrack pattern and the lower plot simulations use of a back \& forth pattern. To simulate the back \& forth pattern, adjascent passes are mirrored about the center for odd passes. \color{red} The back \& forth simulation will not accurately represent in-field uniformity if the base pattern is obtained in a crosswind. \color{black}\par
     The number of \textbf{simulated adjascent passes} (each side) can be set to any non-negative integer.\par
+    The plots can be drawn in \textbf{One Pass} mode, which will show only the mathematically relevant portion of the simulated overlap, specifically datapoints between -swathwidth/2 and swathwidth/2. Alternatively, the plots can be drawn in \textbf{All Passes} mode, which can be useful for illustrating the big picture of in-field overlap.\par
     The plotted area shows the additive contribution of all selected overlapping passes to the central swath width of the central pattern. The summation of all overlapped passes represents theoretical uniformity in the field and is used to compute the Coefficient of Variation (CV).\par
     The dashed horizontal line represents the average relative deposition about which standard deviations are computed for the CV calculations. In other words, the further each additive overlap point is from the average, the more it contributes to the overall CV.
     \begin{figure}[hb]
@@ -275,8 +289,32 @@
     \label{sec:string_hardware_settings}
 
     \subsection{String Drive}
+    From the \textbf{Capture/Edit Pass} window, string drive settings can be adjusted by clicking the \textbf{Edit String Drive} button, which opens the applicable window (Figure~\ref{fig:string_drive_settings}). This window contains a dropdown for choosing a serial communication port, and accompanying refresh button to re-populate this list (for example, if a device is plugged-in after opening this window). With a port chosen in the list, that port's manufacturer and product information will be displayed.\par
+    There are two fields which allow setting of the \textbf{String Length} and \textbf{String Forward Speed}. The units of string length [ft or m] can also be set here, and this will trigger the units of string forward speed [ft/sec or m/sec] to follow. While the string forward speed can be set manually here, this can also be calculated interactively; Clicking the \textbf{Calculate String Speed} button will open the applicable window (Figure~\ref{fig:string_drive_speed}). Here, a known length of string will be advanced through the string drive. This length does not need to be equal to what is used for the flightline length. Clicking the \textbf{Start} button will begin advancing string and start a timer. Once the known length of string has passed through the string drive, clicking \textbf{Stop} will stop the string drive and timer and calculate the speed [known-length / elapsed-time]. Clicking \textbf{Ok} will save this speed and return to the \textbf{Edit String Drive} window.
+    \begin{figure}[hb]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=0.75\textwidth]{string_drive_settings.png}}
+        \caption{String Drive Settings}
+        \label{fig:string_drive_settings}
+    \end{figure}
+    \begin{figure}[hb]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=0.75\textwidth]{string_drive_speed.png}}
+        \caption{Interactively Calculate String Drive Speed}
+        \label{fig:string_drive_speed}
+    \end{figure}
+    \FloatBarrier
 
     \subsection{Spectrometer}
+    From the \textbf{Capture/Edit Pass} window, spectrometer settings can be adjusted by clicking the \textbf{Edit Spectrometer} button, which opens the applicable window (Figure~\ref{fig:spectrometer_settings}). This window displays the currently connected spectrometer's model and serial numbers. An accompanying refresh button is included to re-scan for a spectrometer (for example, if one is plugged-in after opening this window).\par
+    There are three fields which allow setting of the \textbf{Excitation Wavelength (nm)}, \textbf{Emission Wavelength (nm)} and \textbf{Integration Time (milliseconds)}. The chosen wavelengths do not change the operation of the spectrometer; a full spectrum reading is always provided. They merely change the points on the spectrum from which this software collects and displays data. Note that each spectrometer is calibrated differently, and this software will attempt to find the pixel on the spectrometer which corresponds to the wavelength closest to that specified. This pixel and actual wavelength is displayed here. The integration time set here is sent to the spectrometer and does change its operation. Briefly, consider the integration time as the exposure on a camera; longer times correspond with more detail incorporated in each data frame, but a lower quantity of data frames. Clicking \textbf{Ok} will save these settings and return to the \textbf{Capture/Edit Pass} window.
+    \begin{figure}[hb]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=0.75\textwidth]{spectrometer_settings.png}}
+        \caption{Spectrometer Settings}
+        \label{fig:spectrometer_settings}
+    \end{figure}
+    \FloatBarrier
     \newpage
 
     \section{Spray-Card - Details}
