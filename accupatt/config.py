@@ -415,3 +415,30 @@ def get_card_defined_set() -> str:
     return QSettings().value(_CARD_DEFINED_SET, defaultValue=CARD_DEFINED_SET__DEFAULT, type=str)
 def set_card_defined_set(value: str):
     QSettings().setValue(_CARD_DEFINED_SET, value)
+    
+# Report - SprayCard Params
+
+_REPORT_CARD_INCLUDE_IMAGES = 'report_card_include_images'
+REPORT_CARD_INCLUDE_IMAGES__DEFAULT = True
+def get_report_card_include_images() -> bool:
+    return QSettings().value(_REPORT_CARD_INCLUDE_IMAGES, defaultValue=REPORT_CARD_INCLUDE_IMAGES__DEFAULT, type=bool)
+def set_report_card_include_images(value: bool):
+    QSettings().setValue(_REPORT_CARD_INCLUDE_IMAGES, value)
+
+_REPORT_CARD_IMAGE_TYPE = 'report_card_image_type'
+REPORT_CARD_IMAGE_TYPE_ORIGINAL = 'original'
+REPORT_CARD_IMAGE_TYPE_OUTLINE = 'outline'
+REPORT_CARD_IMAGE_TYPE_MASK = 'mask'
+REPORT_CARD_IMAGE_TYPES = [REPORT_CARD_IMAGE_TYPE_ORIGINAL, REPORT_CARD_IMAGE_TYPE_OUTLINE, REPORT_CARD_IMAGE_TYPE_MASK]
+REPORT_CARD_IMAGE_TYPE__DEFAULT = REPORT_CARD_IMAGE_TYPE_ORIGINAL
+def get_report_card_image_type() -> str:
+    return QSettings().value(_REPORT_CARD_IMAGE_TYPE, defaultValue=REPORT_CARD_IMAGE_TYPE__DEFAULT, type=str)
+def set_report_card_image_type(value: str):
+    QSettings().setValue(_REPORT_CARD_IMAGE_TYPE, value)
+    
+_REPORT_CARD_IMAGE_PER_PAGE = 'report_card_image_per_page'
+REPORT_CARD_IMAGE_PER_PAGE__DEFAULT = 9
+def get_report_card_image_per_page() -> int:
+    return QSettings().value(_REPORT_CARD_IMAGE_PER_PAGE, defaultValue=REPORT_CARD_IMAGE_PER_PAGE__DEFAULT, type=int)
+def set_report_card_image_per_page(value: int):
+    QSettings().setValue(_REPORT_CARD_IMAGE_PER_PAGE, value)

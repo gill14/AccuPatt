@@ -1,21 +1,23 @@
-from io import BytesIO
 import math
+from io import BytesIO
 
 import accupatt.config as cfg
+import cv2
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
+from accupatt.models.sprayCard import SprayCard
+from accupatt.widgets.mplwidget import MplWidget
+from PIL import Image
 from reportlab.graphics import renderPDF
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, letter
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import inch
+from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Frame, Paragraph, Table, TableStyle
 from reportlab.platypus.flowables import Flowable
 from svglib.svglib import svg2rlg
-from accupatt.models.sprayCard import SprayCard
-
-from accupatt.widgets.mplwidget import MplWidget
 
 
 class ReportMaker:
@@ -126,7 +128,7 @@ class ReportMaker:
         # Page Break
         self.canvas.showPage()
         
-    def report_safe_cards(self, spatialDVWidget: MplWidget, spatialCoverageWidget: MplWidget, histogramNumberWidget: MplWidget, histogramCoverageWidget: MplWidget, tableView, passData: Pass):
+    def report_safe_card_summary(self, spatialDVWidget: MplWidget, spatialCoverageWidget: MplWidget, histogramNumberWidget: MplWidget, histogramCoverageWidget: MplWidget, tableView, passData: Pass):
         # Headers
         self.printHeaders()
         # Card Plots
@@ -153,6 +155,96 @@ class ReportMaker:
         frame_disclaimers.addFromList(self._list_disclaimers(passData), self.canvas)
         #Page Break
         self.canvas.showPage()
+
+    def report_card_individuals_concise(self, passData: Pass):
+        self.canvas.setPageSize((self.page_height, self.page_width))
+        cards_per_page = cfg.get_report_card_image_per_page()
+        image_type = cfg.get_report_card_image_type()
+        use_compression = False
+        h_gap = 10
+        card_window_width = round((0.9 * self.page_height) / cards_per_page - h_gap)
+        card_window_height = 275
+        x_start = round(0.05 * self.page_height)
+        x_space = round(card_window_width) + h_gap
+        y_start = 270
+        
+        cards_paged = 0
+        cards_to_page = [c for c in passData.spray_cards if c.include_in_composite and c.has_image]
+        pages_needed = math.ceil(len(cards_to_page)/cards_per_page)
+        
+        for i in range(pages_needed):
+            for j in range(cards_per_page):
+                if cards_paged >= len(cards_to_page):
+                    break
+                x = x_start + (j * x_space)
+                y = y_start
+                card: SprayCard = cards_to_page[cards_paged]
+                print(f'card name = {card.name}, x={x}, y={y}, window_width={card_window_width}')
+                self.canvas.drawImage(self._get_image(card, image_type),x, y, card_window_width, card_window_height, preserveAspectRatio=True, showBoundary=True, anchor='s')
+                # More Stuff
+                table = self._detail_card(card)
+                table.wrapOn(self.canvas, card_window_width, 200)
+                frame = Frame(x, y-200, card_window_width, 180, leftPadding=0,rightPadding=0, bottomPadding=0, topPadding=0,showBoundary=0)
+                frame.addFromList([table], self.canvas)
+                
+                #table.drawOn(self.canvas, x, y-200)
+                cards_paged += 1
+            self.canvas.drawCentredString(round(self.page_height/2),30,f'{self.s.info.string_reg_series()} - Individual Card Data for {passData.name} - Page {i+1}/{pages_needed}',)
+            self.canvas.showPage()
+            
+        self.canvas.setPageSize((self.page_width, self.page_height))
+
+    def _detail_card(self, card: SprayCard):
+        tablestyle_alt = TableStyle([('BACKGROUND',(0,0),(-1,0),colors.lightgrey),
+                                     ('FONTSIZE',(0,0),(-1,-1), 8),
+                                     ('FONTSIZE',(0,0),(-1,0), 10),
+                                    ('BACKGROUND',(0,6),(-1,6),colors.palegreen),
+                                    ('ALIGN',(0,0),(-1,-1),'CENTER'),
+                                    ('INNERGRID', (0,0), (-1,-1), 0.25, colors.lightgrey, None, (2,2,2)),
+                                    ('BOX', (0,0), (-1,-1), 0.25, colors.black),
+                                    ('SPAN',(0,0),(1,0))])
+        data = []
+        data.append([card.name,''])
+        stains = len(card.stain_areas_valid_px2)
+        area = card._px2_to_in2(card.area_px2)
+        if stains > 0:
+            dv01, dv05, dv09, rs, dsc = card.volumetric_stats()
+            rs = f'{rs:.2f}'
+            cov = f'{card.percent_coverage():.2f}'
+            spsi = round(stains/area)   
+        else:
+            dv01='-'
+            dv05='-'
+            dv09='-'
+            rs='-'
+            dsc='-'
+            cov='-'
+            spsi='-'
+        area = f'{area:.2f}'
+        data.append(['DSC',dsc])
+        data.append(['Dv0.1',f'{dv01} \u03BCm'])
+        data.append(['VMD',f'{dv05} \u03BCm'])
+        data.append(['Dv0.9',f'{dv09} \u03BCm'])
+        data.append(['RS',rs])
+        data.append(['Cov.',f'{cov}%'])
+        data.append(['Area',f'{area} in\u00B2'])
+        data.append(['St.',stains])
+        data.append(['St./in\u00B2',spsi])
+        return Table(data, style=tablestyle_alt)
+    
+    def _get_image(self, card: SprayCard, image_type: str):
+        if image_type == cfg.REPORT_CARD_IMAGE_TYPE_OUTLINE:
+            im_cv = card.images_processed()[0]
+        elif image_type == cfg.REPORT_CARD_IMAGE_TYPE_MASK:
+            im_cv = card.images_processed()[1]
+        else:
+            im_cv = card.image_original()
+        # Change Color Space to RGB
+        im_cv = cv2.cvtColor(im_cv, cv2.COLOR_BGR2RGB)
+        # Convert to PIL image
+        im_pil = Image.fromarray(im_cv)
+        # Return a reportlab-friendly wrapper
+        return ImageReader(im_pil)
 
     def _header_applicator(self):
         return Table([

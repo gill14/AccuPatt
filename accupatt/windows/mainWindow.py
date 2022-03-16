@@ -21,6 +21,7 @@ from accupatt.windows.readString import ReadString
 from accupatt.widgets import mplwidget, seriesinfowidget, singleCVImageWidget, splitcardwidget
 from PyQt6 import uic
 from PyQt6.QtCore import QSignalBlocker, Qt, pyqtSlot
+from PyQt6.QtGui import QAction, QActionGroup
 from PyQt6.QtWidgets import (QComboBox, QFileDialog, QLabel,
                              QListWidgetItem, QMenu, QMessageBox, QProgressDialog)
 
@@ -57,6 +58,25 @@ class MainWindow(baseclass):
         # --> Setup Report Menu
         self.ui.actionCreate_Report.triggered.connect(self.makeReport)
         self.ui.actionReportManager.triggered.connect(self.reportManager)
+        # --> # --> Report Options
+        self.ui.actionInclude_Card_Images.setChecked(cfg.get_report_card_include_images())
+        self.ui.actionInclude_Card_Images.toggled[bool].connect(self.reportCardImageChanged)
+        # --> # --> # --> SprayCard Image Type
+        self.ui.actionOriginal.setChecked(cfg.get_report_card_image_type() == cfg.REPORT_CARD_IMAGE_TYPE_ORIGINAL)
+        self.ui.actionOutline.setChecked(cfg.get_report_card_image_type() == cfg.REPORT_CARD_IMAGE_TYPE_OUTLINE)
+        self.ui.actionMask.setChecked(cfg.get_report_card_image_type() == cfg.REPORT_CARD_IMAGE_TYPE_MASK)
+        ag_image_type = QActionGroup(self.ui.menuCard_Image_Type)
+        for action in self.ui.menuCard_Image_Type.actions():
+            ag_image_type.addAction(action)
+        ag_image_type.triggered[QAction].connect(self.reportCardImageTypeChanged)
+        # --> # --> # --> SprayCard Image Quantity per Page
+        self.ui.action5.setChecked(cfg.get_report_card_image_per_page() == 5)
+        self.ui.action7.setChecked(cfg.get_report_card_image_per_page() == 7)
+        self.ui.action9.setChecked(cfg.get_report_card_image_per_page() == 9)
+        ag_image_per_page = QActionGroup(self.ui.menuCard_Images_per_Page)
+        for action in self.ui.menuCard_Images_per_Page.actions():
+            ag_image_per_page.addAction(action)
+        ag_image_per_page.triggered[QAction].connect(self.reportCardImagePerPageChanged)
         # --> Setup Help Menu
         self.ui.actionAbout.triggered.connect(self.about)
         self.ui.actionUserManual.triggered.connect(self.openResourceUserManual)
@@ -384,7 +404,7 @@ class MainWindow(baseclass):
                     self.ui.listWidgetSprayCardPass.setCurrentRow(row)
                     # Select the pass for droplet dist
                     self.ui.comboBoxSprayCardDist.setCurrentIndex(1)
-                    reportMaker.report_safe_cards(
+                    reportMaker.report_safe_card_summary(
                         spatialDVWidget=self.ui.mplWidgetCardSpatial1,
                         spatialCoverageWidget=self.ui.mplWidgetCardSpatial2,
                         histogramNumberWidget=self.ui.plotWidgetDropDist1,
@@ -392,10 +412,35 @@ class MainWindow(baseclass):
                         tableView=self.ui.tableWidgetSprayCardStats,
                         passData=p
                     )
+                    # Print cards for pass
+                    if cfg.get_report_card_include_images():
+                        reportMaker.report_card_individuals_concise(passData=p) 
             reportMaker.save()
             subprocess.call(["open", savefile])
             # Redraw plots with defaults
             self.update_all_ui()
+    
+    @pyqtSlot(bool)
+    def reportCardImageChanged(self, checked: bool):
+        cfg.set_report_card_include_images(checked)
+    
+    @pyqtSlot(QAction)
+    def reportCardImageTypeChanged(self, action: QAction):
+        if action == self.ui.actionOutline:
+            cfg.set_report_card_image_type(cfg.REPORT_CARD_IMAGE_TYPE_OUTLINE)
+        elif action == self.ui.actionMask:
+            cfg.set_report_card_image_type(cfg.REPORT_CARD_IMAGE_TYPE_MASK)
+        else:
+            cfg.set_report_card_image_type(cfg.REPORT_CARD_IMAGE_TYPE_ORIGINAL)
+    
+    @pyqtSlot(QAction)
+    def reportCardImagePerPageChanged(self, action: QAction):
+        if action == self.ui.action5:
+            cfg.set_report_card_image_per_page(5)
+        elif action == self.ui.action7:
+            cfg.set_report_card_image_per_page(7)
+        else:
+            cfg.set_report_card_image_per_page(9)
     
     @pyqtSlot()
     def reportManager(self):
@@ -412,8 +457,7 @@ class MainWindow(baseclass):
     
     @pyqtSlot()
     def openResourceUserManual(self):
-        #self.openResourceDocument('UserManual.pdf')
-        pass
+        self.openResourceDocument('accupatt_2_user_manual.pdf')
     
     @pyqtSlot()
     def openResourceWSWRK(self):
