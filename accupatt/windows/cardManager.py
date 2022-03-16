@@ -41,7 +41,6 @@ class CardManager(baseclass):
         self.ui.comboBoxLoadMethod.addItems(cfg.IMAGE_LOAD_METHODS)
         self.ui.comboBoxLoadMethod.setCurrentText(cfg.get_image_load_method())
         self.ui.buttonLoad.clicked.connect(self.load_cards)
-        self.image_dir = cfg.get_image_load_dir()
         
         #Populate Table
         self.cardTable: CardTableWidget = self.ui.cardTableWidget
@@ -110,7 +109,7 @@ class CardManager(baseclass):
         
     
     def _load_cards_singles(self, selected_cards):
-        fnames, _ = QFileDialog.getOpenFileNames(self, 'Open file(s)', self.image_dir, "Image files (*.png)")
+        fnames, _ = QFileDialog.getOpenFileNames(self, 'Open file(s)', cfg.get_image_load_dir(), "Image files (*.png)")
         if len(fnames) == 0:
             return
         cfg.set_image_load_dir(os.path.dirname(fnames[0]))
@@ -119,7 +118,7 @@ class CardManager(baseclass):
         e.exec()
     
     def _load_cards_multi(self, card_list):
-        fname, _ = QFileDialog.getOpenFileName(self, 'Open file', self.image_dir, "Image files (*.png)")
+        fname, _ = QFileDialog.getOpenFileName(self, 'Open file', cfg.get_image_load_dir(), "Image files (*.png)")
         if fname == '': return
         cfg.set_image_load_dir(os.path.dirname(fname))
         e = LoadCards(image_file=fname, card_list=card_list, parent=self)
@@ -132,7 +131,7 @@ class CardManager(baseclass):
         if len(excepts := self.passInfoWidget.validate_fields(p)) > 0:
             QMessageBox.warning(self, 'Invalid Data', '\n'.join(excepts))
             return
+        # If all checks out, update config, notify requestor and close
         cfg.set_card_defined_set(self.ui.comboBoxDefinedSet.currentText())
         cfg.set_image_load_method(self.ui.comboBoxLoadMethod.currentText())
-        # If all checks out, notify requestor and close
         super().accept()  
