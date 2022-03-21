@@ -4,7 +4,8 @@ import os
 from superqt import QLabeledRangeSlider, QLabeledSlider
 import accupatt.config as cfg
 from PyQt6 import uic
-from PyQt6.QtCore import Qt, pyqtSlot
+from PyQt6.QtCore import Qt, pyqtSlot, QSignalBlocker
+from PyQt6.QtWidgets import QDialogButtonBox
 
 from accupatt.models.sprayCard import SprayCard
 
@@ -17,8 +18,6 @@ class EditThreshold(baseclass):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
-        #Get a handle on the card (will be used to commit changes in on_applied)
-        self.sprayCard_OG = sprayCard
         #Make a working copy
         self.sprayCard: SprayCard = copy.copy(sprayCard)
         #Get a handle to seriesData and passData to enable "Apply to all cards on save"
@@ -73,6 +72,7 @@ class EditThreshold(baseclass):
         #Signals for saving
         self.ui.checkBoxApplyToAllSeries.toggled[bool].connect(self.toggleApplyToAllSeries)
 
+        self.ui.buttonBox.button(QDialogButtonBox.StandardButton.RestoreDefaults).clicked.connect(self._restore_defaults)
         
         self.threshold_type_changed(self.ui.comboBoxThresholdType.currentIndex())
         self.show()
@@ -154,7 +154,44 @@ class EditThreshold(baseclass):
 
         self.ui.splitCardWidget.updateSprayCardView(cvImg1, cvImg2)
 
+    def _restore_defaults(self):
+        sc = self.sprayCard
+        if sc.threshold_type == cfg.THRESHOLD_TYPE_GRAYSCALE:
+            sc.set_threshold_method_grayscale(cfg.get_threshold_grayscale_method())
+            with QSignalBlocker(self.ui.radioButtonAutomatic):
+                self.ui.radioButtonAutomatic.setChecked(sc.threshold_method_grayscale == cfg.THRESHOLD_GRAYSCALE_METHOD_AUTO)
+            with QSignalBlocker(self.ui.radioButtonManual):
+                self.ui.radioButtonManual.setChecked(sc.threshold_method_grayscale == cfg.THRESHOLD_GRAYSCALE_METHOD_MANUAL)
+            sc.set_threshold_grayscale(cfg.get_threshold_grayscale())
+            with QSignalBlocker(self.ui.sliderGrayscale):
+                self.ui.sliderGrayscale.setValue(sc.threshold_grayscale)
+        elif sc.threshold_type == cfg.THRESHOLD_TYPE_HSB:
+            sc.set_threshold_method_color(cfg.get_threshold_hsb_method())
+            with QSignalBlocker(self.ui.radioButtonInclude):
+                self.ui.radioButtonInclude.setChecked(sc.threshold_method_color == cfg.THRESHOLD_HSB_METHOD_INCLUDE)
+            with QSignalBlocker(self.ui.radioButtonExclude):
+                self.ui.radioButtonExclude.setChecked(sc.threshold_method_color == cfg.THRESHOLD_HSB_METHOD_EXCLUDE)
+            sc.set_threshold_color_hue(tuple(cfg.get_threshold_hsb_hue()))
+            with QSignalBlocker(self.ui.rangeSliderHue):
+                self.ui.rangeSliderHue.setValue(self.sprayCard.threshold_color_hue)
+            sc.set_threshold_color_saturation(tuple(cfg.get_threshold_hsb_saturation()))
+            with QSignalBlocker(self.ui.rangeSliderSaturation):
+                self.ui.rangeSliderSaturation.setValue(self.sprayCard.threshold_color_saturation)
+            sc.set_threshold_color_brightness(tuple(cfg.get_threshold_hsb_brightness()))
+            with QSignalBlocker(self.ui.rangeSliderBrightness):
+                self.ui.rangeSliderBrightness.setValue(self.sprayCard.threshold_color_brightness)
+        sc.watershed = cfg.get_watershed()
+        with QSignalBlocker(self.ui.checkBoxWatershed):
+            self.ui.checkBoxWatershed.setChecked(sc.watershed)
+        sc.min_stain_area_px = cfg.get_min_stain_area_px()
+        with QSignalBlocker(self.ui.spinBoxMinSize):
+            self.ui.spinBoxMinSize.setValue(sc.min_stain_area_px)
+        sc.stain_approximation_method = cfg.get_stain_approximation_method()
+        with QSignalBlocker(self.ui.comboBoxApproximationMethod):
+            self.ui.comboBoxApproximationMethod.setCurrentText(sc.stain_approximation_method)
+
     def accept(self):
+        sc = self.sprayCard
         #Cycle through passes
         for p in self.seriesData.passes:
             #Check if should apply to pass
@@ -162,21 +199,36 @@ class EditThreshold(baseclass):
                 #Cycle through cards in pass
                 card: SprayCard
                 for card in p.spray_cards:
-                    if card.name == self.sprayCard_OG.name or self.ui.checkBoxApplyToAllPass.checkState() == Qt.CheckState.Checked:
+                    if card.name == sc.name or self.ui.checkBoxApplyToAllPass.checkState() == Qt.CheckState.Checked:
                         #Apply
                         #Set overall type
-                        card.set_threshold_type(self.sprayCard.threshold_type)
+                        card.set_threshold_type(sc.threshold_type)
                         #Set grayscale options
-                        card.set_threshold_method_grayscale(self.sprayCard.threshold_method_grayscale)
-                        card.set_threshold_grayscale(self.sprayCard.threshold_grayscale)
+                        card.set_threshold_method_grayscale(sc.threshold_method_grayscale)
+                        card.set_threshold_grayscale(sc.threshold_grayscale)
                         #Set color options
-                        card.set_threshold_method_color(self.sprayCard.threshold_method_color)
-                        card.set_threshold_color_hue(self.sprayCard.threshold_color_hue)
-                        card.set_threshold_color_saturation(self.sprayCard.threshold_color_saturation)
-                        card.set_threshold_color_brightness(self.sprayCard.threshold_color_brightness)
+                        card.set_threshold_method_color(sc.threshold_method_color)
+                        card.set_threshold_color_hue(sc.threshold_color_hue)
+                        card.set_threshold_color_saturation(sc.threshold_color_saturation)
+                        card.set_threshold_color_brightness(sc.threshold_color_brightness)
                         #Set Additional Options
-                        card.watershed = self.sprayCard.watershed
-                        card.min_stain_area_px = self.sprayCard.min_stain_area_px
-                        card.stain_approximation_method = self.sprayCard.stain_approximation_method
+                        card.watershed = sc.watershed
+                        card.min_stain_area_px = sc.min_stain_area_px
+                        card.stain_approximation_method = sc.stain_approximation_method
+        # Update Defualts if requested
+        if self.ui.checkBoxUpdateDefaults.isChecked():
+            cfg.set_threshold_type(sc.threshold_type)
+            # Only update for type selected
+            if sc.threshold_type == cfg.THRESHOLD_TYPE_GRAYSCALE:
+                cfg.set_threshold_grayscale_method(sc.threshold_method_grayscale)
+                cfg.set_threshold_grayscale(sc.threshold_grayscale)
+            elif sc.threshold_type == cfg.THRESHOLD_TYPE_HSB:
+                cfg.set_threshold_hsb_method(sc.threshold_method_color)
+                cfg.set_threshold_hsb_hue(list(sc.threshold_color_hue))
+                cfg.set_threshold_hsb_saturation(list(sc.threshold_color_saturation))
+                cfg.set_threshold_hsb_brightness(list(sc.threshold_color_brightness))
+            cfg.set_watershed(sc.watershed)
+            cfg.set_min_stain_area_px(sc.min_stain_area_px)
+            cfg.set_stain_approximation_method(sc.stain_approximation_method)
         #Notify requestor
         super().accept()
