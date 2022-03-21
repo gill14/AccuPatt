@@ -2,7 +2,7 @@ import os
 
 import accupatt.config as cfg
 from PyQt6 import uic
-from PyQt6.QtWidgets import QLineEdit, QSpinBox
+from PyQt6.QtWidgets import QDialogButtonBox, QLineEdit, QSpinBox
 from accupatt.models.passData import Pass
 
 from accupatt.models.seriesData import SeriesData
@@ -32,6 +32,8 @@ class StringAdvancedOptions(baseclass):
         self.passData = passData
         self.seriesData = seriesData
         
+        self.ui.buttonBox.button(QDialogButtonBox.StandardButton.RestoreDefaults).clicked.connect(self._reset_defaults)
+        
         self.show()
         
     def _populate_fields(self, name: str, window: float, window_units: str, order: int, center_method: str):
@@ -42,21 +44,37 @@ class StringAdvancedOptions(baseclass):
         self.spinBoxOrder: QSpinBox = self.ui.spinBoxOrder
         self.spinBoxOrder.setValue(order)
         self.ui.radioButtonCentroid.setChecked(center_method == cfg.CENTER_METHOD_CENTROID)
+        self.ui.radioButtonCOD.setChecked(center_method == cfg.CENTER_METHOD_COD)
+    
+    def _reset_defaults(self):
+        self._populate_fields(name=self.ui.labelName.text(),
+                              window=cfg.get_string_smooth_window(),
+                              window_units=self.ui.labelSmoothWindowUnits.text(),
+                              order=cfg.get_string_smooth_order(),
+                              center_method=cfg.get_center_method())
         
     def accept(self):
+        # Capture/Cast values
         smooth_window = float(self.lineEditSmoothWindow.text())
         smooth_order = self.spinBoxOrder.value()
         center_method = cfg.CENTER_METHOD_CENTROID if self.ui.radioButtonCentroid.isChecked() else cfg.CENTER_METHOD_COD
+        
         if self.passData:
+            # Update Pass object
             self.passData.string.smooth_window = smooth_window
             self.passData.string.smooth_order = smooth_order
             self.passData.string.center_method = center_method
         else:
+            # Update Series Object
             self.seriesData.string.smooth_window = smooth_window
             self.seriesData.string.smooth_order = smooth_order
             self.seriesData.string.center_method = center_method
-        
-        
+            
+        if self.ui.checkBoxUpdateDefaults.isChecked():
+            # Update Defaults
+            cfg.set_string_smooth_window(smooth_window)
+            cfg.set_string_smooth_order(smooth_order)
+            cfg.set_center_method(center_method)
         
         super().accept()
         

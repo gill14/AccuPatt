@@ -589,6 +589,7 @@ class MainWindow(baseclass):
         
     def stringAdvancedOptionsSeriesUpdated(self):
         self.updateStringPlots(modify=True, composites=True, simulations=True)
+        self.saveFile()
     
     @pyqtSlot(int)
     def swathAdjustedChanged(self, swath):
