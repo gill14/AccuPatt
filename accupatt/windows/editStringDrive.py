@@ -1,4 +1,5 @@
 import os
+import subprocess
 import serial
 
 import accupatt.config as cfg
@@ -44,6 +45,10 @@ class EditStringDrive(baseclass):
         
         #Init calc string speed button
         self.ui.buttonCalculateStringSpeed.pressed.connect(self.click_calc_speed)
+        
+        # Direct commands
+        self.ui.pushButtonSendCommand.pressed.connect(self.send_command)
+        self.ui.pushButtonHelp.pressed.connect(self.openStepperManual)
 
         self.show()
 
@@ -91,6 +96,20 @@ class EditStringDrive(baseclass):
         e.speed_accepted[str,str].connect(self.update_speed)
         e.exec()
 
+    @pyqtSlot()
+    def send_command(self):
+        if self.ser and self.ser.is_open:
+            command: str = self.ui.lineEditCommand.text()
+            command = command + '\r'
+            if command != '':
+                self.ser.write(command.encode())
+                self.ui.labelReturn.setText(self.ser.readline().decode('utf-8'))
+
+    @pyqtSlot()
+    def openStepperManual(self):
+        file = os.path.join(os.getcwd(), 'resources', 'documents', 'weeder_stepper_driver_manual.pdf')
+        subprocess.call(["open", file])
+    
     def strip_num(self, x) -> str:
         if type(x) is str:
             if x == '':

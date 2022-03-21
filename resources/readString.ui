@@ -70,6 +70,10 @@
          <property name="text">
           <string>Edit Spectrometer</string>
          </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>icon_adjust.png</normaloff>icon_adjust.png</iconset>
+         </property>
         </widget>
        </item>
        <item>
@@ -161,6 +165,10 @@
         <widget class="QPushButton" name="buttonEditStringDrive">
          <property name="text">
           <string>Edit String Drive</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>icon_adjust.png</normaloff>icon_adjust.png</iconset>
          </property>
         </widget>
        </item>

@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>378</width>
-    <height>309</height>
+    <height>387</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -64,6 +64,10 @@
        </property>
        <property name="text">
         <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>refresh.png</normaloff>refresh.png</iconset>
        </property>
       </widget>
      </item>
@@ -308,6 +312,10 @@
        <property name="text">
         <string>Calculate String Speed</string>
        </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>icon_adjust.png</normaloff>icon_adjust.png</iconset>
+       </property>
       </widget>
      </item>
      <item>
@@ -322,6 +330,79 @@
         </size>
        </property>
       </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="Line" name="line_2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_7">
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Direct Command:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="lineEditCommand"/>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButtonSendCommand">
+       <property name="text">
+        <string>Send</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>icon_up.png</normaloff>icon_up.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButtonHelp">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>icon_help.png</normaloff>icon_help.png</iconset>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_8">
+     <item>
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Return Value:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="labelReturn">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
