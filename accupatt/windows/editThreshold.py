@@ -189,6 +189,7 @@ class EditThreshold(baseclass):
         sc.stain_approximation_method = cfg.get_stain_approximation_method()
         with QSignalBlocker(self.ui.comboBoxApproximationMethod):
             self.ui.comboBoxApproximationMethod.setCurrentText(sc.stain_approximation_method)
+        self.updateSprayCardView()
 
     def accept(self):
         sc = self.sprayCard

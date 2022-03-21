@@ -3,8 +3,8 @@ import os
 import accupatt.config as cfg
 from accupatt.models.sprayCard import SprayCard
 from PyQt6 import uic
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtCore import QSignalBlocker, Qt
+from PyQt6.QtWidgets import QDialogButtonBox, QMessageBox
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'editSpreadFactors.ui'))
 
@@ -44,6 +44,8 @@ class EditSpreadFactors(baseclass):
 
         self.updateLabel()
 
+        self.ui.buttonBox.button(QDialogButtonBox.StandardButton.RestoreDefaults).clicked.connect(self._restore_defaults)
+
         self.show()
 
     def updateLabel(self):
@@ -53,6 +55,10 @@ class EditSpreadFactors(baseclass):
         isNone = self.ui.radioButtonNone.isChecked()
         self.ui.spreadFactorALabel.setEnabled(not isNone)
         self.ui.spreadFactorALineEdit.setEnabled(not isNone)
+        self.ui.spreadFactorBLabel.setEnabled(not isNone)
+        self.ui.spreadFactorBLineEdit.setEnabled(not isNone)
+        self.ui.spreadFactorCLabel.setEnabled(not isNone)
+        self.ui.spreadFactorCLineEdit.setEnabled(not isNone)
         if isNone:
             self.ui.labelEquation.setText(eqn)
             self.method = cfg.SPREAD_METHOD_NONE
@@ -90,27 +96,39 @@ class EditSpreadFactors(baseclass):
             self.ui.checkBoxApplyToAllPass.setCheckState(Qt.CheckState.Unchecked)
         self.ui.checkBoxApplyToAllPass.setEnabled(not boo)
 
+    def _restore_defaults(self):
+        self.method = cfg.get_spread_factor_equation()
+        with QSignalBlocker(self.ui.radioButtonNone):
+            self.ui.radioButtonNone.setChecked(self.method == cfg.SPREAD_METHOD_NONE)
+        with QSignalBlocker(self.ui.radioButtonDirect):
+            self.ui.radioButtonDirect.setChecked(self.method == cfg.SPREAD_METHOD_DIRECT)
+        with QSignalBlocker(self.ui.radioButtonAdaptive):
+            self.ui.radioButtonAdaptive.setChecked(self.method == cfg.SPREAD_METHOD_ADAPTIVE)
+        with QSignalBlocker(self.ui.spreadFactorALineEdit):
+            self.ui.spreadFactorALineEdit.setText(f'{cfg.get_spread_factor_a():g}')
+        with QSignalBlocker(self.ui.spreadFactorBLineEdit):
+            self.ui.spreadFactorBLineEdit.setText(f'{cfg.get_spread_factor_b():g}')
+        with QSignalBlocker(self.ui.spreadFactorCLineEdit):
+            self.ui.spreadFactorCLineEdit.setText(f'{cfg.get_spread_factor_c():g}')
+        self.updateLabel()
+
     def accept(self):
         excepts = []
-        a = self.ui.spreadFactorALineEdit.text()
-        b = self.ui.spreadFactorBLineEdit.text()
-        c = self.ui.spreadFactorCLineEdit.text()
-        try: 
-            cfg.set_spread_factor_a(float(a))
+        try:
+            a = float(self.ui.spreadFactorALineEdit.text())
         except:
             excepts.append('-SPREAD FACTOR A cannot be converted to a NUMBER')
         try: 
-            cfg.set_spread_factor_b(float(b))
+            b = float(self.ui.spreadFactorBLineEdit.text())
         except:
             excepts.append('-SPREAD FACTOR B cannot be converted to a NUMBER')
         try: 
-            cfg.set_spread_factor_c(float(c))
+            c = float(self.ui.spreadFactorCLineEdit.text())
         except:
             excepts.append('-SPREAD FACTOR C cannot be converted to a NUMBER')
         if len(excepts) > 0:
             QMessageBox.warning(self, 'Invalid Data', '\n'.join(excepts))
             return
-        cfg.set_spread_factor_equation(self.method)
         
         # Apply to multiple cards if requested
         # Cycle through passes
@@ -123,7 +141,16 @@ class EditSpreadFactors(baseclass):
                         # Spread Method
                         card.spread_method = self.method
                         # Spread Factors
-                        card.spread_factor_a = float(a)
-                        card.spread_factor_b = float(b)
-                        card.spread_factor_c = float(c)
+                        card.spread_factor_a = a
+                        card.spread_factor_b = b
+                        card.spread_factor_c = c
+        
+        # Update Defaults if requested
+        if self.ui.checkBoxUpdateDefaults.isChecked():
+            cfg.set_spread_factor_a(a)
+            cfg.set_spread_factor_b(b)
+            cfg.set_spread_factor_c(c)
+            cfg.set_spread_factor_equation(self.method)
+            
+        # Notify Requestor, Close, Return    
         super().accept()
