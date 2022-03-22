@@ -109,7 +109,7 @@ class CardManager(baseclass):
         
     
     def _load_cards_singles(self, selected_cards):
-        fnames, _ = QFileDialog.getOpenFileNames(self, 'Open file(s)', cfg.get_image_load_dir(), "Image files (*.png)")
+        fnames, _ = QFileDialog.getOpenFileNames(self, 'Open file(s)', cfg.get_image_load_dir(), "Image files (*.png *.tif *.tiff)")
         if len(fnames) == 0:
             return
         cfg.set_image_load_dir(os.path.dirname(fnames[0]))
@@ -118,7 +118,7 @@ class CardManager(baseclass):
         e.exec()
     
     def _load_cards_multi(self, card_list):
-        fname, _ = QFileDialog.getOpenFileName(self, 'Open file', cfg.get_image_load_dir(), "Image files (*.png)")
+        fname, _ = QFileDialog.getOpenFileName(self, 'Open file', cfg.get_image_load_dir(), "Image files (*.png *.tif *.tiff)")
         if fname == '': return
         cfg.set_image_load_dir(os.path.dirname(fname))
         e = LoadCards(image_file=fname, card_list=card_list, parent=self)
