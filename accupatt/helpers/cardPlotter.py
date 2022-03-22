@@ -20,7 +20,7 @@ class SprayCardComposite(SprayCard):
 class CardPlotter:
     
     def createRepresentativeComposite(sprayCard: SprayCard = None, passData: Pass = None, seriesData: SeriesData = None) -> SprayCardComposite:
-        cards = []
+        cards: list[SprayCard] = []
         composite = SprayCardComposite()
         # If seriesData is passed in, compute series-wise dist
         if seriesData is not None:
@@ -46,7 +46,11 @@ class CardPlotter:
                 composite.drop_vol_um3.extend(dv)
                 composite.stain_areas_all_px2.extend(card.stain_areas_all_px2)
                 composite.stain_areas_valid_px2.extend(card.stain_areas_valid_px2)
-                
+        
+        # Sort droplet lists
+        composite.drop_dia_um.sort()
+        composite.drop_vol_um3.sort()
+        
         return composite
     
     def plotDistribution(mplWidget1: MplWidget, mplWidget2: MplWidget, tableWidget: QTableWidget, sprayCard: SprayCard, passData: Pass = None, seriesData: SeriesData = None):
@@ -112,7 +116,7 @@ class CardPlotter:
         if len(composite.stain_areas_valid_px2) < 1:
             return
         # Calc values from composite
-        dv01, dv05, dv09, rs, dsc = composite.volumetric_stats(composite.drop_dia_um.sort(), composite.drop_vol_um3.sort())
+        dv01, dv05, dv09, rs, dsc = composite.volumetric_stats(composite.drop_dia_um, composite.drop_vol_um3)
         cov = composite.percent_coverage()
         stains = len(composite.stain_areas_valid_px2)
         area = composite.area_in2
