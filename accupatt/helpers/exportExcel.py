@@ -92,7 +92,7 @@ def export_all_to_excel(series: SeriesData, saveFile: str):
         vals.extend([n.type,n.size,n.deflection,n.quantity])
     # Table Series String
     labels.extend(['center_average','smooth_average','equalize_integrals','simulated_adjascent_passes'])
-    vals.extend([s.string_average_center_method,s.string_average_smooth,s.string_equalize_integrals,s.string_simulated_adjascent_passes])
+    vals.extend([s.string.center_method,s.string.smooth,s.string.equalize_integrals,s.string.simulated_adjascent_passes])
     # plot it 
     for i, (label, val) in enumerate(zip(labels,vals)):
         ws.cell(i+1, 1, label)
@@ -102,12 +102,12 @@ def export_all_to_excel(series: SeriesData, saveFile: str):
     
     # Passes Sheet
     ws = wb.create_sheet('Passes')
-    labels = ['pass_name','pass_number','ground_speed','ground_speed_units','spray_height','spray_height_units','pass_heading','wind_direction','wind_speed','wind_speed_units','temperature','temperature_units','humidity','include_in_composite','excitation_wav','emission_wav','trim_left','trim_right','trim_vertical', 'center', 'smooth', 'data_loc_units']
+    labels = ['pass_name','pass_number','ground_speed','ground_speed_units','spray_height','spray_height_units','pass_heading','wind_direction','wind_speed','wind_speed_units','temperature','temperature_units','humidity','string_include_in_composite','cards_include_in_composite','excitation_wav','emission_wav','trim_left','trim_right','trim_vertical', 'center', 'smooth', 'data_loc_units']
     for i, label in enumerate(labels):
         ws.cell(i+1,1,label)
     p: Pass
     for j, p in enumerate(s.passes):
-        vals = [p.name,p.number,p.ground_speed,p.ground_speed_units,p.spray_height,p.spray_height_units,p.pass_heading,p.wind_direction,p.wind_speed,p.wind_speed_units,p.temperature,p.temperature_units,p.humidity,p.include_in_composite,p.excitation_wav,p.emission_wav,p.trim_l,p.trim_r,p.trim_v,p.string_center_method, p.string_smooth, p.data_loc_units]
+        vals = [p.name,p.number,p.ground_speed,p.ground_speed_units,p.spray_height,p.spray_height_units,p.pass_heading,p.wind_direction,p.wind_speed,p.wind_speed_units,p.temperature,p.temperature_units,p.humidity,p.string_include_in_composite,p.cards_include_in_composite,p.string.wav_ex,p.string.wav_em,p.string.trim_l,p.string.trim_r,p.string.trim_v,p.string.center_method, p.string.smooth, p.string.data_loc_units]
         for i, val in enumerate(vals):
             ws.cell(i+1, j+2, val)
     for cell in ws['A'] + ws[1]:
@@ -119,7 +119,7 @@ def export_all_to_excel(series: SeriesData, saveFile: str):
     # Join all df's
     df = pd.DataFrame()
     for i, p in enumerate(s.passes):
-        df = pd.concat([df, p.data_ex, p.data], axis=1)
+        df = pd.concat([df, p.string.data_ex, p.string.data], axis=1)
     for j, p in enumerate(s.passes):
         ws.cell(1,1+(j*4),p.name)
         ws.merge_cells(start_row=1,start_column=1+(j*4),end_row=1,end_column=4+(j*4))

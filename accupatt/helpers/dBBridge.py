@@ -99,11 +99,11 @@ def _load_table_nozzles(c: sqlite3.Cursor, s: SeriesData, alt_id: str = ''):
                                 quantity=row[4]))
 
 def _load_table_passes(c: sqlite3.Cursor, s: SeriesData, file: str):
-    c.execute('''SELECT id, pass_name, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity, include_in_composite FROM passes WHERE series_id = ?''',(s.id,))
+    c.execute('''SELECT id, pass_name, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity, string_include_in_composite, cards_include_in_composite FROM passes WHERE series_id = ?''',(s.id,))
     data = c.fetchall()
     for row in data:
         p = Pass(id=row[0], number=row[2])
-        _, p.name, _, p.ground_speed, p.ground_speed_units, p.spray_height, p.spray_height_units, p.pass_heading, p.wind_direction, p.wind_speed, p.wind_speed_units, p.temperature, p.temperature_units, p.humidity, p.include_in_composite = row
+        _, p.name, _, p.ground_speed, p.ground_speed_units, p.spray_height, p.spray_height_units, p.pass_heading, p.wind_direction, p.wind_speed, p.wind_speed_units, p.temperature, p.temperature_units, p.humidity, p.string_include_in_composite, p.cards_include_in_composite = row
         
         _load_table_pass_string(c,p)
         _load_table_spray_cards(c,p,file)
@@ -234,10 +234,10 @@ def _update_table_nozzles(c: sqlite3.Cursor, s: SeriesData):
 def _update_table_passes(c: sqlite3.Cursor, s: SeriesData):
     p: Pass
     for p in s.passes:
-        c.execute('''INSERT INTO passes (id, series_id, pass_name, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity, include_in_composite) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        c.execute('''INSERT INTO passes (id, series_id, pass_name, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity, string_include_in_composite, cards_include_in_composite) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(id) DO UPDATE SET
-                    pass_name = excluded.pass_name, pass_number = excluded.pass_number, ground_speed = excluded.ground_speed, ground_speed_units = excluded.ground_speed_units, spray_height = excluded.spray_height, spray_height_units = excluded.spray_height_units, pass_heading = excluded.pass_heading, wind_direction = excluded.wind_direction, wind_speed = excluded.wind_speed, wind_speed_units = excluded.wind_speed_units, temperature = excluded.temperature, temperature_units = excluded.temperature_units, humidity = excluded.humidity, include_in_composite = excluded.include_in_composite''',
-                    (p.id, s.id, p.name, p.number, p.ground_speed, p.ground_speed_units, p.spray_height, p.spray_height_units, p.pass_heading, p.wind_direction, p.wind_speed, p.wind_speed_units, p.temperature, p.temperature_units, p.humidity, p.include_in_composite))
+                    pass_name = excluded.pass_name, pass_number = excluded.pass_number, ground_speed = excluded.ground_speed, ground_speed_units = excluded.ground_speed_units, spray_height = excluded.spray_height, spray_height_units = excluded.spray_height_units, pass_heading = excluded.pass_heading, wind_direction = excluded.wind_direction, wind_speed = excluded.wind_speed, wind_speed_units = excluded.wind_speed_units, temperature = excluded.temperature, temperature_units = excluded.temperature_units, humidity = excluded.humidity, string_include_in_composite = excluded.string_include_in_composite, cards_include_in_composite = excluded.cards_include_in_composite''',
+                    (p.id, s.id, p.name, p.number, p.ground_speed, p.ground_speed_units, p.spray_height, p.spray_height_units, p.pass_heading, p.wind_direction, p.wind_speed, p.wind_speed_units, p.temperature, p.temperature_units, p.humidity, p.string_include_in_composite, p.cards_include_in_composite))
         _update_table_pass_string(c, p)
         _update_table_spray_cards(c, p)
     # Loop through passes on db, delete any not in series object

@@ -19,8 +19,6 @@ class Pass:
         self.name = name
         if self.name=='':
             self.name = 'Pass ' + str(self.number)
-        #Include in Composite by default
-        self.include_in_composite = True
         # Pass Info
         self.ground_speed = 0
         self.ground_speed_units = cfg.get_unit_ground_speed()
@@ -37,6 +35,9 @@ class Pass:
         self.string = PassStringData(name=self.name)
         # Spray Card List
         self.spray_cards = []
+        #Include in Composite by default
+        self.string_include_in_composite = True
+        self.cards_include_in_composite = True
 
     def calc_airspeed(self, units='mph') -> int:
         gs = float(self.ground_speed)

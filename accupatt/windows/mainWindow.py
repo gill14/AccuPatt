@@ -30,7 +30,7 @@ from accupatt.windows.stringAdvancedOptions import StringAdvancedOptions
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'mainWindow.ui'))
 Ui_Form_About, baseclass_about = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'about.ui'))
-testing = False
+testing = True
 class MainWindow(baseclass):
 
     def __init__(self, *args, **kwargs):
@@ -335,7 +335,7 @@ class MainWindow(baseclass):
                     item.setCheckState(Qt.CheckState.Unchecked)
                     if not p.string.data.empty:
                         item.setFlags(Qt.ItemFlag.ItemIsEnabled|Qt.ItemFlag.ItemIsSelectable|Qt.ItemFlag.ItemIsUserCheckable)
-                        if p.include_in_composite:
+                        if p.string_include_in_composite:
                             item.setCheckState(Qt.CheckState.Checked)
                         else:
                             item.setCheckState(Qt.CheckState.PartiallyChecked)
@@ -505,7 +505,7 @@ class MainWindow(baseclass):
             item.setCheckState(Qt.CheckState.PartiallyChecked)
         # Update SeriesData -> Pass object
         p = self.seriesData.passes[self.ui.listWidgetStringPass.row(item)]
-        p.include_in_composite = (item.checkState() == Qt.CheckState.Checked)
+        p.string_include_in_composite = (item.checkState() == Qt.CheckState.Checked)
         # Replot composites, simulations
         self.updateStringPlots(modify=True, composites=True, simulations=True)
 

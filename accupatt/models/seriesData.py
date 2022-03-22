@@ -21,23 +21,37 @@ class SeriesData:
     '''
     The methods below are used to convert and calculate info values as needed
     '''
-    def calc_airspeed_mean(self, units: str = 'mph'):
-        return int(np.mean([p.calc_airspeed(units) for p in self.passes if p.include_in_composite]))
+    def calc_airspeed_mean(self, units: str = 'mph', string_included=True, cards_included=True):
+        return int(np.mean([p.calc_airspeed(units) for p in self._get_applicable_passes(string_included, cards_included)]))
 
-    def calc_spray_height_mean(self):
-        return float(np.mean([p.spray_height for p in self.passes if p.include_in_composite]))
+    def calc_spray_height_mean(self, string_included=True, cards_included=True):
+        return float(np.mean([p.spray_height for p in self._get_applicable_passes(string_included, cards_included)]))
 
-    def calc_wind_speed_mean(self):
-        return float(np.mean([p.wind_speed for p in self.passes if p.include_in_composite]))
+    def calc_wind_speed_mean(self, string_included=True, cards_included=True):
+        return float(np.mean([p.wind_speed for p in self._get_applicable_passes(string_included, cards_included)]))
 
-    def calc_crosswind_mean(self):
-        return float(np.mean([p.calc_crosswind() for p in self.passes if p.include_in_composite]))
+    def calc_crosswind_mean(self, string_included=True, cards_included=True):
+        return float(np.mean([p.calc_crosswind() for p in self._get_applicable_passes(string_included, cards_included)]))
 
-    def calc_temperature_mean(self):
-        return int(np.mean([p.temperature for p in self.passes if p.include_in_composite]))
+    def calc_temperature_mean(self, string_included=True, cards_included=True):
+        return int(np.mean([p.temperature for p in self._get_applicable_passes(string_included, cards_included)]))
 
-    def calc_humidity_mean(self):
-        return int(np.mean([p.humidity for p in self.passes if p.include_in_composite]))
+    def calc_humidity_mean(self, string_included=True, cards_included=True):
+        return int(np.mean([p.humidity for p in self._get_applicable_passes(string_included, cards_included)]))
+
+    def _get_applicable_passes(self, string_included, cards_included):
+        applicablePasses: list[Pass] = []
+        for p in self.passes:
+            include = True
+            if string_included:
+                if not p.string_include_in_composite:
+                    include = False
+            if cards_included:
+                if not p.cards_include_in_composite:
+                    include = False
+            if include:
+                applicablePasses.append(p)
+        return applicablePasses
 
     #Convience Accessor so that the model is only run once  
     def calc_droplet_stats(self):

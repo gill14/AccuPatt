@@ -73,22 +73,23 @@ CREATE TABLE IF NOT EXISTS nozzles (
     quantity        INTEGER
 );
 CREATE TABLE IF NOT EXISTS passes (
-    id                      TEXT PRIMARY KEY,
-    series_id               TEXT REFERENCES series(id),
-    pass_name               TEXT,
-    pass_number             INTEGER,
-    ground_speed            REAL,
-    ground_speed_units      TEXT,
-    spray_height            REAL,
-    spray_height_units      TEXT,
-    pass_heading            INTEGER,
-    wind_direction          INTEGER,
-    wind_speed              REAL,
-    wind_speed_units        TEXT,
-    temperature             REAL,
-    temperature_units       TEXT,
-    humidity                REAL,
-    include_in_composite    INTEGER
+    id                          TEXT PRIMARY KEY,
+    series_id                   TEXT REFERENCES series(id),
+    pass_name                   TEXT,
+    pass_number                 INTEGER,
+    ground_speed                REAL,
+    ground_speed_units          TEXT,
+    spray_height                REAL,
+    spray_height_units          TEXT,
+    pass_heading                INTEGER,
+    wind_direction              INTEGER,
+    wind_speed                  REAL,
+    wind_speed_units            TEXT,
+    temperature                 REAL,
+    temperature_units           TEXT,
+    humidity                    REAL,
+    string_include_in_composite INTEGER,
+    cards_include_in_composite  INTEGER
 );
 CREATE TABLE IF NOT EXISTS pass_string (
     pass_id                 TEXT PRIMARY KEY REFERENCES passes(id),
