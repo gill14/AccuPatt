@@ -204,6 +204,7 @@ def load_from_accupatt_1_file(file) -> SeriesData:
             c.include_in_composite = 1 if sh.cell(row=3,column=col).value else 0
             if c.has_image:
                 c.threshold_grayscale = int(sh.cell(row=4,column=col).value)
+            c.dpi = 600
             c.threshold_type = cfg.THRESHOLD_TYPE_GRAYSCALE
             c.spread_method = spread_method
             c.spread_factor_a = spread_a
