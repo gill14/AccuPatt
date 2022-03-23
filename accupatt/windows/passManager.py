@@ -37,7 +37,7 @@ class PassManager(baseclass):
     def deletePass(self):
         row = self.ui.tableView.selectedIndexes()[0].row()
         p: Pass = self.tm.pass_list[row]
-        if not p.data.empty or p.spray_cards:
+        if p.has_string_data() or p.has_card_data():
             msg = QMessageBox.question(self,'Are You Sure?',
                                        f'{p.name} constains aquired data which will be permanently erased.')
             if msg == QMessageBox.StandardButton.No:
@@ -46,6 +46,9 @@ class PassManager(baseclass):
 
     def accept(self):
         self.pass_list_updated.emit(copy.copy(self.tm.pass_list))
+        # Update default if requested
+        if self.ui.checkBoxUpdateDefaultNumberOfPasses.isChecked():
+            cfg.set_number_of_passes(len(self.tm.pass_list))
         #Notify Requestor
         super().accept()
 
@@ -216,8 +219,11 @@ class PassTable(QAbstractTableModel):
         p_nums = []
         for p in self.pass_list:
             p_nums.append(p.number)
-        if nextIndex <= max(p_nums):
-            nextIndex = max(p_nums)+1
+        if p_nums:
+            if nextIndex <= max(p_nums):
+                nextIndex = max(p_nums)+1
+        else:
+            nextIndex = 1
         self.beginInsertRows(QModelIndex(), len(self.pass_list), len(self.pass_list))
         #Create pass and add it to listwidget
         self.pass_list.append(Pass(number=nextIndex))

@@ -396,7 +396,7 @@ class MainWindow(baseclass):
                 backAndForthWidget=self.ui.plotWidgetBackAndForth,
                 tableView=self.ui.tableWidgetCV)
             for row, p in enumerate(self.seriesData.passes):
-                if p.spray_cards and any([sc.include_in_composite for sc in p.spray_cards]):
+                if p.has_card_data() and p.cards_include_in_composite and any([sc.include_in_composite for sc in p.spray_cards]):
                     # Select the pass to update plots
                     self.ui.listWidgetSprayCardPass.setCurrentRow(row)
                     # Select the pass for droplet dist
