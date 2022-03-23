@@ -13,6 +13,7 @@ def clear_all_settings():
 #Unit Labels
 UNIT_MPH = 'mph'
 UNIT_KPH = 'kph'
+UNIT_KN = 'kn'
 UNIT_FT = 'ft'
 UNIT_M = 'm'
 UNIT_IN = 'in'
@@ -86,7 +87,7 @@ def set_number_of_passes(value: int):
     QSettings().setValue(_NUMBER_OF_PASSES, value)
 
 _UNIT_GROUND_SPEED = 'unit_ground_speed'
-UNITS_GROUND_SPEED = [UNIT_MPH, UNIT_KPH]
+UNITS_GROUND_SPEED = [UNIT_MPH, UNIT_KPH, UNIT_KN]
 UNIT_GROUND_SPEED__DEFAULT = UNITS_GROUND_SPEED[0]
 def get_unit_ground_speed() -> str:
     return QSettings().value(_UNIT_GROUND_SPEED, defaultValue=UNIT_GROUND_SPEED__DEFAULT, type=str)

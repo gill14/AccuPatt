@@ -182,27 +182,27 @@ class PassTable(QAbstractTableModel):
         elif col==4:
             p.cards_include_in_composite= (Qt.CheckState(value) == Qt.CheckState.Checked)
         elif col==5:
-            p.ground_speed = float(value)
+            p.set_ground_speed(value)
         elif col==6:
             p.ground_speed_units = value
         elif col==7:
-            p.spray_height = float(value)
+            p.set_spray_height(value)
         elif col==8:
             p.spray_height_units = value
         elif col==9:
-            p.pass_heading = int(value)
+            p.set_pass_heading(value)
         elif col==10:
-            p.wind_direction = int(value)
+            p.set_wind_direction(value)
         elif col==11:
-            p.wind_speed = float(value)
+            p.set_wind_speed(value)
         elif col==12:
             p.wind_speed_units = value
         elif col==13:
-            p.temperature = float(value)
+            p.set_temperature(value)
         elif col==14:
             p.temperature_units = value
         elif col==15:
-            p.humidity = float(value)
+            p.set_humidity(value)
         else:
             return False
         self.dataChanged.emit(index,index)

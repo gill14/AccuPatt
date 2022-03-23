@@ -74,7 +74,7 @@ class ReportMaker:
     def save(self):
         self.canvas.save()
 
-    def printHeaders(self, applicator: bool = True, aircraft: bool = True, spray_system: bool = True, nozzles: bool = True, flyin: bool = True, observables: bool = True, setup_notes: bool = True):
+    def printHeaders(self, applicator: bool = True, aircraft: bool = True, spray_system: bool = True, nozzles: bool = True, flyin: bool = True, observables: bool = True, setup_notes: bool = True, string_include = False, cards_include = False):
         # Build first row of tables
         line_1 = []
         if applicator:
@@ -96,7 +96,7 @@ class ReportMaker:
         if flyin:
             line_2.append(self._header_flyin())
         if observables:
-            line_2.append(self._header_observables())
+            line_2.append(self._header_observables(string_included=string_include, cards_included=cards_include))
         if setup_notes:
             line_2.append(self._header_setup_notes())
         if len(line_2) > 0:
@@ -108,7 +108,7 @@ class ReportMaker:
     
     def report_safe_string(self, overlayWidget: MplWidget, averageWidget: MplWidget, racetrackWidget: MplWidget, backAndForthWidget: MplWidget, tableView):
         # Headers
-        self.printHeaders()
+        self.printHeaders(string_include=True)
         # String Plots
         y_space = 25
         y_tall = 140
@@ -130,7 +130,7 @@ class ReportMaker:
         
     def report_safe_card_summary(self, spatialDVWidget: MplWidget, spatialCoverageWidget: MplWidget, histogramNumberWidget: MplWidget, histogramCoverageWidget: MplWidget, tableView, passData: Pass):
         # Headers
-        self.printHeaders()
+        self.printHeaders(cards_include=True)
         # Card Plots
         y_space = 25
         y_tall = 140
@@ -303,7 +303,7 @@ class ReportMaker:
             ['', f'Analyst: {self.i.flyin_analyst}']
         ], style=self.tablestyle)
         
-    def _header_observables(self):
+    def _header_observables(self, string_included=False, cards_included=False):
         #Pass data
         row1 = ['','']
         row2 = [TTR('Observables'),'Airspeed:']
@@ -312,22 +312,29 @@ class ReportMaker:
         row5 = ['', 'X-Wind Speed:']
         row6 = ['', 'Temperature:']
         row7 = ['', 'Humidity:']
+        # Run series calcs first to obtain common units
+        _, airspeed_units, airspeed_string = self.s.get_airspeed_mean(string_included=string_included, cards_included=cards_included)
+        _, spray_height_units, spray_height_string = self.s.get_spray_height_mean(string_included=string_included, cards_included=cards_included)
+        _, wind_speed_units, wind_speed_string = self.s.get_wind_speed_mean(string_included=string_included, cards_included=cards_included)
+        _, crosswind_speed_units, crosswind_speed_string = self.s.get_crosswind_mean(string_included=string_included, cards_included=cards_included)
+        _, temperature_units, temperature_string = self.s.get_temperature_mean(string_included=string_included, cards_included=cards_included)
+        _, humidity_units, humidity_string = self.s.get_humidity_mean(string_included=string_included, cards_included=cards_included)
         p: Pass
-        for p in self.s.passes:
+        for p in self.s.get_includable_passes(string_included=string_included, cards_included=cards_included):
             row1.append(p.name)
-            row2.append(p.str_airspeed(units='mph'))
-            row3.append(p.str_spray_height())
-            row4.append(p.str_wind_speed())
-            row5.append(p.str_crosswind(units='mph'))
+            row2.append(p.get_airspeed(airspeed_units)[2])
+            row3.append(p.get_spray_height(spray_height_units)[2])
+            row4.append(p.get_wind_speed(wind_speed_units)[2])
+            row5.append(p.get_crosswind(crosswind_speed_units)[2])
             row6.append('-')
             row7.append('-')
         row1.append('Average')
-        row2.append(f'{self.s.calc_airspeed_mean()} mph')
-        row3.append(f'{self.s.calc_spray_height_mean():.1f} ft')
-        row4.append(f'{self.s.calc_wind_speed_mean():.1f} mph')
-        row5.append(f'{self.s.calc_crosswind_mean():.1f} mph')
-        row6.append(f'{self.s.calc_temperature_mean()} °F')
-        row7.append(f'{self.s.calc_humidity_mean()}%')
+        row2.append(airspeed_string)
+        row3.append(spray_height_string)
+        row4.append(wind_speed_string)
+        row5.append(crosswind_speed_string)
+        row6.append(temperature_string)
+        row7.append(humidity_string)
         return Table([row1,row2,row3,row4,row5,row6,row7], style=self.tablestyle_with_headers)
         
     def _header_setup_notes(self):
@@ -368,16 +375,17 @@ class ReportMaker:
         tablestyle_alt = self.tablestyle_with_headers + [
             ('BACKGROUND',(3,6),(3,-1),colors.lightgrey)
         ]
+        dv01, dv05, dv09, plt100, plt200, dsc, rs = self.s.calc_droplet_stats(cards_included=True)
         data = []
         data.append(['', '','Measured \u00B9\u22C5\u00B2', 'USDA Model \u00B3'])
         for row in range(tableWidget.rowCount()):
             data.append(['',tableWidget.item(row,0).text(), tableWidget.item(row,1).text(),''])
         data[1][0] = TTR(f'Composite - {passName}')
-        data[1][3] = self.s.calc_dsc()
-        data[2][3] = f'{self.s.calc_dv01()} μm'
-        data[3][3] = f'{self.s.calc_dv05()} μm'
-        data[4][3] = f'{self.s.calc_dv09()} μm'
-        data[5][3] = f'{self.s.calc_rs():.2f}'
+        data[1][3] = dsc
+        data[2][3] = f'{dv01} μm'
+        data[3][3] = f'{dv05} μm'
+        data[4][3] = f'{dv09} μm'
+        data[5][3] = f'{rs:.2f}'
         return Table(data, style=tablestyle_alt)
     
     def _list_disclaimers(self, passData:Pass):

@@ -14,21 +14,28 @@ class PassInfoWidget(baseclass):
         self.ui.setupUi(self)
        
     def fill_from_pass(self, passData: Pass):
-        self.ui.lineEditGS.setText(passData.str_ground_speed())
+        _, gs_unit, gs, _ = passData.get_ground_speed()
+        self.ui.lineEditGS.setText(gs)
         self.ui.comboBoxUnitsGS.addItems(cfg.UNITS_GROUND_SPEED)
-        self.ui.comboBoxUnitsGS.setCurrentText(passData.ground_speed_units)
-        self.ui.lineEditSH.setText(passData.str_spray_height())
+        self.ui.comboBoxUnitsGS.setCurrentText(gs_unit)
+        _, sh_unit, sh, _ = passData.get_spray_height()
+        self.ui.lineEditSH.setText(sh)
         self.ui.comboBoxUnitsSH.addItems(cfg.UNITS_SPRAY_HEIGHT)
-        self.ui.comboBoxUnitsSH.setCurrentText(passData.spray_height_units)
-        self.ui.lineEditPH.setText(passData.str_pass_heading())
-        self.ui.lineEditWD.setText(passData.str_wind_direction())
-        self.ui.lineEditWS.setText(passData.str_wind_speed())
+        self.ui.comboBoxUnitsSH.setCurrentText(sh_unit)
+        _, _, ph, _ = passData.get_pass_heading()
+        self.ui.lineEditPH.setText(ph)
+        _, _, wd, _ = passData.get_wind_direction()
+        self.ui.lineEditWD.setText(wd)
+        _, ws_unit, ws, _ = passData.get_wind_speed()
+        self.ui.lineEditWS.setText(ws)
         self.ui.comboBoxUnitsWS.addItems(cfg.UNITS_WIND_SPEED)
-        self.ui.comboBoxUnitsWS.setCurrentText(passData.wind_speed_units)
-        self.ui.lineEditT.setText(passData.str_temperature())
+        self.ui.comboBoxUnitsWS.setCurrentText(ws_unit)
+        _, t_unit, t, _ = passData.get_temperature()
+        self.ui.lineEditT.setText(t)
         self.ui.comboBoxUnitsT.addItems(cfg.UNITS_TEMPERATURE)
-        self.ui.comboBoxUnitsT.setCurrentText(passData.temperature_units)
-        self.ui.lineEditH.setText(passData.str_humidity())
+        self.ui.comboBoxUnitsT.setCurrentText(t_unit)
+        _, _, h, _ = passData.get_humidity()
+        self.ui.lineEditH.setText(h)
     
     '''
     Check if each field has an invalid value, else set the currently selected
@@ -39,13 +46,11 @@ class PassInfoWidget(baseclass):
         p = passData
         excepts = []
         #Ground Speed
-        if not p.set_ground_speed(self.ui.lineEditGS.text()):
+        if not p.set_ground_speed(self.ui.lineEditGS.text(), units=self.ui.comboBoxUnitsGS.currentText()):
             excepts.append('-GROUND SPEED cannot be converted to a NUMBER')
-        p.ground_speed_units = self.ui.comboBoxUnitsGS.currentText()
         #Spray Height
-        if not p.set_spray_height(self.ui.lineEditSH.text()):
+        if not p.set_spray_height(self.ui.lineEditSH.text(), units=self.ui.comboBoxUnitsSH.currentText()):
             excepts.append('-SPRAY HEIGHT cannot be converted to a NUMBER')
-        p.spray_height_units = self.ui.comboBoxUnitsSH.currentText()
         #Pass Heading
         if not p.set_pass_heading(self.ui.lineEditPH.text()):
             excepts.append('-PASS HEADING cannot be converted to an INTEGER')
@@ -53,13 +58,11 @@ class PassInfoWidget(baseclass):
         if not p.set_wind_direction(self.ui.lineEditWD.text()):
             excepts.append('-WIND DIRECTION cannot be converted to a NUMBER')
         #Wind Speed
-        if not p.set_wind_speed(self.ui.lineEditWS.text()):
+        if not p.set_wind_speed(self.ui.lineEditWS.text(), units=self.ui.comboBoxUnitsWS.currentText()):
             excepts.append('-WIND SPEED cannot be converted to a NUMBER')
-        p.wind_speed_units = self.ui.comboBoxUnitsWS.currentText()
         #Temperature
-        if not p.set_temperature(self.ui.lineEditT.text()):
+        if not p.set_temperature(self.ui.lineEditT.text(), units=self.ui.comboBoxUnitsT.currentText()):
             excepts.append('-TEMPERATURE cannot be converted to a NUMBER')
-        p.temperature_units = self.ui.comboBoxUnitsT.currentText()
         #Humidity
         if not p.set_humidity(self.ui.lineEditH.text()):
             excepts.append('-HUMIDITY cannot be converted to a NUMBER')

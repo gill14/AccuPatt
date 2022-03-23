@@ -19,75 +19,80 @@ class SeriesData:
         self.string = SeriesStringData(self.passes, self.info.swath_units)
 
     '''
-    The methods below are used to convert and calculate info values as needed
+    GET methods below optionally take imposed unit, otherwise find most common unit, convert values and return a tuple
+    containing (mean_value, mean_value_units, mean_value_and_units_string)
     '''
-    def calc_airspeed_mean(self, units: str = 'mph', string_included=True, cards_included=True):
-        return int(np.mean([p.calc_airspeed(units) for p in self._get_applicable_passes(string_included, cards_included)]))
+    def get_airspeed_mean(self, units=None, string_included=False, cards_included=False) -> tuple[int, str, str]:
+        passes = self.get_includable_passes(string_included, cards_included)
+        if len(passes) < 1:
+            return 0, '-', '-'
+        units = units if units else self._get_common_unit([p.ground_speed_units for p in passes])
+        value = round(np.mean([p.get_airspeed(units)[0] for p in passes]))
+        return value, units, f'{value} {units}'
 
-    def calc_spray_height_mean(self, string_included=True, cards_included=True):
-        return float(np.mean([p.spray_height for p in self._get_applicable_passes(string_included, cards_included)]))
+    def get_spray_height_mean(self, units=None, string_included=False, cards_included=False) -> tuple[float, str, str]:
+        passes = self.get_includable_passes(string_included, cards_included)
+        if len(passes) < 1:
+            return 0, '-', '-'
+        units = units if units else self._get_common_unit([p.spray_height_units for p in passes])
+        value = np.mean([p.get_spray_height(units)[0] for p in passes])
+        return value, units, f'{value:.1f} {units}'
 
-    def calc_wind_speed_mean(self, string_included=True, cards_included=True):
-        return float(np.mean([p.wind_speed for p in self._get_applicable_passes(string_included, cards_included)]))
+    def get_wind_speed_mean(self, units=None, string_included=False, cards_included=False) -> tuple[float, str, str]:
+        passes = self.get_includable_passes(string_included, cards_included)
+        if len(passes) < 1:
+            return 0, '-', '-'
+        units = units if units else self._get_common_unit([p.wind_speed_units for p in passes])
+        value = np.mean([p.get_wind_speed(units)[0] for p in passes])
+        return value, units, f'{value:.1f} {units}'
 
-    def calc_crosswind_mean(self, string_included=True, cards_included=True):
-        return float(np.mean([p.calc_crosswind() for p in self._get_applicable_passes(string_included, cards_included)]))
+    def get_crosswind_mean(self, units=None, string_included=False, cards_included=False) -> tuple[float, str, str]:
+        passes = self.get_includable_passes(string_included, cards_included)
+        if len(passes) < 1:
+            return 0, '-', '-'
+        units = units if units else self._get_common_unit([p.wind_speed_units for p in passes])
+        value = np.mean([p.get_crosswind(units)[0] for p in passes])
+        return value, units, f'{value:.1f} {units}'
 
-    def calc_temperature_mean(self, string_included=True, cards_included=True):
-        return int(np.mean([p.temperature for p in self._get_applicable_passes(string_included, cards_included)]))
+    def get_temperature_mean(self, units=None, string_included=False, cards_included=False) -> tuple[float, str, str]:
+        passes = self.get_includable_passes(string_included, cards_included)
+        if len(passes) < 1:
+            return 0, '-', '-'
+        units = units if units else self._get_common_unit([p.temperature_units for p in passes])
+        value = np.mean([p.get_temperature(units)[0] for p in passes])
+        return value, units, f'{value:.1f} {units}'
 
-    def calc_humidity_mean(self, string_included=True, cards_included=True):
-        return int(np.mean([p.humidity for p in self._get_applicable_passes(string_included, cards_included)]))
+    def get_humidity_mean(self, string_included=False, cards_included=False) -> tuple[float, str, str]:
+        passes = self.get_includable_passes(string_included, cards_included)
+        if len(passes) < 1:
+            return 0, '-', '-'
+        value = np.mean([p.get_humidity()[0] for p in passes])
+        return value, '%', f'{value:.1f}%'
 
-    def _get_applicable_passes(self, string_included, cards_included):
-        applicablePasses: list[Pass] = []
+    def get_includable_passes(self, string_included, cards_included):
+        includablePasses: list[Pass] = []
         for p in self.passes:
             include = True
-            if string_included:
-                if not p.string_include_in_composite:
-                    include = False
-            if cards_included:
-                if not p.cards_include_in_composite:
-                    include = False
+            if string_included and (not p.has_string_data() or not p.string_include_in_composite):
+                include = False
+            if cards_included and (not p.has_card_data() or not p.cards_include_in_composite):
+                include = False
             if include:
-                applicablePasses.append(p)
-        return applicablePasses
+                includablePasses.append(p)
+        return includablePasses
+    
+    def _get_common_unit(self, units: list[str]) -> str:
+        return max(set(units), key=units.count)
 
-    #Convience Accessor so that the model is only run once  
-    def calc_droplet_stats(self):
-        model = self._populate_model()
-        return model.dv01(), model.dv05(), model.dv09(), model.p_lt_100(), model.p_lt_100(), model.dsc(), model.rs()
-
-    #Individual accessors, model re-runs each time.
-    def calc_dv01(self):
-        return self._populate_model().dv01()
-
-    def calc_dv05(self):
-        return self._populate_model().dv05()
-
-    def calc_dv09(self):
-        return self._populate_model().dv09()
-
-    def calc_p_lt_100(self):
-        return self._populate_model().p_lt_100()
-
-    def calc_p_lt_200(self):
-        return self._populate_model().p_lt_200()
-
-    def calc_dsc(self):
-        return self._populate_model().dsc()
-
-    def calc_rs(self):
-        return self._populate_model().rs()
-
-    def _populate_model(self):
+    # Run USDA Model on input params and observables
+    def calc_droplet_stats(self, string_included=False, cards_included=False) -> tuple[int, int, int, float, float, str, float]:
         model = AtomizationModelMulti()
         for n in self.info.nozzles:
             model.addNozzleSet(name=n.type,
                                orifice=n.size,
-                               airspeed=self.calc_airspeed_mean(units=cfg.UNIT_MPH),
+                               airspeed=self.get_airspeed_mean(units=cfg.UNIT_MPH, string_included=string_included, cards_included=cards_included)[0],
                                pressure=self.info.get_pressure(units=cfg.UNIT_PSI),
                                angle=n.deflection,
                                quantity=n.quantity)
-        return model
+        return model.dv01(), model.dv05(), model.dv09(), model.p_lt_100(), model.p_lt_100(), model.dsc(), model.rs()
         
