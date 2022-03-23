@@ -137,7 +137,7 @@ def export_all_to_excel(series: SeriesData, saveFile: str):
     ws = wb.create_sheet('Card Data')
     col_pass_name = 2
     for j, p in enumerate(s.passes):
-        if len(p.spray_cards) > 0:
+        if p.has_card_data():
             ws.cell(1, col_pass_name, p.name)
             ws.merge_cells(start_row=1,start_column=col_pass_name,end_row=1,end_column=col_pass_name+len(p.spray_cards)-1)
             for k, c in enumerate(p.spray_cards):

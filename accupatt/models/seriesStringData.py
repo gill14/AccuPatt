@@ -25,7 +25,7 @@ class SeriesStringData:
         self.average = Pass(name='Average')
         
     def modifyPatterns(self):
-        active_passes = [p for p in self.passes if p.string_include_in_composite and not p.string.data.empty]
+        active_passes = [p for p in self.passes if p.string_include_in_composite and p.has_string_data()]
         if len(active_passes)==0:
             return
         # Apply individual pattern modifications
@@ -76,7 +76,7 @@ class SeriesStringData:
         # Setup and clear the plotter
         self._config_mpl_plotter(mplWidget)
         # Filter plottable passes
-        active_passes = [p for p in self.passes if p.string_include_in_composite and not p.string.data.empty]
+        active_passes = [p for p in self.passes if p.string_include_in_composite and p.has_string_data()]
         # Iterate over plottable passes
         for p in active_passes:
             # Numpy-ize dataframe columns to plot

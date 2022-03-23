@@ -30,7 +30,7 @@ from accupatt.windows.stringAdvancedOptions import StringAdvancedOptions
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'mainWindow.ui'))
 Ui_Form_About, baseclass_about = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'about.ui'))
-testing = True
+testing = False
 class MainWindow(baseclass):
 
     def __init__(self, *args, **kwargs):
@@ -333,7 +333,7 @@ class MainWindow(baseclass):
                     item = QListWidgetItem(p.name, lwps)
                     item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
                     item.setCheckState(Qt.CheckState.Unchecked)
-                    if not p.string.data.empty:
+                    if p.has_string_data():
                         item.setFlags(Qt.ItemFlag.ItemIsEnabled|Qt.ItemFlag.ItemIsSelectable|Qt.ItemFlag.ItemIsUserCheckable)
                         if p.string_include_in_composite:
                             item.setCheckState(Qt.CheckState.Checked)
@@ -492,10 +492,10 @@ class MainWindow(baseclass):
             self.ui.checkBoxStringPassCenter.setEnabled(not passData.string.rebase)
             self.updateStringPlots(individuals=True)
             #Update the info labels on the individual pass tab
-            if passData.string.data.empty:
-                self.ui.buttonReadString.setText(f'Capture {passData.name}')
-            else:
+            if passData.has_string_data():
                 self.ui.buttonReadString.setText(f'Edit {passData.name}')
+            else:
+                self.ui.buttonReadString.setText(f'Capture {passData.name}')
         
     @pyqtSlot(QListWidgetItem)
     def stringPassItemChanged(self, item: QListWidgetItem):

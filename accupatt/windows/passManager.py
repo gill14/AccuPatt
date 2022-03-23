@@ -107,9 +107,9 @@ class PassTable(QAbstractTableModel):
                 return p.name
         elif col==1:
             if role==Qt.ItemDataRole.CheckStateRole:
-                return Qt.CheckState.Unchecked if p.string.data.empty else Qt.CheckState.Checked
+                return Qt.CheckState.Checked if p.has_string_data() else Qt.CheckState.Unchecked
             elif role==Qt.ItemDataRole.DisplayRole:
-                return 'No' if p.string.data.empty else 'Yes'
+                return 'Yes' if p.has_string_data() else 'No'
         elif col==2:
             if role==Qt.ItemDataRole.CheckStateRole:
                 return Qt.CheckState.Checked if p.string_include_in_composite else Qt.CheckState.Unchecked
@@ -119,9 +119,9 @@ class PassTable(QAbstractTableModel):
                 return p.string_include_in_composite
         elif col==3:
             if role==Qt.ItemDataRole.CheckStateRole:
-                return Qt.CheckState.Checked if len(p.spray_cards)>0 else Qt.CheckState.Unchecked
+                return Qt.CheckState.Checked if p.has_card_data() else Qt.CheckState.Unchecked
             elif role==Qt.ItemDataRole.DisplayRole:
-                return 'No' if len(p.spray_cards)==0 else 'Yes'
+                return 'Yes' if p.has_card_data() else 'No'
         elif col==4:
             if role==Qt.ItemDataRole.CheckStateRole:
                 return Qt.CheckState.Checked if p.cards_include_in_composite else Qt.CheckState.Unchecked
@@ -236,25 +236,25 @@ class PassTable(QAbstractTableModel):
         col = index.column()
         p: Pass = self.pass_list[row]
         if col==1:
-            if p.string.data.empty:
-                return Qt.ItemFlag.ItemIsSelectable
-            else:
+            if p.has_string_data():
                 return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
+            else:
+                return Qt.ItemFlag.ItemIsSelectable
         elif col==2:
-            if p.string.data.empty:
-                return Qt.ItemFlag.ItemIsSelectable
-            else:
+            if p.has_string_data():
                 return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsUserCheckable
+            else:
+                return Qt.ItemFlag.ItemIsSelectable
         elif col==3:
-            if len(p.spray_cards)==0:
-                return Qt.ItemFlag.ItemIsSelectable
-            else:
+            if p.has_card_data():
                 return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
-        elif col==4:
-            if len(p.spray_cards)==0:
-                return Qt.ItemFlag.ItemIsSelectable
             else:
+                return Qt.ItemFlag.ItemIsSelectable
+        elif col==4:
+            if p.has_card_data():
                 return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsUserCheckable
+            else:
+                return Qt.ItemFlag.ItemIsSelectable
         else:
             return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEditable
 

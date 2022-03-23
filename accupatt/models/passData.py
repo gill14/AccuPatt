@@ -39,6 +39,12 @@ class Pass:
         self.string_include_in_composite = True
         self.cards_include_in_composite = True
 
+    def has_string_data(self) -> bool:
+        return not self.string.data.empty
+    
+    def has_card_data(self) -> bool:
+        return len(self.spray_cards) > 0
+
     def calc_airspeed(self, units='mph') -> int:
         gs = float(self.ground_speed)
         gs_units = self.ground_speed_units
