@@ -22,7 +22,7 @@ from accupatt.widgets import mplwidget, seriesinfowidget, singleCVImageWidget, s
 from PyQt6 import uic
 from PyQt6.QtCore import QSignalBlocker, Qt, pyqtSlot
 from PyQt6.QtGui import QAction, QActionGroup
-from PyQt6.QtWidgets import (QComboBox, QFileDialog, QLabel,
+from PyQt6.QtWidgets import (QComboBox, QFileDialog, QLabel, QListWidget,
                              QListWidgetItem, QMenu, QMessageBox, QProgressDialog)
 
 from accupatt.windows.reportManager import ReportManager
@@ -111,6 +111,7 @@ class MainWindow(baseclass):
 
         # --> Setup Card Analysis Tab
         self.ui.listWidgetSprayCardPass.itemSelectionChanged.connect(self.sprayCardPassSelectionChanged)
+        self.ui.listWidgetSprayCardPass.itemChanged[QListWidgetItem].connect(self.sprayCardPassItemChanged)
         self.ui.listWidgetSprayCard.itemSelectionChanged.connect(self.sprayCardSelectionChanged)
         self.ui.listWidgetSprayCard.itemChanged[QListWidgetItem].connect(self.sprayCardItemChanged)
         self.ui.buttonEditCards.clicked.connect(self.editSprayCardList)
@@ -303,6 +304,9 @@ class MainWindow(baseclass):
         #Refresh ListWidgets
         self.updatePassListWidgets(string=True, cards=True)
 
+        # Updates individual pass view and capture/edit button
+        self.stringPassSelectionChanged()
+        
         # Set swath adjust UI, plot loc unit labels and replot
         self.swathTargetChanged()
         
@@ -327,34 +331,27 @@ class MainWindow(baseclass):
     def updatePassListWidgets(self, string = False, string_index = -1, cards = False, cards_index = -1):
         # ListWidget String Pass
         if string:
-            with QSignalBlocker(lwps := self.ui.listWidgetStringPass):
+           with QSignalBlocker(lwps := self.ui.listWidgetStringPass):
                 lwps.clear()
                 for p in self.seriesData.passes:
-                    item = QListWidgetItem(p.name, lwps)
-                    item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
-                    item.setCheckState(Qt.CheckState.Unchecked)
-                    if p.has_string_data():
-                        item.setFlags(Qt.ItemFlag.ItemIsEnabled|Qt.ItemFlag.ItemIsSelectable|Qt.ItemFlag.ItemIsUserCheckable)
-                        if p.string_include_in_composite:
-                            item.setCheckState(Qt.CheckState.Checked)
-                        else:
-                            item.setCheckState(Qt.CheckState.PartiallyChecked)
-                    lwps.setCurrentItem(item)
-                if string_index != -1:
-                    lwps.setCurrentRow(string_index)
+                    self._addPassListWidgetItem(lwps, p.name, p.has_string_data(), p.string_include_in_composite) 
+                lwps.setCurrentRow(string_index if string_index >= 0 else lwps.count()-1)
+        
         # ListWidget Cards Pass
         if cards:
             with QSignalBlocker(lwpc := self.ui.listWidgetSprayCardPass):
                 lwpc.clear()
                 for p in self.seriesData.passes:
-                    item = QListWidgetItem(p.name, lwpc)
-                    item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
-                    item.setCheckState(Qt.CheckState.Unchecked)
-                    if p.spray_cards:
-                        item.setCheckState(Qt.CheckState.Checked)
-                    lwpc.setCurrentItem(item)
-                if cards_index != -1:
-                    lwpc.setCurrentRow(cards_index)
+                    self._addPassListWidgetItem(lwpc, p.name, p.has_card_data(), p.cards_include_in_composite)
+                lwpc.setCurrentRow(cards_index if cards_index >= 0 else lwpc.count()-1)
+    
+    def _addPassListWidgetItem(self, listWidget: QListWidget, passName: str, hasData: bool, include: bool):
+        item = QListWidgetItem(passName, listWidget)
+        item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+        item.setCheckState(Qt.CheckState.Unchecked)
+        if hasData:
+            item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(Qt.CheckState.Checked if include else Qt.CheckState.PartiallyChecked)
     
     @pyqtSlot()
     def resetDefaults(self):
@@ -702,6 +699,18 @@ class MainWindow(baseclass):
                         item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
         self.sprayCardSelectionChanged()
         self.updateCardPlots(spatial=True)
+
+    @pyqtSlot(QListWidgetItem)
+    def sprayCardPassItemChanged(self, item: QListWidgetItem):
+        # Checkstate on item changed
+        # If new state is unchecked, make it partial
+        if item.checkState() == Qt.CheckState.Unchecked:
+            item.setCheckState(Qt.CheckState.PartiallyChecked)
+        # Update SeriesData -> Pass object
+        p = self.seriesData.passes[self.ui.listWidgetSprayCardPass.row(item)]
+        p.cards_include_in_composite = (item.checkState() == Qt.CheckState.Checked)
+        # Replot and Recalculate composites
+        self.updateCardPlots(distributions=True)
 
     @pyqtSlot()
     def sprayCardSelectionChanged(self):

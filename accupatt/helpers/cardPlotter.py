@@ -25,8 +25,9 @@ class CardPlotter:
         # If seriesData is passed in, compute series-wise dist
         if seriesData is not None:
             for p in seriesData.passes:
-                for c in p.spray_cards:
-                    cards.append(c)
+                if p.cards_include_in_composite:
+                    for c in p.spray_cards:
+                        cards.append(c)
         # If passData is passed in, compute pass-wise dist
         elif passData is not None:
             for c in passData.spray_cards:
