@@ -41,7 +41,7 @@
 	\textit{AccuPatt} is a desktop application created to process spray pattern data for agricultural aircraft. This includes measuring tracer dye deposition on string collectors and measuring droplet deposition from spray cards. The goals of this application are twofold:
     \begin{itemize}
         \item Maximize flexibility through parameterization to provide broad utility
-        \item Wherever possible, simplify; The best tools don't need user manuals
+        \item Wherever possible, simplify; The best tools don't need user manuals (And yet here we are)
     \end{itemize}
 
     \newpage
@@ -122,8 +122,8 @@
     \subsubsection{View \& Trim Pass}
     Once string data for a pass is collected, the pass will have a check next to it in the pass list on the \textbf{String Analysis} tab. When a pass with string data is selected from the pass list, the \textbf{Individual Passes} sub-tab will show two plots (Figure~\ref{fig:string_individual}): 
     \begin{itemize}
-        \item \textbf{Raw Data:} [Upper Plot] Plots data exactly as acquired. \textbf{Trim L} and \textbf{Trim R} (yellow) handles can be moved to exclude data outside their limits. The \textbf{Floor} handle will automatically be set to the lowest non-excluded data point, however, it may be raised to pull up lower data points to a new level. This is typically done for subjectively removing background noise.
-        \item \textbf{Modified Data:} [Lower Plot] Plots trimmed data (white) and overlays that with a copy which has had a smoothing filter applied (yellow).
+        \item \textbf{Raw Data:} [Upper Plot] Plots data exactly as acquired. \textbf{Trim L} and \textbf{Trim R} (yellow) handles can be moved to exclude data outside their limits. The \textbf{Floor} handle will automatically be set to the lowest non-excluded data point, however, it may be further raised to pull up lower data points to a new level. This is typically done for subjectively removing background noise.
+        \item \textbf{Modified Data:} [Lower Plot] Plots trimmed and rebased data (white) and overlays that with a copy which has had a smoothing filter applied (yellow). Rebasing and smoothing are only shown when applicable (see \hyperref[sec:string_options]{String Options})
     \end{itemize}
     \begin{figure}[h]
         \centering
@@ -136,8 +136,8 @@
     \subsubsection{Composite}
     The \textbf{Composite} sub-tab contains two plots (Figure~\ref{fig:string_composite}):
     \begin{itemize}
-        \item \textbf{Overlay:} [Upper Plot] Each individual pass is plotted together. 
-        \item \textbf{Average:} [Lower Plot] Each individual psss is used to generate an average pattern. A gray swath-box is plotted with x-bounds on the adjusted swath width. The height of the swath-box is equal to half the average integrated area under the bounded section of the average pattern.
+        \item \textbf{Overlay:} [Upper Plot] Each individual (non-excluded) pass is plotted together. 
+        \item \textbf{Average:} [Lower Plot] Each individual (non-excluded) psss is used to generate an average pattern. A gray swath-box is plotted with x-bounds on the adjusted swath width. The height of the swath-box is equal to half the average integrated area under the bounded section of the average pattern.
     \end{itemize}
     \begin{figure}[hb]
         \centering
@@ -148,6 +148,7 @@
     \newpage
 
     \subsubsection{Options}
+    \label{sec:string_options}
     The \textbf{String Analysis} tab contains \textbf{Pass Options} which affect only the selected pass:
     \begin{itemize}
         \item \textbf{Include In Composite:} Once a pass is recorded, a checkmark will appear adjascent to it in the pass list. This indicates that it is recorded and included in composite (series-wise) calculations and plots. Clicking the checkmark will turn it into a dash, indicating that it is recorded, but excluded ffom composite calculations and plots.
@@ -211,9 +212,9 @@
         \item \textbf{Shift Down:} Shift selected cards down by one row, if possible.
     \end{itemize}
     Below these buttons are controls for utilizing \textbf{Defined Sets} which facilitate adding a pre-configured list of spray-cards to the list. Use the dropdown to select a set and click \textbf{Add Set To Pass} to append the cards to the table. More details can be found in the \hyperref[sec:defined_sets]{Defined Sets} section.\par
-    To the right of the card table is a set of text fields for entering in observables for the current pass. These observables are shared between for string and card data on the same pass. See the \hyperref[sec:data]{Data Structure} settings for more details.\par
+    To the right of the card table is a set of text fields for entering in observables for the current pass. These observables are shared between string and card data on the same pass. See the \hyperref[sec:data]{Data Structure} settings for more details.\par
     Below the pass observable entry fields are controls to \textbf{Upload Images} to the selected cards in the table. A dropdown facilitates choice of the upload method and and clicking the \textbf{Upload Image(s) to Selection} button will open a file chooser window to select all applicable files. A more detailed description of image upload methods and their processes can be found in the \hyperref[sec:image_upload]{Spray-Card - Image Upload} section.\par
-    Once satisfied with the properties in the card table and images are uploaded, click \textbf{Ok} to return to the main window.
+    Once satisfied with the properties in the card table and with images uploaded, click \textbf{Ok} to return to the main window.
     \FloatBarrier
 
     \subsubsection{Check Image Processing}
@@ -249,7 +250,7 @@
     \begin{itemize}
         \item \textbf{Card:} Performs droplet analysis for the selected card only.
         \item \textbf{Pass:} Computes a representative composite card from all cards in the pass which have images and are not actively excluded, then performs a droplet analysis on that composite card. This is NOT simply a pass-wise average of single card statistics.
-        \item \textbf{Series:} Same as \textbf{Pass}, except including cards from all passes.
+        \item \textbf{Series:} Same as \textbf{Pass}, except including cards from all (non-excluded) passes.
     \end{itemize}
     \begin{figure}[hb]
         \centering
@@ -290,7 +291,8 @@
 
     \subsection{String Drive}
     From the \textbf{Capture/Edit Pass} window, string drive settings can be adjusted by clicking the \textbf{Edit String Drive} button, which opens the applicable window (Figure~\ref{fig:string_drive_settings}). This window contains a dropdown for choosing a serial communication port, and accompanying refresh button to re-populate this list (for example, if a device is plugged-in after opening this window). With a port chosen in the list, that port's manufacturer and product information will be displayed.\par
-    There are two fields which allow setting of the \textbf{String Length} and \textbf{String Forward Speed}. The units of string length [ft or m] can also be set here, and this will trigger the units of string forward speed [ft/sec or m/sec] to follow. While the string forward speed can be set manually here, this can also be calculated interactively; Clicking the \textbf{Calculate String Speed} button will open the applicable window (Figure~\ref{fig:string_drive_speed}). Here, a known length of string will be advanced through the string drive. This length does not need to be equal to what is used for the flightline length. Clicking the \textbf{Start} button will begin advancing string and start a timer. Once the known length of string has passed through the string drive, clicking \textbf{Stop} will stop the string drive and timer and calculate the speed [known-length / elapsed-time]. Clicking \textbf{Ok} will save this speed and return to the \textbf{Edit String Drive} window.
+    There are two fields which allow setting of the \textbf{String Length} and \textbf{String Forward Speed}. The units of string length [ft or m] can also be set here, and this will trigger the units of string forward speed [ft/sec or m/sec] to follow. While the string forward speed can be set manually here, this can also be calculated interactively; Clicking the \textbf{Calculate String Speed} button will open the applicable window (Figure~\ref{fig:string_drive_speed}). Here, a known length of string will be advanced through the string drive. This length does not need to be equal to what is used for the flightline length. Clicking the \textbf{Start} button will begin advancing string and start a timer. Once the known length of string has passed through the string drive, clicking \textbf{Stop} will stop the string drive and timer and calculate the speed [known-length / elapsed-time]. Clicking \textbf{Ok} will save this speed and return to the \textbf{Edit String Drive} window.\par
+    A \textbf{Direct Command} interface is included to facilitate querying and setting string drive stepper motor paramaters to onboard nonvolatile memory. The Take-Up Reel corresponds to address \textbf{A} and the Supply Reel corresponds to address \textbf{B}. With a command typed into the textfield, clicking the \textbf{Send} button will append a carriage return, encode the message and send it to the stepper motor driver. A string of return text is normally recieved, and is displayed when available. This return text may simply be an echo of your command, or it may contain paramater information. See the stepper motor driver documentation by clicking the \textbf{?} button for specific commands.
     \begin{figure}[hb]
         \centering
         \makebox[\textwidth]{\includegraphics[width=0.75\textwidth]{string_drive_settings.png}}
@@ -307,7 +309,7 @@
 
     \subsection{Spectrometer}
     From the \textbf{Capture/Edit Pass} window, spectrometer settings can be adjusted by clicking the \textbf{Edit Spectrometer} button, which opens the applicable window (Figure~\ref{fig:spectrometer_settings}). This window displays the currently connected spectrometer's model and serial numbers. An accompanying refresh button is included to re-scan for a spectrometer (for example, if one is plugged-in after opening this window).\par
-    There are three fields which allow setting of the \textbf{Excitation Wavelength (nm)}, \textbf{Emission Wavelength (nm)} and \textbf{Integration Time (milliseconds)}. The chosen wavelengths do not change the operation of the spectrometer; a full spectrum reading is always provided. They merely change the points on the spectrum from which this software collects and displays data. Note that each spectrometer is calibrated differently, and this software will attempt to find the pixel on the spectrometer which corresponds to the wavelength closest to that specified. This pixel and actual wavelength is displayed here. The integration time set here is sent to the spectrometer and does change its operation. Briefly, consider the integration time as the exposure on a camera; longer times correspond with more detail incorporated in each data frame, but a lower quantity of data frames. Clicking \textbf{Ok} will save these settings and return to the \textbf{Capture/Edit Pass} window.
+    There are three fields which allow setting of the \textbf{Excitation Wavelength (nm)}, \textbf{Emission Wavelength (nm)} and \textbf{Integration Time (milliseconds)}. The chosen wavelengths do not change the operation of the spectrometer; a full spectrum reading is always provided. They merely change the points on the spectrum from which this software collects and displays data. Note that each spectrometer is calibrated differently, and this software will attempt to find the pixel on the spectrometer which corresponds to the wavelength closest to that specified. This pixel and actual wavelength is displayed here. The integration time set here is sent to the spectrometer and does change its operation. Briefly, consider the integration time as the exposure on a camera; longer times correspond with more detail incorporated in each data frame, but a lower quantity of data frames per unit length of string. Clicking \textbf{Ok} will save these settings and return to the \textbf{Capture/Edit Pass} window.
     \begin{figure}[hb]
         \centering
         \makebox[\textwidth]{\includegraphics[width=0.75\textwidth]{spectrometer_settings.png}}
@@ -341,10 +343,10 @@
 
     \subsection{Image Upload}
     \label{sec:image_upload}
-    Images are uploaded to the datafile using the method selected in the \textbf{Image Upload Method} dropdown. With the cards you intend to upload selected in the Card Manager tableview, click \textbf{Upload Image(s) to Selection}.
+    Images are uploaded to the datafile using the method selected in the \textbf{Image Upload Method} dropdown. With the cards you intend to upload selected in the Card Manager tableview, click \textbf{Upload Image(s) to Selection}. Note that image files must be of type \textit{*.png : Portable Network Graphics} or \textit{*.tif, *.tiff : Tagged Image File Format}. Ensure that images are acquired with no pre-processing, corrections, enhancements or compression.
 
     \subsubsection{One File, Multiple Cards}
-    When multiple cards are acquired in a single large scan, this method will allow cropping of each card and saving individually to the datafile. After selecting the file, the image will be shown with each card's independently draggable, resizable region-of-interest (ROI) (Figure~\ref{fig:card_upload_multiple}). The following options are available to adjust the method for which these ROI's are drawn:
+    When multiple cards are acquired in a single large scan, this method will allow cropping of each card and saving individually to the datafile. After selecting the file, the image will be shown with each card's independently draggable, resizable region-of-interest (ROI) (Figure~\ref{fig:card_upload_multiple}). The image may be panned or zoomed-upon. To decrease RAM consuption, large images are shown in lower resolution here, but full-resolution ROI's will be cropped out of the original image using a scaled coordinate system. The following options are available to adjust the method for which these ROI's are drawn:
     \begin{itemize}
         \item \textbf{Pixels Per Inch:} Automatically set by the image metadata, but user-adjustable. This is used in conjunction with the image pixel dimensions to show calculated image dimensions. These are provided only to allow verification by the user of proper pixels per inch setting.
         \item \textbf{Orientation:} Used in conjunction with order to decide automatic assigning of names to cards. Either vertical or horizontal.
@@ -387,7 +389,7 @@
         \end{itemize}
         \item \textbf{Minimum Stain Size:} integer area in pixels below which stains should be treated as background.
     \end{itemize}
-    By default, options are saved only to the selected card. Checking the \textbf{Apply To All} option of \textbf{Pass} or \textbf{Series} prior to will apply the options set to all applicable other cards and save that to the datafile.
+    By default, options are saved only to the selected card. Checking the \textbf{Apply To All} option of \textbf{Pass} or \textbf{Series} prior to saving will apply the options set to all applicable other cards and save that to the datafile. Additionally, checking \textbf{Update defaults with selection} will cause any spray cards created in the future to utilize these settings by default.
     
     \begin{figure}[hb]
         \centering
@@ -404,7 +406,7 @@
         \item \textbf{Adaptive:} $D_D = D_S / (aD_S^2+bD_S+cD_S)$
         \item \textbf{Direct:} $D_D = aD_S^2+bD_S+cD_S$
     \end{itemize}
-    By default, options are saved only to the selected card. Checking the \textbf{Apply To All} option of \textbf{Pass} or \textbf{Series} prior to will apply the options set to all applicable other cards and save that to the datafile.
+    By default, options are saved only to the selected card. Checking the \textbf{Apply To All} option of \textbf{Pass} or \textbf{Series} prior to will apply the options set to all applicable other cards and save that to the datafile. Additionally, checking \textbf{Update defaults with selection} will cause any spray cards created in the future to utilize these settings by default.
     \begin{figure}[hb]
         \centering
         \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_spread_factors.png}}
@@ -416,11 +418,31 @@
     \newpage
 
     \section{Exporting Data to Excel}
-    \color{red} To-Do \color{black}
+    While typically unnecessary, it is sometimes desirable to export data obtained in \textit{AccuPatt} into a format more widely accesible. To facilitate this, data can be copied to a \textit{Microsoft Excel (*.xlsx)} file by choosing one of the following options from the \textbf{Export} menu:
+    \begin{itemize}
+        \item \textbf{Operation S.A.F.E. Attendee Log:} Prompts selection of any number of data files, and generates the file required by NAAREF to document attendance at a S.A.F.E. Fly-In.
+        \item \textbf{All Raw Data:} Exactly like it sounds, no processing or calculations, just the data and parameter settings.
+        \item \textbf{Processed Data:} \color{red} To-Do \color{black}
+        \item \textbf{All Images:} \color{red} To-Do \color{black}
+    \end{itemize}
     \newpage
 
     \section{Creating PDF Reports}
-    \color{red} To-Do \color{black}
+    Creating a printable/distributable report is a key function, and \textit{AccuPatt} provides utility to generate various report permuations using the \textit{Portable Document Format (*.pdf)}. The following options can be set from the \textbf{Report} menu:
+    \begin{itemize}
+        \item \textbf{Include Card Images:} [True/False] Whether to add page(s) to the report with individual card images/statistics.
+        \item \textbf{Card Image Type:} [Original, Outline, Mask] What type of image to use in report.
+        \item \textbf{Card Images Per Page:} [5, 7, 9] Card images are scaled to fit, so this effectively allows balancing desired image size and resultant number of pages required.
+    \end{itemize}
+
+    \subsection{Operation S.A.F.E. Report}
+    Creates a standardized report with the following pages:
+    \begin{itemize}
+        \item \textbf{String Summary Page:} Headers with all reported application info and observables. Plots overlay, average and simulations. Includes a uniformity (Coefficient of Variation) table. Page will only be included if at least one string pass is collected and selected for inclusion in the composite.
+        \item \textbf{Card Summary Page:} Headers with all reported application info and observables. Plots Volume Fraction by location, coverage and droplet spectrum category by location, spray volume by droplet diameter and number of droplets by droplet diameter. Pass-wise droplet spectrum characteristics are shown for measured data as well as a USDA Model simulation for the provided nozzle/observable parameters. One page will be included for each pass which has card data associated with it and is selected for inclusion in the composite.
+        \item \textbf{Card Image Page:} Individual card images displayed as per the report settings. Individual card statistics shown below each card. Pages included for each pass which has card data associated with it and is selected for inclusion in the composite. Number of pages required will vary based on number of cards and report options selected.
+    \end{itemize}
+
     \newpage
 
     \section{Data Structure}
@@ -488,7 +510,8 @@
         \begin{itemize}
             \item \textbf{pass-id:} unique identifier, automatically generated
             \item \textbf{name:} editable text, default is 'Pass ' + \textbf{passes.index}
-            \item \textbf{include-in-composite:} True/False, include pass in series-wise calculations/plots
+            \item \textbf{string-include-in-composite:} True/False, include pass in series-wise calculations/plots
+            \item \textbf{cards-include-in-composite:} True/False, include pass in series-wise calculations/plots
             \item \textbf{observables:} 
             \begin{itemize}
                 \item \textbf{ground-speed:} float, units=[mph, kph]
@@ -538,7 +561,7 @@
                 \item \textbf{spread-factor-a:} float
                 \item \textbf{spread-factor-b:} float
                 \item \textbf{spread-factor-c:} float
-                \item \textbf{image:} image, limited to *.png
+                \item \textbf{image:} image, limited to *.png *.tif *.tiff
             \end{itemize}
         \end{itemize}
     \end{itemize}
@@ -547,6 +570,20 @@
 
     \section{Changelog}
     \begin{itemize}
+        \item \textbf{2.0.8 - 24 Mar 2022}
+        \begin{itemize}
+            \item (fix) Droplet stat table inadvertently defaulting to persistent dpi
+            \item (fix) Import AccuPatt 1 cards inadvertently defaulting to persistent dpi
+            \item (feature) Rebuild Pass Manager for pass observables
+            \item (feature) Set default number of passes in Pass Manager
+            \item (feature) Impose units for series-wise observable means
+            \item (feature) Impose units for retrieving pass observables
+            \item (feature) Add cards-include-in-composite to Pass for series-wise calculations
+            \item (feature) String Drive - Direct Command Line
+            \item (feature) User-defined defaults for string advanced options
+            \item (feature) User-defined defaults for spray card processing and spread factors
+            \item (feature) *.tif *.tiff support for loading spray cards
+        \end{itemize}
         \item \textbf{2.0.7 - 16 Mar 2022}
         \begin{itemize}
             \item (fix) Spectrometer disconnect on subsequent calls to capture string
