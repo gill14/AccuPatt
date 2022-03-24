@@ -56,13 +56,6 @@
      </item>
      <item>
       <widget class="QPushButton" name="buttonAddCard">
-       <property name="font">
-        <font>
-         <pointsize>13</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
        <property name="toolTip">
         <string>Add Single Card</string>
        </property>
@@ -83,13 +76,6 @@
      </item>
      <item>
       <widget class="QPushButton" name="buttonRemoveCard">
-       <property name="font">
-        <font>
-         <pointsize>13</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
        <property name="toolTip">
         <string>Remove Selected Card(s)</string>
        </property>
@@ -107,13 +93,6 @@
      </item>
      <item>
       <widget class="QPushButton" name="buttonUp">
-       <property name="font">
-        <font>
-         <pointsize>13</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
        <property name="toolTip">
         <string>Shift Selection Up</string>
        </property>
@@ -131,13 +110,6 @@
      </item>
      <item>
       <widget class="QPushButton" name="buttonDown">
-       <property name="font">
-        <font>
-         <pointsize>13</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
        <property name="toolTip">
         <string>Shift Selection Down</string>
        </property>

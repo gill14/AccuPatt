@@ -252,11 +252,6 @@
        </item>
        <item>
         <widget class="QPushButton" name="buttonStart">
-         <property name="font">
-          <font>
-           <pointsize>13</pointsize>
-          </font>
-         </property>
          <property name="autoFillBackground">
           <bool>false</bool>
          </property>
@@ -284,11 +279,6 @@
            <property name="enabled">
             <bool>false</bool>
            </property>
-           <property name="font">
-            <font>
-             <pointsize>13</pointsize>
-            </font>
-           </property>
            <property name="text">
             <string>Abort</string>
            </property>
@@ -296,11 +286,6 @@
          </item>
          <item>
           <widget class="QPushButton" name="buttonClear">
-           <property name="font">
-            <font>
-             <pointsize>13</pointsize>
-            </font>
-           </property>
            <property name="text">
             <string>Clear</string>
            </property>

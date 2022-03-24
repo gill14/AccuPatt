@@ -67,12 +67,6 @@
      </item>
      <item>
       <widget class="QGroupBox" name="groupBox">
-       <property name="font">
-        <font>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
        <property name="title">
         <string>SF Adjusted Diameter Calculation Method</string>
        </property>
@@ -188,12 +182,6 @@
      </item>
      <item>
       <widget class="QGroupBox" name="groupBox_2">
-       <property name="font">
-        <font>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
        <property name="title">
         <string>On Save</string>
        </property>
