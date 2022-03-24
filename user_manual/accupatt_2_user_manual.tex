@@ -80,7 +80,7 @@
     \section{Operational Overview}
     
     \subsection{New Series}
-    All data and operations in \textit{AccuPatt} require a series. To acquire new data, a new series must be created. From the menubar, use \textbf{File $\rightarrow$ New Series} to view options available (Figure~\ref{fig:new_series}):
+    All data and operations in \textit{AccuPatt} require a series. To acquire new data, a new series must be created. From the menubar, use \textbf{File $\rightarrow$ New Series} to view options available (Figure~\ref{fig:new_series}). A series is created with the user-defined default number of passes.
     \begin{itemize}
         \item \textbf{New Series $\rightarrow$ New Aircraft:} Create an empty series with required parameters set to default values.
         \item \textbf{New Series $\rightarrow$ File Aircraft:} Create a series, copying all application info from a previous data file. Increments the series number by 1. A list of previous data files in your current working directory will appear in the menu for you to select from. Alternatively, choosing \textbf{Select File Aircraft} will open a File Chooser allowing you to select a datafile from anywhere.
@@ -101,6 +101,18 @@
         \label{fig:application_info}
     \end{figure}
     \FloatBarrier
+
+    \subsubsection{Pass Observables}
+    In addition to \textbf{Application Info}, which is collected on a per-series basis, there is some observable data which is typically collected on a per-pass basis. These are frequently referred to here and in the program as \textbf{Pass Observables} since they consist solely of measured values obtained at the time of the application.\par
+    These values can be entered in several locations for the convenience of the analyst. Typically, they are entered from either the \textbf{Capture/Edit String} winodw or the \textbf{Card Manager} window for any individual pass. Alternatively, choosing \textbf{Options $\rightarrow$ Pass Manager} from the menu will open the \textbf{Pass Manager} window (Figure~\ref{fig:pass_manager}) which contains a table with rows for each pass and columns for each pass observable parameter. In addition to the editable fields for pass observables, the pass name itself may be changed here. There are also checkboxes to facilitate the inclusion/exclusion of string and/or card data from series-wise calculations and plots.\par
+    The \textbf{Pass Manager} window also provides buttons to add or remove passes from the series. There is no functional limit to the number of passes per series. A checkbox is provided which, if checked, will update the default number of passes to add to all future series.
+    \begin{figure}[hb]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{pass_manager.png}}
+        \caption{Pass Manager}
+        \label{fig:pass_manager}
+    \end{figure}
+    \newpage
 
     \subsection{String Analysis}
     String data is collected on a per-pass basis, but may be analyzed on a per-series basis. The \textbf{String Analysis} tab provides a list of passes in the series and pass/series processing options. This tab also contains sub-tabs for viewing/modifying data as discussed below.
@@ -267,56 +279,13 @@
         \item \textbf{Coverage by Location} For each card location, plots the percent coverage.
     \end{itemize}
     The \textbf{Plot X-Units} selection is available to rescale the plot axes to a unit other than what is declared with the card.\par
-    The \textbf{Colorize by DSC} checkbox enables shading of the coverage plot with semi-standard droplet spectrum category colors.
+    The \textbf{Colorize by DSC} checkbox enables shading of the coverage plot with semi-standard droplet spectrum category colors. \color{red}This DSC shading utilizes linear interpolation of $D_{V0.1}$ and $D_{V0.5}$ between measured data points and recalculates the DSC for each interpolated location. This may result in DSC's shown between measured datapoints which do not actually exist in the measured data.\color{black}
     \begin{figure}[hb]
         \centering
         \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_spatial_dist.png}}
         \caption{Spray-Card Analysis - Spatial Distribution}
         \label{fig:card_spatial_dist}
     \end{figure}
-    \newpage
-
-    \section{Opening Past Datafiles}
-    From the menubar choose \textbf{File $\rightarrow$ Open} to open a filechooser window and select the file to open. Legacy files created in AccuPatt 1.xx, when opened, will cause a choice prompt to open the file as \textbf{View Only} or to \textbf{Create Compatible Copy} (Figure~\ref{fig:open}). If the latter is chosen, an identically named .db file will be placed in the same directory as the original file. The original (.xlsx) file is never edited, only read.
-    \begin{figure}[hb]
-        \centering
-        \makebox[\textwidth]{\includegraphics[width=0.75\textwidth]{open.png}}
-        \caption{Open Datafile}
-        \label{fig:open}
-    \end{figure}
-    \newpage
-
-    \section{String Hardware System Settings}
-    \label{sec:string_hardware_settings}
-
-    \subsection{String Drive}
-    From the \textbf{Capture/Edit Pass} window, string drive settings can be adjusted by clicking the \textbf{Edit String Drive} button, which opens the applicable window (Figure~\ref{fig:string_drive_settings}). This window contains a dropdown for choosing a serial communication port, and accompanying refresh button to re-populate this list (for example, if a device is plugged-in after opening this window). With a port chosen in the list, that port's manufacturer and product information will be displayed.\par
-    There are two fields which allow setting of the \textbf{String Length} and \textbf{String Forward Speed}. The units of string length [ft or m] can also be set here, and this will trigger the units of string forward speed [ft/sec or m/sec] to follow. While the string forward speed can be set manually here, this can also be calculated interactively; Clicking the \textbf{Calculate String Speed} button will open the applicable window (Figure~\ref{fig:string_drive_speed}). Here, a known length of string will be advanced through the string drive. This length does not need to be equal to what is used for the flightline length. Clicking the \textbf{Start} button will begin advancing string and start a timer. Once the known length of string has passed through the string drive, clicking \textbf{Stop} will stop the string drive and timer and calculate the speed [known-length / elapsed-time]. Clicking \textbf{Ok} will save this speed and return to the \textbf{Edit String Drive} window.\par
-    A \textbf{Direct Command} interface is included to facilitate querying and setting string drive stepper motor paramaters to onboard nonvolatile memory. The Take-Up Reel corresponds to address \textbf{A} and the Supply Reel corresponds to address \textbf{B}. With a command typed into the textfield, clicking the \textbf{Send} button will append a carriage return, encode the message and send it to the stepper motor driver. A string of return text is normally recieved, and is displayed when available. This return text may simply be an echo of your command, or it may contain paramater information. See the stepper motor driver documentation by clicking the \textbf{?} button for specific commands.
-    \begin{figure}[hb]
-        \centering
-        \makebox[\textwidth]{\includegraphics[width=0.75\textwidth]{string_drive_settings.png}}
-        \caption{String Drive Settings}
-        \label{fig:string_drive_settings}
-    \end{figure}
-    \begin{figure}[hb]
-        \centering
-        \makebox[\textwidth]{\includegraphics[width=0.75\textwidth]{string_drive_speed.png}}
-        \caption{Interactively Calculate String Drive Speed}
-        \label{fig:string_drive_speed}
-    \end{figure}
-    \FloatBarrier
-
-    \subsection{Spectrometer}
-    From the \textbf{Capture/Edit Pass} window, spectrometer settings can be adjusted by clicking the \textbf{Edit Spectrometer} button, which opens the applicable window (Figure~\ref{fig:spectrometer_settings}). This window displays the currently connected spectrometer's model and serial numbers. An accompanying refresh button is included to re-scan for a spectrometer (for example, if one is plugged-in after opening this window).\par
-    There are three fields which allow setting of the \textbf{Excitation Wavelength (nm)}, \textbf{Emission Wavelength (nm)} and \textbf{Integration Time (milliseconds)}. The chosen wavelengths do not change the operation of the spectrometer; a full spectrum reading is always provided. They merely change the points on the spectrum from which this software collects and displays data. Note that each spectrometer is calibrated differently, and this software will attempt to find the pixel on the spectrometer which corresponds to the wavelength closest to that specified. This pixel and actual wavelength is displayed here. The integration time set here is sent to the spectrometer and does change its operation. Briefly, consider the integration time as the exposure on a camera; longer times correspond with more detail incorporated in each data frame, but a lower quantity of data frames per unit length of string. Clicking \textbf{Ok} will save these settings and return to the \textbf{Capture/Edit Pass} window.
-    \begin{figure}[hb]
-        \centering
-        \makebox[\textwidth]{\includegraphics[width=0.75\textwidth]{spectrometer_settings.png}}
-        \caption{Spectrometer Settings}
-        \label{fig:spectrometer_settings}
-    \end{figure}
-    \FloatBarrier
     \newpage
 
     \section{Spray-Card - Details}
@@ -417,14 +386,37 @@
 
     \newpage
 
-    \section{Exporting Data to Excel}
-    While typically unnecessary, it is sometimes desirable to export data obtained in \textit{AccuPatt} into a format more widely accesible. To facilitate this, data can be copied to a \textit{Microsoft Excel (*.xlsx)} file by choosing one of the following options from the \textbf{Export} menu:
-    \begin{itemize}
-        \item \textbf{Operation S.A.F.E. Attendee Log:} Prompts selection of any number of data files, and generates the file required by NAAREF to document attendance at a S.A.F.E. Fly-In.
-        \item \textbf{All Raw Data:} Exactly like it sounds, no processing or calculations, just the data and parameter settings.
-        \item \textbf{Processed Data:} \color{red} To-Do \color{black}
-        \item \textbf{All Images:} \color{red} To-Do \color{black}
-    \end{itemize}
+    \section{String Hardware System Settings}
+    \label{sec:string_hardware_settings}
+
+    \subsection{String Drive}
+    From the \textbf{Capture/Edit Pass} window, string drive settings can be adjusted by clicking the \textbf{Edit String Drive} button, which opens the applicable window (Figure~\ref{fig:string_drive_settings}). This window contains a dropdown for choosing a serial communication port, and accompanying refresh button to re-populate this list (for example, if a device is plugged-in after opening this window). With a port chosen in the list, that port's manufacturer and product information will be displayed.\par
+    There are two fields which allow setting of the \textbf{String Length} and \textbf{String Forward Speed}. The units of string length [ft or m] can also be set here, and this will trigger the units of string forward speed [ft/sec or m/sec] to follow. While the string forward speed can be set manually here, this can also be calculated interactively; Clicking the \textbf{Calculate String Speed} button will open the applicable window (Figure~\ref{fig:string_drive_speed}). Here, a known length of string will be advanced through the string drive. This length does not need to be equal to what is used for the flightline length. Clicking the \textbf{Start} button will begin advancing string and start a timer. Once the known length of string has passed through the string drive, clicking \textbf{Stop} will stop the string drive and timer and calculate the speed [known-length / elapsed-time]. Clicking \textbf{Ok} will save this speed and return to the \textbf{Edit String Drive} window.\par
+    A \textbf{Direct Command} interface is included to facilitate querying and setting string drive stepper motor paramaters to onboard nonvolatile memory. The Take-Up Reel corresponds to address \textbf{A} and the Supply Reel corresponds to address \textbf{B}. With a command typed into the textfield, clicking the \textbf{Send} button will append a carriage return, encode the message and send it to the stepper motor driver. A string of return text is normally recieved, and is displayed when available. This return text may simply be an echo of your command, or it may contain paramater information. See the stepper motor driver documentation by clicking the \textbf{?} button for specific commands.
+    \begin{figure}[hb]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=0.75\textwidth]{string_drive_settings.png}}
+        \caption{String Drive Settings}
+        \label{fig:string_drive_settings}
+    \end{figure}
+    \begin{figure}[hb]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=0.75\textwidth]{string_drive_speed.png}}
+        \caption{Interactively Calculate String Drive Speed}
+        \label{fig:string_drive_speed}
+    \end{figure}
+    \FloatBarrier
+
+    \subsection{Spectrometer}
+    From the \textbf{Capture/Edit Pass} window, spectrometer settings can be adjusted by clicking the \textbf{Edit Spectrometer} button, which opens the applicable window (Figure~\ref{fig:spectrometer_settings}). This window displays the currently connected spectrometer's model and serial numbers. An accompanying refresh button is included to re-scan for a spectrometer (for example, if one is plugged-in after opening this window).\par
+    There are three fields which allow setting of the \textbf{Excitation Wavelength (nm)}, \textbf{Emission Wavelength (nm)} and \textbf{Integration Time (milliseconds)}. The chosen wavelengths do not change the operation of the spectrometer; a full spectrum reading is always provided. They merely change the points on the spectrum from which this software collects and displays data. Note that each spectrometer is calibrated differently, and this software will attempt to find the pixel on the spectrometer which corresponds to the wavelength closest to that specified. This pixel and actual wavelength is displayed here. The integration time set here is sent to the spectrometer and does change its operation. Briefly, consider the integration time as the exposure on a camera; longer times correspond with more detail incorporated in each data frame, but a lower quantity of data frames per unit length of string. Clicking \textbf{Ok} will save these settings and return to the \textbf{Capture/Edit Pass} window.
+    \begin{figure}[hb]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=0.75\textwidth]{spectrometer_settings.png}}
+        \caption{Spectrometer Settings}
+        \label{fig:spectrometer_settings}
+    \end{figure}
+    \FloatBarrier
     \newpage
 
     \section{Creating PDF Reports}
@@ -442,7 +434,26 @@
         \item \textbf{Card Summary Page:} Headers with all reported application info and observables. Plots Volume Fraction by location, coverage and droplet spectrum category by location, spray volume by droplet diameter and number of droplets by droplet diameter. Pass-wise droplet spectrum characteristics are shown for measured data as well as a USDA Model simulation for the provided nozzle/observable parameters. One page will be included for each pass which has card data associated with it and is selected for inclusion in the composite.
         \item \textbf{Card Image Page:} Individual card images displayed as per the report settings. Individual card statistics shown below each card. Pages included for each pass which has card data associated with it and is selected for inclusion in the composite. Number of pages required will vary based on number of cards and report options selected.
     \end{itemize}
+    \newpage
 
+    \section{Exporting Data to Excel}
+    While typically unnecessary, it is sometimes desirable to export data obtained in \textit{AccuPatt} into a format more widely accesible. To facilitate this, data can be copied to a \textit{Microsoft Excel (*.xlsx)} file by choosing one of the following options from the \textbf{Export} menu:
+    \begin{itemize}
+        \item \textbf{Operation S.A.F.E. Attendee Log:} Prompts selection of any number of data files, and generates the file required by NAAREF to document attendance at a S.A.F.E. Fly-In.
+        \item \textbf{All Raw Data:} Exactly like it sounds, no processing or calculations, just the data and parameter settings.
+        \item \textbf{Processed Data:} \color{red} To-Do \color{black}
+        \item \textbf{All Images:} \color{red} To-Do \color{black}
+    \end{itemize}
+    \newpage
+
+    \section{Opening Past Datafiles}
+    From the menubar choose \textbf{File $\rightarrow$ Open} to open a filechooser window and select the file to open. Legacy files created in AccuPatt 1.xx, when opened, will cause a choice prompt to open the file as \textbf{View Only} or to \textbf{Create Compatible Copy} (Figure~\ref{fig:open}). If the latter is chosen, an identically named .db file will be placed in the same directory as the original file. The original (.xlsx) file is never edited, only read.
+    \begin{figure}[hb]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=0.75\textwidth]{open.png}}
+        \caption{Open Datafile}
+        \label{fig:open}
+    \end{figure}
     \newpage
 
     \section{Data Structure}
