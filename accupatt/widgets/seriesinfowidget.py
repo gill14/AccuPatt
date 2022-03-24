@@ -54,6 +54,7 @@ class SeriesInfoWidget(baseclass):
         self.ui.dateEdit.dateChanged[QDate].connect(self._dateEdit_changed)
         # Analyst
         self.ui.lineEditAnalyst.setText(info.flyin_analyst)
+        self.ui.lineEditAnalyst.editingFinished.connect(self._commit_analyst)
     
     @pyqtSlot()
     def _commit_name(self):
