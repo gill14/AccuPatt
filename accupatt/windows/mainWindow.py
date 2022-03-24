@@ -2,6 +2,7 @@ from datetime import datetime
 import os
 from pathlib import Path
 import subprocess
+import sys
 
 import accupatt.config as cfg
 from accupatt.helpers.cardPlotter import CardPlotter
@@ -418,7 +419,10 @@ class MainWindow(baseclass):
                     if cfg.get_report_card_include_images():
                         reportMaker.report_card_individuals_concise(passData=p) 
             reportMaker.save()
-            subprocess.call(["open", savefile])
+            if sys.platform == 'darwin':
+                subprocess.call(["open", savefile])
+            elif sys.platform == 'win32':
+                os.startfile(file)
             # Redraw plots with defaults
             self.update_all_ui()
     
@@ -479,7 +483,10 @@ class MainWindow(baseclass):
     
     def openResourceDocument(self, file):
         file = os.path.join(os.getcwd(), 'resources', 'documents', file)
-        subprocess.call(["open", file])
+        if sys.platform == 'darwin':
+            subprocess.call(["open", file])
+        elif sys.platform == 'win32':
+            os.startfile(file)
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     String Analysis

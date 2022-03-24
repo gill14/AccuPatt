@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 import serial
 
 import accupatt.config as cfg
@@ -108,7 +109,10 @@ class EditStringDrive(baseclass):
     @pyqtSlot()
     def openStepperManual(self):
         file = os.path.join(os.getcwd(), 'resources', 'documents', 'weeder_stepper_driver_manual.pdf')
-        subprocess.call(["open", file])
+        if sys.platform == 'darwin':
+            subprocess.call(["open", file])
+        elif sys.platform == 'win32':
+            os.startfile(file)
     
     def strip_num(self, x) -> str:
         if type(x) is str:
