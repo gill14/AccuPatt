@@ -520,16 +520,16 @@
         \item \textbf{passes:} [list]
         \begin{itemize}
             \item \textbf{pass-id:} unique identifier, automatically generated
-            \item \textbf{name:} editable text, default is 'Pass ' + \textbf{passes.index}
+            \item \textbf{name:} editable text, default is 'Pass ' + position in passes list at creation
             \item \textbf{string-include-in-composite:} True/False, include pass in series-wise calculations/plots
             \item \textbf{cards-include-in-composite:} True/False, include pass in series-wise calculations/plots
             \item \textbf{observables:} 
             \begin{itemize}
-                \item \textbf{ground-speed:} float, units=[mph, kph]
+                \item \textbf{ground-speed:} float, units=[mph, kph, kn]
                 \item \textbf{spray-height:} float, units=[ft, m]
                 \item \textbf{pass-heading:} integer, range=[0-359]
                 \item \textbf{wind-direction:} integer, range=[0-359]
-                \item \textbf{wind-speed:} float, units=[mph, kph]
+                \item \textbf{wind-speed:} float, units=[mph, kph, kn]
                 \item \textbf{temperature:} float, units=[\degree F, \degree C]
                 \item \textbf{humidity:} float
             \end{itemize}
@@ -545,8 +545,8 @@
                 \item \textbf{trim-right:} integer, number of sample points to set to floor value
                 \item \textbf{trim-vertical:} float, value to subtract from all points in addition to floor value
                 \item \textbf{rebase:} true/false, use trim-l/trim-r to scale x-domain 
-                \item \textbf{center:} true/false, apply average-center-method
-                \item \textbf{center-method:} text, option=[none, centroid, center-of-distribution]
+                \item \textbf{center:} true/false, apply center-method to pass
+                \item \textbf{center-method:} text, option=[centroid, center-of-distribution]
                 \item \textbf{smooth:} true/false, apply smoothing filter to pass
                 \item \textbf{smooth-window} float, x-domain window over which to apply smoothing
                 \item \textbf{smooth-order} integer, polynomial order for smoothing filter
