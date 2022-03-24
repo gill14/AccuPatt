@@ -355,7 +355,12 @@ class MainWindow(baseclass):
     
     @pyqtSlot()
     def resetDefaults(self):
-        cfg.clear_all_settings()
+        msg = QMessageBox.question(self, 'Clear All User-Defined Defaults?',
+                                    'This will permanently erase all user-defined defaults for AccuPatt on this computer and revert all to their originally provided values. This includes all user-defined spray card sets. This cannot be undone. Are you sure you want to do this?')
+        if msg == QMessageBox.StandardButton.Yes:
+            cfg.clear_all_settings()
+            QMessageBox.information(self, 'Success',
+                                    'All user-defined defaults erased successfully.')
     
     @pyqtSlot()
     def exportSAFEAttendeeLog(self):
