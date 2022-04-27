@@ -422,7 +422,7 @@ class MainWindow(baseclass):
             if sys.platform == 'darwin':
                 subprocess.call(["open", savefile])
             elif sys.platform == 'win32':
-                os.startfile(file)
+                os.startfile(savefile)
             # Redraw plots with defaults
             self.update_all_ui()
     
