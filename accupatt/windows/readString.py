@@ -89,7 +89,6 @@ class ReadString(baseclass):
         self.string_speed = cfg.get_string_speed()
         # Calculate from all above
         self.len_per_frame = self.integration_time_ms * self.string_speed / 1000
-        
 
     def set_plotdata(self, name, data_x, data_y):
         if name in self.traces:
@@ -102,30 +101,30 @@ class ReadString(baseclass):
 
     def plotFrame(self):
         #get Location
-        if len(self.x) == 0:
-            location = -self.string_length/2
-        else:
-            location = self.x[len(self.x)-1] + self.len_per_frame
-        if location <= self.string_length/2:
-            #Capture and record one frame
-            #record x_val (location)
-            self.x = np.append(self.x, location)
-            #take a full spectrum reading
-            intensities = self.spec.intensities(correct_dark_counts=True,
-                correct_nonlinearity=True)
-            #record y_val (emission amplitute) and request plot update
-            self.y = np.append(self.y, intensities[self.pix_em])
-            self.set_plotdata(name='emission', data_x=self.x, data_y=self.y)
-            #record y_ex_val (excitation amplitude) and request plot update
-            self.y_ex = np.append(self.y_ex, intensities[self.pix_ex])
-            #self.set_plotdata(name='excitation', data_x=self.x, data_y=self.y_ex)
-        else:
-            #After recording entire fl, stop timer and and stop string drive
-            self.timer.stop()
-            self.ser.write(cfg.STRING_DRIVE_FWD_STOP.encode())
-            self.ui.buttonStart.setText('Start')
-            self.ui.buttonAbort.setEnabled(False)
-            self.ui.buttonClear.setEnabled(True)
+        ellapsedTimeSec = (self.timer.interval() - self.timer.remainingTime()) / 1000
+        location = -self.string_length/2 + (ellapsedTimeSec * self.string_speed)
+        #print(f'Location: {location} FT')
+        #Capture and record one frame
+        #record x_val (location)
+        self.x = np.append(self.x, location)
+        #take a full spectrum reading
+        intensities = self.spec.intensities(correct_dark_counts=True,
+            correct_nonlinearity=True)
+        #record y_val (emission amplitute) and request plot update
+        self.y = np.append(self.y, intensities[self.pix_em])
+        self.set_plotdata(name='emission', data_x=self.x, data_y=self.y)
+        #record y_ex_val (excitation amplitude) and request plot update
+        self.y_ex = np.append(self.y_ex, intensities[self.pix_ex])
+        #self.set_plotdata(name='excitation', data_x=self.x, data_y=self.y_ex)
+    
+    @pyqtSlot()
+    def endPlot(self):
+        self.timer_trigger.stop()
+        self.ser.write(cfg.STRING_DRIVE_FWD_STOP.encode())
+        self.ui.buttonStart.setText('Start')
+        self.marked = False
+        self.ui.buttonAbort.setEnabled(False)
+        self.ui.buttonClear.setEnabled(True)
 
     @pyqtSlot()
     def click_start(self):
@@ -138,12 +137,22 @@ class ReadString(baseclass):
             self.ui.buttonStart.setText('Mark')
             self.marked = True
         else:
-            #Initialize timer
+            #Initialize timers
             self.timer = QTimer(self)
-            #Set the timeout action
-            self.timer.timeout.connect(self.plotFrame)
-            self.plotFrame()
-            self.timer.start(int(self.integration_time_ms))
+            self.timer_trigger = QTimer(self)
+            #Set the intervals and timeouts
+            self.timer.setSingleShot(True)
+            self.timer.setInterval(int((self.string_length / self.string_speed) * 1000))
+            self.timer.timeout.connect(self.endPlot)
+            self.timer_trigger.setInterval(int(self.integration_time_ms))
+            self.timer_trigger.timeout.connect(self.plotFrame)
+            #print(f'timer = {self.timer.interval()}')
+            #print(f'timer_trigger = {self.timer_trigger.interval()}')
+            # Plot initial frame
+            #self.plotFrame()
+            # Start timers
+            self.timer.start()
+            self.timer_trigger.start()
             self.ui.buttonStart.setEnabled(False)
         #Enable abort button
         self.ui.buttonAbort.setEnabled(True)
@@ -152,6 +161,7 @@ class ReadString(baseclass):
     @pyqtSlot()
     def click_abort(self):
         self.timer.stop()
+        self.timer_trigger.stop()
         self.ser.write(cfg.STRING_DRIVE_FWD_STOP.encode())
         self.clear()
         self.ui.buttonStart.setText('Start')
