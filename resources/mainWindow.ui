@@ -2061,6 +2061,7 @@
     </widget>
     <addaction name="actionAbout"/>
     <addaction name="actionUserManual"/>
+    <addaction name="actionWRKSpectrometerManual"/>
     <addaction name="separator"/>
     <addaction name="menuWorksheets"/>
     <addaction name="separator"/>
@@ -2123,7 +2124,7 @@
   </action>
   <action name="actionUserManual">
    <property name="text">
-    <string>User Manual</string>
+    <string>AccuPatt User Manual</string>
    </property>
   </action>
   <action name="actionWorksheetWRK">
@@ -2236,6 +2237,11 @@
    </property>
    <property name="text">
     <string>Compress Card Images</string>
+   </property>
+  </action>
+  <action name="actionWRKSpectrometerManual">
+   <property name="text">
+    <string>WRK Spectrometer Manual</string>
    </property>
   </action>
  </widget>
