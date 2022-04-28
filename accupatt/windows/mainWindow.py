@@ -81,6 +81,7 @@ class MainWindow(baseclass):
         # --> Setup Help Menu
         self.ui.actionAbout.triggered.connect(self.about)
         self.ui.actionUserManual.triggered.connect(self.openResourceUserManual)
+        self.ui.actionWRKSpectrometerManual.triggered.connect(self.openResourceWRKSpectrometerManual)
         self.ui.actionWorksheetWRK.triggered.connect(self.openResourceWSWRK)
         self.ui.actionWorksheetGillColor.triggered.connect(self.openResourceWSGillColor)
         self.ui.actionWorksheetGillBW.triggered.connect(self.openResourceWSGillBW)
@@ -464,6 +465,10 @@ class MainWindow(baseclass):
     @pyqtSlot()
     def openResourceUserManual(self):
         self.openResourceDocument('accupatt_2_user_manual.pdf')
+    
+    @pyqtSlot()
+    def openResourceWRKSpectrometerManual(self):
+        self.openResourceDocument('WRK_spectrometer_manual.pdf')
     
     @pyqtSlot()
     def openResourceWSWRK(self):
