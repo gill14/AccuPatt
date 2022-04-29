@@ -47,11 +47,11 @@ class ReadString(baseclass):
         self.setupStringDrive()
         
         #Enable/Disable Start and Abort buttons as applicable
-        self.checkReady()
+        self.enableButtons()
 
         #Setup signal slots
         self.ui.buttonManualReverse.clicked.connect(self.string_drive_manual_reverse)
-        self.ui.buttonManualForward.clicked.connect(self.string_drive_manual_forward)
+        self.ui.buttonManualAdvance.clicked.connect(self.string_drive_manual_advance)
         self.ui.buttonEditSpectrometer.clicked.connect(self.editSpectrometer)
         self.ui.buttonEditStringDrive.clicked.connect(self.editStringDrive)
         self.ui.buttonStart.clicked.connect(self.click_start)
@@ -59,27 +59,11 @@ class ReadString(baseclass):
         self.ui.buttonClear.clicked.connect(self.click_clear)
 
         #Setup plot
-        self.marked = False
-        self.traces = dict()
-        pyqtgraph.setConfigOptions(antialias=True)
-        pyqtgraph.setConfigOption('background', 'k')
-        pyqtgraph.setConfigOption('foreground', 'w')
-        self.p = self.ui.plotWidget
-        self.p.setLabel(axis='bottom',text='Location', units=self.string_length_units)
-        self.p.setLabel(axis='left', text = 'Relative Dye Intensity')
-        self.p.showGrid(x=True, y=True)
-
-        self.clear(showPopup=False)
+        self.setup_and_clear_plot(showPopup=False)
 
         #Load in pattern data from pass object if available
         if passData.has_string_data():
-            self.x = np.array(passData.string.data['loc'].values, dtype=float)
-            self.y = np.array(passData.string.data[passData.name].values, dtype=float)
-            self.y_ex = np.array(passData.string.data_ex[passData.name].values, dtype=float)
-            self.set_plotdata(name='emission', data_x=self.x, data_y=self.y)
-            #self.set_plotdata(name='excitation', data_x=self.x, data_y=self.y_ex)
-            self.set_plotdata(name='emission', data_x=self.x, data_y=self.y)
-            #self.set_plotdata(name='excitation', data_x=self.x, data_y=self.y_ex)
+            self.load_data_from_pass()
 
         self.show()
 
@@ -90,20 +74,46 @@ class ReadString(baseclass):
         # Calculate from all above
         self.len_per_frame = self.integration_time_ms * self.string_speed / 1000
 
-    def set_plotdata(self, name, data_x, data_y):
-        if name in self.traces:
-            self.traces[name].setData(data_x, data_y)
-        else:
-            if name == 'emission':
-                self.traces[name] = self.p.plot(name='Emission',pen='w')
-            if name == 'excitation':
-                self.traces[name] = self.p.plot(name='Excitation',pen='c')
+    def load_data_from_pass(self):
+        self.x = np.array(self.passData.string.data['loc'].values, dtype=float)
+        self.y = np.array(self.passData.string.data[self.passData.name].values, dtype=float)
+        self.y_ex = np.array(self.passData.string.data_ex[self.passData.name].values, dtype=float)
+        self.plot_emission.setData(self.x, self.y)
+        self.plot_excitation.setData(self.x, self.y)
+
+    def setup_and_clear_plot(self, showPopup=True):
+        # Optionally prompt to proceed
+        if showPopup and not self.y == []:
+            msg = QMessageBox.question(self, 'Are You Sure?',
+                                       f'Clear Existing String Data for {self.passData.name}?')
+            if msg == QMessageBox.StandardButton.No:
+                return False
+        # Init arrays
+        self.x = []
+        self.y = []
+        self.y_ex = []
+        # Configuration options
+        pyqtgraph.setConfigOptions(antialias=True)
+        pyqtgraph.setConfigOption('background', 'k')
+        pyqtgraph.setConfigOption('foreground', 'w')
+        # Get a handle to the plotWidget
+        self.plotWidget: pyqtgraph.PlotWidget = self.ui.plotWidget
+        # Clear the plot
+        self.plotWidget.plotItem.clear()
+        # Add plots of excitation and emission
+        self.plot_emission = self.plotWidget.plotItem.plot(name='Emission', pen='w')
+        self.plot_excitation = self.plotWidget.plotItem.plot(name='Excitation', pen='c')
+        # Labels and formatting
+        self.plotWidget.plotItem.setLabel(axis='bottom',text='Location', units=self.string_length_units)
+        self.plotWidget.plotItem.setLabel(axis='left', text = 'Relative Dye Intensity')
+        self.plotWidget.plotItem.showGrid(x=True, y=True)
+        self.plotWidget.setXRange(-self.string_length/2, self.string_length/2)
+        return True
 
     def plotFrame(self):
         #get Location
         ellapsedTimeSec = (self.timer.interval() - self.timer.remainingTime()) / 1000
         location = -self.string_length/2 + (ellapsedTimeSec * self.string_speed)
-        #print(f'Location: {location} FT')
         #Capture and record one frame
         #record x_val (location)
         self.x = np.append(self.x, location)
@@ -112,30 +122,25 @@ class ReadString(baseclass):
             correct_nonlinearity=True)
         #record y_val (emission amplitute) and request plot update
         self.y = np.append(self.y, intensities[self.pix_em])
-        self.set_plotdata(name='emission', data_x=self.x, data_y=self.y)
+        self.plot_emission.setData(self.x, self.y)
         #record y_ex_val (excitation amplitude) and request plot update
         self.y_ex = np.append(self.y_ex, intensities[self.pix_ex])
-        #self.set_plotdata(name='excitation', data_x=self.x, data_y=self.y_ex)
+        #self.plot_excitation.setData(self.x, self.y_ex)
     
     @pyqtSlot()
     def endPlot(self):
         self.timer_trigger.stop()
         self.ser.write(cfg.STRING_DRIVE_FWD_STOP.encode())
-        self.ui.buttonStart.setText('Start')
-        self.marked = False
-        self.ui.buttonAbort.setEnabled(False)
-        self.ui.buttonClear.setEnabled(True)
+        self.enableButtons(start=False, abort=False)
 
     @pyqtSlot()
     def click_start(self):
-        if not self.marked:
-            #clear plot and re-initialize np arrays
-            if not self.clear(showPopup=True): 
-                return
-            #Start String Drive (forward)
+        if self.ui.buttonStart.text() == 'Start':
+            self.setup_and_clear_plot()
+            #Start String Drive (advance)
             self.ser.write(cfg.STRING_DRIVE_FWD_START.encode())
             self.ui.buttonStart.setText('Mark')
-            self.marked = True
+            self.enableButtons(clear=False, reverse=False, advance=False, window=False)
         else:
             #Initialize timers
             self.timer = QTimer(self)
@@ -146,53 +151,33 @@ class ReadString(baseclass):
             self.timer.timeout.connect(self.endPlot)
             self.timer_trigger.setInterval(int(self.integration_time_ms))
             self.timer_trigger.timeout.connect(self.plotFrame)
-            #print(f'timer = {self.timer.interval()}')
-            #print(f'timer_trigger = {self.timer_trigger.interval()}')
-            # Plot initial frame
-            #self.plotFrame()
             # Start timers
             self.timer.start()
             self.timer_trigger.start()
-            self.ui.buttonStart.setEnabled(False)
-        #Enable abort button
-        self.ui.buttonAbort.setEnabled(True)
-        self.ui.buttonClear.setEnabled(False)
+            self.enableButtons(start=False, clear=False, reverse=False, advance=False, window=False)
  
     @pyqtSlot()
     def click_abort(self):
-        self.timer.stop()
-        self.timer_trigger.stop()
+        if not self.ui.buttonStart.isEnabled():
+            self.timer.stop()
+            self.timer_trigger.stop()
         self.ser.write(cfg.STRING_DRIVE_FWD_STOP.encode())
-        self.clear()
+        self.setup_and_clear_plot(showPopup=False)
         self.ui.buttonStart.setText('Start')
-        self.ui.buttonStart.setEnabled(True)
-        self.marked = False
-        self.ui.buttonAbort.setEnabled(False)
-        self.ui.buttonClear.setEnabled(True)
+        self.enableButtons(clear=False, abort=False)
         
     @pyqtSlot()
     def click_clear(self):
-        if self.clear(showPopup=True):
+        if self.setup_and_clear_plot(showPopup=True):
             self.ui.buttonStart.setText('Start')
-            self.ui.buttonStart.setEnabled(True)
-            self.marked = False
-            self.ui.buttonAbort.setEnabled(False)
-            self.ui.buttonClear.setEnabled(True)
-
-    def clear(self, showPopup=True):
-        if showPopup and not self.y == []:
-            msg = QMessageBox.question(self, 'Are You Sure?',
-                                       f'Clear Existing String Data for {self.passData.name}?')
-            if msg == QMessageBox.StandardButton.No:
-                return False
-        self.x = []
-        self.y = []
-        self.y_ex = []
-        self.p.clear()
-        self.traces = dict()
-        return True
+            self.enableButtons(clear=False, abort=False)
 
     def reject(self):
+        if not self.y == []:
+            msg = QMessageBox.question(self, 'Are You Sure?',
+                                        f'Abandon data/changes for {self.passData.name}?')
+            if msg == QMessageBox.StandardButton.No:
+                return False
         # Ensure connections are severed
         if self.ser and self.ser.is_open:
             self.ser.close()
@@ -234,11 +219,21 @@ class ReadString(baseclass):
         else:
             return f'{round(float(x), 2):.2f}'
     
-    #Only enable buttons if String Drive and Spectrometer Connected
-    def checkReady(self):
-        self.ready = (self.spec_connected and self.ser_connected)
-        self.ui.buttonStart.setEnabled(self.ready)
-        self.ui.buttonAbort.setEnabled(self.ready)
+    def enableButtons(self, start=True, abort=True, clear=True, reverse=True, advance=True, window=True):
+        if not self.ser_connected:
+            reverse=False
+            advance=False
+        if not self.spec_connected or not self.ser_connected:
+            start=False
+            abort=False
+        self.ui.buttonStart.setEnabled(start)
+        self.ui.buttonAbort.setEnabled(abort)
+        self.ui.buttonClear.setEnabled(clear)
+        self.ui.buttonManualReverse.setEnabled(reverse)
+        self.ui.buttonManualAdvance.setEnabled(advance)
+        self.ui.buttonEditStringDrive.setEnabled(window)
+        self.ui.buttonEditSpectrometer.setEnabled(window)
+        self.ui.buttonBox.setEnabled(window)
     
     '''
     String Drive Hook-Ups
@@ -265,14 +260,12 @@ class ReadString(baseclass):
         self.ui.labelStringLength.setText(f'String Length: {self.strip_num(self.string_length)} {self.string_length_units}')
         self.ui.labelStringVelocity.setText(f'String Velocity: {self.strip_num(self.string_speed)} {self.string_length_units}/sec')
         #Enale/Disable manual drive buttons
-        self.ui.buttonManualReverse.setEnabled(self.ser_connected)
-        self.ui.buttonManualForward.setEnabled(self.ser_connected)
-        self.checkReady()
+        self.enableButtons()
     
     @pyqtSlot(str)
     def string_length_units_changed(self, units: str):
         self.string_length_units = units
-        self.p.setLabel(axis='bottom',text='Location', units=units)
+        self.plotWidget.plotItem.setLabel(axis='bottom',text='Location', units=units)
         pass
     
     @pyqtSlot()
@@ -284,19 +277,19 @@ class ReadString(baseclass):
     def string_drive_manual_reverse(self):
         if not self.ui.buttonManualReverse.isChecked():
             self.ser.write(cfg.STRING_DRIVE_REV_STOP.encode())
-            self.ui.buttonManualForward.setEnabled(True)
+            self.enableButtons()
         else:
             self.ser.write(cfg.STRING_DRIVE_REV_START.encode())
-            self.ui.buttonManualForward.setEnabled(False)
+            self.enableButtons(start=False, abort=False, clear=False, advance=False, window=False)
    
     @pyqtSlot()
-    def string_drive_manual_forward(self):
-        if not self.ui.buttonManualForward.isChecked():
+    def string_drive_manual_advance(self):
+        if not self.ui.buttonManualAdvance.isChecked():
             self.ser.write(cfg.STRING_DRIVE_FWD_STOP.encode())
-            self.ui.buttonManualReverse.setEnabled(True)
+            self.enableButtons()
         else:
             self.ser.write(cfg.STRING_DRIVE_FWD_START.encode())
-            self.ui.buttonManualReverse.setEnabled(False)
+            self.enableButtons(start=False, abort=False, clear=False, reverse=False, window=False)
     
     '''
     Spectrometer Hook-Ups
@@ -332,7 +325,7 @@ class ReadString(baseclass):
             f"Emission: {self.wav_em} nm")
         self.ui.labelIntegrationTime.setText(
             f"Integration Time: {self.integration_time_ms} ms")
-        self.checkReady()
+        self.enableButtons()
         
     @pyqtSlot()
     def reSetupSpectrometer(self):
