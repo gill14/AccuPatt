@@ -5,7 +5,7 @@ from accupatt.models.sprayCard import SprayCard
 from PyQt6 import uic
 from PyQt6.QtCore import (QAbstractTableModel, QItemSelectionModel,
                           QModelIndex, Qt, QVariant, pyqtSignal, pyqtSlot)
-from PyQt6.QtWidgets import QComboBox, QStyledItemDelegate, QMessageBox, QTableView
+from PyQt6.QtWidgets import QAbstractItemView, QComboBox, QHeaderView, QStyledItemDelegate, QMessageBox, QPushButton, QTableView
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'cardTableWidget.ui'))
 
@@ -13,6 +13,8 @@ class CardTableWidget(baseclass):
 
     passDataChanged = pyqtSignal()
     selectionChanged = pyqtSignal(bool)
+    editCard = pyqtSignal(SprayCard)
+    editCardSpreadFactors = pyqtSignal(SprayCard)
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -27,16 +29,26 @@ class CardTableWidget(baseclass):
         #Populate TableView
         self.tm = CardTable(self)
         self.tv: QTableView = self.ui.tableView
+        
         self.tv.setModel(self.tm)
-        self.tv.setItemDelegateForColumn(4, ComboBoxDelegate(self, cfg.UNITS_LENGTH_LARGE))
-        self.tv.setItemDelegateForColumn(5, EditableComboBoxDelegate(self, [str(dpi) for dpi in cfg.IMAGE_DPI_OPTIONS]))
-        self.tv.setItemDelegateForColumn(6, ComboBoxDelegate(self, cfg.THRESHOLD_TYPES))
+        self.tv.setItemDelegateForColumn(3, ComboBoxDelegate(self.tv, cfg.UNITS_LENGTH_LARGE))
+        self.tv.setItemDelegateForColumn(5, EditableComboBoxDelegate(self.tv, [str(dpi) for dpi in cfg.IMAGE_DPI_OPTIONS]))
+        self.tv.setItemDelegateForColumn(6, PushButtonDelegate(self.tv, text='Process Options'))
+        self.tv.setItemDelegateForColumn(7, PushButtonDelegate(self.tv, text='Spread Factors'))
+        self.tv.setItemDelegateForColumn(8, ComboBoxDelegate(self.tv, cfg.THRESHOLD_TYPES))
 
         self.selection_changed()
 
         self.show()
+        self.tv.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         
         self.tv.selectionModel().selectionChanged.connect(self.selection_changed)
+    
+    def edit_card(self, card):
+        self.editCard.emit(card)
+        
+    def edit_card_spread_factors(self, card):
+        self.editCardSpreadFactors.emit(card)
     
     def assign_card_list(self, card_list: list[SprayCard], filepath: str = None):
         self.tm.loadCards(card_list)
@@ -85,6 +97,29 @@ class CardTableWidget(baseclass):
         self.tm.removeCards(sel)
         self.passDataChanged.emit()
 
+class PushButtonDelegate(QStyledItemDelegate):
+    def __init__(self, owner, text):
+        QStyledItemDelegate.__init__(self, owner)
+        self.text = text
+    
+    def paint(self, painter, option, index):
+        parent: QAbstractItemView = self.parent()
+        if parent.model().flags(index) & Qt.ItemFlag.ItemIsEditable:
+            self.parent().openPersistentEditor(index)
+        QStyledItemDelegate.paint(self, painter, option, index)
+    
+    def setModelData(self, editor, model, index):
+        model.setData(index, editor.text())
+        
+    def createEditor(self, parent, option, index):
+        button = QPushButton(self.text,parent)
+        button.clicked.connect(self.button_clicked)
+        self.parent().horizontalHeader().resizeSections(QHeaderView.ResizeMode.ResizeToContents)
+        return button
+    
+    def button_clicked(self):
+        self.commitData.emit(self.sender())
+
 class ComboBoxDelegate(QStyledItemDelegate):
     def __init__(self, owner, itemList):
         QStyledItemDelegate.__init__(self, owner)
@@ -130,7 +165,7 @@ class EditableComboBoxDelegate(QStyledItemDelegate):
 class CardTable(QAbstractTableModel):
     def __init__(self, parent=None, *args): 
         super(CardTable, self).__init__(parent)
-        self.headers = ['Name','Has Image?','In Composite','Location','Units','Px Per In','Threshold Type']
+        self.headers = ['Name','In Composite','Location','Units','Has Image?','Px Per In','Edit Processing Options','Edit Spread Factors','Threshold Type']
         self.card_list = []
     
     def loadCards(self, card_list):
@@ -161,32 +196,32 @@ class CardTable(QAbstractTableModel):
                 return card.name
         elif col==1:
             if role==Qt.ItemDataRole.CheckStateRole:
-                return Qt.CheckState.Checked if card.has_image else Qt.CheckState.Unchecked
-            elif role==Qt.ItemDataRole.DisplayRole:
-                return 'Yes' if card.has_image else 'No'
-        elif col==2:
-            if role==Qt.ItemDataRole.CheckStateRole:
                 return Qt.CheckState.Checked if card.include_in_composite else Qt.CheckState.Unchecked
             elif role==Qt.ItemDataRole.DisplayRole:
                 return 'Yes' if card.include_in_composite else 'No'
             elif role==Qt.ItemDataRole.EditRole:
                 return card.include_in_composite
-        elif col==3:
+        elif col==2:
             if role==Qt.ItemDataRole.DisplayRole:
                 return card.location
             if role==Qt.ItemDataRole.EditRole:
                 return card.location
-        elif col==4:
+        elif col==3:
             if role==Qt.ItemDataRole.DisplayRole:
                 return card.location_units
             elif role==Qt.ItemDataRole.EditRole:
                 return cfg.UNITS_LENGTH_LARGE.index(card.location_units)
+        elif col==4:
+            if role==Qt.ItemDataRole.CheckStateRole:
+                return Qt.CheckState.Checked if card.has_image else Qt.CheckState.Unchecked
+            elif role==Qt.ItemDataRole.DisplayRole:
+                return 'Yes' if card.has_image else 'No' 
         elif col==5:
             if role==Qt.ItemDataRole.DisplayRole:
                 return str(card.dpi) if card.has_image else ''
             elif role==Qt.ItemDataRole.EditRole:
                 return str(card.dpi)
-        elif col==6:
+        elif col==8:
             if role==Qt.ItemDataRole.DisplayRole:
                 return card.threshold_type
             if role==Qt.ItemDataRole.EditRole:
@@ -202,20 +237,24 @@ class CardTable(QAbstractTableModel):
         if col==0:
             card.name = value
         elif col==1:
-            pass
-        elif col==2:
             if card.has_image:
                 card.include_in_composite = (Qt.CheckState(value) == Qt.CheckState.Checked)
-        elif col==3:
+        elif col==2:
             try:
                 card.location = float(value)
             except ValueError:
                 return False
-        elif col==4:
+        elif col==3:
             card.location_units = cfg.UNITS_LENGTH_LARGE[value]
+        elif col==4:
+            pass
         elif col==5:
             card.dpi = int(value)
         elif col==6:
+            self.parent().edit_card(card)
+        elif col==7:
+            self.parent().edit_card_spread_factors(card)
+        elif col==8:
             if role==Qt.ItemDataRole.EditRole:
                 card.threshold_type = cfg.THRESHOLD_TYPES[value]
         else:
@@ -269,10 +308,10 @@ class CardTable(QAbstractTableModel):
             return None
         col = index.column()
         if col==1:
-            return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
-        elif col==2:
             return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsUserCheckable
-        elif col==5 and not self.card_list[index.row()].has_image:
+        elif col==4:
+            return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
+        elif (col==5 or col==6 or col==7) and not self.card_list[index.row()].has_image:
             return Qt.ItemFlag.NoItemFlags
         else:
             return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEditable

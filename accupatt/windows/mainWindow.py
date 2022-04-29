@@ -117,8 +117,6 @@ class MainWindow(baseclass):
         self.ui.listWidgetSprayCard.itemSelectionChanged.connect(self.sprayCardSelectionChanged)
         self.ui.listWidgetSprayCard.itemChanged[QListWidgetItem].connect(self.sprayCardItemChanged)
         self.ui.buttonEditCards.clicked.connect(self.editSprayCardList)
-        self.ui.buttonEditThreshold.clicked.connect(self.editThreshold)
-        self.ui.buttonEditSpreadFactors.clicked.connect(self.editSpreadFactors)
         # --> | --> Setup Add/Edit Cards Tab
         self.ui.radioButtonSprayCardFitH.toggled[bool].connect(self.updateSprayCardFitMode)
         self.ui.radioButtonSprayCardFitV.toggled[bool].connect(self.updateSprayCardFitMode)
@@ -739,8 +737,6 @@ class MainWindow(baseclass):
             cb_dist.addItem((sprayCard.name if sprayCard else ''))
             cb_dist.addItem((passData.name if passData else ''))
             cb_dist.addItem(('Series'))
-        # Processing Buttons visibility
-        self.setSprayCardProcessingButtonsEnable(bool(sprayCard and sprayCard.has_image))
         # Update plot/image ui
         self.updateCardPlots(images=True, distributions=True)
 
@@ -767,7 +763,7 @@ class MainWindow(baseclass):
             if not self.saveFile():
                 return
         #Open the Edit Card List window for currently selected pass
-        e = CardManager(passData=passData, filepath=self.currentFile, parent=self)
+        e = CardManager(passData=passData, seriesData=self.seriesData, filepath=self.currentFile, parent=self)
         #Connect Slot to retrieve Vals back from popup
         e.accepted.connect(self.editSprayCardListFinished)
         e.passDataChanged.connect(self.saveFile)
@@ -782,28 +778,6 @@ class MainWindow(baseclass):
         self.updatePassListWidgets(cards=True, cards_index=self.ui.listWidgetSprayCardPass.currentRow())
         # Repopulates card list widget, updates rest of ui
         self.sprayCardPassSelectionChanged()
-
-    @pyqtSlot()
-    def editThreshold(self):
-        passData, sprayCard = self.getCurrentCardPassAndCard()
-        if sprayCard and sprayCard.has_image:
-            #Open the Edit SF window for currently selected card
-            e = EditThreshold(sprayCard=sprayCard, passData=passData, seriesData=self.seriesData, parent=self)
-            #Connect Slot to retrieve Vals back from popup
-            e.accepted.connect(self.saveAndUpdateSprayCardView)
-            #Start Loop
-            e.exec()
-    
-    @pyqtSlot()
-    def editSpreadFactors(self):
-        passData, sprayCard = self.getCurrentCardPassAndCard()
-        if sprayCard and sprayCard.has_image:
-            #Open the Edit SF window for currently selected card
-            e = EditSpreadFactors(sprayCard=sprayCard, passData=passData, seriesData=self.seriesData, parent=self)
-            #Connect Slot to retrieve Vals back from popup
-            e.accepted.connect(self.saveAndUpdateSprayCardView)
-            #Start Loop
-            e.exec()
 
     @pyqtSlot(bool)
     def updateSprayCardFitMode(self, newBool):
@@ -862,10 +836,6 @@ class MainWindow(baseclass):
             if (cardIndex := self.ui.listWidgetSprayCard.currentRow()) != -1:
                 sprayCard: SprayCard = passData.spray_cards[cardIndex]
         return passData, sprayCard
-    
-    def setSprayCardProcessingButtonsEnable(self, enable = False):
-        self.ui.buttonEditThreshold.setEnabled(enable)
-        self.ui.buttonEditSpreadFactors.setEnabled(enable)
         
 class About(baseclass_about):
     def __init__(self, parent = None):

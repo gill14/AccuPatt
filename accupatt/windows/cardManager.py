@@ -2,10 +2,13 @@ import os
 
 import accupatt.config as cfg
 from accupatt.models.passData import Pass
+from accupatt.models.seriesData import SeriesData
 from accupatt.models.sprayCard import SprayCard
 from accupatt.widgets.cardtablewidget import CardTableWidget
 from accupatt.widgets.passinfowidget import PassInfoWidget
 from accupatt.windows.definedSetManager import DefinedSet, DefinedSetManager, load_defined_sets
+from accupatt.windows.editSpreadFactors import EditSpreadFactors
+from accupatt.windows.editThreshold import EditThreshold
 from accupatt.windows.loadCards import LoadCards, LoadCardsPreBatch
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
@@ -17,7 +20,7 @@ class CardManager(baseclass):
 
     passDataChanged = pyqtSignal()
 
-    def __init__(self, passData: Pass = None, filepath=None, parent=None):
+    def __init__(self, passData: Pass, seriesData: SeriesData, filepath, parent):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -26,6 +29,7 @@ class CardManager(baseclass):
         self.filepath = filepath
         
         # Pass Info Fields
+        self.seriesData = seriesData
         self.passData = passData
         self.ui.labelPass.setText(passData.name)
         self.passInfoWidget: PassInfoWidget = self.ui.passInfoWidget
@@ -46,6 +50,8 @@ class CardManager(baseclass):
         self.cardTable: CardTableWidget = self.ui.cardTableWidget
         self.cardTable.passDataChanged.connect(self.passDataChanged.emit)
         self.cardTable.selectionChanged.connect(self.selection_changed)
+        self.cardTable.editCard.connect(self.edit_card)
+        self.cardTable.editCardSpreadFactors.connect(self.edit_card_spread_factors)
         self.cardTable.assign_card_list(passData.spray_cards, filepath)
 
         self.show()
@@ -82,6 +88,22 @@ class CardManager(baseclass):
             c.set_filepath(self.filepath)
         # Add cards to tablemodel
         self.cardTable.add_cards_to_table(cards)
+    
+    @pyqtSlot(SprayCard)
+    def edit_card(self, sprayCard: SprayCard):
+        if sprayCard and sprayCard.has_image:
+            #Open the Edit Process Options window for currently selected card
+            e = EditThreshold(sprayCard=sprayCard, passData=self.passData, seriesData=self.seriesData, parent=self)
+            #Start Loop
+            e.exec()
+    
+    @pyqtSlot(SprayCard)
+    def edit_card_spread_factors(self, sprayCard: SprayCard):
+        if sprayCard and sprayCard.has_image:
+            #Open the Edit Spread Factors window for currently selected card
+            e = EditSpreadFactors(sprayCard=sprayCard, passData=self.passData, seriesData=self.seriesData, parent=self)
+            #Start Loop
+            e.exec()
     
     @pyqtSlot()
     def update_table(self):
