@@ -6,13 +6,14 @@ from accupatt.models.seriesData import SeriesData
 from accupatt.models.sprayCard import SprayCard
 from accupatt.widgets.cardtablewidget import CardTableWidget
 from accupatt.widgets.passinfowidget import PassInfoWidget
+from accupatt.widgets.singlecardwidget import SingleCardWidget
 from accupatt.windows.definedSetManager import DefinedSet, DefinedSetManager, load_defined_sets
 from accupatt.windows.editSpreadFactors import EditSpreadFactors
 from accupatt.windows.editThreshold import EditThreshold
 from accupatt.windows.loadCards import LoadCards, LoadCardsPreBatch
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
-from PyQt6.QtWidgets import QFileDialog, QMessageBox, QComboBox
+from PyQt6.QtWidgets import QFileDialog, QLabel, QMessageBox, QComboBox
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'cardManager.ui'))
 
@@ -60,6 +61,7 @@ class CardManager(baseclass):
     def selection_changed(self, has_selection: bool):
         self.ui.buttonLoad.setEnabled(has_selection)
         self.ui.comboBoxLoadMethod.setEnabled(has_selection)
+        self._update_image_widgets(has_selection)
     
     @pyqtSlot()
     def edit_sets(self):
@@ -129,6 +131,33 @@ class CardManager(baseclass):
             #Single Image, Multiple Cards
             self._load_cards_multi(selected_cards)
         
+    
+    def _update_image_widgets(self, has_selection):
+        imageWidget1: SingleCardWidget = self.ui.cardWidget1
+        labelCard1: QLabel = self.ui.labelCard1
+        imageWidget2: SingleCardWidget = self.ui.cardWidget2
+        labelCard2: QLabel = self.ui.labelCard2
+        # Initially clear labels
+        labelCard1.setText('')
+        labelCard2.setText('')
+        # Check if any cards selected
+        if has_selection:
+            selected_rows = [index.row() for index in self.cardTable.tv.selectionModel().selectedRows()]
+            # Check if a single card (row) is selected
+            if len(selected_rows) == 1:
+                selected_card: SprayCard = self.cardTable.tm.card_list[selected_rows[0]]
+                labelCard1.setText(selected_card.name)
+                labelCard2.setText(selected_card.name)
+                # Check if single selected card has image data
+                if selected_card.has_image:
+                    cvImg1, cvImg2 = selected_card.images_processed()
+                    imageWidget1.updateSprayCardView(cvImg1)
+                    imageWidget2.updateSprayCardView(cvImg2)
+                    return
+        # Clear image views if not explicitly set
+        imageWidget1.clearSprayCardView()
+        imageWidget2.clearSprayCardView()
+            
     
     def _load_cards_singles(self, selected_cards):
         fnames, _ = QFileDialog.getOpenFileNames(self, 'Open file(s)', cfg.get_image_load_dir(), "Image files (*.png *.tif *.tiff)")

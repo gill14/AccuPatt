@@ -3,7 +3,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QImage, QPixmap, QResizeEvent
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QGraphicsPixmapItem, QGraphicsScene
 
-class SingleCVImageWidget(QWidget):
+class SingleCardWidget(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         layout = QHBoxLayout(self)
@@ -21,7 +21,7 @@ class SingleCVImageWidget(QWidget):
 
     def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
-        self.updateSprayCardView()
+        self.resize_and_fit()
 
     def scrollGV_V(self, value):
         self.graphicsView1.verticalScrollBar().setValue(value)
@@ -32,22 +32,28 @@ class SingleCVImageWidget(QWidget):
     def updateSprayCardView(self, cvImg1=None):
         self.clearSprayCardView()
         if not cvImg1 is None:
-            self.pixmap_item_original.setPixmap(QPixmap.fromImage(SingleCVImageWidget.qImg_from_cvImg(cvImg1)))
+            self.pixmap_item_original.setPixmap(QPixmap.fromImage(SingleCardWidget.qImg_from_cvImg(cvImg1)))
         #Auto-resize to fit width of card to width of graphicsView
         scene1 = self.graphicsView1.scene()
         scene1.setSceneRect(scene1.itemsBoundingRect())
-        self.graphicsView1.fitInView(scene1.sceneRect(), Qt.AspectRatioMode.KeepAspectRatioByExpanding)
+        self.fit = Qt.AspectRatioMode.KeepAspectRatioByExpanding
+        self.resize_and_fit()
 
     def clearSprayCardView(self):
         self.pixmap_item_original.setPixmap(QPixmap())
+
+    def resize_and_fit(self):
+        scene1 = self.graphicsView1.scene()
+        scene1.setSceneRect(scene1.itemsBoundingRect())
+        self.graphicsView1.fitInView(scene1.sceneRect(), self.fit)
 
     def qImg_from_cvImg(cvImg):
         height, width = cvImg.shape[:2]
         if len(cvImg.shape) == 2:
             bytesPerLine = 1 * width
-            qImg = QImage(cvImg.data, width, height, bytesPerLine, QImage.Format_Grayscale8)
+            qImg = QImage(cvImg.data, width, height, bytesPerLine, QImage.Format.Format_Grayscale8)
         elif len(cvImg.shape) == 3:
             bytesPerLine = 3 * width
-            qImg = QImage(cvImg.data, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+            qImg = QImage(cvImg.data, width, height, bytesPerLine, QImage.Format.Format_BGR888)
         return qImg
         

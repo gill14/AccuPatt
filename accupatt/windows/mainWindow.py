@@ -19,7 +19,7 @@ from accupatt.windows.editSpreadFactors import EditSpreadFactors
 from accupatt.windows.editThreshold import EditThreshold
 from accupatt.windows.passManager import PassManager
 from accupatt.windows.readString import ReadString
-from accupatt.widgets import mplwidget, seriesinfowidget, singleCVImageWidget, splitcardwidget
+from accupatt.widgets import mplwidget, seriesinfowidget, singlecardwidget, splitcardwidget
 from PyQt6 import uic
 from PyQt6.QtCore import QSignalBlocker, Qt, pyqtSlot
 from PyQt6.QtGui import QAction, QActionGroup
@@ -31,7 +31,7 @@ from accupatt.windows.stringAdvancedOptions import StringAdvancedOptions
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'mainWindow.ui'))
 Ui_Form_About, baseclass_about = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'about.ui'))
-testing = False
+testing = True
 class MainWindow(baseclass):
 
     def __init__(self, *args, **kwargs):
@@ -238,7 +238,7 @@ class MainWindow(baseclass):
         except NameError:
             self.currentDirectory = Path.home()
         if testing:
-            file = '/Users/gill14/Library/Mobile Documents/com~apple~CloudDocs/Projects/AccuPatt/testing/N802BK 01.db'
+            file = '/Users/gill14/Library/Mobile Documents/com~apple~CloudDocs/Projects/AccuPatt/testing/N510DC 01.db'
             #file = '/Users/gill14/Library/Mobile Documents/com~apple~CloudDocs/Projects/AccuPatt/testing/N802BK 01.xlsx'
         else:
             file, _ = QFileDialog.getOpenFileName(parent=self, 
