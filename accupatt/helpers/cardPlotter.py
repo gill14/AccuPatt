@@ -54,9 +54,7 @@ class CardPlotter:
         
         return composite
     
-    def plotDistribution(mplWidget1: MplWidget, mplWidget2: MplWidget, tableWidget: QTableWidget, sprayCard: SprayCard, passData: Pass = None, seriesData: SeriesData = None):
-        # Create Composite if applicable
-        composite: SprayCardComposite = CardPlotter.createRepresentativeComposite(sprayCard, passData, seriesData)
+    def plotDistribution(mplWidget1: MplWidget, mplWidget2: MplWidget, tableWidget: QTableWidget, composite: SprayCardComposite):
         # Create sorting bins
         bins = [x for x in range(0, 900, 50)]
         binned_cov = [0 for b in bins]
@@ -137,7 +135,7 @@ class CardPlotter:
             tableWidget.item(row,1).setText(val)
         tableWidget.resizeColumnsToContents()
         
-    def plotSpatial(mplWidget1: MplWidget, mplWidget2: MplWidget, sprayCards: list[SprayCard], loc_units, colorize = False):
+    def plotSpatial(mplWidget: MplWidget, sprayCards: list[SprayCard], loc_units, colorize = False):
         # Units for plot
         
         # Init vals as none
@@ -171,8 +169,8 @@ class CardPlotter:
             dv05 = [stat[1] for stat in stats]
             dv09 = [stat[2] for stat in stats]
         # Plot
-        CardPlotter._plotSpatialDV(mplWidget1, x=locs, y_01=dv01, y_05=dv05, y_09=dv09, x_units=loc_units)
-        CardPlotter._plotSpatialCov(mplWidget2, x=locs, y_cov=cov, y_01=dv01, y_05=dv05, x_units=loc_units, fill_dsc=colorize)
+        #CardPlotter._plotSpatialDV(mplWidget1, x=locs, y_01=dv01, y_05=dv05, y_09=dv09, x_units=loc_units)
+        CardPlotter._plotSpatialCov(mplWidget, x=locs, y_cov=cov, y_01=dv01, y_05=dv05, x_units=loc_units, fill_dsc=colorize)
         
     def _plotSpatialDV(mplWidget: MplWidget, x, y_01, y_05, y_09, x_units):
         # Setup Axes and Clear
