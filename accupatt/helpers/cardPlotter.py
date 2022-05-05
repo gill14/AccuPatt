@@ -38,11 +38,11 @@ class CardPlotter:
         for card in cards:
             if card.has_image and card.include_in_composite:
                 # Do the image processing
-                card.images_processed()
+                #card.images_processed()
                 # Glob into representative composite card
                 composite.area_px2 += card.area_px2
-                composite.area_in2 += card._px2_to_in2(card.area_px2)
-                dd, dv = card.build_droplet_data()
+                composite.area_in2 += card.stats._px2_to_in2(card.area_px2)
+                dd, dv = card.stats.get_droplet_diameters_and_volumes()
                 composite.drop_dia_um.extend(dd)
                 composite.drop_vol_um3.extend(dv)
                 composite.stain_areas_all_px2.extend(card.stain_areas_all_px2)
@@ -51,6 +51,9 @@ class CardPlotter:
         # Sort droplet lists
         composite.drop_dia_um.sort()
         composite.drop_vol_um3.sort()
+        
+        # Set the dv vals in composite stats object for future use
+        composite.stats.set_volumetric_stats(composite.drop_dia_um, composite.drop_vol_um3)
         
         return composite
     
@@ -114,25 +117,15 @@ class CardPlotter:
         # If no drops, return
         if len(composite.stain_areas_valid_px2) < 1:
             return
-        # Calc values from composite
-        dv01, dv05, dv09, rs, dsc = composite.volumetric_stats(composite.drop_dia_um, composite.drop_vol_um3)
-        cov = composite.percent_coverage()
-        stains = len(composite.stain_areas_valid_px2)
-        area = composite.area_in2
-        spsi = round(stains / area)
-        # Put vals in table
-        for row, val in zip([0,1,2,3,4,5,6,7,8],[dsc,dv01,dv05,dv09,rs,cov,area,stains,spsi]):
-            if row >= 1 and row <= 3:
-                val = str(val) + ' \u03BC' + 'm'
-            elif row == 4:
-                val = f'{val:.2f}'
-            elif row == 5:
-                val = f'{val:.2f}%'
-            elif row == 6:
-                val = f'{val:.2f} in\u00B2'
-            elif row >= 7 and row <= 8:
-                val = str(val)
-            tableWidget.item(row,1).setText(val)
+        tableWidget.item(0,1).setText(composite.stats.get_dsc())
+        tableWidget.item(1,1).setText(composite.stats.get_dv01(text=True))
+        tableWidget.item(2,1).setText(composite.stats.get_dv05(text=True))
+        tableWidget.item(3,1).setText(composite.stats.get_dv09(text=True))
+        tableWidget.item(4,1).setText(composite.stats.get_relative_span(text=True))
+        tableWidget.item(5,1).setText(composite.stats.get_percent_coverage(text=True))
+        tableWidget.item(6,1).setText(f'{composite.area_in2:.2f} in\u00B2')
+        tableWidget.item(7,1).setText(composite.stats.get_number_of_stains(text=True))
+        tableWidget.item(8,1).setText(str(round(composite.stats.get_number_of_stains()/composite.area_in2)))
         tableWidget.resizeColumnsToContents()
         
     def plotSpatial(mplWidget: MplWidget, sprayCards: list[SprayCard], loc_units, colorize = False):
@@ -141,19 +134,16 @@ class CardPlotter:
         # Init vals as none
         locs, cov, dv01, dv05, dv09 = [None] * 5
         # Get a ist of valid cards with locations
-        card: SprayCard
         scs = [card for card in sprayCards if card.has_image and card.include_in_composite and card.location is not None and card.location_units is not None]
         #Process each card for stats
-        for card in scs:
-            card.images_processed()
+        #for card in scs:
+        #    card.images_processed()
         # Remove cards with no stains
         scs = [card for card in scs if len(card.stain_areas_valid_px2)>0]
         # Populate arrays if cards available
         if len(scs) > 0:
            # Sort by location
             scs.sort(key=lambda x: x.location)
-            # Calculate all card stats only once for speed
-            stats = [card.volumetric_stats() for card in scs]
             # Create plottable series
             locs = [card.location for card in scs]
             units = [card.location_units for card in scs]
@@ -164,10 +154,10 @@ class CardPlotter:
                         locs[i] = loc / cfg.FT_PER_M
                     else:
                         locs[i] = loc * cfg.FT_PER_M
-            cov = [card.percent_coverage() for card in scs]
-            dv01 = [stat[0] for stat in stats]
-            dv05 = [stat[1] for stat in stats]
-            dv09 = [stat[2] for stat in stats]
+            cov = [card.stats.get_percent_coverage() for card in scs]
+            dv01 = [card.stats.get_dv01() for card in scs]
+            dv05 = [card.stats.get_dv05() for card in scs]
+            dv09 = [card.stats.get_dv09() for card in scs]
         # Plot
         #CardPlotter._plotSpatialDV(mplWidget1, x=locs, y_01=dv01, y_05=dv05, y_09=dv09, x_units=loc_units)
         CardPlotter._plotSpatialCov(mplWidget, x=locs, y_cov=cov, y_01=dv01, y_05=dv05, x_units=loc_units, fill_dsc=colorize)

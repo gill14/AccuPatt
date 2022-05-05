@@ -36,8 +36,10 @@ class DefinedSetManager(baseclass):
         self.lv.setModel(self.lm)
         self.cardTable: CardTableWidget = self.ui.cardTableWidget
         self.cardTable.tv.hideColumn(1)
-        self.cardTable.tv.hideColumn(2)
+        self.cardTable.tv.hideColumn(4)
         self.cardTable.tv.hideColumn(5)
+        self.cardTable.tv.hideColumn(6)
+        self.cardTable.tv.hideColumn(7)
         # Set and select initial value for listview
         self.lv.selectionModel().currentChanged[QModelIndex,QModelIndex].connect(self.current_set_changed)
         self.lv.setCurrentIndex(self.lm.index(0,0))

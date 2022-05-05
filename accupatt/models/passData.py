@@ -5,6 +5,7 @@ import accupatt.config as cfg
 import numpy as np
 
 from accupatt.models.passStringData import PassStringData
+from accupatt.models.sprayCard import SprayCard
 
 class Pass:
 
@@ -32,7 +33,7 @@ class Pass:
         # String Data
         self.string = PassStringData(name=self.name)
         # Spray Card List
-        self.spray_cards = []
+        self.spray_cards: list[SprayCard] = []
         #Include in Composite by default
         self.string_include_in_composite = True
         self.cards_include_in_composite = True

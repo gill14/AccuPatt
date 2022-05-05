@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import math
 import uuid
 
@@ -40,100 +41,18 @@ class SprayCard:
         self.area_px2 = 0.0
         self.stain_areas_all_px2 = []
         self.stain_areas_valid_px2 = []
+        self.stats = SprayCardStats(sprayCard=self)
+        # Flag for currency
+        self.current = False
     
     def image_original(self):
         return sprayCardImageFileHandler.read_image_from_file(self)
 
     def images_processed(self):
         # Returns processed images as tuple (overlay on og, binary mask)
-        # And Populates Stain Area Lists
+        # And Populates Stain Area Lists, card area
+        self.current = True
         return SprayCardImageProcessor(sprayCard=self).draw_and_log_stains()
-
-    def percent_coverage(self):
-        #Protect from div/0 error or empty stain array
-        if self.area_px2 == 0 or len(self.stain_areas_all_px2) == 0:
-            return 0
-        # Calculate coverage as percent of pixel area
-        cov = sum(self.stain_areas_all_px2) / self.area_px2
-        # Return value as percentage
-        return cov*100.0
-
-    def stains_per_in2(self):
-        # Return a rounded int value
-        if self.area_px2 == 0:
-            return 0
-        return round(len(self.stain_areas_all_px2) / self._px2_to_in2(self.area_px2)) 
-
-    def build_droplet_data(self):
-        # Protect agains empty array
-        if len(self.stain_areas_valid_px2) == 0:
-            return [],[]
-        drop_dia_um = []
-        drop_vol_um3 = []
-        # Sort areas into ascending order of size
-        self.stain_areas_valid_px2.sort()
-        for area in self.stain_areas_valid_px2:
-            # Convert px2 to um2
-            area_um2 = self._px2_to_um2(area)
-            # Calculate stain diameter assuming circular stain
-            dia_um = math.sqrt((4.0 * area_um2) / math.pi)
-            # Apply Spread Factors to get originating drop diameter
-            drop_dia_um.append(self._stain_dia_to_drop_dia(dia_um))
-            # Use drop diameter to calculate drop volume
-            vol_um3 = (math.pi * dia_um**3) / 6.0
-            # Build volume list
-            drop_vol_um3.append(vol_um3)
-        return drop_dia_um, drop_vol_um3
-    
-    def volumetric_stats(self, drop_dia_um = None, drop_vol_um3 = None):
-        # Protect agains empty array
-        if len(self.stain_areas_valid_px2) == 0:
-            return 0, 0, 0, 0, ''
-        if drop_dia_um is None or drop_vol_um3 is None:
-            drop_dia_um, drop_vol_um3 = self.build_droplet_data()
-        # Calculate volume sum
-        drop_vol_um3_sum = sum(drop_vol_um3)
-        # Calculate volume fractions
-        dv01_vol = 0.10 * drop_vol_um3_sum
-        dv05_vol = 0.50 * drop_vol_um3_sum
-        dv09_vol = 0.90 * drop_vol_um3_sum
-        # Convert lists to np arrays
-        drop_dia_um = np.array(drop_dia_um, dtype=float, order='K')
-        drop_vol_um3 = np.array(drop_vol_um3, dtype=float, order='K')
-        # Create cumulative volume array
-        drop_vol_um3_cum = np.cumsum(drop_vol_um3)
-        # Interpolate drop diameters using volume fractions
-        dv01 = np.interp(dv01_vol, drop_vol_um3_cum, drop_dia_um)
-        dv05 = np.interp(dv05_vol, drop_vol_um3_cum, drop_dia_um)
-        dv09 = np.interp(dv09_vol, drop_vol_um3_cum, drop_dia_um)
-        # Calculate Relative Span
-        rs = (dv09 - dv01) / dv05
-        # Calculate the DSC
-        dsc = AtomizationModel(nozzle=None, orifice=None, airspeed=None, pressure=None, angle=None).dsc(dv01=dv01, dv05=dv05)
-        # Return rounded representative vol frac diameters as ints, rel span as float
-        return round(dv01), round(dv05), round(dv09), rs, dsc
-
-    def minimum_detectable_droplet_diameter(self):
-        min_stain_area = self._px2_to_um2(self.min_stain_area_px)
-        min_stain_dia = math.sqrt((4.0 * min_stain_area) / math.pi)
-        return round(self._stain_dia_to_drop_dia(min_stain_dia))
-    
-    def _px2_to_um2(self, area_px2):
-        um_per_px = cfg.UM_PER_IN / self.dpi
-        return area_px2 * um_per_px * um_per_px
-    
-    def _px2_to_in2(self, area_px2):
-        return area_px2 / (self.dpi ** 2)
-
-    def _stain_dia_to_drop_dia(self, stain_dia):
-        if self.spread_method == cfg.SPREAD_METHOD_DIRECT:
-            # D = A(S)^2 + B(S) + C
-            return self.spread_factor_a * stain_dia * stain_dia + self.spread_factor_b * stain_dia + self.spread_factor_c
-        elif self.spread_method == cfg.SPREAD_METHOD_ADAPTIVE:
-            # D = S / ( A(S)^2 + B(S) + C )
-            return stain_dia / (self.spread_factor_a * stain_dia * stain_dia + self.spread_factor_b * stain_dia + self.spread_factor_c)
-        # DD = DS
-        return stain_dia
 
     def save_image_to_file(self, image):
         return sprayCardImageFileHandler.save_image_to_file(self, image)
@@ -161,7 +80,156 @@ class SprayCard:
 
     def set_threshold_color_brightness(self, range: tuple[int,int]):
         self.threshold_color_brightness = range
-      
+     
+@dataclass
+class SprayCardStats:
+    
+    sprayCard: SprayCard
+    
+    dv01: int = 0
+    dv05: int = 0
+    dv09: int = 0
+    
+    # Flag for currency
+    current = False
+    
+    # Public value/text getters
+    
+    def get_dv01(self, text = False):
+        if text:
+            return str(self.dv01) + ' \u03BC' + 'm'
+        else:
+            return self.dv01
+    
+    def get_dv05(self, text = False):
+        if text:
+            return str(self.dv05) + ' \u03BC' + 'm'
+        else:
+            return self.dv05
+        
+    def get_dv09(self, text = False):
+        if text:
+            return str(self.dv09) + ' \u03BC' + 'm'
+        else:
+            return self.dv09
+    
+    def get_dsc(self):
+        return AtomizationModel(nozzle=None, orifice=None, airspeed=None, pressure=None, angle=None).dsc(dv01=self.dv01, dv05=self.dv05)
+        
+    def get_relative_span(self, text = False):
+        if self.dv05 == 0:
+            rs = 0
+        else:
+            rs = (self.dv09 - self.dv01) / self.dv05
+        if text:
+            return f'{rs:.2f}'
+        else:
+            return rs
+    
+    def get_percent_coverage(self, text = False):
+        #Protect from div/0 error or empty stain array
+        if self.sprayCard.area_px2 == 0 or len(self.sprayCard.stain_areas_all_px2) == 0:
+            return 0
+        # Calculate coverage as percent of pixel area
+        cov = (sum(self.sprayCard.stain_areas_all_px2) / self.sprayCard.area_px2) * 100.0
+        if text:
+            return f'{cov:.2f}%'
+        else:
+            return cov
+
+    def get_number_of_stains(self, text = False):
+        if text:
+            return str(len(self.sprayCard.stain_areas_valid_px2))
+        else:
+            return len(self.sprayCard.stain_areas_valid_px2)
+    
+    def get_stains_per_in2(self, text = False):
+        if self.sprayCard.area_px2 == 0:
+            return 0
+        spsi = round(len(self.sprayCard.stain_areas_valid_px2) / self._px2_to_in2(self.sprayCard.area_px2))
+        if text:
+            return str(spsi)
+        else:
+            return spsi
+        
+    def get_minimum_detectable_droplet_diameter(self):
+        min_stain_area = self._px2_to_um2(self.sprayCard.min_stain_area_px)
+        min_stain_dia = math.sqrt((4.0 * min_stain_area) / math.pi)
+        return round(self._stain_dia_to_drop_dia(min_stain_dia))
+    
+    # Public setter for dv's
+    
+    def set_volumetric_stats(self, drop_dia_um = None, drop_vol_um3 = None):
+        # Protect agains empty array
+        if len(self.sprayCard.stain_areas_valid_px2) == 0:
+            self.dv01 = 0
+            self.dv05 = 0
+            self.dv09 = 0
+            return
+        # dd and dv lists normally none, but will have values already for composite card calcs
+        if drop_dia_um is None or drop_vol_um3 is None:
+            drop_dia_um, drop_vol_um3 = self.get_droplet_diameters_and_volumes()
+        # Calculate volume sum
+        drop_vol_um3_sum = sum(drop_vol_um3)
+        # Calculate volume fractions
+        dv01_vol = 0.10 * drop_vol_um3_sum
+        dv05_vol = 0.50 * drop_vol_um3_sum
+        dv09_vol = 0.90 * drop_vol_um3_sum
+        # Convert lists to np arrays
+        drop_dia_um = np.array(drop_dia_um, dtype=float, order='K')
+        drop_vol_um3 = np.array(drop_vol_um3, dtype=float, order='K')
+        # Create cumulative volume array
+        drop_vol_um3_cum = np.cumsum(drop_vol_um3)
+        # Interpolate drop diameters using volume fractions
+        self.dv01 = round(np.interp(dv01_vol, drop_vol_um3_cum, drop_dia_um))
+        self.dv05 = round(np.interp(dv05_vol, drop_vol_um3_cum, drop_dia_um))
+        self.dv09 = round(np.interp(dv09_vol, drop_vol_um3_cum, drop_dia_um))
+        # Reset currency flag
+        self.current = True
+    
+    # Publicly accessible getter for dd and dv lists, only public so can be used in Composite Card calculations
+    
+    def get_droplet_diameters_and_volumes(self) -> tuple[list[float],list[float]]:
+        # Protect agains empty array
+        if len(self.sprayCard.stain_areas_valid_px2) == 0:
+            return [],[]
+        drop_dia_um = []
+        drop_vol_um3 = []
+        # Sort areas into ascending order of size
+        self.sprayCard.stain_areas_valid_px2.sort()
+        for area in self.sprayCard.stain_areas_valid_px2:
+            # Convert px2 to um2
+            area_um2 = self._px2_to_um2(area)
+            # Calculate stain diameter assuming circular stain
+            dia_um = math.sqrt((4.0 * area_um2) / math.pi)
+            # Apply Spread Factors to get originating drop diameter
+            drop_dia_um.append(self._stain_dia_to_drop_dia(dia_um))
+            # Use drop diameter to calculate drop volume
+            vol_um3 = (math.pi * dia_um**3) / 6.0
+            # Build volume list
+            drop_vol_um3.append(vol_um3)
+        return drop_dia_um, drop_vol_um3
+    
+    # Internal Functions
+    
+    def _px2_to_um2(self, area_px2):
+        um_per_px = cfg.UM_PER_IN / self.sprayCard.dpi
+        return area_px2 * um_per_px * um_per_px
+    
+    def _px2_to_in2(self, area_px2):
+        return area_px2 / (self.sprayCard.dpi ** 2)
+    
+    def _stain_dia_to_drop_dia(self, stain_dia):
+        if self.sprayCard.spread_method == cfg.SPREAD_METHOD_DIRECT:
+            # D = A(S)^2 + B(S) + C
+            return self.sprayCard.spread_factor_a * stain_dia * stain_dia + self.sprayCard.spread_factor_b * stain_dia + self.sprayCard.spread_factor_c
+        elif self.sprayCard.spread_method == cfg.SPREAD_METHOD_ADAPTIVE:
+            # D = S / ( A(S)^2 + B(S) + C )
+            return stain_dia / (self.sprayCard.spread_factor_a * stain_dia * stain_dia + self.sprayCard.spread_factor_b * stain_dia + self.sprayCard.spread_factor_c)
+        # DD = DS
+        return stain_dia
+    
+    
 class sprayCardImageFileHandler:
     
     def read_image_from_file(sprayCard: SprayCard):
@@ -263,10 +331,13 @@ class SprayCardImageProcessor:
         minHSV = np.array([self.sprayCard.threshold_color_hue[0], self.sprayCard.threshold_color_saturation[0], self.sprayCard.threshold_color_brightness[0]])
         maxHSV = np.array([self.sprayCard.threshold_color_hue[1], self.sprayCard.threshold_color_saturation[1], self.sprayCard.threshold_color_brightness[1]])
         # Binarize image with TRUE for HSB values in user-defined range
-        mask = cv2.inRange(img_hsv, minHSV, maxHSV)
+        
         # Invert image according to user defined method
         if self.sprayCard.threshold_method_color == cfg.THRESHOLD_HSB_METHOD_INCLUDE:
-            mask = cv2.bitwise_not(mask)
+            mask = cv2.inRange(img_hsv, minHSV, maxHSV)
+        else:
+            # TODO - need to add pass options to each param
+            mask = cv2.inRange(img_hsv, minHSV, maxHSV)
         return mask
 
     def _image_watershed(self, img_src, img_thresh, contours_original):

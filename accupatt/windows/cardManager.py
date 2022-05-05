@@ -13,7 +13,7 @@ from accupatt.windows.editThreshold import EditThreshold
 from accupatt.windows.loadCards import LoadCards, LoadCardsPreBatch
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
-from PyQt6.QtWidgets import QFileDialog, QLabel, QMessageBox, QComboBox
+from PyQt6.QtWidgets import QFileDialog, QLabel, QMessageBox, QComboBox, QProgressDialog
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'cardManager.ui'))
 
@@ -47,8 +47,13 @@ class CardManager(baseclass):
         self.ui.comboBoxLoadMethod.setCurrentText(cfg.get_image_load_method())
         self.ui.buttonLoad.clicked.connect(self.load_cards)
         
+        self.ui.buttonProcessOptions.clicked.connect(self.click_process_options)
+        self.ui.buttonSpreadFactors.clicked.connect(self.click_spread_factors)
+        
         #Populate Table
         self.cardTable: CardTableWidget = self.ui.cardTableWidget
+        self.cardTable.tv.hideColumn(6)
+        self.cardTable.tv.hideColumn(7)
         self.cardTable.passDataChanged.connect(self.passDataChanged.emit)
         self.cardTable.selectionChanged.connect(self.selection_changed)
         self.cardTable.editCard.connect(self.edit_card)
@@ -91,6 +96,12 @@ class CardManager(baseclass):
         # Add cards to tablemodel
         self.cardTable.add_cards_to_table(cards)
     
+    @pyqtSlot()
+    def click_process_options(self):
+        selected_rows = [index.row() for index in self.cardTable.tv.selectionModel().selectedRows()]
+        selected_card: SprayCard = self.cardTable.tm.card_list[selected_rows[0]]
+        self.edit_card(selected_card)
+    
     @pyqtSlot(SprayCard)
     def edit_card(self, sprayCard: SprayCard):
         if sprayCard and sprayCard.has_image:
@@ -98,6 +109,12 @@ class CardManager(baseclass):
             e = EditThreshold(sprayCard=sprayCard, passData=self.passData, seriesData=self.seriesData, parent=self)
             #Start Loop
             e.exec()
+    
+    @pyqtSlot()
+    def click_spread_factors(self):
+        selected_rows = [index.row() for index in self.cardTable.tv.selectionModel().selectedRows()]
+        selected_card: SprayCard = self.cardTable.tm.card_list[selected_rows[0]]
+        self.edit_card_spread_factors(selected_card)
     
     @pyqtSlot(SprayCard)
     def edit_card_spread_factors(self, sprayCard: SprayCard):
@@ -133,28 +150,32 @@ class CardManager(baseclass):
         
     
     def _update_image_widgets(self, has_selection):
+        labelCard: QLabel = self.ui.labelCard
+        imageWidget0: SingleCardWidget = self.ui.cardWidget0
         imageWidget1: SingleCardWidget = self.ui.cardWidget1
-        labelCard1: QLabel = self.ui.labelCard1
         imageWidget2: SingleCardWidget = self.ui.cardWidget2
-        labelCard2: QLabel = self.ui.labelCard2
         # Initially clear labels
-        labelCard1.setText('')
-        labelCard2.setText('')
+        labelCard.setText('')
         # Check if any cards selected
         if has_selection:
             selected_rows = [index.row() for index in self.cardTable.tv.selectionModel().selectedRows()]
             # Check if a single card (row) is selected
             if len(selected_rows) == 1:
                 selected_card: SprayCard = self.cardTable.tm.card_list[selected_rows[0]]
-                labelCard1.setText(selected_card.name)
-                labelCard2.setText(selected_card.name)
+                labelCard.setText(self.passData.name + ' - ' + selected_card.name)
                 # Check if single selected card has image data
                 if selected_card.has_image:
+                    self.ui.buttonProcessOptions.setEnabled(True)
+                    self.ui.buttonSpreadFactors.setEnabled(True)
+                    imageWidget0.updateSprayCardView(selected_card.image_original())
                     cvImg1, cvImg2 = selected_card.images_processed()
                     imageWidget1.updateSprayCardView(cvImg1)
                     imageWidget2.updateSprayCardView(cvImg2)
                     return
         # Clear image views if not explicitly set
+        self.ui.buttonProcessOptions.setEnabled(False)
+        self.ui.buttonSpreadFactors.setEnabled(False)
+        imageWidget0.clearSprayCardView()
         imageWidget1.clearSprayCardView()
         imageWidget2.clearSprayCardView()
             
@@ -182,6 +203,28 @@ class CardManager(baseclass):
         if len(excepts := self.passInfoWidget.validate_fields(p)) > 0:
             QMessageBox.warning(self, 'Invalid Data', '\n'.join(excepts))
             return
+        # If all checks out, process each card and show progress
+        prog = QProgressDialog(self)
+        prog.setMinimumDuration(0)
+        prog.setWindowModality(Qt.WindowModality.WindowModal)
+        card_list: list[SprayCard] = self.cardTable.tm.card_list
+        for i, card in enumerate(card_list):
+            if i==0:
+                prog.setRange(0, len(card_list))
+            prog.setValue(i)
+            prog.setLabelText(f'Processing {card.name} and caching droplet statistics')
+            # Process image
+            if not card.current:
+                card.images_processed()
+            # Cache droplet stats
+            if not card.stats.current:
+                card.stats.set_volumetric_stats()
+            
+            if prog.wasCanceled():
+                return
+            
+            if i==len(card_list)-1:
+                prog.setValue(i+1)
         # If all checks out, update config, notify requestor and close
         cfg.set_card_defined_set(self.ui.comboBoxDefinedSet.currentText())
         cfg.set_image_load_method(self.ui.comboBoxLoadMethod.currentText())

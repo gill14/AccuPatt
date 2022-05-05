@@ -1,6 +1,8 @@
 import os
 
 import accupatt.config as cfg
+from accupatt.models.seriesData import SeriesData
+from accupatt.models.passData import Pass
 from accupatt.models.sprayCard import SprayCard
 from PyQt6 import uic
 from PyQt6.QtCore import QSignalBlocker, Qt
@@ -10,7 +12,7 @@ Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'edit
 
 class EditSpreadFactors(baseclass):
 
-    def __init__(self, sprayCard, passData, seriesData, parent=None):
+    def __init__(self, sprayCard, passData: Pass, seriesData: SeriesData, parent=None):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -144,6 +146,8 @@ class EditSpreadFactors(baseclass):
                         card.spread_factor_a = a
                         card.spread_factor_b = b
                         card.spread_factor_c = c
+                        # Currency Flags
+                        card.stats.current = False
         
         # Update Defaults if requested
         if self.ui.checkBoxUpdateDefaults.isChecked():

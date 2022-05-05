@@ -297,6 +297,32 @@ class MainWindow(baseclass):
         with QSignalBlocker(self.ui.radioButtonSimulationOne):
             self.ui.radioButtonSimulationOne.setChecked(cfg.get_string_simulation_view_window() == cfg.STRING_SIMULATION_VIEW_WINDOW_ONE)
 
+        # Process and cache all card stats
+        prog = QProgressDialog(self)
+        prog.setMinimumDuration(0)
+        prog.setWindowModality(Qt.WindowModality.WindowModal)
+        card_list: list[SprayCard] = []
+        card_identifier_list: list[str] = []
+        for p in self.seriesData.passes:
+            for c in p.spray_cards:
+                card_list.append(c)
+                card_identifier_list.append(f'{p.name} - {c.name}')
+        for i, card in enumerate(card_list):
+            if i==0:
+                prog.setRange(0, len(card_list))
+            prog.setValue(i)
+            prog.setLabelText(f'Processing {card_identifier_list[i]} and caching droplet statistics')
+            # Process image
+            card.images_processed()
+            # Cache droplet stats
+            card.stats.set_volumetric_stats()
+            
+            if prog.wasCanceled():
+                return
+            
+            if i==len(card_list)-1:
+                prog.setValue(i+1)
+        
         #Refresh ListWidgets
         self.updatePassListWidgets(string=True, cards=True)
 
