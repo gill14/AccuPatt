@@ -10,7 +10,7 @@ from PIL import Image
 from PyQt6 import uic
 from PyQt6.QtGui import QImageReader, QPixmap
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
-from PyQt6.QtWidgets import QCheckBox, QGraphicsPixmapItem, QListWidget, QProgressDialog
+from PyQt6.QtWidgets import QCheckBox, QComboBox, QGraphicsPixmapItem, QListWidget, QProgressDialog
 from pyqtgraph.functions import mkPen
 
 Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'loadCards.ui'))
@@ -289,9 +289,12 @@ class LoadCardsPreBatch(baseclass_pre):
         self.lwc: QListWidget = self.ui.listWidgetCard
         self.lwf: QListWidget = self.ui.listWidgetFile
         self.cbc: QCheckBox = self.ui.checkBoxCrop
+        self.cbd: QComboBox = self.ui.comboBoxDpi
         
         self.lwc.addItems([c.name for c in self.cards])
         self.lwf.addItems(self.files)
+        self.cbd.addItem('Auto')
+        self.cbd.addItems([str(dpi) for dpi in cfg.IMAGE_DPI_OPTIONS])
         
         self.show()
         
@@ -308,7 +311,10 @@ class LoadCardsPreBatch(baseclass_pre):
                     c = self.cards[i]
                     c.has_image = True
                     c.include_in_composite = True
-                    c.dpi = round(Image.open(self.lwf.item(i).text()).info['dpi'][0])
+                    if self.cbd.currentIndex() == 0:
+                        c.dpi = round(Image.open(self.lwf.item(i).text()).info['dpi'][0])
+                    else:
+                        c.dpi = int(self.cbd.currentText())
                     c.save_image_to_file(image=binary_data)
                 
         super().accept()
