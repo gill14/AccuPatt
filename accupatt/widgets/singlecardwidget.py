@@ -15,6 +15,8 @@ class SingleCardWidget(QWidget):
         layout.addWidget(self.graphicsView1)
         self.graphicsView1.setScene(scene1)
 
+        self.fit = Qt.AspectRatioMode.KeepAspectRatioByExpanding
+
         #Signals for syncing scrollbars
         self.graphicsView1.verticalScrollBar().valueChanged[int].connect(self.scrollGV_V)
         self.graphicsView1.horizontalScrollBar().valueChanged[int].connect(self.scrollGV_H)
@@ -36,7 +38,6 @@ class SingleCardWidget(QWidget):
         #Auto-resize to fit width of card to width of graphicsView
         scene1 = self.graphicsView1.scene()
         scene1.setSceneRect(scene1.itemsBoundingRect())
-        self.fit = Qt.AspectRatioMode.KeepAspectRatioByExpanding
         self.resize_and_fit()
 
     def clearSprayCardView(self):
