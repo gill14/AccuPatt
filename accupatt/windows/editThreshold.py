@@ -49,6 +49,7 @@ class EditThreshold(baseclass):
             rs.setEdgeLabelMode(0)
             rs.setMinimum(0)
             rs.setMaximum(255)
+        rs_hue.setMaximum(179)
         rs_hue.setValue(self.sprayCard.threshold_color_hue)
         rs_hue.valueChanged[tuple].connect(self.updateHue)
         rs_sat.setValue(self.sprayCard.threshold_color_saturation)
@@ -216,6 +217,9 @@ class EditThreshold(baseclass):
                         card.watershed = sc.watershed
                         card.min_stain_area_px = sc.min_stain_area_px
                         card.stain_approximation_method = sc.stain_approximation_method
+                        #Currency Flag
+                        card.current = False
+                        card.stats.current = False
         # Update Defualts if requested
         if self.ui.checkBoxUpdateDefaults.isChecked():
             cfg.set_threshold_type(sc.threshold_type)
