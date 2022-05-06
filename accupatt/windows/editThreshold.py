@@ -38,10 +38,12 @@ class EditThreshold(baseclass):
         self.ui.sliderGrayscale.valueChanged[int].connect(self.updateThresholdGrayscale)
 
         #Populate color ui from spray card
-        self.ui.radioButtonInclude.setChecked(self.sprayCard.threshold_method_color == cfg.THRESHOLD_HSB_METHOD_INCLUDE)
-        self.ui.radioButtonExclude.setChecked(self.sprayCard.threshold_method_color == cfg.THRESHOLD_HSB_METHOD_EXCLUDE)
-        self.ui.radioButtonInclude.toggled[bool].connect(self.toggleThresholdMethodColor)
-        self.ui.radioButtonExclude.toggled[bool].connect(self.toggleThresholdMethodColor)
+        self.ui.checkBoxHue.setChecked(self.sprayCard.threshold_color_hue_pass)
+        self.ui.checkBoxHue.toggled.connect(self.toggleHuePass)
+        self.ui.checkBoxSat.setChecked(self.sprayCard.threshold_color_saturation_pass)
+        self.ui.checkBoxSat.toggled.connect(self.toggleSatPass)
+        self.ui.checkBoxBri.setChecked(self.sprayCard.threshold_color_brightness_pass)
+        self.ui.checkBoxBri.toggled.connect(self.toggleBriPass)
         rs_hue: QLabeledRangeSlider = self.ui.rangeSliderHue
         rs_sat: QLabeledRangeSlider = self.ui.rangeSliderSaturation
         rs_bri: QLabeledRangeSlider = self.ui.rangeSliderBrightness
@@ -50,11 +52,11 @@ class EditThreshold(baseclass):
             rs.setMinimum(0)
             rs.setMaximum(255)
         rs_hue.setMaximum(179)
-        rs_hue.setValue(self.sprayCard.threshold_color_hue)
+        rs_hue.setValue((int(self.sprayCard.threshold_color_hue_min), int(self.sprayCard.threshold_color_hue_max)))
         rs_hue.valueChanged[tuple].connect(self.updateHue)
-        rs_sat.setValue(self.sprayCard.threshold_color_saturation)
+        rs_sat.setValue((int(self.sprayCard.threshold_color_saturation_min), int(self.sprayCard.threshold_color_saturation_max)))
         rs_sat.valueChanged[tuple].connect(self.updateSaturation)
-        rs_bri.setValue(self.sprayCard.threshold_color_brightness)
+        rs_bri.setValue((int(self.sprayCard.threshold_color_brightness_min), int(self.sprayCard.threshold_color_brightness_max)))
         rs_bri.valueChanged[tuple].connect(self.updateBrightness)
         
         #Populate Watershed
@@ -105,26 +107,35 @@ class EditThreshold(baseclass):
         self.sprayCard.threshold_method_grayscale = method
         self.updateSprayCardView()
 
-    def toggleThresholdMethodColor(self):
-        if self.ui.radioButtonInclude.isChecked():
-            self.sprayCard.threshold_method_color = cfg.THRESHOLD_HSB_METHOD_INCLUDE
-        elif self.ui.radioButtonExclude.isChecked():
-            self.sprayCard.threshold_method_color = cfg.THRESHOLD_HSB_METHOD_EXCLUDE
+    @pyqtSlot(bool)
+    def toggleHuePass(self, checked):
+        print(checked)
+        self.sprayCard.set_threshold_color_hue(bandpass=checked)
         self.updateSprayCardView()
 
     @pyqtSlot(tuple)
     def updateHue(self, vals):
-        self.sprayCard.set_threshold_color_hue(vals)
+        self.sprayCard.set_threshold_color_hue(min=vals[0], max=vals[1])
+        self.updateSprayCardView()
+    
+    @pyqtSlot(bool)
+    def toggleSatPass(self, checked):
+        self.sprayCard.set_threshold_color_saturation(bandpass=checked)
         self.updateSprayCardView()
     
     @pyqtSlot(tuple)
     def updateSaturation(self, vals):
-        self.sprayCard.set_threshold_color_saturation(vals)
+        self.sprayCard.set_threshold_color_saturation(min=vals[0], max=vals[1])
+        self.updateSprayCardView()
+
+    @pyqtSlot(bool)
+    def toggleBriPass(self, checked):
+        self.sprayCard.set_threshold_color_brightness(bandpass=checked)
         self.updateSprayCardView()
 
     @pyqtSlot(tuple)
     def updateBrightness(self, vals):
-        self.sprayCard.set_threshold_color_brightness(vals)
+        self.sprayCard.set_threshold_color_brightness(min=vals[0], max=vals[1])
         self.updateSprayCardView()
         
     @pyqtSlot(int)
@@ -167,20 +178,21 @@ class EditThreshold(baseclass):
             with QSignalBlocker(self.ui.sliderGrayscale):
                 self.ui.sliderGrayscale.setValue(sc.threshold_grayscale)
         elif sc.threshold_type == cfg.THRESHOLD_TYPE_HSB:
-            sc.set_threshold_method_color(cfg.get_threshold_hsb_method())
-            with QSignalBlocker(self.ui.radioButtonInclude):
-                self.ui.radioButtonInclude.setChecked(sc.threshold_method_color == cfg.THRESHOLD_HSB_METHOD_INCLUDE)
-            with QSignalBlocker(self.ui.radioButtonExclude):
-                self.ui.radioButtonExclude.setChecked(sc.threshold_method_color == cfg.THRESHOLD_HSB_METHOD_EXCLUDE)
-            sc.set_threshold_color_hue(tuple(cfg.get_threshold_hsb_hue()))
+            sc.set_threshold_color_hue(min=cfg.get_threshold_hsb_hue_min(), max=cfg.get_threshold_hsb_hue_max(), bandpass=cfg.get_threshold_hsb_hue_pass())
+            with QSignalBlocker(cb:=self.ui.checkBoxHue):
+                cb.setChecked(sc.threshold_color_hue_pass)
             with QSignalBlocker(self.ui.rangeSliderHue):
-                self.ui.rangeSliderHue.setValue(self.sprayCard.threshold_color_hue)
-            sc.set_threshold_color_saturation(tuple(cfg.get_threshold_hsb_saturation()))
+                self.ui.rangeSliderHue.setValue((self.sprayCard.threshold_color_hue_min,self.sprayCard.threshold_color_hue_max))
+            sc.set_threshold_color_saturation(min=cfg.get_threshold_hsb_hue_min(), max=cfg.get_threshold_hsb_hue_max(), bandpass=cfg.get_threshold_hsb_saturation_pass())
+            with QSignalBlocker(cb:=self.ui.checkBoxSat):
+                cb.setChecked(sc.threshold_color_saturation_pass)
             with QSignalBlocker(self.ui.rangeSliderSaturation):
-                self.ui.rangeSliderSaturation.setValue(self.sprayCard.threshold_color_saturation)
-            sc.set_threshold_color_brightness(tuple(cfg.get_threshold_hsb_brightness()))
+                self.ui.rangeSliderSaturation.setValue((self.sprayCard.threshold_color_saturation_min,self.sprayCard.threshold_color_saturation_max))
+            sc.set_threshold_color_brightness(min=cfg.get_threshold_hsb_hue_min(), max=cfg.get_threshold_hsb_hue_max(), bandpass=cfg.get_threshold_hsb_brightness_pass())
+            with QSignalBlocker(cb:=self.ui.checkBoxBri):
+                cb.setChecked(sc.threshold_color_brightness_pass)
             with QSignalBlocker(self.ui.rangeSliderBrightness):
-                self.ui.rangeSliderBrightness.setValue(self.sprayCard.threshold_color_brightness)
+                self.ui.rangeSliderBrightness.setValue((self.sprayCard.threshold_color_brightness_min,self.sprayCard.threshold_color_brightness_max))
         sc.watershed = cfg.get_watershed()
         with QSignalBlocker(self.ui.checkBoxWatershed):
             self.ui.checkBoxWatershed.setChecked(sc.watershed)
@@ -209,10 +221,9 @@ class EditThreshold(baseclass):
                         card.set_threshold_method_grayscale(sc.threshold_method_grayscale)
                         card.set_threshold_grayscale(sc.threshold_grayscale)
                         #Set color options
-                        card.set_threshold_method_color(sc.threshold_method_color)
-                        card.set_threshold_color_hue(sc.threshold_color_hue)
-                        card.set_threshold_color_saturation(sc.threshold_color_saturation)
-                        card.set_threshold_color_brightness(sc.threshold_color_brightness)
+                        card.set_threshold_color_hue(min=sc.threshold_color_hue_min, max=sc.threshold_color_hue_max, bandpass=sc.threshold_color_hue_pass)
+                        card.set_threshold_color_saturation(min=sc.threshold_color_saturation_min, max=sc.threshold_color_saturation_max, bandpass=sc.threshold_color_saturation_pass)
+                        card.set_threshold_color_brightness(min=sc.threshold_color_brightness_min, max=sc.threshold_color_brightness_max, bandpass=sc.threshold_color_brightness_pass)
                         #Set Additional Options
                         card.watershed = sc.watershed
                         card.min_stain_area_px = sc.min_stain_area_px
@@ -228,10 +239,15 @@ class EditThreshold(baseclass):
                 cfg.set_threshold_grayscale_method(sc.threshold_method_grayscale)
                 cfg.set_threshold_grayscale(sc.threshold_grayscale)
             elif sc.threshold_type == cfg.THRESHOLD_TYPE_HSB:
-                cfg.set_threshold_hsb_method(sc.threshold_method_color)
-                cfg.set_threshold_hsb_hue(list(sc.threshold_color_hue))
-                cfg.set_threshold_hsb_saturation(list(sc.threshold_color_saturation))
-                cfg.set_threshold_hsb_brightness(list(sc.threshold_color_brightness))
+                cfg.set_threshold_hsb_hue_min(sc.threshold_color_hue_min)
+                cfg.set_threshold_hsb_hue_max(sc.threshold_color_hue_max)
+                cfg.set_threshold_hsb_hue_pass(sc.threshold_color_hue_pass)
+                cfg.set_threshold_hsb_saturation_min(sc.threshold_color_saturation_min)
+                cfg.set_threshold_hsb_saturation_max(sc.threshold_color_saturation_max)
+                cfg.set_threshold_hsb_saturation_pass(sc.threshold_color_saturation_pass)
+                cfg.set_threshold_hsb_brightness_min(sc.threshold_color_brightness_min)
+                cfg.set_threshold_hsb_brightness_max(sc.threshold_color_brightness_max)
+                cfg.set_threshold_hsb_brightness_pass(sc.threshold_color_brightness_pass)
             cfg.set_watershed(sc.watershed)
             cfg.set_min_stain_area_px(sc.min_stain_area_px)
             cfg.set_stain_approximation_method(sc.stain_approximation_method)

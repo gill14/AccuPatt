@@ -26,10 +26,15 @@ class SprayCard:
         self.threshold_type = cfg.get_threshold_type()
         self.threshold_method_grayscale = cfg.get_threshold_grayscale_method()
         self.threshold_grayscale = cfg.get_threshold_grayscale()
-        self.threshold_method_color = cfg.get_threshold_hsb_method()
-        self.threshold_color_hue = cfg.get_threshold_hsb_hue()
-        self.threshold_color_saturation = cfg.get_threshold_hsb_saturation()
-        self.threshold_color_brightness = cfg.get_threshold_hsb_brightness()
+        self.threshold_color_hue_min = cfg.get_threshold_hsb_hue_min()
+        self.threshold_color_hue_max = cfg.get_threshold_hsb_hue_max()
+        self.threshold_color_hue_pass = cfg.get_threshold_hsb_hue_pass()
+        self.threshold_color_saturation_min = cfg.get_threshold_hsb_saturation_min()
+        self.threshold_color_saturation_max = cfg.get_threshold_hsb_saturation_max()
+        self.threshold_color_saturation_pass = cfg.get_threshold_hsb_saturation_pass()
+        self.threshold_color_brightness_min = cfg.get_threshold_hsb_brightness_min()
+        self.threshold_color_brightness_max = cfg.get_threshold_hsb_brightness_max()
+        self.threshold_color_brightness_pass = cfg.get_threshold_hsb_brightness_pass()
         self.watershed = cfg.get_watershed()
         self.min_stain_area_px = cfg.get_min_stain_area_px()
         self.stain_approximation_method = cfg.get_stain_approximation_method()
@@ -69,17 +74,29 @@ class SprayCard:
     def set_threshold_grayscale(self, threshold: int):
         self.threshold_grayscale = threshold
 
-    def set_threshold_method_color(self, method=cfg.THRESHOLD_HSB_METHOD__DEFAULT):
-        self.threshold_method_color = method
+    def set_threshold_color_hue(self, min=None, max=None, bandpass=None):
+        if min:
+            self.threshold_color_hue_min = min
+        if max:
+            self.threshold_color_hue_max = max
+        if bandpass is not None:
+            self.threshold_color_hue_pass = bandpass
 
-    def set_threshold_color_hue(self, range: tuple[int,int]):
-        self.threshold_color_hue = range
+    def set_threshold_color_saturation(self, min=None, max=None, bandpass=None):
+        if min:
+            self.threshold_color_saturation_min = min
+        if max:
+            self.threshold_color_saturation_max = max
+        if bandpass is not None:
+            self.threshold_color_saturation_pass = bandpass
 
-    def set_threshold_color_saturation(self, range: tuple[int,int]):
-        self.threshold_color_saturation = range
-
-    def set_threshold_color_brightness(self, range: tuple[int,int]):
-        self.threshold_color_brightness = range
+    def set_threshold_color_brightness(self, min=None, max=None, bandpass=None):
+        if min:
+            self.threshold_color_brightness_min = min
+        if max:
+            self.threshold_color_brightness_max = max
+        if bandpass is not None:
+            self.threshold_color_brightness_pass = bandpass
      
 @dataclass
 class SprayCardStats:
@@ -323,22 +340,50 @@ class SprayCardImageProcessor:
         return img_thresh
 
     def _image_threshold_color(self, img):
-        #Use HSV colorspace
+        # Readability
+        hbl = 0
+        hvl = self.sprayCard.threshold_color_hue_min
+        hvh = self.sprayCard.threshold_color_hue_max
+        hbh = 179
+        sbl = 0
+        svl = self.sprayCard.threshold_color_saturation_min
+        svh = self.sprayCard.threshold_color_saturation_max
+        sbh = 255
+        bbl = 0
+        bvl = self.sprayCard.threshold_color_brightness_min
+        bvh = self.sprayCard.threshold_color_brightness_max
+        bbh = 255
+        # Use HSV colorspace
         img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        if self.sprayCard.threshold_color_hue is None or self.sprayCard.threshold_color_saturation is None or self.sprayCard.threshold_color_brightness is None:
-            return None
-        #Convenience arrays for user-defined HSB range values
-        minHSV = np.array([self.sprayCard.threshold_color_hue[0], self.sprayCard.threshold_color_saturation[0], self.sprayCard.threshold_color_brightness[0]])
-        maxHSV = np.array([self.sprayCard.threshold_color_hue[1], self.sprayCard.threshold_color_saturation[1], self.sprayCard.threshold_color_brightness[1]])
-        # Binarize image with TRUE for HSB values in user-defined range
-        
-        # Invert image according to user defined method
-        if self.sprayCard.threshold_method_color == cfg.THRESHOLD_HSB_METHOD_INCLUDE:
-            mask = cv2.inRange(img_hsv, minHSV, maxHSV)
+        # Check Hue channel
+        if self.sprayCard.threshold_color_hue_pass:
+            # Band-Pass
+            mask_hue = cv2.inRange(img_hsv, np.array([hvl,sbl,bbl]), np.array([hvh,sbh,bbh]))
         else:
-            # TODO - need to add pass options to each param
-            mask = cv2.inRange(img_hsv, minHSV, maxHSV)
-        return mask
+            # Band-Reject
+            mask_hue_low = cv2.inRange(img_hsv, np.array([hbl,sbl,bbl]), np.array([hvl,sbh,bbh]))
+            mask_hue_high = cv2.inRange(img_hsv, np.array([hvh,sbl,bbl]), np.array([hbh,sbh,bbh]))
+            mask_hue = cv2.bitwise_or(mask_hue_low, mask_hue_high)
+        # Check Saturation channel
+        if self.sprayCard.threshold_color_saturation_pass:
+            # Band-Pass
+            mask_sat = cv2.inRange(img_hsv, np.array([hbl,svl,bbl]), np.array([hbh,svh,bbh]))
+        else:
+            # Band-Reject
+            mask_sat_low = cv2.inRange(img_hsv, np.array([hbl,sbl,bbl]), np.array([hbh,svl,bbh]))
+            mask_sat_high = cv2.inRange(img_hsv, np.array([hbl,svh,bbl]), np.array([hbh,sbh,bbh]))
+            mask_sat = cv2.bitwise_or(mask_sat_low, mask_sat_high)
+        # Check Brightness channel
+        if self.sprayCard.threshold_color_brightness_pass:
+            # Band-Pass
+            mask_bri = cv2.inRange(img_hsv, np.array([hbl,sbl,bvl]), np.array([hbh,sbh,bvh]))
+        else:
+            # Band-Reject
+            mask_bri_low = cv2.inRange(img_hsv, np.array([hbl,sbl,bbl]), np.array([hbh,sbh,bvl]))
+            mask_bri_high = cv2.inRange(img_hsv, np.array([hbl,sbl,bvh]), np.array([hbh,sbh,bbh]))
+            mask_bri = cv2.bitwise_or(mask_bri_low, mask_bri_high)
+        # Merge layers and return
+        return cv2.bitwise_and(cv2.bitwise_and(mask_hue, mask_sat), mask_bri)
 
     def _image_watershed(self, img_src, img_thresh, contours_original):
         thresh = img_thresh

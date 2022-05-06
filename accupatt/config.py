@@ -289,36 +289,68 @@ def get_threshold_grayscale_method() -> str:
 def set_threshold_grayscale_method(value: str):
     QSettings().setValue(_THRESHOLD_GRAYSCALE_METHOD, value)
 
-_THRESHOLD_HSB_HUE = 'threshold_hsb_hue'
-THRESHOLD_HSB_HUE__DEFAULT = [140,200] # Used internally as tuple, delared as list for QSettings Compat
-def get_threshold_hsb_hue() -> list[int]:
-    return QSettings().value(_THRESHOLD_HSB_HUE, defaultValue=THRESHOLD_HSB_HUE__DEFAULT, type=int)
-def set_threshold_hsb_hue(value: list[int]):
-    QSettings().setValue(_THRESHOLD_HSB_HUE, value)
+_THRESHOLD_HSB_HUE_MIN = 'threshold_hsb_hue_min'
+THRESHOLD_HSB_HUE_MIN__DEFAULT = 140
+def get_threshold_hsb_hue_min() -> int:
+    return QSettings().value(_THRESHOLD_HSB_HUE_MIN, defaultValue=THRESHOLD_HSB_HUE_MIN__DEFAULT, type=int)
+def set_threshold_hsb_hue_min(value: int):
+    QSettings().setValue(_THRESHOLD_HSB_HUE_MIN, value)
 
-_THRESHOLD_HSB_SATURATION = 'threshold_hsb_saturation'
-THRESHOLD_HSB_SATURATION__DEFAULT = [18,255] # Used internally as tuple, delared as list for QSettings Compat
-def get_threshold_hsb_saturation() -> list[int]:
-    return QSettings().value(_THRESHOLD_HSB_SATURATION, defaultValue=THRESHOLD_HSB_SATURATION__DEFAULT, type=int)
-def set_threshold_hsb_saturation(value: list[int]):
-    QSettings().setValue(_THRESHOLD_HSB_SATURATION, value)
+_THRESHOLD_HSB_HUE_MAX = 'threshold_hsb_hue_max'
+THRESHOLD_HSB_HUE_MAX__DEFAULT = 170
+def get_threshold_hsb_hue_max() -> int:
+    return QSettings().value(_THRESHOLD_HSB_HUE_MAX, defaultValue=THRESHOLD_HSB_HUE_MAX__DEFAULT, type=int)
+def set_threshold_hsb_hue_max(value: int):
+    QSettings().setValue(_THRESHOLD_HSB_HUE_MAX, value)
+    
+_THRESHOLD_HSB_HUE_PASS = 'threshold_hsb_hue_pass'
+THRESHOLD_HSB_HUE_PASS__DEFAULT = True
+def get_threshold_hsb_hue_pass() -> bool:
+    return QSettings().value(_THRESHOLD_HSB_HUE_PASS, defaultValue=THRESHOLD_HSB_HUE_PASS__DEFAULT, type=bool)
+def set_threshold_hsb_hue_pass(value: bool):
+    QSettings().setValue(_THRESHOLD_HSB_HUE_PASS, value)
 
-_THRESHOLD_HSB_BRIGHTNESS = 'threshold_hsb_brightness'
-THRESHOLD_HSB_BRIGHTNESS__DEFAULT = [0,255] # Used internally as tuple, delared as list for QSettings Compat
-def get_threshold_hsb_brightness() -> list[int]:
-    return QSettings().value(_THRESHOLD_HSB_BRIGHTNESS, defaultValue=THRESHOLD_HSB_BRIGHTNESS__DEFAULT, type=int)
-def set_threshold_hsb_brightness(value: list[int]):
-    QSettings().setValue(_THRESHOLD_HSB_BRIGHTNESS, value)
+_THRESHOLD_HSB_SATURATION_MIN = 'threshold_hsb_saturation_min'
+THRESHOLD_HSB_SATURATION_MIN__DEFAULT = 15
+def get_threshold_hsb_saturation_min() -> int:
+    return QSettings().value(_THRESHOLD_HSB_SATURATION_MIN, defaultValue=THRESHOLD_HSB_SATURATION_MIN__DEFAULT, type=int)
+def set_threshold_hsb_saturation_min(value: int):
+    QSettings().setValue(_THRESHOLD_HSB_SATURATION_MIN, value)
+    
+_THRESHOLD_HSB_SATURATION_MAX = 'threshold_hsb_saturation_max'
+THRESHOLD_HSB_SATURATION_MAX__DEFAULT = 255
+def get_threshold_hsb_saturation_max() -> int:
+    return QSettings().value(_THRESHOLD_HSB_SATURATION_MAX, defaultValue=THRESHOLD_HSB_SATURATION_MAX__DEFAULT, type=int)
+def set_threshold_hsb_saturation_max(value: int):
+    QSettings().setValue(_THRESHOLD_HSB_SATURATION_MAX, value)
+    
+_THRESHOLD_HSB_SATURATION_PASS = 'threshold_hsb_saturation_pass'
+THRESHOLD_HSB_SATURATION_PASS__DEFAULT = True
+def get_threshold_hsb_saturation_pass() -> bool:
+    return QSettings().value(_THRESHOLD_HSB_SATURATION_PASS, defaultValue=THRESHOLD_HSB_SATURATION_PASS__DEFAULT, type=bool)
+def set_threshold_hsb_saturation_pass(value: bool):
+    QSettings().setValue(_THRESHOLD_HSB_SATURATION_PASS, value)
 
-_THRESHOLD_HSB_METHOD = 'threshold_hsb_method'
-THRESHOLD_HSB_METHOD_INCLUDE = 'Include'
-THRESHOLD_HSB_METHOD_EXCLUDE = 'Exclude'
-THRESHOLD_HSB_METHODS = [THRESHOLD_HSB_METHOD_INCLUDE,THRESHOLD_HSB_METHOD_EXCLUDE]
-THRESHOLD_HSB_METHOD__DEFAULT = THRESHOLD_HSB_METHODS[1]
-def get_threshold_hsb_method() -> str:
-    return QSettings().value(_THRESHOLD_HSB_METHOD, defaultValue=THRESHOLD_HSB_METHOD__DEFAULT, type=str)
-def set_threshold_hsb_method(value: str):
-    QSettings().setValue(_THRESHOLD_HSB_METHOD, value)
+_THRESHOLD_HSB_BRIGHTNESS_MIN = 'threshold_hsb_brightness_min'
+THRESHOLD_HSB_BRIGHTNESS_MIN__DEFAULT = 0
+def get_threshold_hsb_brightness_min() -> int:
+    return QSettings().value(_THRESHOLD_HSB_BRIGHTNESS_MIN, defaultValue=THRESHOLD_HSB_BRIGHTNESS_MIN__DEFAULT, type=int)
+def set_threshold_hsb_brightness_min(value: int):
+    QSettings().setValue(_THRESHOLD_HSB_BRIGHTNESS_MIN, value)
+    
+_THRESHOLD_HSB_BRIGHTNESS_MAX = 'threshold_hsb_brightness_max'
+THRESHOLD_HSB_BRIGHTNESS_MAX__DEFAULT = 255
+def get_threshold_hsb_brightness_max() -> int:
+    return QSettings().value(_THRESHOLD_HSB_BRIGHTNESS_MAX, defaultValue=THRESHOLD_HSB_BRIGHTNESS_MAX__DEFAULT, type=int)
+def set_threshold_hsb_brightness_max(value: int):
+    QSettings().setValue(_THRESHOLD_HSB_BRIGHTNESS_MAX, value)
+    
+_THRESHOLD_HSB_BRIGHTNESS_PASS = 'threshold_hsb_brightness_pass'
+THRESHOLD_HSB_BRIGHTNESS_PASS__DEFAULT = True
+def get_threshold_hsb_brightness_pass() -> bool:
+    return QSettings().value(_THRESHOLD_HSB_BRIGHTNESS_PASS, defaultValue=THRESHOLD_HSB_BRIGHTNESS_PASS__DEFAULT, type=bool)
+def set_threshold_hsb_brightness_pass(value: bool):
+    QSettings().setValue(_THRESHOLD_HSB_BRIGHTNESS_PASS, value)
 
 # SprayCard Image Processing - Options
 

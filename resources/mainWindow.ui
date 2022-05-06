@@ -1243,6 +1243,9 @@
           </item>
           <item>
            <widget class="QCheckBox" name="checkBoxCardPassCenter">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -1307,6 +1310,9 @@
           </item>
           <item>
            <widget class="QCheckBox" name="checkBoxCardSeriesCenter">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>Align Center Average</string>
             </property>
@@ -1413,7 +1419,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget_3">
           <property name="currentIndex">
-           <number>3</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tab_4">
            <attribute name="title">
@@ -1442,14 +1448,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="label_2">
-                <property name="text">
-                 <string>Put a stat table here for the selected pass with a row for pass-wise composite stats.</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-               </widget>
+               <widget class="QTableWidget" name="tableWidgetCardPass"/>
               </item>
              </layout>
             </item>

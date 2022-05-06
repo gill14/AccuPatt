@@ -21,6 +21,12 @@ CREATE TABLE IF NOT EXISTS series_string (
     equalize_integrals          INTEGER,
     simulated_adjascent_passes  INTEGER
 );
+CREATE TABLE IF NOT EXISTS series_spray_card (
+    series_id                   TEXT PRIMARY KEY REFERENCES series(id),
+    average_center              INTEGER,
+    average_center_method       TEXT,
+    simulated_adjascent_passes  INTEGER
+);
 CREATE TABLE IF NOT EXISTS flyin (
     series_id       TEXT PRIMARY KEY REFERENCES series(id),
     flyin_name      TEXT,
@@ -109,6 +115,11 @@ CREATE TABLE IF NOT EXISTS pass_string (
     excitation_data         TEXT,
     emission_data           TEXT
 );
+CREATE TABLE IF NOT EXISTS pass_spray_card (
+    pass_id                 TEXT PRIMARY KEY REFERENCES passes(id),
+    center                  INTEGER,
+    center_method           TEXT,
+);
 CREATE TABLE IF NOT EXISTS spray_cards (
     id                              TEXT PRIMARY KEY,
     pass_id                         TEXT REFERENCES passes(id),
@@ -117,15 +128,17 @@ CREATE TABLE IF NOT EXISTS spray_cards (
     location_units                  TEXT,
     include_in_composite            INTEGER,
     threshold_type                  INTEGER,
-    threshold_method_color          INTEGER,
     threshold_method_grayscale      INTEGER,
     threshold_grayscale             INTEGER,
     threshold_color_hue_min         INTEGER,
     threshold_color_hue_max         INTEGER,
+    threshold_color_hue_pass        INTEGER,
     threshold_color_saturation_min  INTEGER,
     threshold_color_saturation_max  INTEGER,
+    threshold_color_saturation_pass INTEGER,
     threshold_color_brightness_min  INTEGER,
     threshold_color_brightness_max  INTEGER,
+    threshold_color_brightness_pass INTEGER,
     watershed                       INTEGER,
     min_stain_area_px               INTEGER,
     dpi                             INTEGER,
