@@ -33,9 +33,13 @@ class CardTableWidget(baseclass):
         self.tv.setModel(self.tm)
         self.tv.setItemDelegateForColumn(3, ComboBoxDelegate(self.tv, cfg.UNITS_LENGTH_LARGE))
         self.tv.setItemDelegateForColumn(5, EditableComboBoxDelegate(self.tv, [str(dpi) for dpi in cfg.IMAGE_DPI_OPTIONS]))
-        self.tv.setItemDelegateForColumn(6, PushButtonDelegate(self.tv, text='Process Options'))
-        self.tv.setItemDelegateForColumn(7, PushButtonDelegate(self.tv, text='Spread Factors'))
-        self.tv.setItemDelegateForColumn(8, ComboBoxDelegate(self.tv, cfg.THRESHOLD_TYPES))
+        self.tv.setItemDelegateForColumn(6, ComboBoxDelegate(self.tv, cfg.THRESHOLD_TYPES))
+        self.tv.setItemDelegateForColumn(7, ComboBoxDelegate(self.tv, cfg.THRESHOLD_GRAYSCALE_METHODS))
+        self.tv.setItemDelegateForColumn(11, ComboBoxDelegate(self.tv, CardTable.band_pass_options))
+        self.tv.setItemDelegateForColumn(14, ComboBoxDelegate(self.tv, CardTable.band_pass_options))
+        self.tv.setItemDelegateForColumn(17, ComboBoxDelegate(self.tv, CardTable.band_pass_options))
+        self.tv.setItemDelegateForColumn(20, ComboBoxDelegate(self.tv, cfg.STAIN_APPROXIMATION_METHODS))
+        self.tv.setItemDelegateForColumn(21, ComboBoxDelegate(self.tv, cfg.SPREAD_METHODS))
 
         self.selection_changed()
 
@@ -44,6 +48,7 @@ class CardTableWidget(baseclass):
         self.tv.verticalHeader().setVisible(False)
         
         self.tv.selectionModel().selectionChanged.connect(self.selection_changed)
+        self.tm.triggerImageUpdate[SprayCard].connect(self.edit_card)
     
     def edit_card(self, card):
         self.editCard.emit(card)
@@ -164,10 +169,15 @@ class EditableComboBoxDelegate(QStyledItemDelegate):
         editor.setGeometry(option.rect)
 
 class CardTable(QAbstractTableModel):
+    
+    triggerImageUpdate = pyqtSignal(SprayCard)
+    
+    band_pass_options = ['Band-Pass','Band-Reject']
+    
     def __init__(self, parent=None, *args): 
         super(CardTable, self).__init__(parent)
-        self.headers = ['Name','In Composite','Location','Units','Has Image?','Px Per In','Edit Processing Options','Edit Spread Factors','Threshold Type']
-        self.card_list = []
+        self.headers = ['Name','In Composite','Location','Units','Has Image?','DPI','Threshold Type','Grayscale Method','Grayscale Threshold','Hue Min','Hue Max','Hue Band','Sat Min','Sat Max','Sat Band','Bri Min','Bri Max','Bri Band','Watershed','Min Stain Px','Stain Approx. Method','Spread Equation','Spread Factor A','Spread Factor B','Spread Factor C']
+        self.card_list: list[SprayCard] = []
     
     def loadCards(self, card_list):
         self.beginResetModel()
@@ -222,11 +232,101 @@ class CardTable(QAbstractTableModel):
                 return str(card.dpi) if card.has_image else ''
             elif role==Qt.ItemDataRole.EditRole:
                 return str(card.dpi)
-        elif col==8:
+        elif col==6:
             if role==Qt.ItemDataRole.DisplayRole:
                 return card.threshold_type
             if role==Qt.ItemDataRole.EditRole:
                 return cfg.THRESHOLD_TYPES.index(card.threshold_type)
+        elif col==7:
+            if role==Qt.ItemDataRole.DisplayRole:
+                return card.threshold_method_grayscale
+            if role==Qt.ItemDataRole.EditRole:
+                return cfg.THRESHOLD_GRAYSCALE_METHODS.index(card.threshold_method_grayscale)
+        elif col==8:
+            if role==Qt.ItemDataRole.DisplayRole:
+                return str(card.threshold_grayscale)
+            if role==Qt.ItemDataRole.EditRole:
+                return str(card.threshold_grayscale)
+        elif col==9:
+            if role==Qt.ItemDataRole.DisplayRole:
+                return str(card.threshold_color_hue_min)
+            if role==Qt.ItemDataRole.EditRole:
+                return str(card.threshold_color_hue_min)
+        elif col==10:
+            if role==Qt.ItemDataRole.DisplayRole:
+                return str(card.threshold_color_hue_max)
+            if role==Qt.ItemDataRole.EditRole:
+                return str(card.threshold_color_hue_max)
+        elif col==11:
+            if role==Qt.ItemDataRole.DisplayRole:
+                return self.band_pass_options[0] if card.threshold_color_hue_pass else self.band_pass_options[1]
+            if role==Qt.ItemDataRole.EditRole:
+                return 0 if card.threshold_color_hue_pass else 1
+        elif col==12:
+            if role==Qt.ItemDataRole.DisplayRole:
+                return str(card.threshold_color_saturation_min)
+            if role==Qt.ItemDataRole.EditRole:
+                return str(card.threshold_color_saturation_min)
+        elif col==13:
+            if role==Qt.ItemDataRole.DisplayRole:
+                return str(card.threshold_color_saturation_max)
+            if role==Qt.ItemDataRole.EditRole:
+                return str(card.threshold_color_saturation_max)
+        elif col==14:
+            if role==Qt.ItemDataRole.DisplayRole:
+                return self.band_pass_options[0] if card.threshold_color_saturation_pass else self.band_pass_options[1]
+            if role==Qt.ItemDataRole.EditRole:
+                return 0 if card.threshold_color_saturation_pass else 1
+        elif col==15:
+            if role==Qt.ItemDataRole.DisplayRole:
+                return str(card.threshold_color_brightness_min)
+            if role==Qt.ItemDataRole.EditRole:
+                return str(card.threshold_color_brightness_min)
+        elif col==16:
+            if role==Qt.ItemDataRole.DisplayRole:
+                return str(card.threshold_color_brightness_max)
+            if role==Qt.ItemDataRole.EditRole:
+                return str(card.threshold_color_brightness_max)
+        elif col==17:
+            if role==Qt.ItemDataRole.DisplayRole:
+                return self.band_pass_options[0] if card.threshold_color_brightness_pass else self.band_pass_options[1]
+            if role==Qt.ItemDataRole.EditRole:
+                return 0 if card.threshold_color_brightness_pass else 1
+        elif col==18:
+            if role==Qt.ItemDataRole.CheckStateRole:
+                return Qt.CheckState.Checked if card.watershed else Qt.CheckState.Unchecked
+            elif role==Qt.ItemDataRole.DisplayRole:
+                return 'Yes' if card.watershed else 'No' 
+        elif col==19:
+            if role==Qt.ItemDataRole.DisplayRole:
+                return str(card.min_stain_area_px)
+            if role==Qt.ItemDataRole.EditRole:
+                return str(card.min_stain_area_px)
+        elif col==20:
+            if role==Qt.ItemDataRole.DisplayRole:
+                return card.stain_approximation_method
+            if role==Qt.ItemDataRole.EditRole:
+                return cfg.STAIN_APPROXIMATION_METHODS.index(card.stain_approximation_method)
+        elif col==21:
+            if role==Qt.ItemDataRole.DisplayRole:
+                return card.spread_method
+            if role==Qt.ItemDataRole.EditRole:
+                return cfg.SPREAD_METHODS.index(card.spread_method)
+        elif col==22:
+            if role==Qt.ItemDataRole.DisplayRole:
+                return str(card.spread_factor_a)
+            if role==Qt.ItemDataRole.EditRole:
+                return str(card.spread_factor_a)
+        elif col==23:
+            if role==Qt.ItemDataRole.DisplayRole:
+                return str(card.spread_factor_b)
+            if role==Qt.ItemDataRole.EditRole:
+                return str(card.spread_factor_b)
+        elif col==24:
+            if role==Qt.ItemDataRole.DisplayRole:
+                return str(card.spread_factor_c)
+            if role==Qt.ItemDataRole.EditRole:
+                return str(card.spread_factor_c)
         else:      
             return QVariant()
     
@@ -234,32 +334,72 @@ class CardTable(QAbstractTableModel):
         if value is None:
             return False
         card: SprayCard = self.card_list[index.row()]
+        flag_reprocess = False
         col = index.column()
-        if col==0:
+        if col == 0:
             card.name = value
-        elif col==1:
+        elif col == 1:
             if card.has_image:
                 card.include_in_composite = (Qt.CheckState(value) == Qt.CheckState.Checked)
-        elif col==2:
+        elif col == 2:
             try:
                 card.location = float(value)
             except ValueError:
                 return False
-        elif col==3:
+        elif col == 3:
             card.location_units = cfg.UNITS_LENGTH_LARGE[value]
-        elif col==4:
+        elif col == 4:
             pass
-        elif col==5:
+        elif col == 5:
             card.dpi = int(value)
-        elif col==6:
-            self.parent().edit_card(card)
-        elif col==7:
-            self.parent().edit_card_spread_factors(card)
-        elif col==8:
+        elif col == 6:
             if role==Qt.ItemDataRole.EditRole:
                 card.threshold_type = cfg.THRESHOLD_TYPES[value]
+        elif col == 7:
+            if role==Qt.ItemDataRole.EditRole:
+                card.threshold_method_grayscale = cfg.THRESHOLD_GRAYSCALE_METHODS[value]
+        elif col == 8:
+            card.threshold_grayscale = int(value)
+        elif col == 9:
+            card.threshold_color_hue_min = int(value)
+        elif col == 10:
+            card.threshold_color_hue_max = int(value)
+        elif col == 11:
+            card.threshold_color_hue_pass = (value == 0)
+        elif col == 12:
+            card.threshold_color_saturation_min = int(value)
+        elif col == 13:
+            card.threshold_color_saturation_max = int(value)
+        elif col == 14:
+            card.threshold_color_saturation_pass = (value == 0)
+        elif col == 15:
+            card.threshold_color_brightness_min = int(value)
+        elif col == 16:
+            card.threshold_color_brightness_max = int(value)
+        elif col == 17:
+            card.threshold_color_brightness_pass = (value == 0)
+        elif col == 18:
+            card.watershed = (Qt.CheckState(value) == Qt.CheckState.Checked)
+        elif col == 19:
+            card.min_stain_area_px = int(value)
+        elif col == 20:
+            card.stain_approximation_method = cfg.STAIN_APPROXIMATION_METHODS[value]
+        elif col == 21:
+            card.spread_method = cfg.SPREAD_METHODS[value]
+        elif col == 22:
+            card.spread_factor_a = float(value)
+        elif col == 23:
+            card.spread_factor_b = float(value)
+        elif col == 24:
+            card.spread_factor_c = float(value)
         else:
             return False
+        if col >= 5 and col <= 20:
+            self.triggerImageUpdate.emit(card)
+            card.current = False
+            card.stats.current = False
+        if col >= 21 and col <= 24:
+            card.stats.current = False
         self.dataChanged.emit(index,index)
         return True
 
@@ -312,7 +452,13 @@ class CardTable(QAbstractTableModel):
             return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsUserCheckable
         elif col==4:
             return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
-        elif (col==5 or col==6 or col==7) and not self.card_list[index.row()].has_image:
-            return Qt.ItemFlag.NoItemFlags
-        else:
-            return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEditable
+        elif col>=5:
+            if not self.card_list[index.row()].has_image:
+                return Qt.ItemFlag.NoItemFlags
+            if (col>=9 and col<=17) and self.card_list[index.row()].threshold_type == cfg.THRESHOLD_TYPE_GRAYSCALE:
+                return Qt.ItemFlag.NoItemFlags
+            if (col==7 or col==8) and self.card_list[index.row()].threshold_type == cfg.THRESHOLD_TYPE_HSB:
+                return Qt.ItemFlag.NoItemFlags   
+            if col==18:
+                return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsUserCheckable
+        return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEditable

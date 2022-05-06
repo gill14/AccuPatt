@@ -52,12 +52,10 @@ class CardManager(baseclass):
         
         #Populate Table
         self.cardTable: CardTableWidget = self.ui.cardTableWidget
-        self.cardTable.tv.hideColumn(6)
-        self.cardTable.tv.hideColumn(7)
         self.cardTable.passDataChanged.connect(self.passDataChanged.emit)
         self.cardTable.selectionChanged.connect(self.selection_changed)
-        self.cardTable.editCard.connect(self.edit_card)
-        self.cardTable.editCardSpreadFactors.connect(self.edit_card_spread_factors)
+        self.cardTable.editCard.connect(self._update_image_widgets)
+        #self.cardTable.editCardSpreadFactors.connect(self.edit_card_spread_factors)
         self.cardTable.assign_card_list(passData.spray_cards, filepath)
 
         self.show()
@@ -66,7 +64,7 @@ class CardManager(baseclass):
     def selection_changed(self, has_selection: bool):
         self.ui.buttonLoad.setEnabled(has_selection)
         self.ui.comboBoxLoadMethod.setEnabled(has_selection)
-        self._update_image_widgets(has_selection)
+        self._update_image_widgets()
     
     @pyqtSlot()
     def edit_sets(self):
@@ -147,31 +145,28 @@ class CardManager(baseclass):
         else:
             #Single Image, Multiple Cards
             self._load_cards_multi(selected_cards)
-        
     
-    def _update_image_widgets(self, has_selection):
+    def _update_image_widgets(self):
         labelCard: QLabel = self.ui.labelCard
         imageWidget0: SingleCardWidget = self.ui.cardWidget0
         imageWidget1: SingleCardWidget = self.ui.cardWidget1
         imageWidget2: SingleCardWidget = self.ui.cardWidget2
         # Initially clear labels
         labelCard.setText('')
-        # Check if any cards selected
-        if has_selection:
-            selected_rows = [index.row() for index in self.cardTable.tv.selectionModel().selectedRows()]
-            # Check if a single card (row) is selected
-            if len(selected_rows) == 1:
-                selected_card: SprayCard = self.cardTable.tm.card_list[selected_rows[0]]
-                labelCard.setText(self.passData.name + ' - ' + selected_card.name)
-                # Check if single selected card has image data
-                if selected_card.has_image:
-                    self.ui.buttonProcessOptions.setEnabled(True)
-                    self.ui.buttonSpreadFactors.setEnabled(True)
-                    imageWidget0.updateSprayCardView(selected_card.image_original())
-                    cvImg1, cvImg2 = selected_card.images_processed()
-                    imageWidget1.updateSprayCardView(cvImg1)
-                    imageWidget2.updateSprayCardView(cvImg2)
-                    return
+        selected_rows = [index.row() for index in self.cardTable.tv.selectionModel().selectedRows()]
+        # Check if a single card (row) is selected
+        if len(selected_rows) == 1:
+            selected_card: SprayCard = self.cardTable.tm.card_list[selected_rows[0]]
+            labelCard.setText(self.passData.name + ' - ' + selected_card.name)
+            # Check if single selected card has image data
+            if selected_card.has_image:
+                self.ui.buttonProcessOptions.setEnabled(True)
+                self.ui.buttonSpreadFactors.setEnabled(True)
+                imageWidget0.updateSprayCardView(selected_card.image_original())
+                cvImg1, cvImg2 = selected_card.images_processed()
+                imageWidget1.updateSprayCardView(cvImg1)
+                imageWidget2.updateSprayCardView(cvImg2)
+                return
         # Clear image views if not explicitly set
         self.ui.buttonProcessOptions.setEnabled(False)
         self.ui.buttonSpreadFactors.setEnabled(False)
