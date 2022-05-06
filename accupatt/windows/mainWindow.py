@@ -1,5 +1,4 @@
 from datetime import datetime
-from importlib.metadata import distribution
 import os
 from pathlib import Path
 import subprocess
@@ -7,6 +6,7 @@ import sys
 
 import accupatt.config as cfg
 from accupatt.helpers.cardPlotter import CardPlotter, SprayCardComposite
+from accupatt.helpers.cardStatTabelModel import CardStatTableModel, ComboBoxDelegate
 from accupatt.helpers.dataFileImporter import convert_xlsx_to_db, load_from_accupatt_1_file
 from accupatt.helpers.dBBridge import load_from_db, save_to_db
 from accupatt.helpers.exportExcel import export_all_to_excel, safe_report
@@ -22,10 +22,10 @@ from accupatt.windows.passManager import PassManager
 from accupatt.windows.readString import ReadString
 from accupatt.widgets import mplwidget, seriesinfowidget, singlecardwidget, splitcardwidget
 from PyQt6 import uic
-from PyQt6.QtCore import QSignalBlocker, Qt, pyqtSlot
+from PyQt6.QtCore import QSignalBlocker, QSortFilterProxyModel, Qt, pyqtSlot
 from PyQt6.QtGui import QAction, QActionGroup
-from PyQt6.QtWidgets import (QComboBox, QFileDialog, QLabel, QListWidget,
-                             QListWidgetItem, QMenu, QMessageBox, QProgressDialog)
+from PyQt6.QtWidgets import (QComboBox, QFileDialog, QHeaderView, QLabel, QListWidget,
+                             QListWidgetItem, QMenu, QMessageBox, QProgressDialog, QTableView)
 
 from accupatt.windows.reportManager import ReportManager
 from accupatt.windows.stringAdvancedOptions import StringAdvancedOptions
@@ -236,7 +236,7 @@ class MainWindow(baseclass):
         except NameError:
             self.currentDirectory = Path.home()
         if testing:
-            file = '/Users/gill14/Library/Mobile Documents/com~apple~CloudDocs/Projects/AccuPatt/testing/N510DC 01.db'
+            file = '/Users/gill14/Library/Mobile Documents/com~apple~CloudDocs/Projects/AccuPatt/testing/N2067B 01.db'
             #file = '/Users/gill14/Library/Mobile Documents/com~apple~CloudDocs/Projects/AccuPatt/testing/N802BK 01.xlsx'
         else:
             file, _ = QFileDialog.getOpenFileName(parent=self, 
@@ -791,6 +791,10 @@ class MainWindow(baseclass):
         self.updateCardPlots(composites=True)
     
     @pyqtSlot()
+    def cardPassStatTableValueChanged(self):
+        self.updateCardPlots(individuals=True, composites=True, simulations=True)
+    
+    @pyqtSlot()
     def saveAndUpdateSprayCardView(self):
         self.saveFile()
         self.updateCardPlots(individuals = True, composites = True, simulations = True, distributions = True)
@@ -802,6 +806,15 @@ class MainWindow(baseclass):
                                     sprayCards=passData.spray_cards,
                                     loc_units=self.seriesData.info.swath_units,
                                     colorize=self.ui.checkBoxCardPassColorize.isChecked())
+            tableView: QTableView = self.ui.tableViewCardPass
+            model = CardStatTableModel()
+            proxyModel = QSortFilterProxyModel()
+            proxyModel.setSourceModel(model)
+            tableView.setModel(proxyModel)
+            tableView.setItemDelegateForColumn(3, ComboBoxDelegate(tableView, cfg.UNITS_LENGTH_LARGE))
+            tableView.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+            model.loadCards([card for card in passData.spray_cards])
+            model.valueChanged.connect(self.cardPassStatTableValueChanged)
         if composites:
             pass
         if simulations:

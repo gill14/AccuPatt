@@ -41,6 +41,7 @@ class CardTableWidget(baseclass):
 
         self.show()
         self.tv.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        self.tv.verticalHeader().setVisible(False)
         
         self.tv.selectionModel().selectionChanged.connect(self.selection_changed)
     

@@ -2,6 +2,7 @@ import accupatt.config as cfg
 import matplotlib.ticker
 import numpy as np
 from accupatt.helpers.atomizationModel import AtomizationModel
+from accupatt.helpers.cardStatTabelModel import CardStatTableModel, ComboBoxDelegate
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
 from accupatt.models.sprayCard import SprayCard

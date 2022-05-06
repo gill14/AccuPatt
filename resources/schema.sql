@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS pass_string (
 CREATE TABLE IF NOT EXISTS pass_spray_card (
     pass_id                 TEXT PRIMARY KEY REFERENCES passes(id),
     center                  INTEGER,
-    center_method           TEXT,
+    center_method           TEXT
 );
 CREATE TABLE IF NOT EXISTS spray_cards (
     id                              TEXT PRIMARY KEY,
