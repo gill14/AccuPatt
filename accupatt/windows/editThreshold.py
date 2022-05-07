@@ -163,8 +163,12 @@ class EditThreshold(baseclass):
     def updateSprayCardView(self):
         #Left Image (1) Right Image (2)
         cvImg1, cvImg2 = self.sprayCard.images_processed()
-
         self.ui.splitCardWidget.updateSprayCardView(cvImg1, cvImg2)
+        self.ui.labelGrayscaleThresholdCalculated.clear()
+        if self.sprayCard.threshold_type == cfg.THRESHOLD_TYPE_GRAYSCALE:
+            if self.sprayCard.threshold_method_grayscale == cfg.THRESHOLD_GRAYSCALE_METHOD_AUTO:
+                self.ui.labelGrayscaleThresholdCalculated.setText('Calculated = '+str(int(self.sprayCard.threshold_grayscale_calculated)))
+        
 
     def _restore_defaults(self):
         sc = self.sprayCard

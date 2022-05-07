@@ -49,6 +49,8 @@ class SprayCard:
         self.stats = SprayCardStats(sprayCard=self)
         # Flag for currency
         self.current = False
+        # Temporary working variable
+        self.threshold_grayscale_calculated = cfg.get_threshold_grayscale()
     
     def image_original(self):
         return sprayCardImageFileHandler.read_image_from_file(self)
@@ -57,7 +59,10 @@ class SprayCard:
         # Returns processed images as tuple (overlay on og, binary mask)
         # And Populates Stain Area Lists, card area
         self.current = True
-        return SprayCardImageProcessor(sprayCard=self).draw_and_log_stains()
+        scip = SprayCardImageProcessor(sprayCard=self)
+        self.threshold_grayscale_calculated = scip.threshold_grayscale_calculated
+        print(self.threshold_grayscale_calculated)
+        return scip.draw_and_log_stains()
 
     def save_image_to_file(self, image):
         return sprayCardImageFileHandler.save_image_to_file(self, image)
@@ -294,20 +299,23 @@ class SprayCardImageProcessor:
 
     def __init__(self, sprayCard):
         self.sprayCard: SprayCard = sprayCard
+        self.threshold_grayscale = self.sprayCard.threshold_grayscale
+        self.img_src = self.sprayCard.image_original()
+        self.threshold_grayscale_calculated, self.img_thresh = self._image_threshold(img=self.img_src)
         
     def draw_and_log_stains(self):
-        img_src = self.sprayCard.image_original()
-        img_thresh = self._image_threshold(img=img_src)
+        #img_src = self.sprayCard.image_original()
+        #self.img_thresh = self._image_threshold(img=img_src)
         # Find all contours (stains)
-        contours, _ = cv2.findContours(img_thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(self.img_thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         # Watershed Segmentation
         if self.sprayCard.watershed:
             # Find all contours via watershed
-            contours = self._image_watershed(img_src.copy(), img_thresh.copy(), contours)
+            contours = self._image_watershed(self.img_src.copy(), self.img_thresh.copy(), contours)
         # Get src overlay image
-        img_overlay = self._image_stains(img=img_src, contours=contours, fillShapes=False)
+        img_overlay = self._image_stains(img=self.img_src, contours=contours, fillShapes=False)
         # Get Binary image
-        img = np.zeros((img_src.shape[0], img_src.shape[1], 3), np.uint8)
+        img = np.zeros((self.img_src.shape[0], self.img_src.shape[1], 3), np.uint8)
         img[:] = (255, 255, 255)
         img_binary = self._image_stains(img=img, contours=contours, fillShapes=True)
 
@@ -330,14 +338,14 @@ class SprayCardImageProcessor:
                 maxval = 255,
                 type = cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
             if thresh_val <= self.sprayCard.threshold_grayscale:
-                return _img_thresh
+                return thresh_val, _img_thresh
         #If manually thresholding, or auto returned threshold value outside ui-specified range, run manual thresh and return it
         _, img_thresh = cv2.threshold(
             src = img_gray,
             thresh = self.sprayCard.threshold_grayscale,
             maxval = 255,
             type = cv2.THRESH_BINARY_INV)
-        return img_thresh
+        return self.sprayCard.threshold_grayscale, img_thresh
 
     def _image_threshold_color(self, img):
         # Readability
@@ -383,7 +391,7 @@ class SprayCardImageProcessor:
             mask_bri_high = cv2.inRange(img_hsv, np.array([hbl,sbl,bvh]), np.array([hbh,sbh,bbh]))
             mask_bri = cv2.bitwise_or(mask_bri_low, mask_bri_high)
         # Merge layers and return
-        return cv2.bitwise_and(cv2.bitwise_and(mask_hue, mask_sat), mask_bri)
+        return 0, cv2.bitwise_and(cv2.bitwise_and(mask_hue, mask_sat), mask_bri)
 
     def _image_watershed(self, img_src, img_thresh, contours_original):
         thresh = img_thresh

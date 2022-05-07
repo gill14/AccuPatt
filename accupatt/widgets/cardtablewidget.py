@@ -334,7 +334,6 @@ class CardTable(QAbstractTableModel):
         if value is None:
             return False
         card: SprayCard = self.card_list[index.row()]
-        flag_reprocess = False
         col = index.column()
         if col == 0:
             card.name = value
@@ -351,7 +350,10 @@ class CardTable(QAbstractTableModel):
         elif col == 4:
             pass
         elif col == 5:
-            card.dpi = int(value)
+            try: 
+                card.dpi = int(value)
+            except ValueError:
+                return False
         elif col == 6:
             if role==Qt.ItemDataRole.EditRole:
                 card.threshold_type = cfg.THRESHOLD_TYPES[value]
@@ -359,39 +361,72 @@ class CardTable(QAbstractTableModel):
             if role==Qt.ItemDataRole.EditRole:
                 card.threshold_method_grayscale = cfg.THRESHOLD_GRAYSCALE_METHODS[value]
         elif col == 8:
-            card.threshold_grayscale = int(value)
+            try:
+                card.threshold_grayscale = int(value)
+            except ValueError:
+                return False
         elif col == 9:
-            card.threshold_color_hue_min = int(value)
+            try:
+                card.threshold_color_hue_min = int(value)
+            except ValueError:
+                return False
         elif col == 10:
-            card.threshold_color_hue_max = int(value)
+            try:
+                card.threshold_color_hue_max = int(value)
+            except ValueError:
+                return False
         elif col == 11:
             card.threshold_color_hue_pass = (value == 0)
         elif col == 12:
-            card.threshold_color_saturation_min = int(value)
+            try:
+                card.threshold_color_saturation_min = int(value)
+            except ValueError:
+                return False
         elif col == 13:
-            card.threshold_color_saturation_max = int(value)
+            try:
+                card.threshold_color_saturation_max = int(value)
+            except ValueError:
+                return False
         elif col == 14:
             card.threshold_color_saturation_pass = (value == 0)
         elif col == 15:
-            card.threshold_color_brightness_min = int(value)
+            try:
+                card.threshold_color_brightness_min = int(value)
+            except ValueError:
+                return False
         elif col == 16:
-            card.threshold_color_brightness_max = int(value)
+            try:
+                card.threshold_color_brightness_max = int(value)
+            except ValueError:
+                return False
         elif col == 17:
             card.threshold_color_brightness_pass = (value == 0)
         elif col == 18:
             card.watershed = (Qt.CheckState(value) == Qt.CheckState.Checked)
         elif col == 19:
-            card.min_stain_area_px = int(value)
+            try:
+                card.min_stain_area_px = int(value)
+            except ValueError:
+                return False
         elif col == 20:
             card.stain_approximation_method = cfg.STAIN_APPROXIMATION_METHODS[value]
         elif col == 21:
             card.spread_method = cfg.SPREAD_METHODS[value]
         elif col == 22:
-            card.spread_factor_a = float(value)
+            try:
+                card.spread_factor_a = float(value)
+            except ValueError:
+                return False
         elif col == 23:
-            card.spread_factor_b = float(value)
+            try:
+                card.spread_factor_b = float(value)
+            except ValueError:
+                return False
         elif col == 24:
-            card.spread_factor_c = float(value)
+            try:
+                card.spread_factor_c = float(value)
+            except ValueError:
+                return False
         else:
             return False
         if col >= 5 and col <= 20:
