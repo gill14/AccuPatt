@@ -141,6 +141,7 @@ CREATE TABLE IF NOT EXISTS spray_cards (
     threshold_color_brightness_pass INTEGER,
     watershed                       INTEGER,
     min_stain_area_px               INTEGER,
+    stain_approximation_method      TEXT,
     dpi                             INTEGER,
     spread_method                   INTEGER,
     spread_factor_a                 REAL,
