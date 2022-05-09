@@ -40,10 +40,10 @@ def convert_xlsx_to_db(file, s: SeriesData = None, prog=None) -> str:
     # Loop over declard cards and save images to db if has_image
     p: Pass = s.passes[on_pass - 1]
     c: SprayCard
-    for i, c in enumerate(p.spray_cards):
+    for i, c in enumerate(p.cards.card_list):
         if prog != None:
             if i == 0:
-                prog.setRange(0, len(p.spray_cards))
+                prog.setRange(0, len(p.cards.card_list))
             prog.setValue(i)
             prog.setLabelText(f"Copying image for {c.name}")
         c.filepath = file_db
@@ -58,7 +58,7 @@ def convert_xlsx_to_db(file, s: SeriesData = None, prog=None) -> str:
             c.save_image_to_file(stream.getvalue())
             # Reclaim resources
             stream.close()
-        if i == len(p.spray_cards) - 1:
+        if i == len(p.cards.card_list) - 1:
             prog.setValue(i + 1)
 
     return file_db
@@ -236,7 +236,7 @@ def load_from_accupatt_1_file(file) -> SeriesData:
             c.spread_factor_a = spread_a
             c.spread_factor_b = spread_b
             c.spread_factor_c = spread_c
-            p.spray_cards.append(c)
+            p.cards.card_list.append(c)
 
     return s
 

@@ -267,9 +267,9 @@ def export_all_to_excel(series: SeriesData, saveFile: str):
                 start_row=1,
                 start_column=col_pass_name,
                 end_row=1,
-                end_column=col_pass_name + len(p.spray_cards) - 1,
+                end_column=col_pass_name + len(p.cards.card_list) - 1,
             )
-            for k, c in enumerate(p.spray_cards):
+            for k, c in enumerate(p.cards.card_list):
                 c: SprayCard
                 labels = [
                     "name",
@@ -318,7 +318,7 @@ def export_all_to_excel(series: SeriesData, saveFile: str):
                 for i, (label, val) in enumerate(zip(labels, vals)):
                     ws.cell(2 + i, 1, label)
                     ws.cell(2 + i, col_pass_name + k, val)
-            col_pass_name += len(p.spray_cards)
+            col_pass_name += len(p.cards.card_list)
 
     for cell in ws["A"] + ws[1] + ws[2]:
         cell.style = "Pandas"

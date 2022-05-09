@@ -5,7 +5,7 @@ import subprocess
 import sys
 
 import accupatt.config as cfg
-from accupatt.helpers.cardPlotter import CardPlotter, SprayCardComposite
+from accupatt.helpers.cardPlotter import CardPlotter
 from accupatt.helpers.cardStatTabelModel import CardStatTableModel, ComboBoxDelegate
 from accupatt.helpers.dataFileImporter import (
     convert_xlsx_to_db,
@@ -18,6 +18,7 @@ from accupatt.models.appInfo import AppInfo
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
 from accupatt.models.sprayCard import SprayCard
+from accupatt.models.sprayCardComposite import SprayCardComposite
 from accupatt.windows.cardManager import CardManager
 from accupatt.windows.editSpreadFactors import EditSpreadFactors
 from accupatt.windows.editThreshold import EditThreshold
@@ -416,7 +417,7 @@ class MainWindow(baseclass):
         card_list: list[SprayCard] = []
         card_identifier_list: list[str] = []
         for p in self.seriesData.passes:
-            for c in p.spray_cards:
+            for c in p.cards.card_list:
                 card_list.append(c)
                 card_identifier_list.append(f"{p.name} - {c.name}")
         for i, card in enumerate(card_list):
@@ -579,7 +580,7 @@ class MainWindow(baseclass):
                 if (
                     p.has_card_data()
                     and p.cards_include_in_composite
-                    and any([sc.include_in_composite for sc in p.spray_cards])
+                    and any([sc.include_in_composite for sc in p.cards.card_list])
                 ):
                     # Select the pass to update plots
                     self.ui.listWidgetCardPass.setCurrentRow(row)
@@ -977,7 +978,7 @@ class MainWindow(baseclass):
             if i > 0:
                 comboBoxCard.addItem("Pass Composite")
                 comboBoxCard.addItems(
-                    [c.name for c in self.seriesData.passes[i - 1].spray_cards]
+                    [c.name for c in self.seriesData.passes[i - 1].cards.card_list]
                 )
                 comboBoxCard.setCurrentIndex(0)
         self.updateCardPlots(distributions=True)
@@ -1016,7 +1017,7 @@ class MainWindow(baseclass):
         if individuals:
             CardPlotter.plotSpatial(
                 mplWidget=self.ui.plotWidgetCardPass,
-                sprayCards=passData.spray_cards,
+                sprayCards=passData.cards.card_list,
                 loc_units=self.seriesData.info.swath_units,
                 colorize=self.ui.checkBoxCardPassColorize.isChecked(),
             )
@@ -1031,19 +1032,17 @@ class MainWindow(baseclass):
             tableView.horizontalHeader().setSectionResizeMode(
                 QHeaderView.ResizeMode.ResizeToContents
             )
-            model.loadCards([card for card in passData.spray_cards])
+            model.loadCards([card for card in passData.cards.card_list])
             model.valueChanged.connect(self.cardPassStatTableValueChanged)
         if composites:
             pass
         if simulations:
             pass
         if distributions:
-            composite: SprayCardComposite = None
+            composite = SprayCardComposite()
             if self.ui.comboBoxCardDistPass.currentIndex() == 0:
                 # "All (Series-Wise Composite)" option
-                composite = CardPlotter.createRepresentativeComposite(
-                    seriesData=self.seriesData
-                )
+                composite.buildFromSeries(seriesData=self.seriesData)
             else:
                 distPassData = self.seriesData.passes[
                     self.ui.comboBoxCardDistPass.currentIndex() - 1
@@ -1051,16 +1050,13 @@ class MainWindow(baseclass):
                 # "Pass X" option
                 if self.ui.comboBoxCardDistCard.currentIndex() == 0:
                     # "All (Pass-Wise Composite)" option
-                    composite = CardPlotter.createRepresentativeComposite(
-                        passData=distPassData
-                    )
+                    composite.buildFromPass(passData=distPassData)
                 elif self.ui.comboBoxCardDistCard.currentIndex() > 0:
                     # "Card X" option
-                    composite = CardPlotter.createRepresentativeComposite(
-                        sprayCard=distPassData.spray_cards[
+                    card = distPassData.cards.card_list[
                             self.ui.comboBoxCardDistCard.currentIndex() - 1
                         ]
-                    )
+                    composite.buildFromCard(card)
             CardPlotter.plotDistribution(
                 mplWidget1=self.ui.plotWidgetDropDist1,
                 mplWidget2=self.ui.plotWidgetDropDist2,

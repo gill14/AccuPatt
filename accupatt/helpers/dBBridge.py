@@ -258,7 +258,7 @@ def _load_table_spray_cards(c: sqlite3.Cursor, p: Pass, file: str):
         sc.set_threshold_color_hue(min=hmin, max=hmax, bandpass=hpass)
         sc.set_threshold_color_saturation(min=smin, max=smax, bandpass=spass)
         sc.set_threshold_color_brightness(min=bmin, max=bmax, bandpass=bpass)
-        p.spray_cards.append(sc)
+        p.cards.card_list.append(sc)
 
 
 def load_image_from_db(file: str, spray_card_id: str) -> bytearray:
@@ -496,7 +496,7 @@ def _update_table_pass_string(c: sqlite3.Cursor, p: Pass):
 
 def _update_table_spray_cards(c: sqlite3.Cursor, p: Pass):
     card: SprayCard
-    for card in p.spray_cards:
+    for card in p.cards.card_list:
         c.execute(
             """INSERT INTO spray_cards (id, pass_id, name, location, location_units, include_in_composite, threshold_type, threshold_method_grayscale, threshold_grayscale, threshold_color_hue_min, threshold_color_hue_max, threshold_color_hue_pass, threshold_color_saturation_min, threshold_color_saturation_max, threshold_color_saturation_pass, threshold_color_brightness_min, threshold_color_brightness_max, threshold_color_brightness_pass, watershed, min_stain_area_px, stain_approximation_method, dpi, spread_method, spread_factor_a, spread_factor_b, spread_factor_c, has_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         ON CONFLICT(id) DO UPDATE SET
@@ -532,7 +532,7 @@ def _update_table_spray_cards(c: sqlite3.Cursor, p: Pass):
             ),
         )
     # Loop through cards on db, delete any not in pass object
-    current_ids = [sc.id for sc in p.spray_cards]
+    current_ids = [sc.id for sc in p.cards.card_list]
     if len(current_ids) == 0:
         c.execute("""DELETE FROM spray_cards WHERE pass_id = ?""", (p.id,))
     else:

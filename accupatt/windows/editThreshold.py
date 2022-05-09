@@ -302,7 +302,7 @@ class EditThreshold(baseclass):
             ):
                 # Cycle through cards in pass
                 card: SprayCard
-                for card in p.spray_cards:
+                for card in p.cards.card_list:
                     if (
                         card.name == sc.name
                         or self.ui.checkBoxApplyToAllPass.checkState()

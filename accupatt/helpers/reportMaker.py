@@ -288,7 +288,7 @@ class ReportMaker:
 
         cards_paged = 0
         cards_to_page = [
-            c for c in passData.spray_cards if c.include_in_composite and c.has_image
+            c for c in passData.cards.card_list if c.include_in_composite and c.has_image
         ]
         pages_needed = math.ceil(len(cards_to_page) / cards_per_page)
 
@@ -615,7 +615,7 @@ class ReportMaker:
     def _list_disclaimers(self, passData: Pass):
         disclaimers = []
         sc: SprayCard
-        sc = [card for card in passData.spray_cards if card.include_in_composite][0]
+        sc = [card for card in passData.cards.card_list if card.include_in_composite][0]
         disclaimers.append(
             Paragraph(
                 f"\u00B9  Based on inputs, minimum detectable droplet diameter is {sc.minimum_detectable_droplet_diameter()} μm.",

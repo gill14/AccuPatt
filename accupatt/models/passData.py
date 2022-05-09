@@ -1,8 +1,8 @@
-from typing import Tuple
 import uuid
 
 import accupatt.config as cfg
 import numpy as np
+from accupatt.models.passCardData import PassCardData
 
 from accupatt.models.passStringData import PassStringData
 from accupatt.models.sprayCard import SprayCard
@@ -32,8 +32,8 @@ class Pass:
         self.humidity: float = 0
         # String Data
         self.string = PassStringData(name=self.name)
-        # Spray Card List
-        self.spray_cards: list[SprayCard] = []
+        # Card Data
+        self.cards = PassCardData()
         # Include in Composite by default
         self.string_include_in_composite = True
         self.cards_include_in_composite = True
@@ -42,7 +42,7 @@ class Pass:
         return not self.string.data.empty
 
     def has_card_data(self) -> bool:
-        return len(self.spray_cards) > 0
+        return len(self.cards.card_list) > 0
 
     """
     GET methods return a tuple of (value, units, value_string, value_units_string)

@@ -155,7 +155,7 @@ class EditSpreadFactors(baseclass):
                 == Qt.CheckState.Checked
             ):
                 # Cycle through cards in pass
-                for card in p.spray_cards:
+                for card in p.cards.card_list:
                     if (
                         card.name == self.sprayCard.name
                         or self.ui.checkBoxApplyToAllPass.checkState()

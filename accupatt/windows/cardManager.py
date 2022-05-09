@@ -63,7 +63,7 @@ class CardManager(baseclass):
         self.cardTable.selectionChanged.connect(self.selection_changed)
         self.cardTable.editCard.connect(self._update_image_widgets)
         # self.cardTable.editCardSpreadFactors.connect(self.edit_card_spread_factors)
-        self.cardTable.assign_card_list(passData.spray_cards, filepath)
+        self.cardTable.assign_card_list(passData.cards.card_list, filepath)
 
         self.show()
 

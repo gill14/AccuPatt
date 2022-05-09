@@ -6,62 +6,12 @@ from accupatt.helpers.cardStatTabelModel import CardStatTableModel, ComboBoxDele
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
 from accupatt.models.sprayCard import SprayCard
+from accupatt.models.sprayCardComposite import SprayCardComposite
 from accupatt.widgets.mplwidget import MplWidget
 from PyQt6.QtWidgets import QTableWidget
 
 
-class SprayCardComposite(SprayCard):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.drop_dia_um = []
-        self.drop_vol_um3 = []
-        self.area_in2 = 0.0
-
-
 class CardPlotter:
-    def createRepresentativeComposite(
-        sprayCard: SprayCard = None,
-        passData: Pass = None,
-        seriesData: SeriesData = None,
-    ) -> SprayCardComposite:
-        cards: list[SprayCard] = []
-        composite = SprayCardComposite()
-        # If seriesData is passed in, compute series-wise dist
-        if seriesData is not None:
-            for p in seriesData.passes:
-                if p.cards_include_in_composite:
-                    for c in p.spray_cards:
-                        cards.append(c)
-        # If passData is passed in, compute pass-wise dist
-        elif passData is not None:
-            for c in passData.spray_cards:
-                cards.append(c)
-        elif sprayCard is not None:
-            cards.append(sprayCard)
-        # If either pass-wise or series-wise, re-compute all cards and create composite
-        for card in cards:
-            if card.has_image and card.include_in_composite:
-                # Do the image processing
-                # card.images_processed()
-                # Glob into representative composite card
-                composite.area_px2 += card.area_px2
-                composite.area_in2 += card.stats._px2_to_in2(card.area_px2)
-                dd, dv = card.stats.get_droplet_diameters_and_volumes()
-                composite.drop_dia_um.extend(dd)
-                composite.drop_vol_um3.extend(dv)
-                composite.stain_areas_all_px2.extend(card.stain_areas_all_px2)
-                composite.stain_areas_valid_px2.extend(card.stain_areas_valid_px2)
-
-        # Sort droplet lists
-        composite.drop_dia_um.sort()
-        composite.drop_vol_um3.sort()
-
-        # Set the dv vals in composite stats object for future use
-        composite.stats.set_volumetric_stats(
-            composite.drop_dia_um, composite.drop_vol_um3
-        )
-
-        return composite
 
     def plotDistribution(
         mplWidget1: MplWidget,
