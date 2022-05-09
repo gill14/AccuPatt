@@ -5,11 +5,14 @@ import serial
 from PyQt6 import uic
 from PyQt6.QtCore import QTimer, pyqtSignal, pyqtSlot
 
-Ui_Form, baseclass = uic.loadUiType(os.path.join(os.getcwd(), 'resources', 'calculateStringSpeed.ui'))
+Ui_Form, baseclass = uic.loadUiType(
+    os.path.join(os.getcwd(), "resources", "calculateStringSpeed.ui")
+)
+
 
 class CalculateStringSpeed(baseclass):
 
-    speed_accepted = pyqtSignal(str,str)
+    speed_accepted = pyqtSignal(str, str)
 
     def __init__(self, ser: serial.Serial, length, length_units, parent=None):
         super().__init__(parent=parent)
@@ -21,8 +24,8 @@ class CalculateStringSpeed(baseclass):
         self.ui.comboBox.addItems(cfg.UNITS_LENGTH_LARGE)
         self.ui.comboBox.setCurrentText(length_units)
         self.ui.comboBox.currentTextChanged[str].connect(self.length_units_changed)
-        self.ui.labelUnitsTime.setText('sec')
-        self.ui.labelUnitsSpeed.setText(f'{length_units}/sec')
+        self.ui.labelUnitsTime.setText("sec")
+        self.ui.labelUnitsSpeed.setText(f"{length_units}/sec")
         self.ui.button.pressed.connect(self.button_pressed)
 
         # Serial Port
@@ -31,12 +34,12 @@ class CalculateStringSpeed(baseclass):
             self.serialPort.open()
         # State to know whether winding or not
         self.state = False
-        
+
         self.show()
 
     @pyqtSlot(str)
     def length_units_changed(self, text):
-        self.ui.labelUnitsSpeed.setText(f'{text}/sec')
+        self.ui.labelUnitsSpeed.setText(f"{text}/sec")
 
     @pyqtSlot()
     def button_pressed(self):
@@ -62,21 +65,23 @@ class CalculateStringSpeed(baseclass):
         self.timer.timeout.connect(self.update_elapsed_time)
         self.timer.start(1000)
         # Change Button Text and State
-        self.ui.button.setText('Stop')
+        self.ui.button.setText("Stop")
         self.state = True
-    
+
     def stopCalc(self):
         # Stop Timer and String Drive
         self.timer.stop()
         self.serialPort.write(cfg.STRING_DRIVE_FWD_STOP.encode())
         # Change Button Text
-        self.ui.button.setText('Start')
+        self.ui.button.setText("Start")
         # Calc and show new speed
         length = float(self.ui.lineEditLength.text())
         time = float(self.ui.lineEditTime.text())
-        self.ui.lineEditSpeed.setText(f'{length/time:.2f}')
+        self.ui.lineEditSpeed.setText(f"{length/time:.2f}")
 
     def accept(self):
         # Send back new speed val as str
-        self.speed_accepted.emit(self.ui.lineEditSpeed.text(), self.ui.labelUnitsSpeed.text())
+        self.speed_accepted.emit(
+            self.ui.lineEditSpeed.text(), self.ui.labelUnitsSpeed.text()
+        )
         super().accept()

@@ -24,6 +24,7 @@ PyQt6 = "^6.2.2"
 [tool.poetry.dev-dependencies]
 pyinstaller = "^4.9"
 py2app = "^0.27"
+black = "^22.3.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
