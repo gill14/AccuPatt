@@ -1,24 +1,20 @@
-import os
-
+from numpy import TooHardError
 import accupatt.config as cfg
 from accupatt.models.sprayCard import SprayCard
 from PyQt6.QtCore import (
     QAbstractTableModel,
-    QItemSelectionModel,
     QModelIndex,
     Qt,
     QVariant,
     pyqtSignal,
-    pyqtSlot,
+)
+from PyQt6.QtGui import (
+    QBrush,
+    QColor,
 )
 from PyQt6.QtWidgets import (
-    QAbstractItemView,
     QComboBox,
-    QHeaderView,
     QStyledItemDelegate,
-    QMessageBox,
-    QPushButton,
-    QTableView,
 )
 
 
@@ -97,15 +93,35 @@ class CardStatTableModel(QAbstractTableModel):
         elif col == 4:
             if role == Qt.ItemDataRole.DisplayRole:
                 return card.stats.get_dsc()
+            if role == Qt.ItemDataRole.BackgroundRole:
+                hex_color = card.stats.get_dsc_color()
+                qcolor = QColor(hex_color)
+                qcolor.setAlpha(128)
+                return QBrush(qcolor)
         elif col == 5:
             if role == Qt.ItemDataRole.DisplayRole:
                 return card.stats.get_dv01(text=True)
+            if role == Qt.ItemDataRole.BackgroundRole:
+                hex_color = card.stats.get_dv01_color()
+                qcolor = QColor(hex_color)
+                qcolor.setAlpha(128)
+                return QBrush(qcolor)
         elif col == 6:
             if role == Qt.ItemDataRole.DisplayRole:
                 return card.stats.get_dv05(text=True)
+            if role == Qt.ItemDataRole.BackgroundRole:
+                hex_color = card.stats.get_dv05_color()
+                qcolor = QColor(hex_color)
+                qcolor.setAlpha(128)
+                return QBrush(qcolor)
         elif col == 7:
             if role == Qt.ItemDataRole.DisplayRole:
                 return card.stats.get_dv09(text=True)
+            if role == Qt.ItemDataRole.BackgroundRole:
+                hex_color = card.stats.get_dv09_color()
+                qcolor = QColor(hex_color)
+                qcolor.setAlpha(128)
+                return QBrush(qcolor)
         elif col == 8:
             if role == Qt.ItemDataRole.DisplayRole:
                 return card.stats.get_relative_span(text=True)

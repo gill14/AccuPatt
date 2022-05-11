@@ -15,13 +15,55 @@ class AtomizationModel:
     """
 
     ref_nozzles = {
-        "VF": {"DV01": [0.0, 59.5], "DV05": [0.0, 134.4], "RANK": 0},
-        "F": {"DV01": [59.5, 110.3], "DV05": [134.4, 248.1], "RANK": 1},
-        "M": {"DV01": [110.3, 162.0], "DV05": [248.1, 357.8], "RANK": 2},
-        "C": {"DV01": [162.0, 191.7], "DV05": [357.8, 431.0], "RANK": 3},
-        "VC": {"DV01": [191.7, 226.1], "DV05": [431.0, 500.9], "RANK": 4},
-        "XC": {"DV01": [226.1, 302.5], "DV05": [500.9, 658.6], "RANK": 5},
-        "UC": {"DV01": [302.5, 65535], "DV05": [658.6, 65535], "RANK": 6},
+        "VF": {
+            "DV01": [0.0, 59.5],
+            "DV05": [0.0, 134.4],
+            "DV09": [134.4, 236.4],
+            "RANK": 0,
+            "Color": "#FF0000",
+        },
+        "F": {
+            "DV01": [59.5, 110.3],
+            "DV05": [134.4, 248.1],
+            "RANK": 1,
+            "DV09": [236.4, 409.4],
+            "Color": "#FFA500",
+        },
+        "M": {
+            "DV01": [110.3, 162.0],
+            "DV05": [248.1, 357.8],
+            "DV09": [409.4, 584.0],
+            "RANK": 2,
+            "Color": "#FFFF00",
+        },
+        "C": {
+            "DV01": [162.0, 191.7],
+            "DV05": [357.8, 431.0],
+            "DV09": [584.0, 737.1],
+            "RANK": 3,
+            "Color": "#0000FF",
+        },
+        "VC": {
+            "DV01": [191.7, 226.1],
+            "DV05": [431.0, 500.9],
+            "DV09": [737.1, 819.8],
+            "RANK": 4,
+            "Color": "#008000",
+        },
+        "XC": {
+            "DV01": [226.1, 302.5],
+            "DV05": [500.9, 658.6],
+            "DV09": [819.8, 1142.2],
+            "RANK": 5,
+            "Color": "#D8D8D8",
+        },
+        "UC": {
+            "DV01": [302.5, 65535],
+            "DV05": [658.6, 65535],
+            "DV09": [1142.2, 65535],
+            "RANK": 6,
+            "Color": "#000000",
+        },
     }
 
     """
@@ -3445,6 +3487,21 @@ class AtomizationModel:
             dsc = dsc_01
         return dsc
 
+    def _dsc_color(self, dsc) -> str:
+        r = self.ref_nozzles
+        color = "#FFFFFF"
+        if dsc in r.keys():
+            color = r[dsc]["Color"]
+        return color
+
+    def _dsc_color_dv(self, dv: float, dv_key: str) -> str:
+        r = self.ref_nozzles
+        color = "#FFFFFF"
+        for category in r.keys():
+            if r[category][dv_key][0] <= dv <= r[category][dv_key][1]:
+                color = r[category]["Color"]
+        return color
+
     def _rs(self, dv01=None, dv05=None, dv09=None):
         if dv01 == None:
             dv01 = self.dv01()
@@ -3482,6 +3539,24 @@ class AtomizationModel:
 
     def dsc(self, dv01=None, dv05=None):
         return self._dsc(dv01, dv05)
+
+    def dsc_color(self, dv01=None, dv05=None):
+        return self._dsc_color(dsc=self._dsc(dv01=dv01, dv05=dv05))
+
+    def dsc_color_dv01(self, dv01=None):
+        if dv01 == None:
+            dv01 = self.dv01()
+        return self._dsc_color_dv(dv=dv01, dv_key="DV01")
+
+    def dsc_color_dv05(self, dv05=None):
+        if dv05 == None:
+            dv05 = self.dv05()
+        return self._dsc_color_dv(dv=dv05, dv_key="DV05")
+
+    def dsc_color_dv09(self, dv09=None):
+        if dv09 == None:
+            dv09 = self.dv09()
+        return self._dsc_color_dv(dv=dv09, dv_key="DV09")
 
     def rs(self, dv01=None, dv05=None, dv09=None):
         return self._rs(dv01, dv05, dv09)

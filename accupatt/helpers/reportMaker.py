@@ -288,7 +288,9 @@ class ReportMaker:
 
         cards_paged = 0
         cards_to_page = [
-            c for c in passData.cards.card_list if c.include_in_composite and c.has_image
+            c
+            for c in passData.cards.card_list
+            if c.include_in_composite and c.has_image
         ]
         pages_needed = math.ceil(len(cards_to_page) / cards_per_page)
 

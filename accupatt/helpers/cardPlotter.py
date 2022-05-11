@@ -12,7 +12,6 @@ from PyQt6.QtWidgets import QTableWidget
 
 
 class CardPlotter:
-
     def plotDistribution(
         mplWidget1: MplWidget,
         mplWidget2: MplWidget,
@@ -186,15 +185,10 @@ class CardPlotter:
                     ]
                 )
                 # Plot the fill data using dsc-specified colors
-                categories = ["VF", "F", "M", "C", "VC", "XC", "UC"]
+                categories = list(AtomizationModel.ref_nozzles)
                 colors = [
-                    "red",
-                    "orange",
-                    "yellow",
-                    "blue",
-                    "green",
-                    "lightgray",
-                    "black",
+                    AtomizationModel.ref_nozzles[category]["Color"]
+                    for category in categories
                 ]
                 for (category, color) in zip(categories, colors):
                     ax.fill_between(

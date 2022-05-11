@@ -1054,8 +1054,8 @@ class MainWindow(baseclass):
                 elif self.ui.comboBoxCardDistCard.currentIndex() > 0:
                     # "Card X" option
                     card = distPassData.cards.card_list[
-                            self.ui.comboBoxCardDistCard.currentIndex() - 1
-                        ]
+                        self.ui.comboBoxCardDistCard.currentIndex() - 1
+                    ]
                     composite.buildFromCard(card)
             CardPlotter.plotDistribution(
                 mplWidget1=self.ui.plotWidgetDropDist1,

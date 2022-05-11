@@ -126,11 +126,17 @@ class SprayCardStats:
         else:
             return self.dv01
 
+    def get_dv01_color(self) -> str:
+        return AtomizationModel().dsc_color_dv01(dv01=self.dv01)
+
     def get_dv05(self, text=False):
         if text:
             return str(self.dv05) + " \u03BC" + "m"
         else:
             return self.dv05
+
+    def get_dv05_color(self) -> str:
+        return AtomizationModel().dsc_color_dv05(dv05=self.dv05)
 
     def get_dv09(self, text=False):
         if text:
@@ -138,10 +144,14 @@ class SprayCardStats:
         else:
             return self.dv09
 
+    def get_dv09_color(self) -> str:
+        return AtomizationModel().dsc_color_dv09(dv09=self.dv09)
+
     def get_dsc(self):
-        return AtomizationModel(
-            nozzle=None, orifice=None, airspeed=None, pressure=None, angle=None
-        ).dsc(dv01=self.dv01, dv05=self.dv05)
+        return AtomizationModel().dsc(dv01=self.dv01, dv05=self.dv05)
+
+    def get_dsc_color(self) -> str:
+        return AtomizationModel().dsc_color(dv01=self.dv01, dv05=self.dv05)
 
     def get_relative_span(self, text=False):
         if self.dv05 == 0:

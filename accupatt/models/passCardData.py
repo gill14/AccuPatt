@@ -4,7 +4,6 @@ from accupatt.models.sprayCard import SprayCard
 
 
 class PassCardData:
-    
     def __init__(self):
         # Card Data
         self.card_list: list[SprayCard] = []

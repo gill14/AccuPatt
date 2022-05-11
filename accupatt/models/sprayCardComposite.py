@@ -11,13 +11,13 @@ class SprayCardComposite(SprayCard):
         self.drop_vol_um3 = []
         # Must keep this for building sum area of individual spray cards
         self.area_in2 = 0.0
-        
+
     def buildFromCard(self, card: SprayCard):
         self._buildFromList([card])
-    
+
     def buildFromPass(self, passData: Pass):
         self._buildFromList(passData.cards.card_list)
-        
+
     def buildFromSeries(self, seriesData: SeriesData):
         cards: list[SprayCard] = []
         for p in seriesData.passes:
@@ -25,7 +25,7 @@ class SprayCardComposite(SprayCard):
                 for card in p.cards.card_list:
                     cards.append(card)
         self._buildFromList(cards)
-        
+
     def _buildFromList(self, cards: list[SprayCard]):
         # Build composite from valid cards
         for card in cards:
@@ -43,7 +43,5 @@ class SprayCardComposite(SprayCard):
         # Sort the dia and vol lists before computing dv's
         self.drop_dia_um.sort()
         self.drop_vol_um3.sort()
-         # Set the dv vals in composite stats object for future use
-        self.stats.set_volumetric_stats(
-            self.drop_dia_um, self.drop_vol_um3
-        )
+        # Set the dv vals in composite stats object for future use
+        self.stats.set_volumetric_stats(self.drop_dia_um, self.drop_vol_um3)
