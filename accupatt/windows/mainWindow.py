@@ -5,7 +5,6 @@ import subprocess
 import sys
 
 import accupatt.config as cfg
-from accupatt.helpers.cardPlotter import CardPlotter
 from accupatt.helpers.cardStatTabelModel import CardStatTableModel, ComboBoxDelegate
 from accupatt.helpers.dataFileImporter import (
     convert_xlsx_to_db,
@@ -1015,9 +1014,8 @@ class MainWindow(baseclass):
     ):
         passData = self.getCurrentCardPass()
         if individuals:
-            CardPlotter.plotSpatial(
+            passData.cards.plot(
                 mplWidget=self.ui.plotWidgetCardPass,
-                sprayCards=passData.cards.card_list,
                 loc_units=self.seriesData.info.swath_units,
                 colorize=self.ui.checkBoxCardPassColorize.isChecked(),
             )
@@ -1057,11 +1055,10 @@ class MainWindow(baseclass):
                         self.ui.comboBoxCardDistCard.currentIndex() - 1
                     ]
                     composite.buildFromCard(card)
-            CardPlotter.plotDistribution(
+            composite.plotDistribution(
                 mplWidget1=self.ui.plotWidgetDropDist1,
                 mplWidget2=self.ui.plotWidgetDropDist2,
                 tableWidget=self.ui.tableWidgetSprayCardStats,
-                composite=composite,
             )
 
     def getCurrentCardPass(self) -> Pass:
