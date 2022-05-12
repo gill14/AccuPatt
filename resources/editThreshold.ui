@@ -110,7 +110,7 @@
              <number>5000</number>
             </property>
             <property name="text">
-             <string>Automatic</string>
+             <string>Automatic (Set maximum threshold)</string>
             </property>
            </widget>
           </item>
@@ -123,7 +123,7 @@
              <number>5000</number>
             </property>
             <property name="text">
-             <string>Manual</string>
+             <string>Manual (Set threshold)</string>
             </property>
            </widget>
           </item>

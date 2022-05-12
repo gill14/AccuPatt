@@ -4,6 +4,7 @@ import numpy as np
 from accupatt.helpers.atomizationModel import AtomizationModelMulti
 from accupatt.models.appInfo import AppInfo
 from accupatt.models.passData import Pass
+from accupatt.models.seriesCardData import SeriesCardData
 from accupatt.models.seriesStringData import SeriesStringData
 
 
@@ -17,6 +18,7 @@ class SeriesData:
         self.info = AppInfo()
         self.passes: list[Pass] = []
         self.string = SeriesStringData(self.passes, self.info.swath_units)
+        self.cards = SeriesCardData(self.passes, self.info.swath_units)
 
     """
     GET methods below optionally take imposed unit, otherwise find most common unit, convert values and return a tuple

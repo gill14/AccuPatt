@@ -33,7 +33,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_info">
        <attribute name="title">
@@ -391,7 +391,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget_2">
           <property name="currentIndex">
-           <number>2</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tab">
            <attribute name="title">
@@ -1244,7 +1244,7 @@
           <item>
            <widget class="QCheckBox" name="checkBoxCardPassCenter">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1311,7 +1311,7 @@
           <item>
            <widget class="QCheckBox" name="checkBoxCardSeriesCenter">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="text">
              <string>Align Center Average</string>
@@ -1381,7 +1381,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QSpinBox" name="spinBoxSwathAdjusted_2">
+             <widget class="QSpinBox" name="spinBoxSwathAdjusted2">
               <property name="specialValueText">
                <string/>
               </property>
@@ -1396,7 +1396,7 @@
            </layout>
           </item>
           <item>
-           <widget class="QSlider" name="horizontalSliderSimulatedSwath_2">
+           <widget class="QSlider" name="horizontalSliderSimulatedSwath2">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -1418,6 +1418,9 @@
         </item>
         <item>
          <widget class="QTabWidget" name="tabWidget_3">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
           <property name="currentIndex">
            <number>0</number>
           </property>
@@ -1517,6 +1520,9 @@
            </layout>
           </widget>
           <widget class="QWidget" name="tab_7">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <attribute name="title">
             <string>Simulations</string>
            </attribute>

@@ -5,8 +5,10 @@ from datetime import datetime
 import pandas as pd
 import accupatt.config as cfg
 from accupatt.models.appInfo import Nozzle
+from accupatt.models.passCardData import PassCardData
 from accupatt.models.passData import Pass
 from accupatt.models.passStringData import PassStringData
+from accupatt.models.seriesCardData import SeriesCardData
 from accupatt.models.seriesData import SeriesData
 from accupatt.models.seriesStringData import SeriesStringData
 from accupatt.models.sprayCard import SprayCard
@@ -35,6 +37,7 @@ def load_from_db(file: str, s: SeriesData, load_only_info=False):
         else:
             _load_table_series(c, s)
             _load_table_series_string(c, s)
+            _load_table_series_spray_card(c, s)
             _load_table_flyin(c, s)
             _load_table_applicator(c, s)
             _load_table_aircraft(c, s)
@@ -67,6 +70,17 @@ def _load_table_series_string(c: sqlite3.Cursor, s: SeriesData):
         ss.simulated_adjascent_passes,
     ) = c.fetchone()
 
+def _load_table_series_spray_card(c: sqlite3.Cursor, s: SeriesData):
+    scd: SeriesCardData = s.cards
+    c.execute(
+        """SELECT average_center, average_center_method, simulated_adjascent_passes FROM series_spray_card WHERE series_id = ?""",
+        (s.id,),
+    )
+    (
+        scd.center,
+        scd.center_method,
+        scd.simulated_adjascent_passes,
+    ) = c.fetchone()
 
 def _load_table_flyin(c: sqlite3.Cursor, s: SeriesData):
     i = s.info
@@ -186,6 +200,7 @@ def _load_table_passes(c: sqlite3.Cursor, s: SeriesData, file: str):
         ) = row
 
         _load_table_pass_string(c, p)
+        _load_table_pass_spray_card(c, p)
         _load_table_spray_cards(c, p, file)
 
         s.passes.append(p)
@@ -217,6 +232,16 @@ def _load_table_pass_string(c: sqlite3.Cursor, p: Pass):
     ps.data_ex = pd.read_json(d_ex)
     ps.data = pd.read_json(d_em)
 
+def _load_table_pass_spray_card(c: sqlite3.Cursor, p: Pass):
+    c.execute(
+        """SELECT center, center_method FROM pass_spray_card WHERE pass_id = ?""",
+        (p.id,),
+    )
+    pcd: PassCardData = p.cards
+    (
+        pcd.center,
+        pcd.center_method,
+    ) = c.fetchone()
 
 def _load_table_spray_cards(c: sqlite3.Cursor, p: Pass, file: str):
     # Spray Cards Table
@@ -294,6 +319,7 @@ def save_to_db(file: str, s: SeriesData):
         # Update all tables
         _update_table_series(c, s)
         _update_table_series_string(c, s)
+        _update_table_series_spray_card(c, s)
         _update_table_flyin(c, s)
         _update_table_aircraft(c, s)
         _update_table_applicator(c, s)
@@ -340,6 +366,19 @@ def _update_table_series_string(c: sqlite3.Cursor, s: SeriesData):
         ),
     )
 
+def _update_table_series_spray_card(c: sqlite3.Cursor, s: SeriesData):
+    scd: SeriesCardData = s.cards
+    c.execute(
+        """INSERT INTO series_spray_card (series_id, average_center, average_center_method, simulated_adjascent_passes) VALUES (?, ?, ?, ?)
+                    ON CONFLICT(series_id) DO UPDATE SET
+                    average_center = excluded.average_center, average_center_method = excluded.average_center_method, simulated_adjascent_passes = excluded.simulated_adjascent_passes""",
+        (
+            s.id,
+            scd.center,
+            scd.center_method,
+            scd.simulated_adjascent_passes,
+        ),
+    )
 
 def _update_table_flyin(c: sqlite3.Cursor, s: SeriesData):
     i = s.info
@@ -449,6 +488,7 @@ def _update_table_passes(c: sqlite3.Cursor, s: SeriesData):
             ),
         )
         _update_table_pass_string(c, p)
+        _update_table_pass_spray_card(c, p)
         _update_table_spray_cards(c, p)
     # Loop through passes on db, delete any not in series object
     current_ids = [p.id for p in s.passes]
@@ -493,6 +533,18 @@ def _update_table_pass_string(c: sqlite3.Cursor, p: Pass):
         ),
     )
 
+def _update_table_pass_spray_card(c: sqlite3.Cursor, p: Pass):
+    pcd: PassCardData = p.cards
+    c.execute(
+        """INSERT INTO pass_spray_card (pass_id, center, center_method) VALUES (?, ?, ?)
+                    ON CONFLICT(pass_id) DO UPDATE SET
+                    center = excluded.center, center_method = excluded.center_method""",
+        (
+            p.id,
+            pcd.center,
+            pcd.center_method,
+        ),
+    )
 
 def _update_table_spray_cards(c: sqlite3.Cursor, p: Pass):
     card: SprayCard

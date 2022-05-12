@@ -61,7 +61,6 @@ class SprayCard:
         self.current = True
         scip = SprayCardImageProcessor(sprayCard=self)
         self.threshold_grayscale_calculated = scip.threshold_grayscale_calculated
-        print(self.threshold_grayscale_calculated)
         return scip.draw_and_log_stains()
 
     def save_image_to_file(self, image):

@@ -189,11 +189,23 @@ class MainWindow(baseclass):
             self.sprayCardPassItemChanged
         )
         self.ui.buttonEditCards.clicked.connect(self.cardManagerOpen)
+        self.ui.checkBoxCardPassCenter.stateChanged[int].connect(
+            self.cardPassCenterChanged
+        )
         self.ui.checkBoxCardPassColorize.stateChanged[int].connect(
             self.cardPassColorizeChanged
         )
+        self.ui.checkBoxCardSeriesCenter.stateChanged[int].connect(
+            self.cardSeriesCenterChanged
+        )
         self.ui.checkBoxCardSeriesColorize.stateChanged[int].connect(
             self.cardSeriesColorizeChanged
+        )
+        self.ui.spinBoxSwathAdjusted2.valueChanged[int].connect(
+            self.swathAdjustedChanged
+        )
+        self.ui.horizontalSliderSimulatedSwath2.valueChanged[int].connect(
+            self.swathAdjustedChanged
         )
         # --> | --> Setup Individual Tab
         # --> | --> Setup Composite Tab
@@ -381,7 +393,7 @@ class MainWindow(baseclass):
         # Populate AppInfo tab
         self.ui.widgetSeriesInfo.fill_from_info(self.seriesData.info)
 
-        # Update Controls
+        # Update String Series Controls
         with QSignalBlocker(self.ui.checkBoxStringSeriesCenter):
             self.ui.checkBoxStringSeriesCenter.setChecked(self.seriesData.string.center)
         with QSignalBlocker(self.ui.checkBoxStringSeriesSmooth):
@@ -408,6 +420,10 @@ class MainWindow(baseclass):
                 cfg.get_string_simulation_view_window()
                 == cfg.STRING_SIMULATION_VIEW_WINDOW_ONE
             )
+
+        # Updates Card Series Controls
+        with QSignalBlocker(self.ui.checkBoxCardSeriesCenter):
+            self.ui.checkBoxCardSeriesCenter.setChecked(self.seriesData.cards.center)
 
         # Process and cache all card stats
         prog = QProgressDialog(self)
@@ -443,11 +459,11 @@ class MainWindow(baseclass):
         # Updates individual pass view and capture/edit button
         self.stringPassSelectionChanged()
 
-        # Set swath adjust UI, plot loc unit labels and replot
-        self.swathTargetChanged()
-
         # Updates spray card views based on potentially new pass list
         self.cardPassSelectionChanged()
+        
+        # Set swath adjust UI, plot loc unit labels and replot
+        self.swathTargetChanged()
 
     @pyqtSlot()
     def openPassManager(self):
@@ -670,6 +686,58 @@ class MainWindow(baseclass):
         elif sys.platform == "win32":
             os.startfile(file)
 
+    def swathTargetChanged(self):
+        # Update the swath adjustment slider
+        sw = self.seriesData.info.swath
+        if sw == 0:
+            sw = self.seriesData.info.swath_adjusted
+        minn = float(sw) * 0.5
+        maxx = float(sw) * 1.5
+        with QSignalBlocker(self.ui.horizontalSliderSimulatedSwath):
+            self.ui.horizontalSliderSimulatedSwath.setValue(
+                self.seriesData.info.swath_adjusted
+            )
+            self.ui.horizontalSliderSimulatedSwath.setMinimum(round(minn))
+            self.ui.horizontalSliderSimulatedSwath.setMaximum(round(maxx))
+        with QSignalBlocker(self.ui.spinBoxSwathAdjusted):
+            self.ui.spinBoxSwathAdjusted.setValue(self.seriesData.info.swath_adjusted)
+            self.ui.spinBoxSwathAdjusted.setSuffix(
+                " " + self.seriesData.info.swath_units
+            )
+        # Must update all string plots for new labels and potential new adjusted swath
+        self.updateStringPlots(
+            modify=True, individuals=True, composites=True, simulations=True
+        )
+        with QSignalBlocker(self.ui.horizontalSliderSimulatedSwath2):
+            self.ui.horizontalSliderSimulatedSwath2.setValue(
+                self.seriesData.info.swath_adjusted
+            )
+            self.ui.horizontalSliderSimulatedSwath2.setMinimum(round(minn))
+            self.ui.horizontalSliderSimulatedSwath2.setMaximum(round(maxx))
+        with QSignalBlocker(self.ui.spinBoxSwathAdjusted2):
+            self.ui.spinBoxSwathAdjusted2.setValue(self.seriesData.info.swath_adjusted)
+            self.ui.spinBoxSwathAdjusted2.setSuffix(
+                " " + self.seriesData.info.swath_units
+            )
+        # Must update all string plots for new labels and potential new adjusted swath
+        self.updateCardPlots(
+            individuals=True, composites=True, simulations=True
+        )
+
+    @pyqtSlot(int)
+    def swathAdjustedChanged(self, swath):
+        self.seriesData.info.swath_adjusted = swath
+        with QSignalBlocker(self.ui.spinBoxSwathAdjusted):
+            self.ui.spinBoxSwathAdjusted.setValue(swath)
+        with QSignalBlocker(self.ui.horizontalSliderSimulatedSwath):
+            self.ui.horizontalSliderSimulatedSwath.setValue(swath)
+        self.updateStringPlots(composites=True, simulations=True)
+        with QSignalBlocker(self.ui.spinBoxSwathAdjusted2):
+            self.ui.spinBoxSwathAdjusted2.setValue(swath)
+        with QSignalBlocker(self.ui.horizontalSliderSimulatedSwath2):
+            self.ui.horizontalSliderSimulatedSwath2.setValue(swath)
+        self.updateCardPlots(composites=True, simulations=True)
+
     """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """''
     String Analysis
     """ """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
@@ -792,38 +860,6 @@ class MainWindow(baseclass):
         self.updateStringPlots(modify=True, composites=True, simulations=True)
         self.saveFile()
 
-    @pyqtSlot(int)
-    def swathAdjustedChanged(self, swath):
-        self.seriesData.info.swath_adjusted = swath
-        with QSignalBlocker(self.ui.spinBoxSwathAdjusted):
-            self.ui.spinBoxSwathAdjusted.setValue(swath)
-        with QSignalBlocker(self.ui.horizontalSliderSimulatedSwath):
-            self.ui.horizontalSliderSimulatedSwath.setValue(swath)
-        self.updateStringPlots(composites=True, simulations=True)
-
-    def swathTargetChanged(self):
-        # Update the swath adjustment slider
-        sw = self.seriesData.info.swath
-        if sw == 0:
-            sw = self.seriesData.info.swath_adjusted
-        minn = float(sw) * 0.5
-        maxx = float(sw) * 1.5
-        with QSignalBlocker(self.ui.horizontalSliderSimulatedSwath):
-            self.ui.horizontalSliderSimulatedSwath.setValue(
-                self.seriesData.info.swath_adjusted
-            )
-            self.ui.horizontalSliderSimulatedSwath.setMinimum(round(minn))
-            self.ui.horizontalSliderSimulatedSwath.setMaximum(round(maxx))
-        with QSignalBlocker(self.ui.spinBoxSwathAdjusted):
-            self.ui.spinBoxSwathAdjusted.setValue(self.seriesData.info.swath_adjusted)
-            self.ui.spinBoxSwathAdjusted.setSuffix(
-                " " + self.seriesData.info.swath_units
-            )
-        # Must update all string plots for new labels and potential new adjusted swath
-        self.updateStringPlots(
-            modify=True, individuals=True, composites=True, simulations=True
-        )
-
     def updateStringPlots(
         self, modify=False, individuals=False, composites=False, simulations=False
     ):
@@ -921,6 +957,8 @@ class MainWindow(baseclass):
             self.ui.buttonEditCards.setText(f"Edit {passData.name}")
         else:
             self.ui.buttonEditCards.setText(f"Capture {passData.name}")
+        self.ui.checkBoxCardPassCenter.setChecked(passData.cards.center)
+        
         self.updateCardPlots(individuals=True)
 
     @pyqtSlot(QListWidgetItem)
@@ -933,7 +971,7 @@ class MainWindow(baseclass):
         p = self.seriesData.passes[self.ui.listWidgetCardPass.row(item)]
         p.cards_include_in_composite = item.checkState() == Qt.CheckState.Checked
         # Replot and Recalculate composites
-        self.updateCardPlots(distributions=True)
+        self.updateCardPlots(composites=True, simulations=True, distributions=True)
 
     @pyqtSlot()
     def cardManagerOpen(self):
@@ -966,6 +1004,7 @@ class MainWindow(baseclass):
         )
         # Repopulates card list widget, updates rest of ui
         self.cardPassSelectionChanged()
+        self.updateCardPlots(composites=True, simulations=True, distributions=True)
 
     @pyqtSlot(int)
     def cardDistPassChanged(self, mode):
@@ -987,8 +1026,18 @@ class MainWindow(baseclass):
         self.updateCardPlots(distributions=True)
 
     @pyqtSlot(int)
+    def cardPassCenterChanged(self, checkstate):
+        self.getCurrentCardPass().cards.center = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
+        self.updateCardPlots(composites=True, simulations=True)
+    
+    @pyqtSlot(int)
     def cardPassColorizeChanged(self, checkstate):
         self.updateCardPlots(individuals=True)
+
+    @pyqtSlot(int)
+    def cardSeriesCenterChanged(self, checkstate):
+        self.seriesData.cards.center = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
+        self.updateCardPlots(composites=True, simulations=True)
 
     @pyqtSlot(int)
     def cardSeriesColorizeChanged(self, checkstate):
@@ -1014,10 +1063,11 @@ class MainWindow(baseclass):
     ):
         passData = self.getCurrentCardPass()
         if individuals:
-            passData.cards.plot(
+            passData.cards.plotCoverage(
                 mplWidget=self.ui.plotWidgetCardPass,
                 loc_units=self.seriesData.info.swath_units,
                 colorize=self.ui.checkBoxCardPassColorize.isChecked(),
+                mod=False
             )
             tableView: QTableView = self.ui.tableViewCardPass
             model = CardStatTableModel()
@@ -1033,7 +1083,13 @@ class MainWindow(baseclass):
             model.loadCards([card for card in passData.cards.card_list])
             model.valueChanged.connect(self.cardPassStatTableValueChanged)
         if composites:
-            pass
+            self.seriesData.cards.plotOverlay(
+                mplWidget=self.ui.plotWidgetCardOverlay
+            )
+            self.seriesData.cards.plotAverage(
+                mplWidget=self.ui.plotWidgetCardAverage,
+                colorize=self.ui.checkBoxCardSeriesColorize.isChecked()
+            )
         if simulations:
             pass
         if distributions:
