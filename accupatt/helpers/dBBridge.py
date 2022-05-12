@@ -70,6 +70,7 @@ def _load_table_series_string(c: sqlite3.Cursor, s: SeriesData):
         ss.simulated_adjascent_passes,
     ) = c.fetchone()
 
+
 def _load_table_series_spray_card(c: sqlite3.Cursor, s: SeriesData):
     scd: SeriesCardData = s.cards
     c.execute(
@@ -81,6 +82,7 @@ def _load_table_series_spray_card(c: sqlite3.Cursor, s: SeriesData):
         scd.center_method,
         scd.simulated_adjascent_passes,
     ) = c.fetchone()
+
 
 def _load_table_flyin(c: sqlite3.Cursor, s: SeriesData):
     i = s.info
@@ -232,6 +234,7 @@ def _load_table_pass_string(c: sqlite3.Cursor, p: Pass):
     ps.data_ex = pd.read_json(d_ex)
     ps.data = pd.read_json(d_em)
 
+
 def _load_table_pass_spray_card(c: sqlite3.Cursor, p: Pass):
     c.execute(
         """SELECT center, center_method FROM pass_spray_card WHERE pass_id = ?""",
@@ -242,6 +245,7 @@ def _load_table_pass_spray_card(c: sqlite3.Cursor, p: Pass):
         pcd.center,
         pcd.center_method,
     ) = c.fetchone()
+
 
 def _load_table_spray_cards(c: sqlite3.Cursor, p: Pass, file: str):
     # Spray Cards Table
@@ -366,6 +370,7 @@ def _update_table_series_string(c: sqlite3.Cursor, s: SeriesData):
         ),
     )
 
+
 def _update_table_series_spray_card(c: sqlite3.Cursor, s: SeriesData):
     scd: SeriesCardData = s.cards
     c.execute(
@@ -379,6 +384,7 @@ def _update_table_series_spray_card(c: sqlite3.Cursor, s: SeriesData):
             scd.simulated_adjascent_passes,
         ),
     )
+
 
 def _update_table_flyin(c: sqlite3.Cursor, s: SeriesData):
     i = s.info
@@ -533,6 +539,7 @@ def _update_table_pass_string(c: sqlite3.Cursor, p: Pass):
         ),
     )
 
+
 def _update_table_pass_spray_card(c: sqlite3.Cursor, p: Pass):
     pcd: PassCardData = p.cards
     c.execute(
@@ -545,6 +552,7 @@ def _update_table_pass_spray_card(c: sqlite3.Cursor, p: Pass):
             pcd.center_method,
         ),
     )
+
 
 def _update_table_spray_cards(c: sqlite3.Cursor, p: Pass):
     card: SprayCard

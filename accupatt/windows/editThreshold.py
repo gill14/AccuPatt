@@ -88,7 +88,7 @@ class EditThreshold(baseclass):
         )
         rs_bri.valueChanged[tuple].connect(self.updateBrightness)
 
-        '''self.ui.hll.clicked.connect(self.hll)
+        """self.ui.hll.clicked.connect(self.hll)
         self.ui.hlh.clicked.connect(self.hlh)
         self.ui.hhl.clicked.connect(self.hhl)
         self.ui.hhh.clicked.connect(self.hhh)
@@ -99,8 +99,8 @@ class EditThreshold(baseclass):
         self.ui.bll.clicked.connect(self.bll)
         self.ui.blh.clicked.connect(self.blh)
         self.ui.bhl.clicked.connect(self.bhl)
-        self.ui.bhh.clicked.connect(self.bhh)'''
-        
+        self.ui.bhh.clicked.connect(self.bhh)"""
+
         # Populate Watershed
         self.ui.checkBoxWatershed.setCheckState(
             Qt.CheckState.Checked

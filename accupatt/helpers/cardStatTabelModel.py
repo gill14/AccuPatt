@@ -63,7 +63,7 @@ class CardStatTableModel(QAbstractTableModel):
         if role == Qt.ItemDataRole.TextAlignmentRole:
             return Qt.AlignmentFlag.AlignCenter
         card: SprayCard = self.card_list[index.row()]
-        alpha = 128 if card.has_image and not card.stats.get_dsc()=='' else 0
+        alpha = 128 if card.has_image and not card.stats.get_dsc() == "" else 0
         col = index.column()
         if col == 0:
             if role == Qt.ItemDataRole.DisplayRole:

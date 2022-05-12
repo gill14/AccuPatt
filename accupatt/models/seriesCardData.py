@@ -12,21 +12,19 @@ class SeriesCardData:
         self.passes = passes
         self.swath_units = swath_units
         # Options
-        #self.smooth = True
-        #self.smooth_window = cfg.get_string_smooth_window()
-        #self.smooth_order = cfg.get_string_smooth_order()
-        #self.equalize_integrals = True
+        # self.smooth = True
+        # self.smooth_window = cfg.get_string_smooth_window()
+        # self.smooth_order = cfg.get_string_smooth_order()
+        # self.equalize_integrals = True
         self.center = True
         self.center_method = cfg.get_center_method()
         self.simulated_adjascent_passes = 2
-        
+
     def _get_active_passes(self) -> list[Pass]:
         return [
-            p
-            for p in self.passes
-            if p.cards_include_in_composite and p.has_card_data()
+            p for p in self.passes if p.cards_include_in_composite and p.has_card_data()
         ]
-        
+
     def _get_average(self) -> pd.DataFrame:
         a_cov = pd.DataFrame()
         a_dv01 = pd.DataFrame()
@@ -50,7 +48,7 @@ class SeriesCardData:
         d.reset_index(inplace=True)
         d["loc_units"] = pd.Series([self.swath_units for i in range(len(d.index))])
         return d
-        
+
     def plotOverlay(self, mplWidget: MplWidget):
         # Setup and clear the plotter
         self._config_mpl_plotter(mplWidget)
@@ -70,11 +68,11 @@ class SeriesCardData:
         mplWidget.canvas.ax.set_ylim(bottom=0, auto=None)
         # Draw the plot regardless if passes were plotted to it
         mplWidget.canvas.draw()
-        
+
     def plotAverage(self, mplWidget: MplWidget, colorize: bool):
         # Setup and clear the plotter
         self._config_mpl_plotter(mplWidget)
-        
+
         avg = self._get_average()
         avgPass = PassCardData()
         avgPass.center = self.center
@@ -82,8 +80,10 @@ class SeriesCardData:
         avg = avgPass.get_data_mod(loc_units=self.swath_units, data=avg)
         # Must re-add loc_units, as it is stripped during get_data_mod
         avg["loc_units"] = pd.Series([self.swath_units for i in range(len(avg.index))])
-        avgPass.plotCoverage(mplWidget=mplWidget, loc_units=self.swath_units, colorize=colorize, d=avg)
-        
+        avgPass.plotCoverage(
+            mplWidget=mplWidget, loc_units=self.swath_units, colorize=colorize, d=avg
+        )
+
     def _config_mpl_plotter(self, mplWidget: MplWidget):
         mplWidget.canvas.ax.clear()
         mplWidget.canvas.ax.set_xlabel(f"Location ({self.swath_units})")

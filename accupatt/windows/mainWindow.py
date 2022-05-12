@@ -462,7 +462,7 @@ class MainWindow(baseclass):
 
         # Updates spray card views based on potentially new pass list
         self.cardPassSelectionChanged()
-        
+
         # Set swath adjust UI, plot loc unit labels and replot
         self.swathTargetChanged()
 
@@ -721,9 +721,7 @@ class MainWindow(baseclass):
                 " " + self.seriesData.info.swath_units
             )
         # Must update all string plots for new labels and potential new adjusted swath
-        self.updateCardPlots(
-            individuals=True, composites=True, simulations=True
-        )
+        self.updateCardPlots(individuals=True, composites=True, simulations=True)
 
     @pyqtSlot(int)
     def swathAdjustedChanged(self, swath):
@@ -959,7 +957,7 @@ class MainWindow(baseclass):
         else:
             self.ui.buttonEditCards.setText(f"Capture {passData.name}")
         self.ui.checkBoxCardPassCenter.setChecked(passData.cards.center)
-        
+
         self.updateCardPlots(individuals=True)
 
     @pyqtSlot(QListWidgetItem)
@@ -1028,16 +1026,20 @@ class MainWindow(baseclass):
 
     @pyqtSlot(int)
     def cardPassCenterChanged(self, checkstate):
-        self.getCurrentCardPass().cards.center = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
+        self.getCurrentCardPass().cards.center = (
+            Qt.CheckState(checkstate) == Qt.CheckState.Checked
+        )
         self.updateCardPlots(composites=True, simulations=True)
-    
+
     @pyqtSlot(int)
     def cardPassColorizeChanged(self, checkstate):
         self.updateCardPlots(individuals=True)
 
     @pyqtSlot(int)
     def cardSeriesCenterChanged(self, checkstate):
-        self.seriesData.cards.center = (Qt.CheckState(checkstate) == Qt.CheckState.Checked)
+        self.seriesData.cards.center = (
+            Qt.CheckState(checkstate) == Qt.CheckState.Checked
+        )
         self.updateCardPlots(composites=True, simulations=True)
 
     @pyqtSlot(int)
@@ -1068,7 +1070,7 @@ class MainWindow(baseclass):
                 mplWidget=self.ui.plotWidgetCardPass,
                 loc_units=self.seriesData.info.swath_units,
                 colorize=self.ui.checkBoxCardPassColorize.isChecked(),
-                mod=False
+                mod=False,
             )
             tableView: QTableView = self.ui.tableViewCardPass
             model = CardStatTableModel()
@@ -1084,12 +1086,10 @@ class MainWindow(baseclass):
             model.loadCards([card for card in passData.cards.card_list])
             model.valueChanged.connect(self.cardPassStatTableValueChanged)
         if composites:
-            self.seriesData.cards.plotOverlay(
-                mplWidget=self.ui.plotWidgetCardOverlay
-            )
+            self.seriesData.cards.plotOverlay(mplWidget=self.ui.plotWidgetCardOverlay)
             self.seriesData.cards.plotAverage(
                 mplWidget=self.ui.plotWidgetCardAverage,
-                colorize=self.ui.checkBoxCardSeriesColorize.isChecked()
+                colorize=self.ui.checkBoxCardSeriesColorize.isChecked(),
             )
         if simulations:
             pass

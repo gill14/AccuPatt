@@ -25,7 +25,6 @@ class PassCardData:
                 and card.include_in_composite
                 and card.location is not None
                 and card.location_units is not None
-                
                 and len(card.stain_areas_valid_px2) > 0
             ],
             key=lambda x: x.location,
@@ -42,7 +41,7 @@ class PassCardData:
             }
         )
 
-    def get_data_mod(self, loc_units, data = pd.DataFrame()) -> pd.DataFrame:
+    def get_data_mod(self, loc_units, data=pd.DataFrame()) -> pd.DataFrame:
         if data.empty:
             data = self._get_data_from_card_list()
         # Homogenize location units to arg
@@ -110,7 +109,14 @@ class PassCardData:
         mplWidget.canvas.fig.set_tight_layout(True)
         mplWidget.canvas.draw()
 
-    def plotCoverage(self, mplWidget: MplWidget, loc_units, colorize=False, mod=True, d=pd.DataFrame()):
+    def plotCoverage(
+        self,
+        mplWidget: MplWidget,
+        loc_units,
+        colorize=False,
+        mod=True,
+        d=pd.DataFrame(),
+    ):
         if d.empty:
             if mod:
                 d = self.get_data_mod(loc_units=loc_units)

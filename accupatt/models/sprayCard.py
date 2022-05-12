@@ -121,7 +121,7 @@ class SprayCardStats:
 
     def get_dv01(self, text=False):
         if text:
-            return str(self.dv01) + " \u03BC" + "m" if self.dv01 > 0 else ''
+            return str(self.dv01) + " \u03BC" + "m" if self.dv01 > 0 else ""
         else:
             return self.dv01
 
@@ -130,7 +130,7 @@ class SprayCardStats:
 
     def get_dv05(self, text=False):
         if text:
-            return str(self.dv05) + " \u03BC" + "m" if self.dv05 > 0 else ''
+            return str(self.dv05) + " \u03BC" + "m" if self.dv05 > 0 else ""
         else:
             return self.dv05
 
@@ -139,7 +139,7 @@ class SprayCardStats:
 
     def get_dv09(self, text=False):
         if text:
-            return str(self.dv09) + " \u03BC" + "m" if self.dv01 > 0 else ''
+            return str(self.dv09) + " \u03BC" + "m" if self.dv01 > 0 else ""
         else:
             return self.dv09
 
