@@ -45,7 +45,7 @@ class CardTableWidget(baseclass):
         self.ui.buttonDown.clicked.connect(self.shift_down)
 
         # Populate TableView
-        self.tm = CardTable(self)
+        self.tm = CardTable(parent=self)
         self.tv: QTableView = self.ui.tableView
 
         self.tv.setModel(self.tm)
@@ -111,6 +111,9 @@ class CardTableWidget(baseclass):
             | QItemSelectionModel.SelectionFlag.Rows
         )
         [self.tv.selectionModel().select(index, mode) for index in indexes]
+
+    def set_defined_set_mode(self):
+        self.tm.definedSetMode = True
 
     @pyqtSlot()
     def selection_changed(self):
@@ -259,6 +262,7 @@ class CardTable(QAbstractTableModel):
             "Spread Factor C",
         ]
         self.card_list: list[SprayCard] = []
+        self.definedSetMode = False
 
     def loadCards(self, card_list):
         self.beginResetModel()
@@ -620,7 +624,7 @@ class CardTable(QAbstractTableModel):
         elif col == 4:
             return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
         elif col >= 5:
-            if not self.card_list[index.row()].has_image:
+            if not self.card_list[index.row()].has_image and not self.definedSetMode:
                 return Qt.ItemFlag.NoItemFlags
             if (col >= 9 and col <= 17) and self.card_list[
                 index.row()

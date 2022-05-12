@@ -45,6 +45,7 @@ class DefinedSetManager(baseclass):
         self.lm = DefinedSetListModel(load_defined_sets(), self)
         self.lv.setModel(self.lm)
         self.cardTable: CardTableWidget = self.ui.cardTableWidget
+        self.cardTable.set_defined_set_mode()
         self.cardTable.tv.hideColumn(1)
         self.cardTable.tv.hideColumn(4)
         # Set and select initial value for listview
@@ -132,6 +133,7 @@ class DefinedSet:
             c.location_units = set_dict["location_unit"][i]
             c.threshold_type = set_dict["threshold_type"][i]
             c.dpi = set_dict["dpi"][i]
+            c.has_image = True
 
     def toJSON(self):
         d = {}
