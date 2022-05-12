@@ -255,10 +255,10 @@ class CardManager(baseclass):
             prog.setValue(i)
             prog.setLabelText(f"Processing {card.name} and caching droplet statistics")
             # Process image
-            if not card.current:
+            if not card.current and card.has_image:
                 card.images_processed()
             # Cache droplet stats
-            if not card.stats.current:
+            if not card.stats.current and card.has_image:
                 card.stats.set_volumetric_stats()
 
             if prog.wasCanceled():

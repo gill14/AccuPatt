@@ -442,10 +442,11 @@ class MainWindow(baseclass):
             prog.setLabelText(
                 f"Processing {card_identifier_list[i]} and caching droplet statistics"
             )
-            # Process image
-            card.images_processed()
-            # Cache droplet stats
-            card.stats.set_volumetric_stats()
+            if card.has_image:
+                # Process image
+                card.images_processed()
+                # Cache droplet stats
+                card.stats.set_volumetric_stats()
 
             if prog.wasCanceled():
                 return

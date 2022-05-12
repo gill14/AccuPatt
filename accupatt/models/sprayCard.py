@@ -121,7 +121,7 @@ class SprayCardStats:
 
     def get_dv01(self, text=False):
         if text:
-            return str(self.dv01) + " \u03BC" + "m"
+            return str(self.dv01) + " \u03BC" + "m" if self.dv01 > 0 else ''
         else:
             return self.dv01
 
@@ -130,16 +130,16 @@ class SprayCardStats:
 
     def get_dv05(self, text=False):
         if text:
-            return str(self.dv05) + " \u03BC" + "m"
+            return str(self.dv05) + " \u03BC" + "m" if self.dv05 > 0 else ''
         else:
             return self.dv05
 
     def get_dv05_color(self) -> str:
-        return AtomizationModel().dsc_color_dv05(dv05=self.dv05)
+        return AtomizationModel().dsc_color_dv05(dv05=self.dv09)
 
     def get_dv09(self, text=False):
         if text:
-            return str(self.dv09) + " \u03BC" + "m"
+            return str(self.dv09) + " \u03BC" + "m" if self.dv01 > 0 else ''
         else:
             return self.dv09
 

@@ -3494,12 +3494,13 @@ class AtomizationModel:
             color = r[dsc]["Color"]
         return color
 
-    def _dsc_color_dv(self, dv: float, dv_key: str) -> str:
+    def _dsc_color_dv(self, dv: int, dv_key: str) -> str:
         r = self.ref_nozzles
         color = "#FFFFFF"
-        for category in r.keys():
-            if r[category][dv_key][0] <= dv <= r[category][dv_key][1]:
-                color = r[category]["Color"]
+        if dv > 0:
+            for category in r.keys():
+                if r[category][dv_key][0] <= dv <= r[category][dv_key][1]:
+                    color = r[category]["Color"]
         return color
 
     def _rs(self, dv01=None, dv05=None, dv09=None):

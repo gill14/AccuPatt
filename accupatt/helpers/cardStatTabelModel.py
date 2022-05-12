@@ -63,6 +63,7 @@ class CardStatTableModel(QAbstractTableModel):
         if role == Qt.ItemDataRole.TextAlignmentRole:
             return Qt.AlignmentFlag.AlignCenter
         card: SprayCard = self.card_list[index.row()]
+        alpha = 128 if card.has_image and not card.stats.get_dsc()=='' else 0
         col = index.column()
         if col == 0:
             if role == Qt.ItemDataRole.DisplayRole:
@@ -96,7 +97,7 @@ class CardStatTableModel(QAbstractTableModel):
             if role == Qt.ItemDataRole.BackgroundRole:
                 hex_color = card.stats.get_dsc_color()
                 qcolor = QColor(hex_color)
-                qcolor.setAlpha(128)
+                qcolor.setAlpha(alpha)
                 return QBrush(qcolor)
         elif col == 5:
             if role == Qt.ItemDataRole.DisplayRole:
@@ -104,7 +105,7 @@ class CardStatTableModel(QAbstractTableModel):
             if role == Qt.ItemDataRole.BackgroundRole:
                 hex_color = card.stats.get_dv01_color()
                 qcolor = QColor(hex_color)
-                qcolor.setAlpha(128)
+                qcolor.setAlpha(alpha)
                 return QBrush(qcolor)
         elif col == 6:
             if role == Qt.ItemDataRole.DisplayRole:
@@ -112,7 +113,7 @@ class CardStatTableModel(QAbstractTableModel):
             if role == Qt.ItemDataRole.BackgroundRole:
                 hex_color = card.stats.get_dv05_color()
                 qcolor = QColor(hex_color)
-                qcolor.setAlpha(128)
+                qcolor.setAlpha(alpha)
                 return QBrush(qcolor)
         elif col == 7:
             if role == Qt.ItemDataRole.DisplayRole:
@@ -120,7 +121,7 @@ class CardStatTableModel(QAbstractTableModel):
             if role == Qt.ItemDataRole.BackgroundRole:
                 hex_color = card.stats.get_dv09_color()
                 qcolor = QColor(hex_color)
-                qcolor.setAlpha(128)
+                qcolor.setAlpha(alpha)
                 return QBrush(qcolor)
         elif col == 8:
             if role == Qt.ItemDataRole.DisplayRole:
