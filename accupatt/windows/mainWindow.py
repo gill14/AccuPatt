@@ -54,7 +54,7 @@ Ui_Form, baseclass = uic.loadUiType(
 Ui_Form_About, baseclass_about = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "about.ui")
 )
-testing = False
+testing = True
 
 
 class MainWindow(baseclass):
