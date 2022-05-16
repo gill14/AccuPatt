@@ -24,7 +24,9 @@ from accupatt.windows.editThreshold import EditThreshold
 from accupatt.windows.passManager import PassManager
 from accupatt.windows.readString import ReadString
 from accupatt.widgets import (
+    cardtablewidget,
     mplwidget,
+    passinfowidget,
     seriesinfowidget,
     singlecardwidget,
     splitcardwidget,
