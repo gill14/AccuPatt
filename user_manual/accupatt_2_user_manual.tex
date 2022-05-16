@@ -204,15 +204,15 @@
     \newpage
 
     \subsection{Spray-Card Analysis}
-    Card data is collected on a per-pass basis, but may be analyzed on a per-card or per-series basis as well. The \textbf{Card Analysis} tab provides a list of passes in the series and a list of cards declared in the selected pass. This tab also contains sub-tabs for viewing/modifying data as discussed below.
+    Card data is collected on a per-pass basis, but may be analyzed on a per-card or per-series basis as well. The \textbf{Card Analysis} tab provides a list of passes in the series. This tab also contains sub-tabs for viewing/modifying data as discussed below.
 
-    \subsubsection{Capture Cards}
+    \subsubsection{Capture Pass}
     \textit{AccuPatt} does not provide any functionality for digitizing spray-cards; instead, images acquired by the scanning software of your choice can be uploaded, saved to the datafile and used for further processing.\par
-    In the \textbf{Card Analysis} tab, click the \textbf{Add/Edit Cards} button to open the \textbf{Card Manager} window (Figure~\ref{fig:card_manager}).\par 
+    In the \textbf{Card Analysis} tab, click the \textbf{Capture/Edit Pass} button to open the \textbf{Card Manager} window (Figure~\ref{fig:card_manager}).\par 
     \begin{figure}[h]
         \centering
         \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_manager.png}}
-        \caption{Spray-Card Analysis - Add/Edit Cards}
+        \caption{Spray-Card Analysis - Card Manager}
         \label{fig:card_manager}
     \end{figure}
     The \textbf{Card Manager} window provides a table of card data, with each row representing a card and each column a property of that card. properties may be edited by either double-clicking on them or utilizing provided checkboxes as applicable.\par
@@ -224,31 +224,60 @@
         \item \textbf{Shift Down:} Shift selected cards down by one row, if possible.
     \end{itemize}
     Below these buttons are controls for utilizing \textbf{Defined Sets} which facilitate adding a pre-configured list of spray-cards to the list. Use the dropdown to select a set and click \textbf{Add Set To Pass} to append the cards to the table. More details can be found in the \hyperref[sec:defined_sets]{Defined Sets} section.\par
-    To the right of the card table is a set of text fields for entering in observables for the current pass. These observables are shared between string and card data on the same pass. See the \hyperref[sec:data]{Data Structure} settings for more details.\par
-    Below the pass observable entry fields are controls to \textbf{Upload Images} to the selected cards in the table. A dropdown facilitates choice of the upload method and and clicking the \textbf{Upload Image(s) to Selection} button will open a file chooser window to select all applicable files. A more detailed description of image upload methods and their processes can be found in the \hyperref[sec:image_upload]{Spray-Card - Image Upload} section.\par
-    Once satisfied with the properties in the card table and with images uploaded, click \textbf{Ok} to return to the main window.
-    \FloatBarrier
-
-    \subsubsection{Check Image Processing}
-    The \textbf{Image} sub-tab contains two image-views for the selected spray-card (Figure~\ref{fig:card_image}):
+    To the right of the card table, under the \textbf{Observables} tab, is a set of text fields for entering in observables for the current pass. These observables are shared between string and card data on the same pass. See the \hyperref[sec:data]{Data Structure} settings for more details.\par
+    At the bottom of the window are controls to \textbf{Upload Images} to the selected cards in the table. A dropdown facilitates choice of the upload method and clicking the \textbf{Upload Image(s) to Selection} button will open a file chooser window to select all applicable files. A more detailed description of image upload methods and their processes can be found in the \hyperref[sec:image_upload]{Spray-Card - Image Upload} section.\par
+    Once a card has image data associated with it, selecting its row in the table will make a preview image visible in the \textbf{Image} tab at the right of the window (Figure~\ref{fig:card_manager_image}). The image may be viewed as follows:
     \begin{itemize}
-        \item \textbf{Stain Mask:} [Left Image] The original image forms the base layer. All stains have their perimeter outlined.
-        \item \textbf{Stain Categorized:} [Right Image] A blank image with stains drawn (filled) and colored according to the following:
+        \item \textbf{Original:} The unmodified original image.
+        \item \textbf{Outline:} The original image forms the base layer. All stains have their perimeter outlined.
+        \item \textbf{Processed:} A blank image with stains drawn (filled) and colored according to the following:
         \begin{itemize}
             \item \textbf{Undersize:} Not counted toward coverage or droplet spectrum analysis.
             \item \textbf{Edge:} Counted toward coverage, but not droplet spectrum analysis.
             \item \textbf{Valid:} Counted toward coverage and droplet spectrum analysis.
         \end{itemize}
     \end{itemize}
-    The purpose of these views is to subjectively verify the image processing efficacy. To adjust image processing options click the \textbf{Edit Threshod} button. For more details, see the \hyperref[sec:image_process]{Image Process Options} section.\par
-    By default, the image is scaled to fit the view horizontally; scrolling either image view will have the other follow in sync. Alternatively, the image-views can be set to scale the image to fit the vertical space using the control below the image-views.
     \begin{figure}[hb]
         \centering
-        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_image.png}}
-        \caption{Spray-Card Analysis - Image}
-        \label{fig:card_image}
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_manager_image.png}}
+        \caption{Spray-Card Analysis - Card Manager}
+        \label{fig:card_manager_image}
+    \end{figure}
+    The purpose of these image views is to subjectively verify the image processing efficacy. In addition to editing process options in the table directly, clicking the \textbf{Process Options} button will provide a more interactive adjustment experience. For more details, see the \hyperref[sec:image_process]{Image Process Options} section.\par
+    In addition to editing spread factor options in the table directly, clicking the \textbf{Spread Factors} button will provide a more interactive adjustment experience.
+    Once satisfied with the properties in the card table and with images uploaded, click \textbf{Ok} to return to the main window.
+    \FloatBarrier
+    \newpage
+
+    \subsubsection{Individual Passes}
+    When a pass is selected from the pass list on the \textbf{Card Analysis} tab, the \textbf{Individual Passes} sub-tab contains a plot of percent coverage versus card location and a table of spray-card statistics (Figure~\ref{fig:card_individual_pass}). The table's first several columns are editable, so that card name, location, location units and inclusion in composite flag may be set here. The plot will automatically update according to modifications made in the table.
+    \begin{figure}[hb]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_individual_pass.png}}
+        \caption{Spray-Card Analysis - Individual Pass View}
+        \label{fig:card_individual_pass}
     \end{figure}
     \FloatBarrier
+    \newpage
+
+    \subsubsection{Composite}
+    The \textbf{Composite} tab contains two plots (Figure~\ref{fig:card_composite}):
+    \begin{itemize}
+        \item \textbf{Overlay:} [Uppper Plot] Each individual (non-excluded) pass is plotted together.
+        \item \textbf{Average:} [Lower Plot] Each individual (non-excluded) pass is used to generate an average pattern.
+    \end{itemize}
+    \begin{figure}[hb]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_composite.png}}
+        \caption{Spray-Card Analysis - Composite View}
+        \label{fig:card_composite}
+    \end{figure}
+    \FloatBarrier
+    \newpage
+
+    \subsubsection{Simulations}
+    \color{red} ToDo \color{black}
+    \newpage
 
     \subsubsection{Droplet Distribution}
     The \textbf{Droplet Distribution} sub-tab contains two histogram plots (Figure~\ref{fig:card_droplet_dist}):
@@ -258,12 +287,7 @@
     \end{itemize}
     A table to the right of the histogram plots contains some select labeled droplet spectrum statistics.\par
     \color{red} The droplet spectrum category provided by \textit{AccuPatt} is based on reference nozzle laser diffraction measurements by USDA ARS. Because the measurement method is different the provided droplet spectrum category should not be considered absolute.\color{black}\par
-    A dropdown menu at the upper-right facilitates selection of the scope of calculation. Depending on what pass and card is selected, you will see the following options if available:
-    \begin{itemize}
-        \item \textbf{Card:} Performs droplet analysis for the selected card only.
-        \item \textbf{Pass:} Computes a representative composite card from all cards in the pass which have images and are not actively excluded, then performs a droplet analysis on that composite card. This is NOT simply a pass-wise average of single card statistics.
-        \item \textbf{Series:} Same as \textbf{Pass}, except including cards from all (non-excluded) passes.
-    \end{itemize}
+    Dropdown menus at the upper-right facilitate selection of the scope of calculation. The first menu allows seleciton of a series-wise composite (disabling the second menu) or selection of a pass. The second menu allows selection of a pass-wise composite (for the above selected pass) or selection of an individual card. Cards and passes which have been actively excluded will not count toward any composite calculations.
     \begin{figure}[hb]
         \centering
         \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_droplet_dist.png}}
@@ -271,21 +295,21 @@
         \label{fig:card_droplet_dist}
     \end{figure}
     \FloatBarrier
+    \newpage
 
-    \subsubsection{Spatial Distribution}
-    The \textbf{Spatial Distribution} sub-tab contains two plots (Figure~\ref{fig:card_spatial_dist}):
+    \subsubsection{Options}
+    The \textbf{Card Analysis} tab contains \textbf{Pass Options} which affect only the selected pass:
     \begin{itemize}
-        \item \textbf{Volume Fraction by Location:} For each card location, plots Dv0.1, Dv0.5 (VMD) and Dv0.9
-        \item \textbf{Coverage by Location} For each card location, plots the percent coverage.
+        \item \textbf{Align Center:} Shift pattern left/right using chosen center method.
+        \item \textbf{Colorize by DSC:} Enables shading of the coverage plot with semi-standard droplet spectrum category colors. \color{red}This DSC shading utilizes linear interpolation of $D_{V0.1}$ and $D_{V0.5}$ between measured data points and recalculates the DSC for each interpolated location. This may result in DSC's shown between measured datapoints which do not actually exist in the measured data.\color{black}
     \end{itemize}
-    The \textbf{Plot X-Units} selection is available to rescale the plot axes to a unit other than what is declared with the card.\par
-    The \textbf{Colorize by DSC} checkbox enables shading of the coverage plot with semi-standard droplet spectrum category colors. \color{red}This DSC shading utilizes linear interpolation of $D_{V0.1}$ and $D_{V0.5}$ between measured data points and recalculates the DSC for each interpolated location. This may result in DSC's shown between measured datapoints which do not actually exist in the measured data.\color{black}
-    \begin{figure}[hb]
-        \centering
-        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_spatial_dist.png}}
-        \caption{Spray-Card Analysis - Spatial Distribution}
-        \label{fig:card_spatial_dist}
-    \end{figure}
+    The \textbf{Card Analysis} tab also contains \textbf{Series Options} which apply only to the average pattern.
+    \begin{itemize}
+        \item \textbf{Align Center Average:} Shift pattern left/right using chosen center method.
+        \item \textbf{Colorize by DSC:} Enables shading of the coverage plot with semi-standard droplet spectrum category colors. \color{red}This DSC shading utilizes linear interpolation of $D_{V0.1}$ and $D_{V0.5}$ between measured data points and recalculates the DSC for each interpolated location. This may result in DSC's shown between measured datapoints which do not actually exist in the measured data.\color{black}
+    \end{itemize}
+    The \textbf{Card Analysis} tab also contains controls for setting the \textbf{Adjusted Swath Width} which defaults to the target swath width, but is saved independently.
+
     \newpage
 
     \section{Spray-Card - Details}
@@ -315,12 +339,18 @@
     Images are uploaded to the datafile using the method selected in the \textbf{Image Upload Method} dropdown. With the cards you intend to upload selected in the Card Manager tableview, click \textbf{Upload Image(s) to Selection}. Note that image files must be of type \textit{*.png : Portable Network Graphics} or \textit{*.tif, *.tiff : Tagged Image File Format}. Ensure that images are acquired with no pre-processing, corrections, enhancements or compression.
 
     \subsubsection{One File, Multiple Cards}
-    When multiple cards are acquired in a single large scan, this method will allow cropping of each card and saving individually to the datafile. After selecting the file, the image will be shown with each card's independently draggable, resizable region-of-interest (ROI) (Figure~\ref{fig:card_upload_multiple}). The image may be panned or zoomed-upon. To decrease RAM consuption, large images are shown in lower resolution here, but full-resolution ROI's will be cropped out of the original image using a scaled coordinate system. The following options are available to adjust the method for which these ROI's are drawn:
+    When multiple cards are acquired in a single large scan, this method will allow cropping of each card and saving individually to the datafile. After selecting the file, the image will be shown with each card's independently draggable, resizable region-of-interest (ROI) (Figure~\ref{fig:card_upload_multiple}).\par 
+    The image may be panned or zoomed-upon. To decrease RAM consuption, large images are shown in lower resolution here, but full-resolution ROIs will be cropped out of the original image using a scaled coordinate system. The following options are available to adjust the method for which these ROI's are drawn:
     \begin{itemize}
         \item \textbf{Pixels Per Inch:} Automatically set by the image metadata, but user-adjustable. This is used in conjunction with the image pixel dimensions to show calculated image dimensions. These are provided only to allow verification by the user of proper pixels per inch setting.
         \item \textbf{Orientation:} Used in conjunction with order to decide automatic assigning of names to cards. Either vertical or horizontal.
         \item \textbf{Order:} Used in conjunction with orientation to dictate automatic assigning of names to cards. Either Increaseing or decreasing.
         \item \textbf{Sampling Area:} After cards are located, the percentage of width and height to draw the rectangular ROI.
+    \end{itemize}
+    In the case that ROIs are not automatically drawn properly, the \textbf{Add} and \textbf{Remove} buttons may be used as follows:
+    \begin{itemize} 
+        \item \textbf{Add:} Click the \textbf{Add} button. The cursor will change to a crosshair. Press the left mouse button on one corner of the spray-card, drag the cursor to the other corner, then release the left mouse button. A new ROI will be drawn (scaled per the \textbf{Sampling Area} set above) and all ROIs will be relabeled as necessary (per the \textbf{Orientation} and \textbf{Order} set above). Note that if your original selection of spray-cards (selected from the Card Manager) already each have ROIs drawn, no more may be drawn.
+        \item \textbf{Remove:} First, click an ROI you would like to remove. The \textbf{Remove} button will become enabled and its text will change to "Remove [spray-card.name]." Clicking the button will remove the ROI and all ROIs will be relabeled as necessary (per the \textbf{Orientation} and \textbf{Order} set above).
     \end{itemize}
     \begin{figure}[hb]
         \centering
@@ -331,7 +361,7 @@
     \FloatBarrier
 
     \subsubsection{One File per Card}
-    For images which are already cropped appropriately, they can be directly uploaded to the datafile (Figure~\ref{fig:card_upload_singles}). Selected files can be dragged to alter the order to match the proper order of declared card names.
+    For images which are already cropped appropriately, they can be directly uploaded to the datafile (Figure~\ref{fig:card_upload_singles}). Selected files [right column] can be dragged to alter the order to match the proper order of declared card names. An \textbf{Assert DPI} menu allows setting of image DPI as automatic (set by image metadata) or to one of several common values. This setting will affect the upload of each file.
     \begin{figure}[hb]
         \centering
         \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_upload_singles.png}}
@@ -342,12 +372,12 @@
 
     \subsection{Image Process Options}
     \label{sec:image_process}
-    The \textbf{Image Process Options} window (Figure~\ref{fig:card_image_process}) is opened by selecting a card in the card list which has image data, and then clicking the \textbf{Edit Threshold} button. It contains the following options:
+    The \textbf{Image Process Options} window is opened by selecting a card in the card list which has image data, and then clicking the \textbf{Edit Threshold} button. It contains the following options:
     \begin{itemize}
         \item \textbf{Threshold Type:} Dropdown menu to select the type of threshold to use when binarizing the imge. Options are HSB (Hue-Saturation-Brightness) or Grayscale. This choice will limit the threshold options as follows:
         \begin{itemize}
-            \item \textbf{HSB:} Binarizes image by pixel filtering the color image by 8-bit ranges (0-255) of Hue, Saturation and Brightness. Once the ranges are set, choose whether to \textbf{include} pixels (count them as part of a stain) which meet the criteria or \textbf{exclude} them (treat them as background)
-            \item \textbf{Grayscale:} Converts the image to an 8-bit (0-255) grayscale image, then uses a threshold value to binarize the image, where values below the threshold are treated as background and values above the threshold are treated as part of a stain. This threshold may be set manually, or automatically. The automatic method uses Otsu's Threshold Method, and is sufficient for most bimodal images.
+            \item \textbf{HSB:} Binarizes image by pixel filtering the color image by ranges of Hue (0-179), Saturation (0-255) and Brightness (0-255). Each range is independently applied as either a band-pass (checking the \textbf{Pass} checkbox) or band-reject filter. The resultant 3 binary masks are then combined with bitwise AND logic. (Figure~\ref{fig:card_image_process_hsb})
+            \item \textbf{Grayscale:} Converts the image to an 8-bit (0-255) grayscale image, then uses a threshold value to binarize the image, where values below the threshold are treated as background and values above the threshold are treated as part of a stain. This threshold may be set manually, or automatically. The automatic method uses Otsu's Threshold Method, and is sufficient for most bimodal images. The threshold chosen will be used as a set value for the manual method and an upper limit for the automatic method (the threshold will be automatically calculated and shown, not to exceed the set value; for fully automatic thresholding, set the value to 255). (Figure~\ref{fig:card_image_process_grayscale})
         \end{itemize}
         \item \textbf{Watershed Segmentation:} Attempt to seperate adjoining stains. \color{red} This is still a work in progress and should generally be kept disabled \color{black}
         \item \textbf{Stain Approximation:} After thresholding and segmentation, optionally attempt to transform each stain using the chosen method.
@@ -362,9 +392,15 @@
     
     \begin{figure}[hb]
         \centering
-        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_image_process.png}}
-        \caption{Spray-Card Analysis - Image Process Options}
-        \label{fig:card_image_process}
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_image_process_grayscale.png}}
+        \caption{Spray-Card Analysis - Image Process Options - Grayscale}
+        \label{fig:card_image_process_grayscale}
+    \end{figure}
+    \begin{figure}[hb]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_image_process_hsb.png}}
+        \caption{Spray-Card Analysis - Image Process Options - HSB}
+        \label{fig:card_image_process_hsb}
     \end{figure}
     \FloatBarrier
 
@@ -431,7 +467,7 @@
     Creates a standardized report with the following pages:
     \begin{itemize}
         \item \textbf{String Summary Page:} Headers with all reported application info and observables. Plots overlay, average and simulations. Includes a uniformity (Coefficient of Variation) table. Page will only be included if at least one string pass is collected and selected for inclusion in the composite.
-        \item \textbf{Card Summary Page:} Headers with all reported application info and observables. Plots Volume Fraction by location, coverage and droplet spectrum category by location, spray volume by droplet diameter and number of droplets by droplet diameter. Pass-wise droplet spectrum characteristics are shown for measured data as well as a USDA Model simulation for the provided nozzle/observable parameters. One page will be included for each pass which has card data associated with it and is selected for inclusion in the composite.
+        \item \textbf{Card Summary Page:} Headers with all reported application info and observables. Plots coverage and droplet spectrum category by location, spray volume by droplet diameter and number of droplets by droplet diameter. Pass-wise droplet spectrum characteristics are shown for measured data as well as a USDA Model simulation for the provided nozzle/observable parameters. One page will be included for each pass which has card data associated with it and is selected for inclusion in the composite.
         \item \textbf{Card Image Page:} Individual card images displayed as per the report settings. Individual card statistics shown below each card. Pages included for each pass which has card data associated with it and is selected for inclusion in the composite. Number of pages required will vary based on number of cards and report options selected.
     \end{itemize}
     \newpage
@@ -517,6 +553,11 @@
             \item \textbf{average-smooth-order} integer, polynomial order for smoothing filter
             \item \textbf{number-simulated-adjascent-passes:} integer, per-side basis
         \end{itemize}
+        \item \textbf{spray-card-settings:} 
+        \begin{itemize}
+            \item \textbf{average-center:} true/false, apply average-center-method
+            \item \textbf{average-center-method:} text, option=[centroid, center-of-distribution]
+        \end{itemize}
         \item \textbf{passes:} [list]
         \begin{itemize}
             \item \textbf{pass-id:} unique identifier, automatically generated
@@ -551,28 +592,35 @@
                 \item \textbf{smooth-window} float, x-domain window over which to apply smoothing
                 \item \textbf{smooth-order} integer, polynomial order for smoothing filter
             \end{itemize}
-            \item \textbf{spray-cards:} [list]
+            \item \textbf{spray-cards:}
             \begin{itemize}
-                \item \textbf{id:} unique identifier, automatically generated
-                \item \textbf{name:} text
-                \item \textbf{include-in-composite} true/false, include spray-card in pass-wise calculations/plots
-                \item \textbf{location:} float, optional linear location of spray-card, units=[ft,m]
-                \item \textbf{ppi:} integer, image resolution in pixels per inch, symmetric only
-                \item \textbf{threshold-type:} text, options=[grayscale, hue-saturation-brightness]
-                \item \textbf{threshold-grayscale-method:} text, options=[automatic, manual]
-                \item \textbf{threshold-grayscale:} integer, range=[0-255]
-                \item \textbf{threshold-hsb-method:} text, options=[include-selection, exclude-selection]
-                \item \textbf{threshold-hsb-hue-range:} [integer, integer], range=[0-255]
-                \item \textbf{threshold-hsb-saturation-range:} [integer, integer], range=[0-255]
-                \item \textbf{threshold-hsb-brightness-range:} [integer, integer], range=[0-255]
-                \item \textbf{watershed:} true/false, stain segmentation using euclidian distance map
-                \item \textbf{min-stain-area:} integer, minimum square pixel area to count as stain
-                \item \textbf{stain-approximation-method:} text, options=[none, min-enclosing-circle, fit-ellipse, convex-hull]
-                \item \textbf{spread-factor-equation:} text, options=[none, direct, adaptive]
-                \item \textbf{spread-factor-a:} float
-                \item \textbf{spread-factor-b:} float
-                \item \textbf{spread-factor-c:} float
-                \item \textbf{image:} image, limited to *.png *.tif *.tiff
+                \item \textbf{center:} true/false, apply center-method to pass
+                \item \textbf{center-method:} text, option=[centroid, center-of-distribution]
+                \item \textbf{spray-cards:} [list]
+                \begin{itemize}
+                    \item \textbf{id:} unique identifier, automatically generated
+                    \item \textbf{name:} text
+                    \item \textbf{include-in-composite} true/false, include spray-card in pass-wise calculations/plots
+                    \item \textbf{location:} float, optional linear location of spray-card, units=[ft,m]
+                    \item \textbf{ppi:} integer, image resolution in pixels per inch, symmetric only
+                    \item \textbf{threshold-type:} text, options=[grayscale, hue-saturation-brightness]
+                    \item \textbf{threshold-grayscale-method:} text, options=[automatic, manual]
+                    \item \textbf{threshold-grayscale:} integer, range=[0-255]
+                    \item \textbf{threshold-hsb-hue-range:} [integer, integer], range=[0-179]
+                    \item \textbf{threshold-hsb-hue-pass:} true/false, band pass/reject
+                    \item \textbf{threshold-hsb-saturation-range:} [integer, integer], range=[0-255]
+                    \item \textbf{threshold-hsb-saturation-pass:} true/false, band pass/reject
+                    \item \textbf{threshold-hsb-brightness-range:} [integer, integer], range=[0-255]
+                    \item \textbf{threshold-hsb-brightness-pass:} true/false, band pass/reject
+                    \item \textbf{watershed:} true/false, stain segmentation using euclidian distance map
+                    \item \textbf{min-stain-area:} integer, minimum square pixel area to count as stain
+                    \item \textbf{stain-approximation-method:} text, options=[none, min-enclosing-circle, fit-ellipse, convex-hull]
+                    \item \textbf{spread-factor-equation:} text, options=[none, direct, adaptive]
+                    \item \textbf{spread-factor-a:} float
+                    \item \textbf{spread-factor-b:} float
+                    \item \textbf{spread-factor-c:} float
+                    \item \textbf{image:} image, limited to *.png *.tif *.tiff
+                \end{itemize}
             \end{itemize}
         \end{itemize}
     \end{itemize}
@@ -581,6 +629,32 @@
 
     \section{Changelog}
     \begin{itemize}
+        \item \textbf{2.0.9 - 16 May 2022}
+        \begin{itemize}
+            \item (fix) String drive overrun (timer) issue
+            \item (fix) Hue range upper limit for HSB threshold
+            \item (fix) Stain approximation method added to data file
+            \item (feature) Redesigned Card Analysis Tab
+            \begin{itemize}
+                \item Controls for centering, colorizing by DSC, setting adj. swath width
+                \item Individual Passes Tab, deposition plot and stat table
+                \item Composite Tab, series-wise deposition overlay and average plots
+                \item Distributions Tab, series-, pass- and card-wise compuations
+            \end{itemize}
+            \item (feature) Enhanced Card Manager
+            \begin{itemize}
+                \item Visibility/editing of all card processing parameters
+                \item Original/outline/processed image viewer
+            \end{itemize}
+            \item (feature) Enhanced Card Process Options Window
+            \begin{itemize}
+                \item Option to band-pass or band-reject for each HSB range
+                \item Calculated autothreshold indicator for grayscale threshold
+            \end{itemize}
+            \item (feature) ability to add/remove ROIs for multi-card-in-single-image uploads
+            \item (feature) card image pre-processor with progress popup to improve UI repsonsiveness
+            \item (feature) WRK String Spectrometer Manual added to help menu
+        \end{itemize}
         \item \textbf{2.0.8 - 24 Mar 2022}
         \begin{itemize}
             \item (fix) Droplet stat table inadvertently defaulting to persistent dpi

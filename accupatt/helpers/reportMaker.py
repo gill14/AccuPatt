@@ -219,7 +219,7 @@ class ReportMaker:
         y_tall = 140
         y_short = 110
         y = 435
-        '''renderPDF.draw(
+        """renderPDF.draw(
             self._drawing_from_plot_widget(
                 spatialDVWidget,
                 0.8 * self.bound_width / inch,
@@ -230,7 +230,7 @@ class ReportMaker:
             self.bound_x_left,
             y,
         )
-        y = y - y_space - y_tall'''
+        y = y - y_space - y_tall"""
         renderPDF.draw(
             self._drawing_from_plot_widget(
                 spatialCoverageWidget,
@@ -263,12 +263,12 @@ class ReportMaker:
         # Droplet Dist Table
         table_cv = self._table_card_stats(tableView, passData.name)
         table_cv.wrapOn(self.canvas, 100, 250)
-        table_cv.drawOn(self.canvas, 400, y+145)
+        table_cv.drawOn(self.canvas, 400, y + 145)
         # Disclaimers
         size = 6
-        #y = 80
-        #x = 405
-        frame_disclaimers = Frame(400, y+15, 160, 120)
+        # y = 80
+        # x = 405
+        frame_disclaimers = Frame(400, y + 15, 160, 120)
         frame_disclaimers.addFromList(self._list_disclaimers(passData), self.canvas)
         # Page Break
         self.canvas.showPage()

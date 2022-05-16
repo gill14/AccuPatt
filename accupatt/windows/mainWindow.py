@@ -54,7 +54,7 @@ Ui_Form, baseclass = uic.loadUiType(
 Ui_Form_About, baseclass_about = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "about.ui")
 )
-testing = True
+testing = False
 
 
 class MainWindow(baseclass):
@@ -602,10 +602,10 @@ class MainWindow(baseclass):
                     # Select the pass to update plots
                     self.ui.listWidgetCardPass.setCurrentRow(row)
                     # Select the pass for droplet dist
-                    self.ui.comboBoxCardDistPass.setCurrentIndex(row+1)
-                    #self.ui.comboBoxCardDistCard.setCurrentIndex(0)
+                    self.ui.comboBoxCardDistPass.setCurrentIndex(row + 1)
+                    # self.ui.comboBoxCardDistCard.setCurrentIndex(0)
                     reportMaker.report_safe_card_summary(
-                        #spatialDVWidget=self.ui.mplWidgetCardSpatial1,
+                        # spatialDVWidget=self.ui.mplWidgetCardSpatial1,
                         spatialCoverageWidget=self.ui.plotWidgetCardPass,
                         histogramNumberWidget=self.ui.plotWidgetDropDist1,
                         histogramCoverageWidget=self.ui.plotWidgetDropDist2,

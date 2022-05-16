@@ -73,8 +73,8 @@ class LoadCards(baseclass):
         self.ui.comboBoxScale.currentIndexChanged[int].connect(self.scale_changed)
         self.ui.buttonAddCard.clicked.connect(self.click_add_card)
         self.ui.buttonRemoveCard.clicked.connect(self.click_remove_card)
-        self.ui.plotWidget.getPlotItem().showAxis('left',False)
-        self.ui.plotWidget.getPlotItem().showAxis('right',True)
+        self.ui.plotWidget.getPlotItem().showAxis("left", False)
+        self.ui.plotWidget.getPlotItem().showAxis("right", True)
 
         # Set pyqtgraph global options
         pg.setConfigOptions(antialias=True)
@@ -200,26 +200,34 @@ class LoadCards(baseclass):
         viewBox.setMouseMode(pg.ViewBox.RectMode)
         viewBox.rbScaleBox.setPen(pg.mkPen((0, 128, 0), width=1))
         viewBox.rbScaleBox.setBrush(pg.mkBrush(0, 128, 0, 100))
-        
-        def mouseDragEvent(ev, axis = None): # This is a modified version of the original mouseDragEvent function in pyqtgraph.ViewBox
+
+        def mouseDragEvent(
+            ev, axis=None
+        ):  # This is a modified version of the original mouseDragEvent function in pyqtgraph.ViewBox
             ev.accept()  # accept all buttons
             dif = (ev.pos() - ev.lastPos()) * -1
-            mouseEnabled = np.array(viewBox.state['mouseEnabled'], dtype = float)
+            mouseEnabled = np.array(viewBox.state["mouseEnabled"], dtype=float)
             mask = mouseEnabled.copy()
             if ev.button() & Qt.MouseButton.LeftButton:
-                if viewBox.state['mouseMode'] == pg.ViewBox.RectMode and axis==None:
+                if viewBox.state["mouseMode"] == pg.ViewBox.RectMode and axis == None:
                     if ev.isFinish():
                         QTimer.singleShot(0, self.restoreCursor)
                         viewBox.rbScaleBox.hide()
-                        ax = QRectF(pg.Point(ev.buttonDownPos(ev.button())), pg.Point(ev.pos()))
+                        ax = QRectF(
+                            pg.Point(ev.buttonDownPos(ev.button())), pg.Point(ev.pos())
+                        )
                         ax = viewBox.childGroup.mapRectFromParent(ax)
                         self.roi_rectangles.append(ax.getRect())
                         self.draw_rois()
-                        viewBox.mouseDragEvent = temp # reset to original mouseDragEvent
+                        viewBox.mouseDragEvent = (
+                            temp  # reset to original mouseDragEvent
+                        )
                         viewBox.setMouseMode(pg.ViewBox.PanMode)
                     else:
-                        viewBox.updateScaleBox(ev.buttonDownPos(), ev.pos()) # update shape of scale box
-            '''elif ev.button() & QtCore.Qt.MidButton: # allow for panning with middle mouse button
+                        viewBox.updateScaleBox(
+                            ev.buttonDownPos(), ev.pos()
+                        )  # update shape of scale box
+            """elif ev.button() & QtCore.Qt.MidButton: # allow for panning with middle mouse button
                 tr = dif*mask
                 tr = viewBox.mapToView(tr) - viewBox.mapToView(Point(0,0))
                 x = tr.x() if mask[0] == 1 else None
@@ -227,35 +235,37 @@ class LoadCards(baseclass):
                 viewBox._resetTarget()
                 if x is not None or y is not None:
                     viewBox.translateBy(x=x, y=y)
-                viewBox.sigRangeChangedManually.emit(viewBox.state['mouseEnabled'])'''
-                
-        def keyPressE_mouseDrag(event): # Override "esc" key to cancel draw
+                viewBox.sigRangeChangedManually.emit(viewBox.state['mouseEnabled'])"""
+
+        def keyPressE_mouseDrag(event):  # Override "esc" key to cancel draw
             if event.key() == Qt.Key.Key_Escape:
                 QTimer.singleShot(0, self.restoreCursor)
                 viewBox.rbScaleBox.hide()
-                viewBox.mouseDragEvent = temp # reset to original mouseDragEvent
+                viewBox.mouseDragEvent = temp  # reset to original mouseDragEvent
                 viewBox.setMouseMode(pg.ViewBox.PanMode)
             else:
                 QDialog.keyPressEvent(self, event)
-            
+
         self.keyPressEvent = keyPressE_mouseDrag
-        temp = viewBox.mouseDragEvent # save original mouseDragEvent for later
-        viewBox.mouseDragEvent = mouseDragEvent # set to modified mouseDragEvent
-        
+        temp = viewBox.mouseDragEvent  # save original mouseDragEvent for later
+        viewBox.mouseDragEvent = mouseDragEvent  # set to modified mouseDragEvent
+
     def restoreCursor(self):
         QApplication.restoreOverrideCursor()
         self.ui.plotWidget.getViewBox().setMouseMode(pg.ViewBox.PanMode)
 
-    @pyqtSlot(object,object)
+    @pyqtSlot(object, object)
     def roi_clicked(self, roi: pg.ROI, _):
         self.ui.buttonRemoveCard.setEnabled(True)
         self.roi_to_remove = roi
-        self.ui.buttonRemoveCard.setText(f'Remove '+self.card_list[self.rois.index(roi)].name)
+        self.ui.buttonRemoveCard.setText(
+            f"Remove " + self.card_list[self.rois.index(roi)].name
+        )
 
     @pyqtSlot()
     def click_remove_card(self):
         self.remove_roi(self.roi_to_remove)
-        #self.draw_rois()
+        # self.draw_rois()
         self.ui.buttonRemoveCard.setText("Remove")
         self.ui.buttonRemoveCard.setEnabled(False)
 
