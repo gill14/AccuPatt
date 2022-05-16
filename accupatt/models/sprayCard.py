@@ -181,13 +181,17 @@ class SprayCardStats:
         else:
             return len(self.sprayCard.stain_areas_valid_px2)
 
+    def get_card_area_in2(self, text=False):
+        area_in2 = self._px2_to_in2(self.sprayCard.area_px2)
+        if text:
+            return f"{area_in2:.2f} in\u00B2"
+        else:
+            return area_in2
+    
     def get_stains_per_in2(self, text=False):
-        if self.sprayCard.area_px2 == 0:
+        if self.sprayCard.area_px2 == 0 or self.sprayCard.area_px2 == 0:
             return 0
-        spsi = round(
-            len(self.sprayCard.stain_areas_valid_px2)
-            / self._px2_to_in2(self.sprayCard.area_px2)
-        )
+        spsi = round(self.get_number_of_stains()/ self.get_card_area_in2())
         if text:
             return str(spsi)
         else:

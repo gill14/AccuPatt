@@ -585,13 +585,14 @@ class MainWindow(baseclass):
         )
         if savefile:
             reportMaker = ReportMaker(file=savefile, seriesData=self.seriesData)
-            reportMaker.report_safe_string(
-                overlayWidget=self.ui.plotWidgetOverlay,
-                averageWidget=self.ui.plotWidgetAverage,
-                racetrackWidget=self.ui.plotWidgetRacetrack,
-                backAndForthWidget=self.ui.plotWidgetBackAndForth,
-                tableView=self.ui.tableWidgetCV,
-            )
+            if any([p.has_string_data() for p in self.seriesData.passes]):
+                reportMaker.report_safe_string(
+                    overlayWidget=self.ui.plotWidgetOverlay,
+                    averageWidget=self.ui.plotWidgetAverage,
+                    racetrackWidget=self.ui.plotWidgetRacetrack,
+                    backAndForthWidget=self.ui.plotWidgetBackAndForth,
+                    tableView=self.ui.tableWidgetCV,
+                )
             for row, p in enumerate(self.seriesData.passes):
                 if (
                     p.has_card_data()
@@ -601,10 +602,11 @@ class MainWindow(baseclass):
                     # Select the pass to update plots
                     self.ui.listWidgetCardPass.setCurrentRow(row)
                     # Select the pass for droplet dist
-                    self.ui.comboBoxSprayCardDist.setCurrentIndex(1)
+                    self.ui.comboBoxCardDistPass.setCurrentIndex(row+1)
+                    #self.ui.comboBoxCardDistCard.setCurrentIndex(0)
                     reportMaker.report_safe_card_summary(
-                        spatialDVWidget=self.ui.mplWidgetCardSpatial1,
-                        spatialCoverageWidget=self.ui.mplWidgetCardSpatial2,
+                        #spatialDVWidget=self.ui.mplWidgetCardSpatial1,
+                        spatialCoverageWidget=self.ui.plotWidgetCardPass,
                         histogramNumberWidget=self.ui.plotWidgetDropDist1,
                         histogramCoverageWidget=self.ui.plotWidgetDropDist2,
                         tableView=self.ui.tableWidgetSprayCardStats,

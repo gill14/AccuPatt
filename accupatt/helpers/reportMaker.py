@@ -206,7 +206,6 @@ class ReportMaker:
 
     def report_safe_card_summary(
         self,
-        spatialDVWidget: MplWidget,
         spatialCoverageWidget: MplWidget,
         histogramNumberWidget: MplWidget,
         histogramCoverageWidget: MplWidget,
@@ -220,7 +219,7 @@ class ReportMaker:
         y_tall = 140
         y_short = 110
         y = 435
-        renderPDF.draw(
+        '''renderPDF.draw(
             self._drawing_from_plot_widget(
                 spatialDVWidget,
                 0.8 * self.bound_width / inch,
@@ -231,7 +230,7 @@ class ReportMaker:
             self.bound_x_left,
             y,
         )
-        y = y - y_space - y_tall
+        y = y - y_space - y_tall'''
         renderPDF.draw(
             self._drawing_from_plot_widget(
                 spatialCoverageWidget,
@@ -264,12 +263,12 @@ class ReportMaker:
         # Droplet Dist Table
         table_cv = self._table_card_stats(tableView, passData.name)
         table_cv.wrapOn(self.canvas, 100, 250)
-        table_cv.drawOn(self.canvas, 400, 150)
+        table_cv.drawOn(self.canvas, 400, y+145)
         # Disclaimers
         size = 6
-        y = 80
-        x = 405
-        frame_disclaimers = Frame(400, 20, 160, 120)
+        #y = 80
+        #x = 405
+        frame_disclaimers = Frame(400, y+15, 160, 120)
         frame_disclaimers.addFromList(self._list_disclaimers(passData), self.canvas)
         # Page Break
         self.canvas.showPage()
@@ -301,9 +300,6 @@ class ReportMaker:
                 x = x_start + (j * x_space)
                 y = y_start
                 card: SprayCard = cards_to_page[cards_paged]
-                print(
-                    f"card name = {card.name}, x={x}, y={y}, window_width={card_window_width}"
-                )
                 self.canvas.drawImage(
                     self._get_image(card, image_type),
                     x,
@@ -364,31 +360,15 @@ class ReportMaker:
         )
         data = []
         data.append([card.name, ""])
-        stains = len(card.stain_areas_valid_px2)
-        area = card._px2_to_in2(card.area_px2)
-        if stains > 0:
-            dv01, dv05, dv09, rs, dsc = card.volumetric_stats()
-            rs = f"{rs:.2f}"
-            cov = f"{card.percent_coverage():.2f}"
-            spsi = round(stains / area)
-        else:
-            dv01 = "-"
-            dv05 = "-"
-            dv09 = "-"
-            rs = "-"
-            dsc = "-"
-            cov = "-"
-            spsi = "-"
-        area = f"{area:.2f}"
-        data.append(["DSC", dsc])
-        data.append(["Dv0.1", f"{dv01} \u03BCm"])
-        data.append(["VMD", f"{dv05} \u03BCm"])
-        data.append(["Dv0.9", f"{dv09} \u03BCm"])
-        data.append(["RS", rs])
-        data.append(["Cov.", f"{cov}%"])
-        data.append(["Area", f"{area} in\u00B2"])
-        data.append(["St.", stains])
-        data.append(["St./in\u00B2", spsi])
+        data.append(["DSC", card.stats.get_dsc()])
+        data.append(["Dv0.1", card.stats.get_dv01(text=True)])
+        data.append(["VMD", card.stats.get_dv05(text=True)])
+        data.append(["Dv0.9", card.stats.get_dv09(text=True)])
+        data.append(["RS", card.stats.get_relative_span(text=True)])
+        data.append(["Cov.", card.stats.get_percent_coverage(text=True)])
+        data.append(["Area", card.stats.get_card_area_in2(text=True)])
+        data.append(["St.", card.stats.get_number_of_stains(text=True)])
+        data.append(["St./in\u00B2", card.stats.get_stains_per_in2(text=True)])
         return Table(data, style=tablestyle_alt)
 
     def _get_image(self, card: SprayCard, image_type: str):
@@ -620,7 +600,7 @@ class ReportMaker:
         sc = [card for card in passData.cards.card_list if card.include_in_composite][0]
         disclaimers.append(
             Paragraph(
-                f"\u00B9  Based on inputs, minimum detectable droplet diameter is {sc.minimum_detectable_droplet_diameter()} μm.",
+                f"\u00B9  Based on inputs, minimum detectable droplet diameter is {sc.stats.get_minimum_detectable_droplet_diameter()} μm.",
                 style=self.style,
             )
         )
