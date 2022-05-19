@@ -169,19 +169,19 @@ class SeriesStringData:
         if not a.empty:
             # Original average data
             x0 = np.array(a["loc"], dtype=float)
-            y = np.array(a["Average"], dtype=float)
-            # Mirrored if needed
-            ym = y[::-1]
+            y0 = np.array(a["Average"], dtype=float)
             # create a shifted x array for each simulated pass with labels
             x_arrays = [x0]
-            y_arrays = [y]
+            y_arrays = [y0]
             labels = ["Center"]
             for i in range(1, self.simulated_adjascent_passes + 1):
-                x_arrays.append(x0 - (i * swath_width))
-                y_arrays.append(ym if mirrorAdjascent and i % 2 != 0 else y)
+                x = (x0*-1)[::-1] if mirrorAdjascent and i % 2 != 0 else x0
+                y = y0[::-1] if mirrorAdjascent and i % 2 != 0 else y0
+                x_arrays.append(x-(i*swath_width))
+                y_arrays.append(y)
                 labels.append(f"Left {i}")
-                x_arrays.append(x0 + (i * swath_width))
-                y_arrays.append(ym if mirrorAdjascent and i % 2 != 0 else y)
+                x_arrays.append(x+(i*swath_width))
+                y_arrays.append(y)
                 labels.append(f"Right {i}")
             # Unify the x-domain
             xfill = np.sort(np.concatenate(x_arrays))
@@ -258,19 +258,19 @@ class SeriesStringData:
         a = self.average.string.data_mod
         # Original average data
         x0 = np.array(a["loc"], dtype=float)
-        y = np.array(a["Average"], dtype=float)
-        # Mirrored if needed
-        ym = y[::-1]
+        y0 = np.array(a["Average"], dtype=float)
         # create a shifted x array for each simulated pass with labels
         x_arrays = [x0]
-        y_arrays = [y]
+        y_arrays = [y0]
         labels = ["Center"]
         for i in range(1, self.simulated_adjascent_passes + 1):
-            x_arrays.append(x0 - (i * swath_width))
-            y_arrays.append(ym if mirrorAdjascent and i % 2 != 0 else y)
+            x = (x0*-1)[::-1] if mirrorAdjascent and i % 2 != 0 else x0
+            y = y0[::-1] if mirrorAdjascent and i % 2 != 0 else y0
+            x_arrays.append(x-(i*swath_width))
+            y_arrays.append(y)
             labels.append(f"Left {i}")
-            x_arrays.append(x0 + (i * swath_width))
-            y_arrays.append(ym if mirrorAdjascent and i % 2 != 0 else y)
+            x_arrays.append(x+(i*swath_width))
+            y_arrays.append(y)
             labels.append(f"Right {i}")
         # Unify the x-domain
         xfill = np.sort(np.concatenate(x_arrays))
