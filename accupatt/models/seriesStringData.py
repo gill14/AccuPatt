@@ -220,10 +220,10 @@ class SeriesStringData:
             # Whether to show the whole window or one swath width
             if not showEntireWindow:
                 mplWidget.canvas.ax.set_xlim(-swath_width / 2, swath_width / 2)
-            # Must set ylim after plotting
-            mplWidget.canvas.ax.set_ylim(bottom=0, auto=None)
-            # Plot it
-            mplWidget.canvas.draw()
+        # Must set ylim after plotting
+        mplWidget.canvas.ax.set_ylim(bottom=0, auto=None)
+        # Plot it
+        mplWidget.canvas.draw()
 
     def _config_mpl_plotter(self, mplWidget: MplWidget):
         mplWidget.canvas.ax.clear()
