@@ -247,7 +247,7 @@ class MainWindow(baseclass):
         for file in [f for f in os.listdir(self.currentDirectory) if f.endswith(".db")]:
             m.addAction(str(file))
 
-    @pyqtSlot()
+    @pyqtSlot(QAction)
     def newSeriesFileAircraftMenuAction(self, action):
         if action.text() == "Select File Aircraft":
             self.newSeries(useFileAircraft=True)
@@ -385,13 +385,13 @@ class MainWindow(baseclass):
             last_modified = (
                 f"Last Save: {datetime.fromtimestamp(self.seriesData.info.modified)}"
             )
-        self.update_all_ui()
+        self.update_all_ui(processCards=True)
         self.status_label_file.setText(f"Current File: {self.currentFile}")
         self.status_label_modified.setText(last_modified)
         self.ui.tabWidget.setEnabled(True)
         self.ui.tabWidget.setCurrentIndex(0)
 
-    def update_all_ui(self):
+    def update_all_ui(self, processCards=False):
         # Populate AppInfo tab
         self.ui.widgetSeriesInfo.fill_from_info(self.seriesData.info)
 
@@ -428,33 +428,31 @@ class MainWindow(baseclass):
             self.ui.checkBoxCardSeriesCenter.setChecked(self.seriesData.cards.center)
 
         # Process and cache all card stats
-        prog = QProgressDialog(self)
-        prog.setMinimumDuration(0)
-        prog.setWindowModality(Qt.WindowModality.WindowModal)
+        
         card_list: list[SprayCard] = []
         card_identifier_list: list[str] = []
         for p in self.seriesData.passes:
             for c in p.cards.card_list:
                 card_list.append(c)
                 card_identifier_list.append(f"{p.name} - {c.name}")
-        for i, card in enumerate(card_list):
-            if i == 0:
-                prog.setRange(0, len(card_list))
-            prog.setValue(i)
-            prog.setLabelText(
-                f"Processing {card_identifier_list[i]} and caching droplet statistics"
-            )
-            if card.has_image:
-                # Process image
-                card.images_processed()
-                # Cache droplet stats
-                card.stats.set_volumetric_stats()
-
-            if prog.wasCanceled():
-                return
-
-            if i == len(card_list) - 1:
-                prog.setValue(i + 1)
+        if processCards and card_list:
+            prog = QProgressDialog(self)
+            prog.setMinimumDuration(0)
+            prog.setWindowModality(Qt.WindowModality.WindowModal)
+            prog.setRange(0, len(card_list))
+            for i, card in enumerate(card_list):
+                prog.setValue(i)
+                prog.setLabelText(
+                    f"Processing {card_identifier_list[i]} and caching droplet statistics"
+                )
+                if card.has_image:
+                    # Process image
+                    card.images_processed()
+                    # Cache droplet stats
+                    card.stats.set_volumetric_stats()
+                if prog.wasCanceled():
+                    return
+            prog.setValue(len(card_list))
 
         # Refresh ListWidgets
         self.updatePassListWidgets(string=True, cards=True)
