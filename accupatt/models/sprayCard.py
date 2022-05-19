@@ -135,7 +135,7 @@ class SprayCardStats:
             return self.dv05
 
     def get_dv05_color(self) -> str:
-        return AtomizationModel().dsc_color_dv05(dv05=self.dv09)
+        return AtomizationModel().dsc_color_dv05(dv05=self.dv05)
 
     def get_dv09(self, text=False):
         if text:
