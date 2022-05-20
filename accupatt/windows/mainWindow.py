@@ -244,7 +244,7 @@ class MainWindow(baseclass):
         m.clear()
         m.addAction("Select File Aircraft")
         m.addSeparator()
-        for file in [f for f in os.listdir(self.currentDirectory) if f.endswith(".db")]:
+        for file in sorted([f for f in os.listdir(self.currentDirectory) if f.endswith(".db")]):
             m.addAction(str(file))
 
     @pyqtSlot(QAction)
@@ -791,6 +791,7 @@ class MainWindow(baseclass):
         )
         # Plot individuals and update capture button text
         self.stringPassSelectionChanged()
+        self.ui.tabWidgetString.setCurrentIndex(0)
 
     @pyqtSlot(int)
     def stringPassCenterChanged(self, checkstate):
