@@ -29,6 +29,7 @@ def load_from_db(file: str, s: SeriesData, load_only_info=False):
             # Need a handle on the series id to load
             s_ = SeriesData()
             _load_table_series(c, s_)
+            s.info.series = s_.info.series
             # Load in only needed data
             _load_table_applicator(c, s, s_.id)
             _load_table_aircraft(c, s, s_.id)
