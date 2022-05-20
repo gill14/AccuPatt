@@ -242,6 +242,7 @@ class SeriesInfoWidget(baseclass):
                     self.ui.lineEditWingspan.setText(f"{round(ws, 2):.2f}")
                 else:
                     self.ui.lineEditWingspan.setText(str(round(ws)))
+                self._commit_wingspan()
         if self.info is not None:
             self._commit_aircraft_model(model)
 
