@@ -744,6 +744,24 @@ def get_spread_factor_equation() -> str:
 def set_spread_factor_equation(value: str):
     QSettings().setValue(_SPREAD_METHOD, value)
 
+# SprayCard Plot Options
+
+_CARD_SIMULATION_VIEW_WINDOW = "card_simulation_view_window"
+CARD_SIMULATION_VIEW_WINDOW_ONE = "one"
+CARD_SIMULATINO_VIEW_WINDOW_ALL = "all"
+
+
+def get_card_simulation_view_window() -> str:
+    return QSettings().value(
+        _CARD_SIMULATION_VIEW_WINDOW,
+        defaultValue=CARD_SIMULATION_VIEW_WINDOW_ONE,
+        type=str,
+    )
+
+
+def set_card_simulation_view_window(value=str):
+    QSettings().setValue(_CARD_SIMULATION_VIEW_WINDOW, value)
+
 
 # SprayCard Prefab Sets
 

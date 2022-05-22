@@ -212,6 +212,12 @@ class MainWindow(baseclass):
         # --> | --> Setup Individual Tab
         # --> | --> Setup Composite Tab
         # --> | --> Setup Simulations Tab
+        self.ui.spinBoxCardSimulatedSwathPasses.valueChanged[int].connect(
+            self.cardSimulatedSwathPassesChanged
+        )
+        self.ui.radioButtonCardSimulationOne.toggled[bool].connect(
+            self.cardSimulationViewWindowChanged
+        )
         # --> | --> Stup Droplet Distribution Tab
         self.ui.comboBoxCardDistPass.currentIndexChanged[int].connect(
             self.cardDistPassChanged
@@ -942,7 +948,7 @@ class MainWindow(baseclass):
 
     @pyqtSlot(bool)
     def simulationViewWindowChanged(self, viewOneIsChecked):
-        cfg.set_String_simulation_view_window(
+        cfg.set_string_simulation_view_window(
             cfg.STRING_SIMULATION_VIEW_WINDOW_ONE
             if viewOneIsChecked
             else cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL
@@ -1103,7 +1109,19 @@ class MainWindow(baseclass):
                 colorize=self.ui.checkBoxCardSeriesColorize.isChecked(),
             )
         if simulations:
-            pass
+            self.seriesData.cards.plotRacetrack(
+                mplWidget=self.ui.plotWidgetCardRacetrack,
+                swath_width=self.seriesData.info.swath_adjusted,
+                showEntireWindow=self.ui.radioButtonCardSimulationAll.isChecked(),
+            )
+            self.seriesData.cards.plotBackAndForth(
+                mplWidget=self.ui.plotWidgetCardBackAndForth,
+                swath_width=self.seriesData.info.swath_adjusted,
+                showEntireWindow=self.ui.radioButtonCardSimulationAll.isChecked(),
+            )
+            self.seriesData.cards.plotCVTable(
+                self.ui.tableWidgetCardCV, self.seriesData.info.swath_adjusted
+            )
         if distributions:
             composite = SprayCardComposite()
             if self.ui.comboBoxCardDistPass.currentIndex() == 0:
@@ -1129,6 +1147,20 @@ class MainWindow(baseclass):
                 tableWidget=self.ui.tableWidgetSprayCardStats,
             )
 
+    @pyqtSlot(int)
+    def cardSimulatedSwathPassesChanged(self, numAdjascentPasses):
+        self.seriesData.cards.simulated_adjascent_passes = numAdjascentPasses
+        self.updateCardPlots(simulations=True)
+
+    @pyqtSlot(bool)
+    def cardSimulationViewWindowChanged(self, viewOneIsChecked):
+        cfg.set_card_simulation_view_window(
+            cfg.STRING_SIMULATION_VIEW_WINDOW_ONE
+            if viewOneIsChecked
+            else cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL
+        )
+        self.updateCardPlots(simulations=True)
+    
     def getCurrentCardPass(self) -> Pass:
         passData: Pass = None
         # Check if a pass is selected

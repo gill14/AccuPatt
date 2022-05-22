@@ -1521,7 +1521,7 @@
           </widget>
           <widget class="QWidget" name="tab_7">
            <property name="enabled">
-            <bool>false</bool>
+            <bool>true</bool>
            </property>
            <attribute name="title">
             <string>Simulations</string>
@@ -1601,7 +1601,7 @@
                </widget>
               </item>
               <item alignment="Qt::AlignHCenter">
-               <widget class="QSpinBox" name="spinBoxSimulatedSwathPasses_2">
+               <widget class="QSpinBox" name="spinBoxCardSimulatedSwathPasses">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -1652,6 +1652,9 @@
               </item>
               <item>
                <widget class="QGroupBox" name="groupBox_4">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
                 <property name="font">
                  <font>
                   <weight>75</weight>
@@ -1663,7 +1666,7 @@
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_12">
                  <item>
-                  <widget class="QRadioButton" name="radioButtonSimulationOne_2">
+                  <widget class="QRadioButton" name="radioButtonCardSimulationOne">
                    <property name="font">
                     <font>
                      <weight>50</weight>
@@ -1673,10 +1676,13 @@
                    <property name="text">
                     <string>One Pass</string>
                    </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QRadioButton" name="radioButtonSimulationAll_2">
+                  <widget class="QRadioButton" name="radioButtonCardSimulationAll">
                    <property name="font">
                     <font>
                      <weight>50</weight>
@@ -1730,7 +1736,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QTableWidget" name="tableWidgetCV_2">
+               <widget class="QTableWidget" name="tableWidgetCardCV">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                   <horstretch>0</horstretch>
