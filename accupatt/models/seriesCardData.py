@@ -46,7 +46,7 @@ class SeriesCardData:
         a_dv05["dv05"] = a_dv05.mean(axis="columns")
         d = pd.concat([a_cov["cov"], a_dv01["dv01"], a_dv05["dv05"]], axis=1)
         d.reset_index(inplace=True)
-        d["loc_units"] = pd.Series([self.swath_units for i in range(len(d.index))])
+        d["loc_units"] = pd.Series([self.swath_units for i in range(len(d.index))], dtype=str)
         return d
 
     def plotOverlay(self, mplWidget: MplWidget):
@@ -79,7 +79,7 @@ class SeriesCardData:
         avgPass.center_method = self.center_method
         avg = avgPass.get_data_mod(loc_units=self.swath_units, data=avg)
         # Must re-add loc_units, as it is stripped during get_data_mod
-        avg["loc_units"] = pd.Series([self.swath_units for i in range(len(avg.index))])
+        avg["loc_units"] = pd.Series([self.swath_units for i in range(len(avg.index))], dtype=str)
         avgPass.plotCoverage(
             mplWidget=mplWidget, loc_units=self.swath_units, colorize=colorize, d=avg
         )
