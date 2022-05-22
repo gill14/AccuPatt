@@ -21,6 +21,24 @@ class SeriesData:
         self.cards = SeriesCardData(self.passes, self.info.swath_units)
 
     """
+    Common pass observable sharing
+    """
+    def fill_common_pass_observables(self):
+        ph = self._fill_zeros_with_last(np.array([p.pass_heading for p in self.passes])[::-1])
+        t = self._fill_zeros_with_last(np.array([p.temperature for p in self.passes])[::-1])
+        h = self._fill_zeros_with_last(np.array([p.humidity for p in self.passes])[::-1])
+        for i, p in enumerate(self.passes):
+            p.set_pass_heading(ph[i])
+            p.set_temperature(t[i])
+            p.set_humidity(h[i])
+            
+    def _fill_zeros_with_last(self, arr):
+        prev = np.arange(len(arr))
+        prev[arr == 0] = 0
+        prev = np.maximum.accumulate(prev)
+        return arr[prev]
+
+    """
     GET methods below optionally take imposed unit, otherwise find most common unit, convert values and return a tuple
     containing (mean_value, mean_value_units, mean_value_and_units_string)
     """

@@ -328,12 +328,16 @@ class MainWindow(baseclass):
         cfg.set_flyin_date(self.seriesData.info.flyin_date)
         cfg.set_flyin_analyst(self.seriesData.info.flyin_analyst)
         # If db file exists, or a new one has been created, save all SeriesData to the db
-        save_to_db(file=self.currentFile, s=self.seriesData)
-        self.status_label_file.setText(f"Current File: {self.currentFile}")
-        self.status_label_modified.setText(
-            f"Last Save: {datetime.fromtimestamp(self.seriesData.info.modified)}"
-        )
-        return True
+        if save_to_db(file=self.currentFile, s=self.seriesData):
+            self.status_label_file.setText(f"Current File: {self.currentFile}")
+            self.status_label_modified.setText(
+                f"Last Save: {datetime.fromtimestamp(self.seriesData.info.modified)}"
+            )
+            return True
+        else:
+            msg = QMessageBox(icon=QMessageBox.Icon.Critical, text=f"Unable to save series data to {self.currentFile}")
+            msg.exec()
+            return False
 
     @pyqtSlot()
     def openFile(self):
@@ -781,6 +785,8 @@ class MainWindow(baseclass):
 
     @pyqtSlot()
     def readStringFinished(self):
+        # Auto-populate pass observables to blank entries
+        self.seriesData.fill_common_pass_observables()
         # Handles checking of string pass list widget
         self.updatePassListWidgets(
             string=True, string_index=self.ui.listWidgetStringPass.currentRow()
@@ -792,6 +798,8 @@ class MainWindow(baseclass):
         # Plot individuals and update capture button text
         self.stringPassSelectionChanged()
         self.ui.tabWidgetString.setCurrentIndex(0)
+        # Update datafile
+        self.saveFile()
 
     @pyqtSlot(int)
     def stringPassCenterChanged(self, checkstate):

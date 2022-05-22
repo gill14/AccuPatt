@@ -321,18 +321,31 @@ def save_to_db(file: str, s: SeriesData):
         conn.executescript(schema)
         # Get a cursor object
         c = conn.cursor()
-        # Update all tables
-        _update_table_series(c, s)
-        _update_table_series_string(c, s)
-        _update_table_series_spray_card(c, s)
-        _update_table_flyin(c, s)
-        _update_table_aircraft(c, s)
-        _update_table_applicator(c, s)
-        _update_table_spray_system(c, s)
-        _update_table_nozzles(c, s)
-        _update_table_passes(c, s)
+        # Ensure we don't get multiple series per db file
+        if _is_new_or_sole_series(c, s):
+            # Update all tables
+            _update_table_series(c, s)
+            _update_table_series_string(c, s)
+            _update_table_series_spray_card(c, s)
+            _update_table_flyin(c, s)
+            _update_table_aircraft(c, s)
+            _update_table_applicator(c, s)
+            _update_table_spray_system(c, s)
+            _update_table_nozzles(c, s)
+            _update_table_passes(c, s)
+            return True
+    return False
 
+def _is_new_or_sole_series(c: sqlite3.Cursor, s: SeriesData):
+    c.execute("""SELECT id FROM series""")
+    ids = c.fetchall()
+    if len(ids) == 0:
+        return True
+    elif len(ids) == 1:
+        return ids[0][0] == s.id
+    return False
 
+        
 def _update_table_series(c: sqlite3.Cursor, s: SeriesData):
     i = s.info
     c.execute(
