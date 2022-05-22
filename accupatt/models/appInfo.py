@@ -183,6 +183,8 @@ class AppInfo:
         return p
 
     def set_wingspan(self, string) -> bool:
+        if string == "":
+            string = "0" 
         try:
             float(string)
         except ValueError:
@@ -207,6 +209,8 @@ class AppInfo:
         return True
 
     def set_rate(self, string) -> bool:
+        if string == "":
+            string = "0" 
         try:
             float(string)
         except ValueError:
@@ -215,6 +219,8 @@ class AppInfo:
         return True
 
     def set_pressure(self, string) -> bool:
+        if string == "":
+            string = "0" 
         try:
             float(string)
         except ValueError:
@@ -223,6 +229,8 @@ class AppInfo:
         return True
 
     def set_boom_width(self, string) -> bool:
+        if string == "":
+            string = "0" 
         try:
             float(string)
         except ValueError:
@@ -231,6 +239,8 @@ class AppInfo:
         return True
 
     def set_boom_drop(self, string) -> bool:
+        if string == "":
+            string = "0" 
         try:
             float(string)
         except ValueError:
@@ -239,6 +249,8 @@ class AppInfo:
         return True
 
     def set_nozzle_spacing(self, string) -> bool:
+        if string == "":
+            string = "0" 
         try:
             float(string)
         except ValueError:
