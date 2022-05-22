@@ -352,7 +352,7 @@ class ReadString(baseclass):
         try:
             self.spec.integration_time_micros(self.integration_time_ms * 1000)
         except:
-            print('Unable to set Spectrometer Integration Time')
+            print("Unable to set Spectrometer Integration Time")
         # Get a handle on pixels for chosen wavelengths
         wavelengths = self.spec.wavelengths()
         self.pix_ex = np.abs(wavelengths - self.wav_ex).argmin()

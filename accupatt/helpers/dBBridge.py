@@ -336,6 +336,7 @@ def save_to_db(file: str, s: SeriesData):
             return True
     return False
 
+
 def _is_new_or_sole_series(c: sqlite3.Cursor, s: SeriesData):
     c.execute("""SELECT id FROM series""")
     ids = c.fetchall()
@@ -345,7 +346,7 @@ def _is_new_or_sole_series(c: sqlite3.Cursor, s: SeriesData):
         return ids[0][0] == s.id
     return False
 
-        
+
 def _update_table_series(c: sqlite3.Cursor, s: SeriesData):
     i = s.info
     c.execute(

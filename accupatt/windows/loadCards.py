@@ -373,7 +373,7 @@ class LoadCards(baseclass):
             # Check if in bounds
             x, y, w, h = cv2.boundingRect(c)
             # If bounding box is less than 5% of w or h of image, reject it
-            if w < 0.05*img.shape[1] or h < 0.05*img.shape[0]:
+            if w < 0.05 * img.shape[1] or h < 0.05 * img.shape[0]:
                 continue
             # If contour touches edge, fail
             if (

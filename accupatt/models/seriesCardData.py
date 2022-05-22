@@ -48,7 +48,9 @@ class SeriesCardData:
         a_dv05["dv05"] = a_dv05.mean(axis="columns")
         d = pd.concat([a_cov["cov"], a_dv01["dv01"], a_dv05["dv05"]], axis=1)
         d.reset_index(inplace=True)
-        d["loc_units"] = pd.Series([self.swath_units for i in range(len(d.index))], dtype=str)
+        d["loc_units"] = pd.Series(
+            [self.swath_units for i in range(len(d.index))], dtype=str
+        )
         return d
 
     def plotOverlay(self, mplWidget: MplWidget):
@@ -81,7 +83,9 @@ class SeriesCardData:
         avgPass.center_method = self.center_method
         avg = avgPass.get_data_mod(loc_units=self.swath_units, data=avg)
         # Must re-add loc_units, as it is stripped during get_data_mod
-        avg["loc_units"] = pd.Series([self.swath_units for i in range(len(avg.index))], dtype=str)
+        avg["loc_units"] = pd.Series(
+            [self.swath_units for i in range(len(avg.index))], dtype=str
+        )
         avgPass.plotCoverage(
             mplWidget=mplWidget, loc_units=self.swath_units, colorize=colorize, d=avg
         )
@@ -90,7 +94,7 @@ class SeriesCardData:
         mplWidget.canvas.ax.clear()
         mplWidget.canvas.ax.set_xlabel(f"Location ({self.swath_units})")
         mplWidget.canvas.ax.set_yticks([])
-        
+
     def plotRacetrack(
         self, mplWidget: MplWidget, swath_width: float, showEntireWindow=False
     ):
@@ -137,12 +141,12 @@ class SeriesCardData:
             y_arrays = [y0]
             labels = ["Center"]
             for i in range(1, self.simulated_adjascent_passes + 1):
-                x = (x0*-1)[::-1] if mirrorAdjascent and i % 2 != 0 else x0
+                x = (x0 * -1)[::-1] if mirrorAdjascent and i % 2 != 0 else x0
                 y = y0[::-1] if mirrorAdjascent and i % 2 != 0 else y0
-                x_arrays.append(x-(i*swath_width))
+                x_arrays.append(x - (i * swath_width))
                 y_arrays.append(y)
                 labels.append(f"Left {i}")
-                x_arrays.append(x+(i*swath_width))
+                x_arrays.append(x + (i * swath_width))
                 y_arrays.append(y)
                 labels.append(f"Right {i}")
             # Unify the x-domain
@@ -227,12 +231,12 @@ class SeriesCardData:
         y_arrays = [y0]
         labels = ["Center"]
         for i in range(1, self.simulated_adjascent_passes + 1):
-            x = (x0*-1)[::-1] if mirrorAdjascent and i % 2 != 0 else x0
+            x = (x0 * -1)[::-1] if mirrorAdjascent and i % 2 != 0 else x0
             y = y0[::-1] if mirrorAdjascent and i % 2 != 0 else y0
-            x_arrays.append(x-(i*swath_width))
+            x_arrays.append(x - (i * swath_width))
             y_arrays.append(y)
             labels.append(f"Left {i}")
-            x_arrays.append(x+(i*swath_width))
+            x_arrays.append(x + (i * swath_width))
             y_arrays.append(y)
             labels.append(f"Right {i}")
         # Unify the x-domain

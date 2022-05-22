@@ -250,7 +250,9 @@ class MainWindow(baseclass):
         m.clear()
         m.addAction("Select File Aircraft")
         m.addSeparator()
-        for file in sorted([f for f in os.listdir(self.currentDirectory) if f.endswith(".db")]):
+        for file in sorted(
+            [f for f in os.listdir(self.currentDirectory) if f.endswith(".db")]
+        ):
             m.addAction(str(file))
 
     @pyqtSlot(QAction)
@@ -341,7 +343,10 @@ class MainWindow(baseclass):
             )
             return True
         else:
-            msg = QMessageBox(icon=QMessageBox.Icon.Critical, text=f"Unable to save series data to {self.currentFile}")
+            msg = QMessageBox(
+                icon=QMessageBox.Icon.Critical,
+                text=f"Unable to save series data to {self.currentFile}",
+            )
             msg.exec()
             return False
 
@@ -438,7 +443,7 @@ class MainWindow(baseclass):
             self.ui.checkBoxCardSeriesCenter.setChecked(self.seriesData.cards.center)
 
         # Process and cache all card stats
-        
+
         card_list: list[SprayCard] = []
         card_identifier_list: list[str] = []
         for p in self.seriesData.passes:
@@ -1160,7 +1165,7 @@ class MainWindow(baseclass):
             else cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL
         )
         self.updateCardPlots(simulations=True)
-    
+
     def getCurrentCardPass(self) -> Pass:
         passData: Pass = None
         # Check if a pass is selected

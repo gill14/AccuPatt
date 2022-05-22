@@ -23,15 +23,22 @@ class SeriesData:
     """
     Common pass observable sharing
     """
+
     def fill_common_pass_observables(self):
-        ph = self._fill_zeros_with_last(np.array([p.pass_heading for p in self.passes])[::-1])
-        t = self._fill_zeros_with_last(np.array([p.temperature for p in self.passes])[::-1])
-        h = self._fill_zeros_with_last(np.array([p.humidity for p in self.passes])[::-1])
+        ph = self._fill_zeros_with_last(
+            np.array([p.pass_heading for p in self.passes])[::-1]
+        )
+        t = self._fill_zeros_with_last(
+            np.array([p.temperature for p in self.passes])[::-1]
+        )
+        h = self._fill_zeros_with_last(
+            np.array([p.humidity for p in self.passes])[::-1]
+        )
         for i, p in enumerate(self.passes):
             p.set_pass_heading(ph[i])
             p.set_temperature(t[i])
             p.set_humidity(h[i])
-            
+
     def _fill_zeros_with_last(self, arr):
         prev = np.arange(len(arr))
         prev[arr == 0] = 0
@@ -144,7 +151,7 @@ class SeriesData:
     # Run USDA Model on input params and observables
     def calc_droplet_stats(
         self, string_included=False, cards_included=False
-    ) -> tuple[str,str,str,str,str]:
+    ) -> tuple[str, str, str, str, str]:
         model = AtomizationModelMulti()
         for n in self.info.nozzles:
             model.addNozzleSet(
@@ -162,8 +169,8 @@ class SeriesData:
         dv01 = model.dv01()
         dv05 = model.dv05()
         dv09 = model.dv09()
-        #pl100 = model.p_lt_100()
-        #pl200 = model.p_lt_200()
+        # pl100 = model.p_lt_100()
+        # pl200 = model.p_lt_200()
         dsc = model.dsc()
         rs = model.rs()
         return (

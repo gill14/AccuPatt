@@ -175,12 +175,12 @@ class SeriesStringData:
             y_arrays = [y0]
             labels = ["Center"]
             for i in range(1, self.simulated_adjascent_passes + 1):
-                x = (x0*-1)[::-1] if mirrorAdjascent and i % 2 != 0 else x0
+                x = (x0 * -1)[::-1] if mirrorAdjascent and i % 2 != 0 else x0
                 y = y0[::-1] if mirrorAdjascent and i % 2 != 0 else y0
-                x_arrays.append(x-(i*swath_width))
+                x_arrays.append(x - (i * swath_width))
                 y_arrays.append(y)
                 labels.append(f"Left {i}")
-                x_arrays.append(x+(i*swath_width))
+                x_arrays.append(x + (i * swath_width))
                 y_arrays.append(y)
                 labels.append(f"Right {i}")
             # Unify the x-domain
@@ -264,12 +264,12 @@ class SeriesStringData:
         y_arrays = [y0]
         labels = ["Center"]
         for i in range(1, self.simulated_adjascent_passes + 1):
-            x = (x0*-1)[::-1] if mirrorAdjascent and i % 2 != 0 else x0
+            x = (x0 * -1)[::-1] if mirrorAdjascent and i % 2 != 0 else x0
             y = y0[::-1] if mirrorAdjascent and i % 2 != 0 else y0
-            x_arrays.append(x-(i*swath_width))
+            x_arrays.append(x - (i * swath_width))
             y_arrays.append(y)
             labels.append(f"Left {i}")
-            x_arrays.append(x+(i*swath_width))
+            x_arrays.append(x + (i * swath_width))
             y_arrays.append(y)
             labels.append(f"Right {i}")
         # Unify the x-domain

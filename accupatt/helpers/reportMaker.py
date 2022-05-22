@@ -572,9 +572,7 @@ class ReportMaker:
         tablestyle_alt = self.tablestyle_with_headers + [
             ("BACKGROUND", (3, 6), (3, -1), colors.lightgrey)
         ]
-        dv01, dv05, dv09, dsc, rs = self.s.calc_droplet_stats(
-            cards_included=True
-        )
+        dv01, dv05, dv09, dsc, rs = self.s.calc_droplet_stats(cards_included=True)
         data = []
         data.append(["", "", "Measured \u00B9\u22C5\u00B2", "USDA Model \u00B3"])
         for row in range(tableWidget.rowCount()):

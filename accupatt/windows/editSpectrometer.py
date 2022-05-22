@@ -110,7 +110,7 @@ class EditSpectrometer(baseclass):
             QMessageBox.warning(self, "Invalid Data", "\n".join(excepts))
             return
         # Release spectrometer
-        #if self.spec:
+        # if self.spec:
         #    self.spec.close()
         # If all checks out, notify requestor and close
         super().accept()
