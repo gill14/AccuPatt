@@ -10,8 +10,8 @@ class PassStringData:
     def __init__(self, name):
         self.name = name
         # String Data Collection
-        self.wav_ex = cfg.get_spec_wav_em()
-        self.wav_em = cfg.get_spec_wav_ex()
+        self.wav_ex = cfg.get_spec_wav_ex()
+        self.wav_em = cfg.get_spec_wav_em()
         self.integration_time_ms = cfg.get_spec_int_time_millis()
         # String Data
         self.data_ex = pd.DataFrame()  # Holds Excitation Data

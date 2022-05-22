@@ -333,6 +333,8 @@ class ReadString(baseclass):
         e = EditSpectrometer(
             self.spec, self.wav_ex, self.wav_em, self.integration_time_ms, parent=self
         )
+        e.wav_em_changed[int].connect(self.wav_em_changed)
+        e.wav_ex_changed[int].connect(self.wav_ex_changed)
         e.accepted.connect(self.reSetupSpectrometer)
         e.exec()
 
@@ -347,7 +349,10 @@ class ReadString(baseclass):
                 self.spec_connected = False
                 return
         # Inform spectrometer of new int time
-        self.spec.integration_time_micros(self.integration_time_ms * 1000)
+        try:
+            self.spec.integration_time_micros(self.integration_time_ms * 1000)
+        except:
+            print('Unable to set Spectrometer Integration Time')
         # Get a handle on pixels for chosen wavelengths
         wavelengths = self.spec.wavelengths()
         self.pix_ex = np.abs(wavelengths - self.wav_ex).argmin()
@@ -368,10 +373,12 @@ class ReadString(baseclass):
 
     @pyqtSlot(int)
     def wav_ex_changed(self, wav: int):
+        cfg.set_spec_wav_ex(wav)
         self.wav_ex = wav
 
     @pyqtSlot(int)
     def wav_em_changed(self, wav: int):
+        cfg.set_spec_wav_em(wav)
         self.wav_em = wav
 
     @pyqtSlot(int)
