@@ -372,8 +372,8 @@ class LoadCards(baseclass):
         for c in contours:
             # Check if in bounds
             x, y, w, h = cv2.boundingRect(c)
-            # If contour is below the min pixel size, fail
-            if cv2.contourArea(c) < 5000:
+            # If bounding box is less than 5% of w or h of image, reject it
+            if w < 0.05*img.shape[1] or h < 0.05*img.shape[0]:
                 continue
             # If contour touches edge, fail
             if (
@@ -385,15 +385,6 @@ class LoadCards(baseclass):
                 continue
             roi_rectangles.append((x, y, w, h))
         return roi_rectangles
-
-    """def clickDraw(self):
-        QApplication.setOverrideCursor(QCursor(Qt.CursorShape.CrossCursor))
-        pw: pg.PlotWidget = self.ui.plotWidget
-        pw.getPlotItem().getViewBox().setMouseMode(pg.ViewBox.RectMode)
-        pw.sceneObj.sigMouseClicked[object].connect(self.clicked)
-           
-    def clicked(self):
-        print('clickec')"""
 
 
 class LoadCardsPreBatch(baseclass_pre):
