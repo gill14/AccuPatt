@@ -248,7 +248,7 @@ def get_string_simulation_view_window() -> str:
     )
 
 
-def set_String_simulation_view_window(value=str):
+def set_string_simulation_view_window(value=str):
     QSettings().setValue(_STRING_SIMULATION_VIEW_WINDOW, value)
 
 
