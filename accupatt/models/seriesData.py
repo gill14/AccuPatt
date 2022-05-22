@@ -144,7 +144,7 @@ class SeriesData:
     # Run USDA Model on input params and observables
     def calc_droplet_stats(
         self, string_included=False, cards_included=False
-    ) -> tuple[int, int, int, float, float, str, float]:
+    ) -> tuple[str,str,str,str,str]:
         model = AtomizationModelMulti()
         for n in self.info.nozzles:
             model.addNozzleSet(
@@ -159,12 +159,17 @@ class SeriesData:
                 angle=n.deflection,
                 quantity=n.quantity,
             )
+        dv01 = model.dv01()
+        dv05 = model.dv05()
+        dv09 = model.dv09()
+        #pl100 = model.p_lt_100()
+        #pl200 = model.p_lt_200()
+        dsc = model.dsc()
+        rs = model.rs()
         return (
-            model.dv01(),
-            model.dv05(),
-            model.dv09(),
-            model.p_lt_100(),
-            model.p_lt_100(),
-            model.dsc(),
-            model.rs(),
+            f"{dv01} μm" if dv01 > 0 else "-",
+            f"{dv05} μm" if dv05 > 0 else "-",
+            f"{dv09} μm" if dv09 > 0 else "-",
+            dsc if dsc != "" else "-",
+            f"{rs:.2f}" if dv01 > 0 and dv05 > 0 else "-",
         )

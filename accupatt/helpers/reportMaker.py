@@ -572,7 +572,7 @@ class ReportMaker:
         tablestyle_alt = self.tablestyle_with_headers + [
             ("BACKGROUND", (3, 6), (3, -1), colors.lightgrey)
         ]
-        dv01, dv05, dv09, plt100, plt200, dsc, rs = self.s.calc_droplet_stats(
+        dv01, dv05, dv09, dsc, rs = self.s.calc_droplet_stats(
             cards_included=True
         )
         data = []
@@ -588,10 +588,10 @@ class ReportMaker:
             )
         data[1][0] = TTR(f"Composite - {passName}")
         data[1][3] = dsc
-        data[2][3] = f"{dv01} μm"
-        data[3][3] = f"{dv05} μm"
-        data[4][3] = f"{dv09} μm"
-        data[5][3] = f"{rs:.2f}"
+        data[2][3] = dv01
+        data[3][3] = dv05
+        data[4][3] = dv09
+        data[5][3] = rs
         return Table(data, style=tablestyle_alt)
 
     def _list_disclaimers(self, passData: Pass):
