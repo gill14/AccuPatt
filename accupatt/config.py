@@ -4,7 +4,7 @@ from PyQt6.QtCore import QSettings
 
 VERSION_MAJOR = 2
 VERSION_MINOR = 0
-VERSION_RELEASE = 9
+VERSION_RELEASE = 10
 
 # For clearning all QSettings
 def clear_all_settings():
@@ -743,6 +743,7 @@ def get_spread_factor_equation() -> str:
 
 def set_spread_factor_equation(value: str):
     QSettings().setValue(_SPREAD_METHOD, value)
+
 
 # SprayCard Plot Options
 
