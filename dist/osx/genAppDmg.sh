@@ -1,11 +1,9 @@
 #!/bin/bash
-#Bash file to turn AccuStain jar into app and dmg
+#Bash file to turn AccuPatt app container into a .dmg for distribution
 
 #Set location
 SCRIPT="$BASH_SOURCE"
-#echo "SCRIPT = $SCRIPT"
 SCRIPTPATH="$(dirname "$SCRIPT")"
-#echo "SCRIPTPATH = $SCRIPTPATH"
 
 #Remove old files
 rm "$SCRIPTPATH"/*.dmg

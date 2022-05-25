@@ -1,5 +1,5 @@
 """
-This script will generate the a .exe file with dependents in same dir
+This script will generate the .exe file with dependents in same dir
 
 Usage:
     poetry run python bundle_win.py
@@ -9,6 +9,15 @@ import subprocess
 import os
 import sys
 import PyInstaller.__main__
+import accupatt.config as cfg
+
+# Update Setup Script Version
+VERSION = f'{cfg.VERSION_MAJOR}.{cfg.VERSION_MINOR}.{cfg.VERSION_RELEASE}'
+with open("./dist/win/innoSetupScript.iss", "r", encoding="utf-8") as file:
+    data = file.readlines()
+data[4] = f"#define MyAppVersion \"{VERSION}\"\n"
+with open("./dist/win/innoSetupScript.iss", "w", encoding="utf-8") as file:
+    file.writelines(data)
 
 if sys.platform == 'win32':
     
