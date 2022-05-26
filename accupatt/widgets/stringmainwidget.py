@@ -6,10 +6,8 @@ from PyQt6.QtCore import QDate, Qt, pyqtSignal, pyqtSlot, QSignalBlocker
 from PyQt6.QtWidgets import (
     QPushButton,
     QCheckBox,
-    QComboBox,
     QListWidget,
     QListWidgetItem,
-    QMessageBox,
     QRadioButton,
     QSlider,
     QSpinBox,
@@ -37,7 +35,6 @@ class StringMainWidget(baseclass):
         super().__init__(*args, **kwargs)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
-        self.parent = parent
         # Typed UI Accessors, connect built-in signals to custom slots
         self.listWidgetPass: QListWidget = self.ui.listWidgetPass
         self.listWidgetPass.itemSelectionChanged.connect(self.passSelectionChanged)
@@ -120,17 +117,37 @@ class StringMainWidget(baseclass):
         self.updatePassListWidget(index_to_select=-1)
         # Update the Pass Data Mod Options Silently, then plot individuals
         self.passSelectionChanged()
-        # Update Adjusted Swath
-        sw = self.seriesData.string.swath_adjusted
-        sw_units = self.seriesData.string.swath_units
+        # Create Average Pattern and apply Mods Silently
+        self._updatePlots(modify=True)
+        # Update Adjusted Swath Control Limits Silently
+        self.setAdjustedSwathFromTargetSwath(replace_adjusted_swath=False, update_plots=False)
+        # Update Adjusted Swath, then plot composites and simulations
+        self.swathAdjustedChanged(swath=self.seriesData.string.swath_adjusted)
+
+    @pyqtSlot()
+    def setAdjustedSwathFromTargetSwath(self, replace_adjusted_swath=True, update_plots=True):
+        swath = self.seriesData.info.swath
+        swath_units = self.seriesData.info.swath_units
+        # Update Card Adjusted Swath
+        if replace_adjusted_swath:
+            self.seriesData.string.swath_adjusted = swath
+            self.seriesData.string.swath_units = swath_units
+        # Update UI
         with QSignalBlocker(self.sliderSimulatedSwath):
-            self.sliderSimulatedSwath.setValue(sw)
-            self.sliderSimulatedSwath.setMinimum(round(0.5 * float(sw)))
-            self.sliderSimulatedSwath.setMaximum(round(1.5 * float(sw)))
+            self.sliderSimulatedSwath.setValue(swath)
+            self.sliderSimulatedSwath.setMinimum(round(0.5 * float(swath)))
+            self.sliderSimulatedSwath.setMaximum(round(1.5 * float(swath)))
         with QSignalBlocker(self.spinBoxSwathAdjusted):
-            self.spinBoxSwathAdjusted.setValue(sw)
-            self.spinBoxSwathAdjusted.setSuffix(" " + sw_units)
-        self._updatePlots(modify=True, composites=True, simulations=True)
+            self.spinBoxSwathAdjusted.setValue(swath)
+            self.spinBoxSwathAdjusted.setSuffix(" " + swath_units)
+        if update_plots:
+            self._updatePlots(modify=True, composites=True, simulations=True)
+
+    @pyqtSlot()
+    def repaint(self):
+        print('repaint called')
+        size = self.plotWidgetAverage.size()
+        self.plotWidgetAverage.canvas.draw()
 
     """
     Pass List Widget
@@ -162,7 +179,7 @@ class StringMainWidget(baseclass):
             item.setCheckState(Qt.CheckState.PartiallyChecked)
         # Update SeriesData -> Pass object
         p = self.seriesData.passes[self.listWidgetPass.row(item)]
-        p.string_include_in_composite = item.checkState() == Qt.CheckState.Checked
+        p.string_include_in_composite = (item.checkState() == Qt.CheckState.Checked)
         # Replot composites, simulations
         self._updatePlots(modify=True, composites=True, simulations=True)
 
