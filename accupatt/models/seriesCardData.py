@@ -23,6 +23,14 @@ class SeriesCardData:
         self.center_method = cfg.get_center_method()
         self.simulated_adjascent_passes = 2
 
+    def set_swath_adjusted(self, string) -> bool:
+        try:
+            int(float(string))
+        except ValueError:
+            return False
+        self.swath_adjusted = int(float(string))
+        return True
+    
     def _get_active_passes(self) -> list[Pass]:
         return [
             p for p in self.passes if p.cards_include_in_composite and p.has_card_data()

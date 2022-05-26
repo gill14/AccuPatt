@@ -346,7 +346,6 @@ class SeriesInfoWidget(baseclass):
     @pyqtSlot()
     def _commit_swath(self):
         self.info.set_swath(self.ui.lineEditSwath.text())
-        self.info.set_swath_adjusted(self.ui.lineEditSwath.text())
         self.target_swath_changed.emit()
 
     @pyqtSlot(str)
