@@ -13,14 +13,12 @@ Ui_Form, baseclass = uic.loadUiType(
 
 class PassManager(baseclass):
 
-    pass_list_updated = pyqtSignal(list)
-
     def __init__(self, passes=None, parent=None):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
-        self.tm = PassTable(copy.copy(passes), self)
+        self.tm = PassTable(passes, self)
         self.tv: QTableView = self.ui.tableView
         self.tv.setModel(self.tm)
         self.tv.setItemDelegateForColumn(
@@ -58,7 +56,6 @@ class PassManager(baseclass):
         self.tm.removePass(self.ui.tableView.selectedIndexes())
 
     def accept(self):
-        self.pass_list_updated.emit(copy.copy(self.tm.pass_list))
         # Update default if requested
         if self.ui.checkBoxUpdateDefaultNumberOfPasses.isChecked():
             cfg.set_number_of_passes(len(self.tm.pass_list))
