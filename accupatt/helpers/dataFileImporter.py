@@ -64,15 +64,13 @@ def convert_xlsx_to_db(file, s: SeriesData = None, prog=None) -> str:
     return file_db
 
 
-def load_from_accupatt_1_file(file) -> SeriesData:
+def load_from_accupatt_1_file(file, s: SeriesData):
     # indicator for metric
     isMetric = False
 
     # Load entire WB into dict of sheets
     df_map = pd.read_excel(file, sheet_name=None, header=None)
 
-    # initialize SeriesData object to store all info
-    s = SeriesData()
     i = s.info
     # Pull data from Fly-In Tab
     df = df_map["Fly-In Data"].fillna("")
@@ -117,7 +115,8 @@ def load_from_accupatt_1_file(file) -> SeriesData:
     i.set_pressure(df.iat[18, 1])
     i.set_rate(df.iat[19, 1])
     i.set_swath(df.iat[20, 1])
-    i.set_swath_adjusted(df.iat[20, 1])  # Just in case it isn't set below
+    s.string.set_swath_adjusted(df.iat[20, 1])  # Just in case it isn't set below
+    s.cards.set_swath_adjusted(df.iat[20, 1])  # Just in case it isn't set below
     i.set_wingspan(df.iat[27, 1])
     i.set_boom_width(df.iat[28, 1])
     i.set_boom_drop(df.iat[30, 1])
@@ -130,7 +129,8 @@ def load_from_accupatt_1_file(file) -> SeriesData:
         i.zip = df.iat[5, 2]
         if i.zip != "":
             i.zip = str(int(i.zip))
-        i.set_swath_adjusted(df.iat[20, 2])
+        s.string.set_swath_adjusted(df.iat[20, 2])  # Just in case it isn't set below
+    s.cards.set_swath_adjusted(df.iat[20, 2])
     # Set units for series/passes based on 'metric' identifier
     isMetric = df.iat[35, 1] == "TRUE"
     s.info.swath_units = cfg.UNIT_M if isMetric else cfg.UNIT_FT
@@ -237,8 +237,6 @@ def load_from_accupatt_1_file(file) -> SeriesData:
             c.spread_factor_b = spread_b
             c.spread_factor_c = spread_c
             p.cards.card_list.append(c)
-
-    return s
 
 
 def translateNozzle(id, type, size, defl, quant) -> Nozzle:
