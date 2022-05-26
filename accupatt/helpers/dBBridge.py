@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import alembic.config
 from datetime import datetime
 
 import pandas as pd
@@ -21,6 +22,14 @@ Loading
 
 
 def load_from_db(file: str, s: SeriesData, load_only_info=False):
+    # Use Alembic to convert db to most current
+    alembic_args = [
+        "--raiseerr",
+        f"-xdbPath=sqlite:////{file}",
+        "upgrade",
+        "head",
+    ]
+    alembic.config.main(argv=alembic_args)
     # Opens a file connection to the db
     with sqlite3.connect(file) as conn:
         # Get a cursor object
@@ -50,15 +59,25 @@ def load_from_db(file: str, s: SeriesData, load_only_info=False):
 def _load_table_series(c: sqlite3.Cursor, s: SeriesData):
     i = s.info
     c.execute(
-        """SELECT id, series, created, modified, notes_setup, notes_analyst FROM series"""
+        """SELECT id, series, created, modified, notes_setup, notes_analyst, version_major, version_minor, version_release FROM series"""
     )
-    s.id, i.series, i.created, i.modified, i.notes_setup, i.notes_analyst = c.fetchone()
+    (
+        s.id,
+        i.series,
+        i.created,
+        i.modified,
+        i.notes_setup,
+        i.notes_analyst,
+        version_major,
+        version_minor,
+        version_release,
+    ) = c.fetchone()
 
 
 def _load_table_series_string(c: sqlite3.Cursor, s: SeriesData):
     ss: SeriesStringData = s.string
     c.execute(
-        """SELECT average_center, average_center_method, average_smooth, average_smooth_window, average_smooth_order, equalize_integrals, simulated_adjascent_passes FROM series_string WHERE series_id = ?""",
+        """SELECT average_center, average_center_method, average_smooth, average_smooth_window, average_smooth_order, equalize_integrals, swath_adjusted, simulated_adjascent_passes FROM series_string WHERE series_id = ?""",
         (s.id,),
     )
     (
@@ -68,6 +87,7 @@ def _load_table_series_string(c: sqlite3.Cursor, s: SeriesData):
         ss.smooth_window,
         ss.smooth_order,
         ss.equalize_integrals,
+        ss.swath_adjusted,
         ss.simulated_adjascent_passes,
     ) = c.fetchone()
 
@@ -75,12 +95,13 @@ def _load_table_series_string(c: sqlite3.Cursor, s: SeriesData):
 def _load_table_series_spray_card(c: sqlite3.Cursor, s: SeriesData):
     scd: SeriesCardData = s.cards
     c.execute(
-        """SELECT average_center, average_center_method, simulated_adjascent_passes FROM series_spray_card WHERE series_id = ?""",
+        """SELECT average_center, average_center_method, swath_adjusted, simulated_adjascent_passes FROM series_spray_card WHERE series_id = ?""",
         (s.id,),
     )
     (
         scd.center,
         scd.center_method,
+        scd.swath_adjusted,
         scd.simulated_adjascent_passes,
     ) = c.fetchone()
 
@@ -136,12 +157,11 @@ def _load_table_spray_system(c: sqlite3.Cursor, s: SeriesData, alt_id: str = "")
         id = alt_id
     i = s.info
     c.execute(
-        """SELECT swath, swath_adjusted, swath_units, rate, rate_units, pressure, pressure_units, boom_width, boom_width_units, boom_drop, boom_drop_units, nozzle_spacing, nozzle_spacing_units FROM spray_system WHERE series_id = ?""",
+        """SELECT swath, swath_units, rate, rate_units, pressure, pressure_units, boom_width, boom_width_units, boom_drop, boom_drop_units, nozzle_spacing, nozzle_spacing_units FROM spray_system WHERE series_id = ?""",
         (id,),
     )
     (
         i.swath,
-        i.swath_adjusted,
         i.swath_units,
         i.rate,
         i.rate_units,
@@ -370,9 +390,9 @@ def _update_table_series(c: sqlite3.Cursor, s: SeriesData):
 def _update_table_series_string(c: sqlite3.Cursor, s: SeriesData):
     ss: SeriesStringData = s.string
     c.execute(
-        """INSERT INTO series_string (series_id, average_center, average_center_method, average_smooth, average_smooth_window, average_smooth_order, equalize_integrals, simulated_adjascent_passes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """INSERT INTO series_string (series_id, average_center, average_center_method, average_smooth, average_smooth_window, average_smooth_order, equalize_integrals, swath_adjusted, simulated_adjascent_passes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(series_id) DO UPDATE SET
-                    average_center = excluded.average_center, average_center_method = excluded.average_center_method, average_smooth = excluded.average_smooth, average_smooth_window = excluded.average_smooth_window, average_smooth_order = excluded.average_smooth_window, equalize_integrals = excluded.equalize_integrals, simulated_adjascent_passes = excluded.simulated_adjascent_passes""",
+                    average_center = excluded.average_center, average_center_method = excluded.average_center_method, average_smooth = excluded.average_smooth, average_smooth_window = excluded.average_smooth_window, average_smooth_order = excluded.average_smooth_window, equalize_integrals = excluded.equalize_integrals, swath_adjusted = excluded.swath_adjusted, simulated_adjascent_passes = excluded.simulated_adjascent_passes""",
         (
             s.id,
             ss.center,
@@ -381,6 +401,7 @@ def _update_table_series_string(c: sqlite3.Cursor, s: SeriesData):
             ss.smooth_window,
             ss.smooth_order,
             ss.equalize_integrals,
+            ss.swath_adjusted,
             ss.simulated_adjascent_passes,
         ),
     )
@@ -389,13 +410,14 @@ def _update_table_series_string(c: sqlite3.Cursor, s: SeriesData):
 def _update_table_series_spray_card(c: sqlite3.Cursor, s: SeriesData):
     scd: SeriesCardData = s.cards
     c.execute(
-        """INSERT INTO series_spray_card (series_id, average_center, average_center_method, simulated_adjascent_passes) VALUES (?, ?, ?, ?)
+        """INSERT INTO series_spray_card (series_id, average_center, average_center_method, swath_adjusted, simulated_adjascent_passes) VALUES (?, ?, ?, ?, ?)
                     ON CONFLICT(series_id) DO UPDATE SET
-                    average_center = excluded.average_center, average_center_method = excluded.average_center_method, simulated_adjascent_passes = excluded.simulated_adjascent_passes""",
+                    average_center = excluded.average_center, average_center_method = excluded.average_center_method, swath_adjusted = excluded.swath_adjusted, simulated_adjascent_passes = excluded.simulated_adjascent_passes""",
         (
             s.id,
             scd.center,
             scd.center_method,
+            scd.swath_adjusted,
             scd.simulated_adjascent_passes,
         ),
     )
@@ -434,13 +456,12 @@ def _update_table_aircraft(c: sqlite3.Cursor, s: SeriesData):
 def _update_table_spray_system(c: sqlite3.Cursor, s: SeriesData):
     i = s.info
     c.execute(
-        """INSERT INTO spray_system (series_id, swath, swath_adjusted, swath_units, rate, rate_units, pressure, pressure_units, boom_width, boom_width_units, boom_drop, boom_drop_units, nozzle_spacing, nozzle_spacing_units) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """INSERT INTO spray_system (series_id, swath, swath_units, rate, rate_units, pressure, pressure_units, boom_width, boom_width_units, boom_drop, boom_drop_units, nozzle_spacing, nozzle_spacing_units) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         ON CONFLICT(series_id) DO UPDATE SET
-                        swath = excluded.swath, swath_adjusted = excluded.swath_adjusted, swath_units = excluded.swath_units, rate = excluded.rate, rate_units = excluded.rate_units, pressure = excluded.pressure, pressure_units = excluded.pressure_units,  boom_width = excluded.boom_width, boom_width_units = excluded.boom_width_units, boom_drop = excluded.boom_drop, boom_drop_units = excluded.boom_drop_units, nozzle_spacing = excluded.nozzle_spacing, nozzle_spacing_units = excluded.nozzle_spacing_units""",
+                        swath = excluded.swath, swath_units = excluded.swath_units, rate = excluded.rate, rate_units = excluded.rate_units, pressure = excluded.pressure, pressure_units = excluded.pressure_units,  boom_width = excluded.boom_width, boom_width_units = excluded.boom_width_units, boom_drop = excluded.boom_drop, boom_drop_units = excluded.boom_drop_units, nozzle_spacing = excluded.nozzle_spacing, nozzle_spacing_units = excluded.nozzle_spacing_units""",
         (
             s.id,
             i.swath,
-            i.swath_adjusted,
             i.swath_units,
             i.rate,
             i.rate_units,

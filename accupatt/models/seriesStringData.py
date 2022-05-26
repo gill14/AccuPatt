@@ -8,7 +8,7 @@ from scipy.stats import variation
 
 
 class SeriesStringData:
-    def __init__(self, passes: list[Pass], swath_units: str):
+    def __init__(self, passes: list[Pass], target_swath: int, swath_units: str):
         # Live feeds from Series Object
         self.passes = passes
         self.swath_units = swath_units
@@ -19,9 +19,18 @@ class SeriesStringData:
         self.equalize_integrals = True
         self.center = True
         self.center_method = cfg.get_center_method()
+        self.swath_adjusted = target_swath
         self.simulated_adjascent_passes = 2
         # Convenience Runtime Placeholder
         self.average = Pass(name="Average")
+
+    def set_swath_adjusted(self, string) -> bool:
+        try:
+            int(float(string))
+        except ValueError:
+            return False
+        self.swath_adjusted = int(float(string))
+        return True
 
     def modifyPatterns(self):
         active_passes = [

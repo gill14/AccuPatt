@@ -17,8 +17,10 @@ class SeriesData:
             self.id = str(uuid.uuid4())
         self.info = AppInfo()
         self.passes: list[Pass] = []
-        self.string = SeriesStringData(self.passes, self.info.swath_units)
-        self.cards = SeriesCardData(self.passes, self.info.swath_units)
+        self.string = SeriesStringData(
+            self.passes, self.info.swath, self.info.swath_units
+        )
+        self.cards = SeriesCardData(self.passes, self.info.swath, self.info.swath_units)
 
     """
     Common pass observable sharing

@@ -9,10 +9,11 @@ from scipy.stats import variation
 
 
 class SeriesCardData:
-    def __init__(self, passes: list[Pass], swath_units: str):
+    def __init__(self, passes: list[Pass], target_swath, swath_units: str):
         # Live feeds from Series Object
         self.passes = passes
         self.swath_units = swath_units
+        self.swath_adjusted = target_swath
         # Options
         # self.smooth = True
         # self.smooth_window = cfg.get_string_smooth_window()

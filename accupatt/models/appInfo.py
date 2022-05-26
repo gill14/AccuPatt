@@ -52,7 +52,6 @@ class AppInfo:
     winglets: str = "No"
 
     swath: int = 0
-    swath_adjusted: int = 50
     swath_units = "ft"
     rate: float = 0
     rate_units: str = ""
@@ -198,14 +197,6 @@ class AppInfo:
         except ValueError:
             return False
         self.swath = int(float(string))
-        return True
-
-    def set_swath_adjusted(self, string) -> bool:
-        try:
-            int(float(string))
-        except ValueError:
-            return False
-        self.swath_adjusted = int(float(string))
         return True
 
     def set_rate(self, string) -> bool:
