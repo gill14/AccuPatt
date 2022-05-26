@@ -1,11 +1,11 @@
 import matplotlib
 from matplotlib.axes import Axes
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as Canvas
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as Canvas
 from matplotlib.figure import Figure
 from PyQt6 import QtWidgets
 
 # Ensure using PyQt6 backend
-matplotlib.use("QT5Agg")
+matplotlib.use("QTAgg")
 
 # Matplotlib canvas class to create figure
 class MplCanvas(Canvas):
