@@ -18,7 +18,7 @@ Ui_Form, baseclass = uic.loadUiType(
 )
 
 
-class ReadString(baseclass):
+class StringPass(baseclass):
     def __init__(self, passData: Pass, parent=None):
         super().__init__(parent=parent)
         self.ui = Ui_Form()

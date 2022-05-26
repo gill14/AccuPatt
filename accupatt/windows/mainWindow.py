@@ -18,18 +18,18 @@ from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
 from accupatt.models.sprayCard import SprayCard
 from accupatt.models.sprayCardComposite import SprayCardComposite
+from accupatt.widgets.seriesinfowidget import SeriesInfoWidget
+from accupatt.widgets.stringmainwidget import StringMainWidget
 from accupatt.windows.cardManager import CardManager
-from accupatt.windows.editSpreadFactors import EditSpreadFactors
-from accupatt.windows.editThreshold import EditThreshold
 from accupatt.windows.passManager import PassManager
-from accupatt.windows.readString import ReadString
+
 from accupatt.widgets import (
     cardtablewidget,
     mplwidget,
     passinfowidget,
-    seriesinfowidget,
     singlecardwidget,
     splitcardwidget,
+    stringmainwidget,
 )
 from PyQt6 import uic
 from PyQt6.QtCore import QSignalBlocker, QSortFilterProxyModel, Qt, pyqtSlot
@@ -44,11 +44,11 @@ from PyQt6.QtWidgets import (
     QMenu,
     QMessageBox,
     QProgressDialog,
+    QTabWidget,
     QTableView,
 )
 
 from accupatt.windows.reportManager import ReportManager
-from accupatt.windows.stringAdvancedOptions import StringAdvancedOptions
 
 Ui_Form, baseclass = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "mainWindow.ui")
@@ -132,56 +132,12 @@ class MainWindow(baseclass):
         self.ui.actionCPCatalog.triggered.connect(self.openResourceCPCatalog)
 
         # Setup Tab Widget
-        self.ui.tabWidget.setEnabled(False)
-        # --> Setup AppInfo Tab
-        self.ui.widgetSeriesInfo.target_swath_changed.connect(self.swathTargetChanged)
-        # --> Setup String Analysis Tab
-        self.ui.listWidgetStringPass.itemSelectionChanged.connect(
-            self.stringPassSelectionChanged
-        )
-        self.ui.listWidgetStringPass.itemChanged[QListWidgetItem].connect(
-            self.stringPassItemChanged
-        )
-        self.ui.buttonReadString.clicked.connect(self.readString)
-        self.ui.checkBoxStringPassCenter.stateChanged[int].connect(
-            self.stringPassCenterChanged
-        )
-        self.ui.checkBoxStringPassSmooth.stateChanged[int].connect(
-            self.stringPassSmoothChanged
-        )
-        self.ui.checkBoxStringPassRebase.stateChanged[int].connect(
-            self.stringPassRebaseChanged
-        )
-        self.ui.stringAdvancedOptionsPass.clicked.connect(
-            self.stringAdvancedOptionsPass
-        )
-        self.ui.checkBoxStringSeriesCenter.stateChanged[int].connect(
-            self.stringSeriesCenterChanged
-        )
-        self.ui.checkBoxStringSeriesSmooth.stateChanged[int].connect(
-            self.stringSeriesSmoothChanged
-        )
-        self.ui.checkBoxStringSeriesEqualize.stateChanged[int].connect(
-            self.stringSeriesEqualizeChanged
-        )
-        self.ui.stringAdvancedOptionsSeries.clicked.connect(
-            self.stringAdvancedOptionsSeries
-        )
-        self.ui.spinBoxSwathAdjusted.valueChanged[int].connect(
-            self.swathAdjustedChanged
-        )
-        self.ui.horizontalSliderSimulatedSwath.valueChanged[int].connect(
-            self.swathAdjustedChanged
-        )
-        # --> | --> Setup Individual Passes Tab
-        # --> | --> Setup Composite Tab
-        # --> | --> Setup Simulations Tab
-        self.ui.spinBoxSimulatedSwathPasses.valueChanged[int].connect(
-            self.simulatedSwathPassesChanged
-        )
-        self.ui.radioButtonSimulationOne.toggled[bool].connect(
-            self.simulationViewWindowChanged
-        )
+        self.tabWidget: QTabWidget = self.ui.tabWidget
+        self.tabWidget.setEnabled(False)
+        self.seriesInfoWidget: SeriesInfoWidget = self.ui.widgetSeriesInfo
+        self.seriesInfoWidget.target_swath_changed.connect(self.swathTargetChanged)
+        self.stringWidget: StringMainWidget = self.ui.stringMainWidget
+        self.stringWidget.request_file_save.connect(self.saveFile)
 
         # --> Setup Card Analysis Tab
         self.ui.listWidgetCardPass.itemSelectionChanged.connect(
@@ -394,7 +350,7 @@ class MainWindow(baseclass):
         self.currentDirectory = os.path.dirname(self.currentFile)
         cfg.set_datafile_dir(self.currentDirectory)
         last_modified = "View-Only Mode"
-        if self.currentFile[-1] == "b":
+        if self.currentFile[-2:] == "db":
             self.seriesData = SeriesData()
             load_from_db(file=self.currentFile, s=self.seriesData)
             last_modified = (
@@ -411,32 +367,7 @@ class MainWindow(baseclass):
         self.ui.widgetSeriesInfo.fill_from_info(self.seriesData.info)
 
         # Update String Series Controls
-        with QSignalBlocker(self.ui.checkBoxStringSeriesCenter):
-            self.ui.checkBoxStringSeriesCenter.setChecked(self.seriesData.string.center)
-        with QSignalBlocker(self.ui.checkBoxStringSeriesSmooth):
-            self.ui.checkBoxStringSeriesSmooth.setChecked(self.seriesData.string.smooth)
-        with QSignalBlocker(self.ui.checkBoxStringSeriesEqualize):
-            self.ui.checkBoxStringSeriesEqualize.setChecked(
-                self.seriesData.string.equalize_integrals
-            )
-        with QSignalBlocker(self.ui.spinBoxSimulatedSwathPasses):
-            self.ui.spinBoxSimulatedSwathPasses.setValue(
-                self.seriesData.string.simulated_adjascent_passes
-            )
-        if (
-            cfg.get_string_simulation_view_window()
-            == cfg.STRING_SIMULATION_VIEW_WINDOW_ONE
-        ):
-            with QSignalBlocker(self.ui.radioButtonSimulationOne):
-                self.ui.radioButtonSimulationOne.setChecked(True)
-        else:
-            with QSignalBlocker(self.ui.radioButtonSimulationAll):
-                self.ui.radioButtonSimulationAll.setChecked(True)
-        with QSignalBlocker(self.ui.radioButtonSimulationOne):
-            self.ui.radioButtonSimulationOne.setChecked(
-                cfg.get_string_simulation_view_window()
-                == cfg.STRING_SIMULATION_VIEW_WINDOW_ONE
-            )
+        self.stringWidget.setData(self.seriesData)
 
         # Updates Card Series Controls
         with QSignalBlocker(self.ui.checkBoxCardSeriesCenter):
@@ -470,10 +401,7 @@ class MainWindow(baseclass):
             prog.setValue(len(card_list))
 
         # Refresh ListWidgets
-        self.updatePassListWidgets(string=True, cards=True)
-
-        # Updates individual pass view and capture/edit button
-        self.stringPassSelectionChanged()
+        self.updatePassListWidgets(string=False, cards=True)
 
         # Updates spray card views based on potentially new pass list
         self.cardPassSelectionChanged()
@@ -500,16 +428,16 @@ class MainWindow(baseclass):
         self, string=False, string_index=-1, cards=False, cards_index=-1
     ):
         # ListWidget String Pass
-        if string:
-            with QSignalBlocker(lwps := self.ui.listWidgetStringPass):
-                lwps.clear()
-                for p in self.seriesData.passes:
-                    self._addPassListWidgetItem(
-                        lwps, p.name, p.has_string_data(), p.string_include_in_composite
-                    )
-                lwps.setCurrentRow(
-                    string_index if string_index >= 0 else lwps.count() - 1
+        """if string:
+        with QSignalBlocker(lwps := self.ui.listWidgetStringPass):
+            lwps.clear()
+            for p in self.seriesData.passes:
+                self._addPassListWidgetItem(
+                    lwps, p.name, p.has_string_data(), p.string_include_in_composite
                 )
+            lwps.setCurrentRow(
+                string_index if string_index >= 0 else lwps.count() - 1
+            )"""
 
         # ListWidget Cards Pass
         if cards:
@@ -602,11 +530,11 @@ class MainWindow(baseclass):
             reportMaker = ReportMaker(file=savefile, seriesData=self.seriesData)
             if any([p.has_string_data() for p in self.seriesData.passes]):
                 reportMaker.report_safe_string(
-                    overlayWidget=self.ui.plotWidgetOverlay,
-                    averageWidget=self.ui.plotWidgetAverage,
-                    racetrackWidget=self.ui.plotWidgetRacetrack,
-                    backAndForthWidget=self.ui.plotWidgetBackAndForth,
-                    tableView=self.ui.tableWidgetCV,
+                    overlayWidget=self.stringWidget.plotWidgetOverlay,
+                    averageWidget=self.stringWidget.plotWidgetAverage,
+                    racetrackWidget=self.stringWidget.plotWidgetRacetrack,
+                    backAndForthWidget=self.stringWidget.plotWidgetBackAndForth,
+                    tableView=self.stringWidget.tableWidgetCV,
                 )
             for row, p in enumerate(self.seriesData.passes):
                 if (
@@ -662,12 +590,7 @@ class MainWindow(baseclass):
 
     @pyqtSlot()
     def reportManager(self):
-        # Create popup and send current appInfo vals to popup
-        e = ReportManager(self)
-        # Connect Slot to retrieve Vals back from popup
-        # e.pass_list_updated[list].connect(self.updateFromPassManager)
-        # Start Loop
-        e.exec()
+        ReportManager(self).exec()
 
     @pyqtSlot()
     def about(self):
@@ -708,10 +631,10 @@ class MainWindow(baseclass):
         # Update the swath adjustment slider
         sw = self.seriesData.info.swath
         if sw == 0:
-            sw = self.seriesData.info.swath_adjusted
+            sw = self.seriesData.cards.swath_adjusted
         minn = float(sw) * 0.5
         maxx = float(sw) * 1.5
-        with QSignalBlocker(self.ui.horizontalSliderSimulatedSwath):
+        """with QSignalBlocker(self.ui.horizontalSliderSimulatedSwath):
             self.ui.horizontalSliderSimulatedSwath.setValue(
                 self.seriesData.info.swath_adjusted
             )
@@ -725,17 +648,17 @@ class MainWindow(baseclass):
         # Must update all string plots for new labels and potential new adjusted swath
         self.updateStringPlots(
             modify=True, individuals=True, composites=True, simulations=True
-        )
+        )"""
         with QSignalBlocker(self.ui.horizontalSliderSimulatedSwath2):
             self.ui.horizontalSliderSimulatedSwath2.setValue(
-                self.seriesData.info.swath_adjusted
+                self.seriesData.cards.swath_adjusted
             )
             self.ui.horizontalSliderSimulatedSwath2.setMinimum(round(minn))
             self.ui.horizontalSliderSimulatedSwath2.setMaximum(round(maxx))
         with QSignalBlocker(self.ui.spinBoxSwathAdjusted2):
-            self.ui.spinBoxSwathAdjusted2.setValue(self.seriesData.info.swath_adjusted)
+            self.ui.spinBoxSwathAdjusted2.setValue(self.seriesData.cards.swath_adjusted)
             self.ui.spinBoxSwathAdjusted2.setSuffix(
-                " " + self.seriesData.info.swath_units
+                " " + self.seriesData.cards.swath_units
             )
         # Must update all string plots for new labels and potential new adjusted swath
         self.updateCardPlots(individuals=True, composites=True, simulations=True)
@@ -743,11 +666,11 @@ class MainWindow(baseclass):
     @pyqtSlot(int)
     def swathAdjustedChanged(self, swath):
         self.seriesData.info.swath_adjusted = swath
-        with QSignalBlocker(self.ui.spinBoxSwathAdjusted):
+        """with QSignalBlocker(self.ui.spinBoxSwathAdjusted):
             self.ui.spinBoxSwathAdjusted.setValue(swath)
         with QSignalBlocker(self.ui.horizontalSliderSimulatedSwath):
             self.ui.horizontalSliderSimulatedSwath.setValue(swath)
-        self.updateStringPlots(composites=True, simulations=True)
+        self.updateStringPlots(composites=True, simulations=True)"""
         with QSignalBlocker(self.ui.spinBoxSwathAdjusted2):
             self.ui.spinBoxSwathAdjusted2.setValue(swath)
         with QSignalBlocker(self.ui.horizontalSliderSimulatedSwath2):
@@ -757,215 +680,6 @@ class MainWindow(baseclass):
     """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """''
     String Analysis
     """ """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
-
-    @pyqtSlot()
-    def stringPassSelectionChanged(self):
-        if passData := self.getCurrentStringPass():
-            self.ui.checkBoxStringPassCenter.setChecked(passData.string.center)
-            self.ui.checkBoxStringPassSmooth.setChecked(passData.string.smooth)
-            self.ui.checkBoxStringPassRebase.setChecked(passData.string.rebase)
-            self.ui.checkBoxStringPassCenter.setEnabled(not passData.string.rebase)
-            self.updateStringPlots(individuals=True)
-            # Update the info labels on the individual pass tab
-            if passData.has_string_data():
-                self.ui.buttonReadString.setText(f"Edit {passData.name}")
-            else:
-                self.ui.buttonReadString.setText(f"Capture {passData.name}")
-
-    @pyqtSlot(QListWidgetItem)
-    def stringPassItemChanged(self, item: QListWidgetItem):
-        # Checkstate on item changed
-        # If new state is unchecked, make it partial
-        if item.checkState() == Qt.CheckState.Unchecked:
-            item.setCheckState(Qt.CheckState.PartiallyChecked)
-        # Update SeriesData -> Pass object
-        p = self.seriesData.passes[self.ui.listWidgetStringPass.row(item)]
-        p.string_include_in_composite = item.checkState() == Qt.CheckState.Checked
-        # Replot composites, simulations
-        self.updateStringPlots(modify=True, composites=True, simulations=True)
-
-    @pyqtSlot()
-    def readString(self):
-        if passData := self.getCurrentStringPass():
-            # Create popup and send current appInfo vals to popup
-            e = ReadString(passData=passData, parent=self)
-            # Connect Slot to retrieve Vals back from popup
-            e.accepted.connect(self.readStringFinished)
-            # Start Loop
-            e.show()
-
-    @pyqtSlot()
-    def readStringFinished(self):
-        # Auto-populate pass observables to blank entries
-        self.seriesData.fill_common_pass_observables()
-        # Handles checking of string pass list widget
-        self.updatePassListWidgets(
-            string=True, string_index=self.ui.listWidgetStringPass.currentRow()
-        )
-        # Replot all but individuals
-        self.updateStringPlots(
-            modify=True, individuals=False, composites=True, simulations=True
-        )
-        # Plot individuals and update capture button text
-        self.stringPassSelectionChanged()
-        self.ui.tabWidgetString.setCurrentIndex(0)
-        # Update datafile
-        self.saveFile()
-
-    @pyqtSlot(int)
-    def stringPassCenterChanged(self, checkstate):
-        if passData := self.getCurrentStringPass():
-            passData.string.center = Qt.CheckState(checkstate) == Qt.CheckState.Checked
-            self.updateStringPlots(modify=True, composites=True, simulations=True)
-
-    @pyqtSlot(int)
-    def stringPassSmoothChanged(self, checkstate):
-        if passData := self.getCurrentStringPass():
-            passData.string.smooth = Qt.CheckState(checkstate) == Qt.CheckState.Checked
-            self.updateStringPlots(
-                modify=True, individuals=True, composites=True, simulations=True
-            )
-
-    @pyqtSlot(int)
-    def stringPassRebaseChanged(self, checkstate):
-        if passData := self.getCurrentStringPass():
-            passData.string.rebase = Qt.CheckState(checkstate) == Qt.CheckState.Checked
-            if passData.string.rebase:
-                passData.string.center = True
-                self.ui.checkBoxStringPassCenter.setChecked(passData.string.center)
-            self.ui.checkBoxStringPassCenter.setEnabled(not passData.string.rebase)
-            self.updateStringPlots(
-                modify=True, individuals=True, composites=True, simulations=True
-            )
-
-    @pyqtSlot(int)
-    def stringSeriesCenterChanged(self, checkstate):
-        self.seriesData.string.center = (
-            Qt.CheckState(checkstate) == Qt.CheckState.Checked
-        )
-        self.updateStringPlots(modify=True, composites=True, simulations=True)
-
-    @pyqtSlot(int)
-    def stringSeriesSmoothChanged(self, checkstate):
-        self.seriesData.string.smooth = (
-            Qt.CheckState(checkstate) == Qt.CheckState.Checked
-        )
-        self.updateStringPlots(modify=True, composites=True, simulations=True)
-
-    @pyqtSlot(int)
-    def stringSeriesEqualizeChanged(self, checkstate):
-        self.seriesData.string.equalize_integrals = (
-            Qt.CheckState(checkstate) == Qt.CheckState.Checked
-        )
-        self.updateStringPlots(modify=True, composites=True, simulations=True)
-
-    @pyqtSlot()
-    def stringAdvancedOptionsPass(self):
-        if passData := self.getCurrentStringPass():
-            e = StringAdvancedOptions(passData=passData, parent=self)
-            e.accepted.connect(self.stringAdvancedOptionsPassUpdated)
-            e.exec()
-
-    def stringAdvancedOptionsPassUpdated(self):
-        self.updateStringPlots(
-            modify=True, individuals=False, composites=True, simulations=True
-        )
-
-    @pyqtSlot()
-    def stringAdvancedOptionsSeries(self):
-        e = StringAdvancedOptions(seriesData=self.seriesData, parent=self)
-        e.accepted.connect(self.stringAdvancedOptionsSeriesUpdated)
-        e.exec()
-
-    def stringAdvancedOptionsSeriesUpdated(self):
-        self.updateStringPlots(modify=True, composites=True, simulations=True)
-        self.saveFile()
-
-    def updateStringPlots(
-        self, modify=False, individuals=False, composites=False, simulations=False
-    ):
-        if modify:
-            self.seriesData.string.modifyPatterns()
-        if individuals:
-            if (passData := self.getCurrentStringPass()) != None:
-                # Plot Individual
-                line_left, line_right, line_vertical = passData.string.plotIndividual(
-                    self.ui.plotWidgetIndividual
-                )
-                # Connect Individual trim handle signals to slots for updating
-                if (
-                    line_left is not None
-                    and line_right is not None
-                    and line_vertical is not None
-                ):
-                    line_left.sigPositionChangeFinished.connect(self._updateTrimL)
-                    line_right.sigPositionChangeFinished.connect(self._updateTrimR)
-                    line_vertical.sigPositionChangeFinished.connect(
-                        self._updateTrimFloor
-                    )
-                # Plot Individual Trim
-                passData.string.plotIndividualTrim(self.ui.plotWidgetIndividualTrim)
-        if composites:
-            self.seriesData.string.plotOverlay(self.ui.plotWidgetOverlay)
-            self.seriesData.string.plotAverage(
-                self.ui.plotWidgetAverage, self.seriesData.info.swath_adjusted
-            )
-        if simulations:
-            self.seriesData.string.plotRacetrack(
-                mplWidget=self.ui.plotWidgetRacetrack,
-                swath_width=self.seriesData.info.swath_adjusted,
-                showEntireWindow=self.ui.radioButtonSimulationAll.isChecked(),
-            )
-            self.seriesData.string.plotBackAndForth(
-                mplWidget=self.ui.plotWidgetBackAndForth,
-                swath_width=self.seriesData.info.swath_adjusted,
-                showEntireWindow=self.ui.radioButtonSimulationAll.isChecked(),
-            )
-            self.seriesData.string.plotCVTable(
-                self.ui.tableWidgetCV, self.seriesData.info.swath_adjusted
-            )
-
-    @pyqtSlot(object)
-    def _updateTrimL(self, object):
-        self.getCurrentStringPass().string.user_set_trim_left(object.value())
-        self.updateStringPlots(
-            modify=True, individuals=True, composites=True, simulations=True
-        )
-
-    @pyqtSlot(object)
-    def _updateTrimR(self, object):
-        self.getCurrentStringPass().string.user_set_trim_right(object.value())
-        self.updateStringPlots(
-            modify=True, individuals=True, composites=True, simulations=True
-        )
-
-    @pyqtSlot(object)
-    def _updateTrimFloor(self, object):
-        self.getCurrentStringPass().string.user_set_trim_floor(object.value())
-        self.updateStringPlots(
-            modify=True, individuals=True, composites=True, simulations=True
-        )
-
-    @pyqtSlot(int)
-    def simulatedSwathPassesChanged(self, numAdjascentPasses):
-        self.seriesData.string.simulated_adjascent_passes = numAdjascentPasses
-        self.updateStringPlots(simulations=True)
-
-    @pyqtSlot(bool)
-    def simulationViewWindowChanged(self, viewOneIsChecked):
-        cfg.set_string_simulation_view_window(
-            cfg.STRING_SIMULATION_VIEW_WINDOW_ONE
-            if viewOneIsChecked
-            else cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL
-        )
-        self.updateStringPlots(simulations=True)
-
-    def getCurrentStringPass(self) -> Pass:
-        passData: Pass = None
-        # Check if a pass is selected
-        if (passIndex := self.ui.listWidgetStringPass.currentRow()) != -1:
-            passData = self.seriesData.passes[passIndex]
-        return passData
 
     """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """''
     Spray Card Analysis
@@ -1116,16 +830,16 @@ class MainWindow(baseclass):
         if simulations:
             self.seriesData.cards.plotRacetrack(
                 mplWidget=self.ui.plotWidgetCardRacetrack,
-                swath_width=self.seriesData.info.swath_adjusted,
+                swath_width=self.seriesData.cards.swath_adjusted,
                 showEntireWindow=self.ui.radioButtonCardSimulationAll.isChecked(),
             )
             self.seriesData.cards.plotBackAndForth(
                 mplWidget=self.ui.plotWidgetCardBackAndForth,
-                swath_width=self.seriesData.info.swath_adjusted,
+                swath_width=self.seriesData.cards.swath_adjusted,
                 showEntireWindow=self.ui.radioButtonCardSimulationAll.isChecked(),
             )
             self.seriesData.cards.plotCVTable(
-                self.ui.tableWidgetCardCV, self.seriesData.info.swath_adjusted
+                self.ui.tableWidgetCardCV, self.seriesData.cards.swath_adjusted
             )
         if distributions:
             composite = SprayCardComposite()
