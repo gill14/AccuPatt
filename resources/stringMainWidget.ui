@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1100</width>
-    <height>600</height>
+    <height>572</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -1021,15 +1021,15 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PlotWidget</class>
-   <extends>QGraphicsView</extends>
-   <header>pyqtgraph</header>
-  </customwidget>
-  <customwidget>
    <class>MplWidget</class>
    <extends>QWidget</extends>
    <header>accupatt/widgets/mplwidget.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PlotWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>pyqtgraph</header>
   </customwidget>
  </customwidgets>
  <resources/>
