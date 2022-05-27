@@ -1,6 +1,7 @@
 import matplotlib.ticker
 import numpy as np
 import pandas as pd
+from scipy import interpolate
 import accupatt.config as cfg
 from accupatt.helpers.atomizationModel import AtomizationModel
 
@@ -138,8 +139,11 @@ class PassCardData:
             # Colorize
             if colorize:
                 # Get a np array of dsc's calculated for each interpolated loc
-                dv01_i = np.interp(locs_i, d["loc"], d["dv01"])
-                dv05_i = np.interp(locs_i, d["loc"], d["dv05"])
+                kind = "linear" if cfg.get_card_plot_colorize_interpolate() else "nearest"
+                interpolator = interpolate.interp1d(d["loc"], d["dv01"], kind = kind)
+                dv01_i = interpolator(locs_i)
+                interpolator = interpolate.interp1d(d["loc"], d["dv05"], kind = kind)
+                dv05_i = interpolator(locs_i)
                 dsc_i = np.array(
                     [
                         AtomizationModel().dsc(dv01=dv01, dv05=dv05)
@@ -157,11 +161,21 @@ class PassCardData:
                         locs_i,
                         np.ma.masked_where(dsc_i != category, cov_i),
                         color=color,
-                        label=category,
+                        alpha=0.7,
+                        label=category
                     )
                 ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+            else:
+                ax.fill_between(
+                    locs_i,
+                    0,
+                    cov_i,
+                    alpha=0.7
+                )
             # Plot base coverage without dsc fill
             ax.plot(locs_i, cov_i, color="black")
         # Draw the plots
-        mplWidget.canvas.fig.set_tight_layout(True)
+        # Must set ylim after plotting
+        mplWidget.canvas.ax.set_ylim(bottom=0, auto=None)
         mplWidget.canvas.draw()
+        

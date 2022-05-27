@@ -73,7 +73,10 @@ class SeriesCardData:
             x = np.array(data["loc"], dtype=float)
             y = np.array(data["cov"], dtype=float)
             # Plot non-zero data, and label the series with the pass name
-            mplWidget.canvas.ax.plot(x[y != 0], y[y != 0], label=p.name)
+            mplWidget.canvas.ax.plot(x[y != 0],
+                                     y[y != 0],
+                                     linewidth=1,
+                                     label=p.name)
         # Add a legend if applicable
         if len(active_passes) > 1:
             mplWidget.canvas.ax.legend()
@@ -98,6 +101,25 @@ class SeriesCardData:
         avgPass.plotCoverage(
             mplWidget=mplWidget, loc_units=self.swath_units, colorize=colorize, d=avg
         )
+        if cfg.get_card_plot_average_swath_box():
+            # Find average deposition inside swath width
+            swath_width = self.swath_adjusted
+            a_c = avg[(avg["loc"] >= -swath_width/2) & (avg["loc"] <= swath_width/2)]
+            a_c_mean = a_c["cov"].mean(axis="rows")
+            mplWidget.canvas.ax.plot(
+                    [-swath_width/2, -swath_width/2, swath_width/2, swath_width/2],
+                    [0, a_c_mean/2, a_c_mean/2, 0],
+                    color="black",
+                    linewidth=1,
+                    dashes=(3,2),
+                    label="Effective Swath"
+                )
+            if not colorize:
+                mplWidget.canvas.ax.legend()
+            # Must set ylim after plotting
+            mplWidget.canvas.ax.set_ylim(bottom=0, auto=None)
+            # Plot it
+            mplWidget.canvas.draw()
 
     def _config_mpl_plotter(self, mplWidget: MplWidget):
         mplWidget.canvas.ax.clear()
@@ -170,7 +192,11 @@ class SeriesCardData:
             y_fill_cum = np.zeros(xfill.size)
             for i in range(len(y_fills)):
                 mplWidget.canvas.ax.fill_between(
-                    xfill, y_fill_cum, y_fill_cum + y_fills[i], label=labels[i]
+                    xfill, 
+                    y_fill_cum, 
+                    y_fill_cum + y_fills[i], 
+                    alpha=0.7,
+                    label=labels[i]
                 )
                 y_fill_cum = y_fill_cum + y_fills[i]
             # Plot a solid line on the cumulative deposition
@@ -185,7 +211,7 @@ class SeriesCardData:
                 [-swath_width / 2, swath_width / 2],
                 [avg, avg],
                 color="black",
-                dashes=[5, 5],
+                dashes=[3, 2],
                 label="Mean Dep.",
             )
             # Legend

@@ -104,7 +104,7 @@ class SeriesStringData:
             x = np.array(p.string.data_mod["loc"], dtype=float)
             y = np.array(p.string.data_mod[p.name], dtype=float)
             # Plot non-zero data, and label the series with the pass name
-            mplWidget.canvas.ax.plot(x[y != 0], y[y != 0], label=p.name)
+            mplWidget.canvas.ax.plot(x[y != 0], y[y != 0], linewidth=1, label=p.name)
         # Add a legend if applicable
         if len(active_passes) > 1:
             mplWidget.canvas.ax.legend()
@@ -119,25 +119,32 @@ class SeriesStringData:
         # Convenience accessor to average string modified data
         a = self.average.string.data_mod
         if not a.empty:
-            # Find average deposition inside swath width
-            a_c = a[(a["loc"] >= -swath_width / 2) & (a["loc"] <= swath_width / 2)]
-            a_c_mean = a_c["Average"].mean(axis="rows")
-            # Plot rectangle, w = swath width, h = (1/2)* average dep inside swath width
-            mplWidget.canvas.ax.fill_between(
-                [-swath_width / 2, swath_width / 2],
-                0,
-                a_c_mean / 2,
-                facecolor="black",
-                alpha=0.25,
-                label="Effective Swath",
-            )
             # Numpy-ize dataframe columns to plot
             x = np.array(a["loc"], dtype=float)
             y = np.array(a["Average"], dtype=float)
             # Plot non-zero data, and label the series
             mplWidget.canvas.ax.plot(
-                x[y != 0], y[y != 0], color="black", linewidth=3, label="Average"
+                x[y != 0], y[y != 0], color="black", linewidth=2, label="Average"
             )
+            mplWidget.canvas.ax.fill_between(
+                x[y != 0],
+                0,
+                y[y != 0],
+                alpha=0.7
+            )
+            if cfg.get_string_plot_average_swath_box():
+                # Find average deposition inside swath width
+                a_c = a[(a["loc"] >= -swath_width / 2) & (a["loc"] <= swath_width / 2)]
+                a_c_mean = a_c["Average"].mean(axis="rows")
+                # Plot rectangle, w = swath width, h = (1/2)* average dep inside swath width
+                mplWidget.canvas.ax.plot(
+                    [-swath_width/2, -swath_width/2, swath_width/2, swath_width/2],
+                    [0, a_c_mean/2, a_c_mean/2, 0],
+                    color="black",
+                    linewidth=1,
+                    dashes=(3,2),
+                    label="Effective Swath"
+                )
             # Add a legend
             mplWidget.canvas.ax.legend()
         # Must set ylim after plotting
@@ -204,7 +211,7 @@ class SeriesStringData:
             y_fill_cum = np.zeros(xfill.size)
             for i in range(len(y_fills)):
                 mplWidget.canvas.ax.fill_between(
-                    xfill, y_fill_cum, y_fill_cum + y_fills[i], label=labels[i]
+                    xfill, y_fill_cum, y_fill_cum + y_fills[i], label=labels[i], alpha=0.8
                 )
                 y_fill_cum = y_fill_cum + y_fills[i]
             # Plot a solid line on the cumulative deposition
