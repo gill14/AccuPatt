@@ -2,7 +2,7 @@ import os
 
 import accupatt.config as cfg
 from PyQt6 import uic
-from PyQt6.QtCore import QDate, Qt, pyqtSignal, pyqtSlot, QSignalBlocker
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QSignalBlocker
 from PyQt6.QtWidgets import (
     QPushButton,
     QCheckBox,
@@ -78,11 +78,6 @@ class StringMainWidget(baseclass):
         self.spinBoxSimulatedPasses.valueChanged[int].connect(
             self.simulatedPassesChanged
         )
-        self.radioButtonSimulationOne: QRadioButton = self.ui.radioButtonSimulationOne
-        self.radioButtonSimulationAll: QRadioButton = self.ui.radioButtonSimulationAll
-        self.radioButtonSimulationOne.toggled[bool].connect(
-            self.simulationViewWindowChanged
-        )
         self.tableWidgetCV: QTableWidget = self.ui.tableWidgetCV
 
     """
@@ -104,15 +99,6 @@ class StringMainWidget(baseclass):
             self.spinBoxSimulatedPasses.setValue(
                 self.seriesData.string.simulated_adjascent_passes
             )
-        if (
-            cfg.get_string_simulation_view_window()
-            == cfg.STRING_SIMULATION_VIEW_WINDOW_ONE
-        ):
-            with QSignalBlocker(self.radioButtonSimulationOne):
-                self.radioButtonSimulationOne.setChecked(True)
-        else:
-            with QSignalBlocker(self.radioButtonSimulationAll):
-                self.radioButtonSimulationAll.setChecked(True)
         # Update the Pass List Widget Silently
         self.updatePassListWidget(index_to_select=-1)
         # Update the Pass Data Mod Options Silently, then plot individuals
@@ -142,12 +128,6 @@ class StringMainWidget(baseclass):
             self.spinBoxSwathAdjusted.setSuffix(" " + swath_units)
         if update_plots:
             self._updatePlots(modify=True, composites=True, simulations=True)
-
-    @pyqtSlot()
-    def repaint(self):
-        print('repaint called')
-        size = self.plotWidgetAverage.size()
-        self.plotWidgetAverage.canvas.draw()
 
     """
     Pass List Widget
@@ -349,17 +329,8 @@ class StringMainWidget(baseclass):
         self.seriesData.string.simulated_adjascent_passes = numAdjascentPasses
         self._updatePlots(simulations=True)
 
-    @pyqtSlot(bool)
-    def simulationViewWindowChanged(self, viewOneIsChecked):
-        cfg.set_string_simulation_view_window(
-            cfg.STRING_SIMULATION_VIEW_WINDOW_ONE
-            if viewOneIsChecked
-            else cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL
-        )
-        self._updatePlots(simulations=True)
-
     """
-    Internal plot trigger
+    Plot trigger
     """
 
     def _updatePlots(
@@ -392,15 +363,18 @@ class StringMainWidget(baseclass):
                 self.plotWidgetAverage, self.seriesData.string.swath_adjusted
             )
         if simulations:
+            showEntireWindow = (
+                cfg.get_string_simulation_view_window()==cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL
+            )
             self.seriesData.string.plotRacetrack(
                 mplWidget=self.plotWidgetRacetrack,
                 swath_width=self.seriesData.string.swath_adjusted,
-                showEntireWindow=self.radioButtonSimulationAll.isChecked(),
+                showEntireWindow=showEntireWindow,
             )
             self.seriesData.string.plotBackAndForth(
                 mplWidget=self.plotWidgetBackAndForth,
                 swath_width=self.seriesData.string.swath_adjusted,
-                showEntireWindow=self.radioButtonSimulationAll.isChecked(),
+                showEntireWindow=showEntireWindow,
             )
             self.seriesData.string.plotCVTable(
                 self.tableWidgetCV, self.seriesData.string.swath_adjusted

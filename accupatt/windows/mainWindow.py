@@ -93,6 +93,72 @@ class MainWindow(baseclass):
         self.ui.action_open.triggered.connect(self.openFile)
         # --> Setup Options Menu
         self.ui.action_pass_manager.triggered.connect(self.openPassManager)
+        # --> | --> String Plot Options
+        menuStringPlotOptions: QMenu = self.ui.menuString_Plot_Options
+        actionStringCrosshair = QAction("Average Plot Swath Box", menuStringPlotOptions)
+        actionStringCrosshair.setCheckable(True)
+        actionStringCrosshair.setChecked(cfg.get_string_plot_average_swath_box())
+        actionStringCrosshair.toggled[bool].connect(self.toggleStringCrosshair)
+        menuStringPlotOptions.addAction(actionStringCrosshair)
+        # --> | --> | --> Simulation View
+        menuStringSimView = QMenu("Simulation View", menuStringPlotOptions)
+        actionStringSimSwath = QAction("One Swath", menuStringSimView)
+        actionStringSimSwath.setCheckable(True)
+        actionStringSimSwath.setChecked(cfg.get_string_simulation_view_window()==cfg.STRING_SIMULATION_VIEW_WINDOW_ONE)
+        actionStringSimAll = QAction("All Passes", menuStringSimView)
+        actionStringSimAll.setCheckable(True)
+        actionStringSimAll.setChecked(cfg.get_string_simulation_view_window()==cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL)
+        menuStringSimView.addActions([actionStringSimSwath,actionStringSimAll])
+        actionGroupStringSimView = QActionGroup(menuStringSimView)
+        actionGroupStringSimView.addAction(actionStringSimSwath)
+        actionGroupStringSimView.addAction(actionStringSimAll)
+        actionGroupStringSimView.triggered[QAction].connect(self.toggleStringSimView)
+        menuStringPlotOptions.addMenu(menuStringSimView)
+        # --> | --> Card Plot Options
+        menuCardPlotOptions: QMenu = self.ui.menuCard_Plot_Options
+        actionCardCrosshair = QAction("Average Plot Swath Box", menuCardPlotOptions)
+        actionCardCrosshair.setCheckable(True)
+        actionCardCrosshair.setChecked(cfg.get_card_plot_average_swath_box())
+        actionCardCrosshair.toggled[bool].connect(self.toggleCardCrosshair)
+        menuCardPlotOptions.addAction(actionCardCrosshair)
+        # --> | --> | --> Simulation View
+        menuCardSimView = QMenu("Simulation View", menuCardPlotOptions)
+        actionCardSimSwath = QAction("One Swath", menuCardSimView)
+        actionCardSimSwath.setCheckable(True)
+        actionCardSimSwath.setChecked(cfg.get_string_simulation_view_window()==cfg.STRING_SIMULATION_VIEW_WINDOW_ONE)
+        actionCardSimAll = QAction("All Passes", menuCardSimView)
+        actionCardSimAll.setCheckable(True)
+        actionCardSimAll.setChecked(cfg.get_string_simulation_view_window()==cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL)
+        menuCardSimView.addActions([actionCardSimSwath,actionCardSimAll])
+        actionGroupCardSimView = QActionGroup(menuCardSimView)
+        actionGroupCardSimView.addAction(actionCardSimSwath)
+        actionGroupCardSimView.addAction(actionCardSimAll)
+        actionGroupCardSimView.triggered[QAction].connect(self.toggleCardSimView)
+        menuCardPlotOptions.addMenu(menuCardSimView)
+        # --> | --> | --> Colorize
+        menuColorize: QMenu = QMenu("DSC Colorize", menuCardPlotOptions)
+        actionColorizePass = QAction("Individual Plot", menuColorize)
+        actionColorizePass.setCheckable(True)
+        actionColorizePass.setChecked(cfg.get_card_plot_colorize_pass())
+        actionColorizePass.toggled[bool].connect(self.toggleCardColorizePass)
+        menuColorize.addAction(actionColorizePass)
+        actionColorizeAverage = QAction("Average Plot", menuColorize)
+        actionColorizeAverage.setCheckable(True)
+        actionColorizeAverage.setChecked(cfg.get_card_plot_colorize_average())
+        actionColorizeAverage.toggled[bool].connect(self.toggleCardColorizeAverage)
+        menuColorize.addAction(actionColorizeAverage)
+        actionColorizeSimulations = QAction("Simulation Plots", menuColorize)
+        actionColorizeSimulations.setCheckable(True)
+        actionColorizeSimulations.setChecked(cfg.get_card_plot_colorize_simulations())
+        actionColorizeSimulations.toggled[bool].connect(self.toggleCardColorizeSimulations)
+        menuColorize.addAction(actionColorizeSimulations)
+        menuColorize.addSeparator()
+        actionColorizeInterpolate = QAction("Interpolate", menuColorize)
+        actionColorizeInterpolate.setCheckable(True)
+        actionColorizeInterpolate.setChecked(cfg.get_card_plot_colorize_interpolate())
+        actionColorizeInterpolate.toggled[bool].connect(self.toggleCardColorizeInterpolate)
+        menuColorize.addAction(actionColorizeInterpolate)
+        menuCardPlotOptions.addMenu(menuColorize)
         self.ui.action_reset_defaults.triggered.connect(self.resetDefaults)
         # --> Setup Export to Excel Menu
         self.ui.action_safe_report.triggered.connect(self.exportSAFEAttendeeLog)
@@ -266,7 +332,6 @@ class MainWindow(baseclass):
 
     @pyqtSlot()
     def openFile(self, file: str = ""):
-        print(file)
         # Open a FileChooser and obtain selected file (DB or XLSX)
         if file == "":
             file, _ = QFileDialog.getOpenFileName(
@@ -304,7 +369,6 @@ class MainWindow(baseclass):
         # Load in data to series object
         self.seriesData = SeriesData()
         if file[-2:] == "db":
-            print(file)
             load_from_db(file, s=self.seriesData)
         elif len(file) > 3 and file[-4:] == "xlsx":
             load_from_accupatt_1_file(file, s=self.seriesData)
@@ -368,6 +432,62 @@ class MainWindow(baseclass):
     def onPassManagerRejected(self):
         # Reload datafile, abandoning changes made
         self.openFile(file=self.currentFile)    
+
+    """
+    String Plot Options
+    """
+
+    @pyqtSlot(bool)
+    def toggleStringCrosshair(self, checked: bool):
+        cfg.set_string_plot_average_swath_box(checked)
+        self.stringWidget._updatePlots(composites=True)
+
+    @pyqtSlot(QAction)
+    def toggleStringSimView(self, action: QAction):
+        if action.text()=="One Swath":
+            view = cfg.STRING_SIMULATION_VIEW_WINDOW_ONE
+        else:
+            view = cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL
+        cfg.set_string_simulation_view_window(view)
+        self.stringWidget._updatePlots(simulations=True)
+    
+    """
+    Card Plot Options
+    """
+    
+    @pyqtSlot(bool)
+    def toggleCardCrosshair(self, checked: bool):
+        cfg.set_card_plot_average_swath_box(checked)
+        self.cardWidget._updatePlots(composites=True)    
+        
+    @pyqtSlot(bool)
+    def toggleCardColorizePass(self, checked: bool):
+        cfg.set_card_plot_colorize_pass(checked)
+        self.cardWidget._updatePlots(individuals=True)
+        
+    @pyqtSlot(bool)
+    def toggleCardColorizeAverage(self, checked: bool):
+        cfg.set_card_plot_colorize_average(checked)
+        self.cardWidget._updatePlots(composites=True)
+        
+    @pyqtSlot(bool)
+    def toggleCardColorizeSimulations(self, checked: bool):
+        cfg.set_card_plot_colorize_simulations(checked)
+        self.cardWidget._updatePlots(simulations=True)
+        
+    @pyqtSlot(bool)
+    def toggleCardColorizeInterpolate(self, checked: bool):
+        cfg.set_card_plot_colorize_interpolate(checked)
+        self.cardWidget._updatePlots(individuals=True, composites=True, simulations=True)
+        
+    @pyqtSlot(QAction)
+    def toggleCardSimView(self, action: QAction):
+        if action.text()=="One Swath":
+            view = cfg.CARD_SIMULATION_VIEW_WINDOW_ONE
+        else:
+            view = cfg.CARD_SIMULATINO_VIEW_WINDOW_ALL
+        cfg.set_card_simulation_view_window(view)
+        self.cardWidget._updatePlots(simulations=True)
 
     @pyqtSlot()
     def resetDefaults(self):

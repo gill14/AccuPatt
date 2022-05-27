@@ -141,7 +141,20 @@
     <property name="title">
      <string>Options</string>
     </property>
+    <widget class="QMenu" name="menuString_Plot_Options">
+     <property name="title">
+      <string>String Plot Options</string>
+     </property>
+    </widget>
+    <widget class="QMenu" name="menuCard_Plot_Options">
+     <property name="title">
+      <string>Card Plot Options</string>
+     </property>
+    </widget>
     <addaction name="action_pass_manager"/>
+    <addaction name="separator"/>
+    <addaction name="menuString_Plot_Options"/>
+    <addaction name="menuCard_Plot_Options"/>
     <addaction name="separator"/>
     <addaction name="action_reset_defaults"/>
    </widget>
@@ -382,6 +395,16 @@
   <action name="actionWRKSpectrometerManual">
    <property name="text">
     <string>WRK Spectrometer Manual</string>
+   </property>
+  </action>
+  <action name="actionSwath_Crosshair_on_Average">
+   <property name="text">
+    <string>Swath Crosshair on Average</string>
+   </property>
+  </action>
+  <action name="actionhjh">
+   <property name="text">
+    <string>hjh</string>
    </property>
   </action>
  </widget>

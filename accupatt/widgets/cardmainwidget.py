@@ -11,7 +11,6 @@ from PyQt6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QProgressDialog,
-    QRadioButton,
     QSlider,
     QSpinBox,
     QTableWidget,
@@ -49,12 +48,8 @@ class CardMainWidget(baseclass):
         self.buttonEditPass.clicked.connect(self.editPass)
         self.checkBoxPassCenter: QCheckBox = self.ui.checkBoxPassCenter
         self.checkBoxPassCenter.stateChanged[int].connect(self.passCenterChanged)
-        self.checkBoxPassColorize: QCheckBox = self.ui.checkBoxPassColorize
-        self.checkBoxPassColorize.stateChanged[int].connect(self.passColorizeChanged)
         self.checkBoxSeriesCenter: QCheckBox = self.ui.checkBoxSeriesCenter
         self.checkBoxSeriesCenter.stateChanged[int].connect(self.seriesCenterChanged)
-        self.checkBoxSeriesColorize: QCheckBox = self.ui.checkBoxSeriesColorize
-        self.checkBoxSeriesColorize.stateChanged[int].connect(self.seriesColorizeChanged)
         self.spinBoxSwathAdjusted: QSpinBox = self.ui.spinBoxSwathAdjusted
         self.spinBoxSwathAdjusted.valueChanged[int].connect(self.swathAdjustedChanged)
         self.sliderSimulatedSwath: QSlider = self.ui.sliderSimulatedSwath
@@ -69,11 +64,6 @@ class CardMainWidget(baseclass):
         self.spinBoxSimulatedPasses: QSpinBox = self.ui.spinBoxSimulatedPasses
         self.spinBoxSimulatedPasses.valueChanged[int].connect(
             self.simulatedPassesChanged
-        )
-        self.radioButtonSimulationOne: QRadioButton = self.ui.radioButtonSimulationOne
-        self.radioButtonSimulationAll: QRadioButton = self.ui.radioButtonSimulationAll
-        self.radioButtonSimulationOne.toggled[bool].connect(
-            self.simulationViewWindowChanged
         )
         self.tableWidgetCV: QTableWidget = self.ui.tableWidgetCV
         self.comboBoxDistPass: QComboBox = self.ui.comboBoxDistPass
@@ -97,6 +87,10 @@ class CardMainWidget(baseclass):
         # Populate Series Data Mod Options Silently
         with QSignalBlocker(self.checkBoxSeriesCenter):
             self.checkBoxSeriesCenter.setChecked(self.seriesData.cards.center)
+        with QSignalBlocker(self.spinBoxSimulatedPasses):
+            self.spinBoxSimulatedPasses.setValue(
+                self.seriesData.cards.simulated_adjascent_passes
+            )
         # Process Cards to get stat data
         self.processCards()
         # Refresh listWidget
@@ -267,10 +261,6 @@ class CardMainWidget(baseclass):
             Qt.CheckState(checkstate) == Qt.CheckState.Checked
         )
         self._updatePlots(composites=True, simulations=True)
-
-    @pyqtSlot(int)
-    def passColorizeChanged(self, checkstate):
-        self._updatePlots(individuals=True)
     
     """
     Series Data Mod Options
@@ -282,10 +272,6 @@ class CardMainWidget(baseclass):
             Qt.CheckState(checkstate) == Qt.CheckState.Checked
         )
         self._updatePlots(composites=True, simulations=True)
-    
-    @pyqtSlot(int)
-    def seriesColorizeChanged(self, checkstate):
-        self._updatePlots(composites=True)
         
     @pyqtSlot(int)
     def swathAdjustedChanged(self, swath: int):
@@ -311,15 +297,6 @@ class CardMainWidget(baseclass):
     @pyqtSlot(int)
     def simulatedPassesChanged(self, numAdjascentPasses: int):
         self.seriesData.cards.simulated_adjascent_passes = numAdjascentPasses
-        self._updatePlots(simulations=True)
-
-    @pyqtSlot(bool)
-    def simulationViewWindowChanged(self, viewOneIsChecked: bool):
-        cfg.set_card_simulation_view_window(
-            cfg.STRING_SIMULATION_VIEW_WINDOW_ONE
-            if viewOneIsChecked
-            else cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL
-        )
         self._updatePlots(simulations=True)
     
     """
@@ -350,40 +327,44 @@ class CardMainWidget(baseclass):
     def _updatePlots(self,individuals=False,composites=False,simulations=False,distributions=False,):
         passData = self._getCurrentPass()
         if individuals:
-            passData.cards.plotCoverage(
-                mplWidget=self.plotWidgetPass,
-                loc_units=self.seriesData.info.swath_units,
-                colorize=self.checkBoxPassColorize.isChecked(),
-                mod=False,
-            )
-            model = CardStatTableModel()
-            proxyModel = QSortFilterProxyModel()
-            proxyModel.setSourceModel(model)
-            self.tableViewPass.setModel(proxyModel)
-            self.tableViewPass.setItemDelegateForColumn(
-                3, ComboBoxDelegate(self.tableViewPass, cfg.UNITS_LENGTH_LARGE)
-            )
-            self.tableViewPass.horizontalHeader().setSectionResizeMode(
-                QHeaderView.ResizeMode.ResizeToContents
-            )
-            model.loadCards(passData.cards.card_list)
-            model.valueChanged.connect(self.passStatTableValueChanged)
+            if (passData := self._getCurrentPass()) != None:
+                passData.cards.plotCoverage(
+                    mplWidget=self.plotWidgetPass,
+                    loc_units=self.seriesData.info.swath_units,
+                    colorize=cfg.get_card_plot_colorize_pass(),
+                    mod=False,
+                )
+                model = CardStatTableModel()
+                proxyModel = QSortFilterProxyModel()
+                proxyModel.setSourceModel(model)
+                self.tableViewPass.setModel(proxyModel)
+                self.tableViewPass.setItemDelegateForColumn(
+                    3, ComboBoxDelegate(self.tableViewPass, cfg.UNITS_LENGTH_LARGE)
+                )
+                self.tableViewPass.horizontalHeader().setSectionResizeMode(
+                    QHeaderView.ResizeMode.ResizeToContents
+                )
+                model.loadCards(passData.cards.card_list)
+                model.valueChanged.connect(self.passStatTableValueChanged)
         if composites:
             self.seriesData.cards.plotOverlay(mplWidget=self.plotWidgetOverlay)
             self.seriesData.cards.plotAverage(
                 mplWidget=self.plotWidgetAverage,
-                colorize=self.checkBoxSeriesColorize.isChecked(),
+                colorize=cfg.get_card_plot_colorize_average(),
             )
         if simulations:
+            showEntireWindow = (
+                cfg.get_card_simulation_view_window()==cfg.CARD_SIMULATINO_VIEW_WINDOW_ALL
+            )
             self.seriesData.cards.plotRacetrack(
                 mplWidget=self.plotWidgetRacetrack,
                 swath_width=self.seriesData.cards.swath_adjusted,
-                showEntireWindow=self.radioButtonSimulationAll.isChecked(),
+                showEntireWindow=showEntireWindow,
             )
             self.seriesData.cards.plotBackAndForth(
                 mplWidget=self.plotWidgetBackAndForth,
                 swath_width=self.seriesData.cards.swath_adjusted,
-                showEntireWindow=self.radioButtonSimulationAll.isChecked(),
+                showEntireWindow=showEntireWindow,
             )
             self.seriesData.cards.plotCVTable(
                 self.tableWidgetCV, self.seriesData.cards.swath_adjusted
