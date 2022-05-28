@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
     QDialog,
     QGraphicsPixmapItem,
     QListWidget,
+    QMessageBox,
     QProgressDialog,
 )
 from pyqtgraph.functions import mkPen
@@ -310,7 +311,27 @@ class LoadCards(baseclass):
             if i == len(self.rois) - 1:
                 prog.setValue(i + 1)
 
+        self.prompt_to_delete_original()
         super().accept()
+
+    def prompt_to_delete_original(self):
+        msg = QMessageBox()
+        msg.setParent(self)
+        msg.setIcon(QMessageBox.Icon.Question)
+        msg.setText("Delete Original File?")
+        msg.setInformativeText("All chosen regions have been cropped from the original image and sucessfully saved to the database.")
+        msg.setWindowModality(Qt.WindowModality.WindowModal)
+        button_delete = msg.addButton(
+            "Delete", QMessageBox.ButtonRole.ActionRole
+        )
+        button_do_not_delete = msg.addButton(
+            "Do Not Delete", QMessageBox.ButtonRole.ActionRole
+        )
+        msg.setDefaultButton(button_do_not_delete)
+        msg.exec()
+        if msg.clickedButton() == button_delete:
+            os.remove(self.image_file)
+            
 
     def _sort_rois(self, orientation, order):
         rois_original = self.roi_rectangles.copy()
