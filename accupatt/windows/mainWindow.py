@@ -1,11 +1,9 @@
 from datetime import datetime
 import os
-from pathlib import Path
 import subprocess
 import sys
 
 import accupatt.config as cfg
-from accupatt.helpers.cardStatTabelModel import CardStatTableModel, ComboBoxDelegate
 from accupatt.helpers.dataFileImporter import (
     convert_xlsx_to_db,
     load_from_accupatt_1_file,
@@ -13,15 +11,11 @@ from accupatt.helpers.dataFileImporter import (
 from accupatt.helpers.dBBridge import load_from_db, save_to_db
 from accupatt.helpers.exportExcel import export_all_to_excel, safe_report
 from accupatt.helpers.reportMaker import ReportMaker
-from accupatt.models.appInfo import AppInfo
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
-from accupatt.models.sprayCard import SprayCard
-from accupatt.models.sprayCardComposite import SprayCardComposite
 from accupatt.widgets.cardmainwidget import CardMainWidget
 from accupatt.widgets.seriesinfowidget import SeriesInfoWidget
 from accupatt.widgets.stringmainwidget import StringMainWidget
-from accupatt.windows.cardManager import CardManager
 from accupatt.windows.passManager import PassManager
 
 from accupatt.widgets import (
@@ -33,20 +27,15 @@ from accupatt.widgets import (
     stringmainwidget,
 )
 from PyQt6 import uic
-from PyQt6.QtCore import QSignalBlocker, QSortFilterProxyModel, Qt, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QAction, QActionGroup
 from PyQt6.QtWidgets import (
-    QComboBox,
     QFileDialog,
-    QHeaderView,
     QLabel,
-    QListWidget,
-    QListWidgetItem,
     QMenu,
     QMessageBox,
     QProgressDialog,
     QTabWidget,
-    QTableView,
 )
 
 from accupatt.windows.reportManager import ReportManager
@@ -58,7 +47,7 @@ Ui_Form_About, baseclass_about = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "about.ui")
 )
 testing = True
-
+testfile = "/Users/gill14/Library/Mobile Documents/com~apple~CloudDocs/Projects/AccuPatt/testing/TEST 01.db"
 
 class MainWindow(baseclass):
     
@@ -233,7 +222,7 @@ class MainWindow(baseclass):
         self.show()
         # Testing
         if testing:
-            self.openFile(file = "/Users/gill14/Library/Mobile Documents/com~apple~CloudDocs/Projects/AccuPatt/testing/N2067B 01.db")
+            self.openFile(file = testfile)
 
     """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """''
     Menubar
@@ -321,6 +310,7 @@ class MainWindow(baseclass):
         if save_to_db(file=self.currentFile, s=self.seriesData):
             self.change_statusbar_save()
             self.file_saved.emit(self.currentFile)
+            print('file_saved emitted from main')
             return True
         else:
             msg = QMessageBox(

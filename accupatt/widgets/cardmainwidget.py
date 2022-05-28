@@ -2,7 +2,7 @@ import os
 
 import accupatt.config as cfg
 from PyQt6 import uic
-from PyQt6.QtCore import QSortFilterProxyModel, Qt, pyqtSignal, pyqtSlot, QSignalBlocker
+from PyQt6.QtCore import QSortFilterProxyModel, Qt, QTimer, pyqtSignal, pyqtSlot, QSignalBlocker
 from PyQt6.QtWidgets import (
     QPushButton,
     QCheckBox,
@@ -40,6 +40,7 @@ class CardMainWidget(baseclass):
         super().__init__(*args, **kwargs)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
+        self.parent = parent
         # Typed UI Accessors, connect built-in signals to custom slots
         self.listWidgetPass: QListWidget = self.ui.listWidgetPass
         self.listWidgetPass.itemSelectionChanged.connect(self.passSelectionChanged)
@@ -214,8 +215,8 @@ class CardMainWidget(baseclass):
         passData = self._getCurrentPass()
         # Trigger file save if filapath needed
         if self.currentFile == None or self.currentFile == "":
-            self.request_file_save.emit()
             self.delayed_request_open_edit_pass = True
+            self.request_file_save.emit()
             return
         # Open the Edit Card List window for currently selected pass
         e = CardManager(
@@ -226,7 +227,7 @@ class CardMainWidget(baseclass):
         )
         # Connect Slot to save file each time the data is changed
         # This is prudent as card images are added
-        e.passDataChanged.connect(lambda x: self.request_file_save.emit())
+        e.passDataChanged.connect(lambda: self.request_file_save.emit())
         # Connect Slot to handle the accept and close of Card Manager
         e.accepted.connect(self.cardManagerOnClose)
         # Start Loop
@@ -248,9 +249,8 @@ class CardMainWidget(baseclass):
     def _acceptFileSaveSignal(self, file: str):
         self.currentFile = file
         if self.delayed_request_open_edit_pass:
-            self.editPass()
             self.delayed_request_open_edit_pass = False  
-    
+            QTimer.singleShot(1000,self.editPass)
     """
     Pass Data Mod Options
     """

@@ -35,6 +35,7 @@ class StringMainWidget(baseclass):
         super().__init__(*args, **kwargs)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
+        self.parent = parent
         # Typed UI Accessors, connect built-in signals to custom slots
         self.listWidgetPass: QListWidget = self.ui.listWidgetPass
         self.listWidgetPass.itemSelectionChanged.connect(self.passSelectionChanged)
