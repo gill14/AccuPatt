@@ -19,7 +19,7 @@ class SeriesStringData:
         self.equalize_integrals = True
         self.center = True
         self.center_method = cfg.get_center_method()
-        self.swath_adjusted = target_swath
+        self.swath_adjusted = target_swath if target_swath > 0 else 50
         self.simulated_adjascent_passes = 2
         # Convenience Runtime Placeholder
         self.average = Pass(name="Average")

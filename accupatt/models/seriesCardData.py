@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from scipy import interpolate
 import accupatt.config as cfg
 from accupatt.models.passCardData import PassCardData
 from accupatt.models.passData import Pass
@@ -13,7 +14,7 @@ class SeriesCardData:
         # Live feeds from Series Object
         self.passes = passes
         self.swath_units = swath_units
-        self.swath_adjusted = target_swath
+        self.swath_adjusted = target_swath if target_swath > 0 else 50
         # Options
         # self.smooth = True
         # self.smooth_window = cfg.get_string_smooth_window()
@@ -37,30 +38,29 @@ class SeriesCardData:
         ]
 
     def _get_average(self) -> pd.DataFrame:
-        a_cov = pd.DataFrame()
-        a_dv01 = pd.DataFrame()
-        a_dv05 = pd.DataFrame()
+        
+        dd = pd.DataFrame()
+        lastPassName = ""
         for p in self._get_active_passes():
-            data: pd.DataFrame = p.cards.get_data_mod(loc_units=self.swath_units)
-            s_cov = data.set_index("loc")["cov"]
-            a_cov = a_cov.join(s_cov, how="outer", lsuffix="_l", rsuffix="_r")
-            s_dv01 = data.set_index("loc")["dv01"]
-            a_dv01 = a_dv01.join(s_dv01, how="outer", lsuffix="_l", rsuffix="_r")
-            s_dv05 = data.set_index("loc")["dv05"]
-            a_dv05 = a_dv05.join(s_dv05, how="outer", lsuffix="_l", rsuffix="_r")
-        # take column-wise average
-        a_cov.interpolate(limit_area="inside", inplace=True)
-        a_cov["cov"] = a_cov.mean(axis="columns")
-        a_dv01.interpolate(limit_area="inside", inplace=True)
-        a_dv01["dv01"] = a_dv01.mean(axis="columns")
-        a_dv05.interpolate(limit_area="inside", inplace=True)
-        a_dv05["dv05"] = a_dv05.mean(axis="columns")
-        d = pd.concat([a_cov["cov"], a_dv01["dv01"], a_dv05["dv05"]], axis=1)
-        d.reset_index(inplace=True)
-        d["loc_units"] = pd.Series(
-            [self.swath_units for i in range(len(d.index))], dtype=str
-        )
-        return d
+            # Get Pass Dataframe
+            d = p.cards.get_data_mod(loc_units=self.swath_units)
+            # Start or merge to the series dataframe
+            if dd.empty:
+                dd = d
+            else:
+                dd = dd.merge(d.set_index("loc"), on="loc", how="outer", suffixes=[f"_{lastPassName}",f"_{p.name}"])
+            lastPassName = p.name
+        dd.set_index("loc", inplace=True)
+        dd.sort_values(by="loc", axis=0, inplace=True)
+        dd.interpolate(method="slinear", limit_area="inside", inplace=True)
+        dd.fillna(0, inplace=True)
+        dd["cov_avg"] = dd.loc[:,dd.columns.str.contains('cov')].mean(axis="columns")
+        dd["dv01_avg"] = dd.loc[:,dd.columns.str.contains('dv01')].mean(axis="columns")
+        dd["dv05_avg"] = dd.loc[:,dd.columns.str.contains('dv05')].mean(axis="columns")
+        dd["loc_units"] = [self.swath_units for i in range(len(dd.index))]
+        avg = dd.loc[:,["cov_avg","dv01_avg","dv05_avg","loc_units"]].reset_index()
+        avg.rename(columns={"cov_avg":"cov","dv01_avg":"dv01","dv05_avg":"dv05"}, inplace=True)
+        return avg
 
     def plotOverlay(self, mplWidget: MplWidget):
         # Setup and clear the plotter
