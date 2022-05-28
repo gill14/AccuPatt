@@ -19,12 +19,14 @@ CREATE TABLE IF NOT EXISTS series_string (
     average_smooth_window       REAL,
     average_smooth_order        INTEGER,
     equalize_integrals          INTEGER,
+    swath_adjusted              INTEGER,
     simulated_adjascent_passes  INTEGER
 );
 CREATE TABLE IF NOT EXISTS series_spray_card (
     series_id                   TEXT PRIMARY KEY REFERENCES series(id),
     average_center              INTEGER,
     average_center_method       TEXT,
+    swath_adjusted              INTEGER,
     simulated_adjascent_passes  INTEGER
 );
 CREATE TABLE IF NOT EXISTS flyin (
@@ -57,7 +59,6 @@ CREATE TABLE IF NOT EXISTS aircraft (
 CREATE TABLE IF NOT EXISTS spray_system (
     series_id               TEXT PRIMARY KEY REFERENCES series(id),
     swath                   INTEGER,
-    swath_adjusted          INTEGER,
     swath_units             TEXT,
     rate                    REAL,
     rate_units              TEXT,

@@ -310,7 +310,6 @@ class MainWindow(baseclass):
         if save_to_db(file=self.currentFile, s=self.seriesData):
             self.change_statusbar_save()
             self.file_saved.emit(self.currentFile)
-            print('file_saved emitted from main')
             return True
         else:
             msg = QMessageBox(
