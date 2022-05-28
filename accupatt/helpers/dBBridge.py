@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import alembic.config
+import alembic.command
 from datetime import datetime
 
 import pandas as pd
@@ -335,6 +336,14 @@ def save_to_db(file: str, s: SeriesData):
     s.info.modified = int(datetime.now().timestamp())
     # Opens a file connection to the db
     with sqlite3.connect(file) as conn:
+        # Use Alembic to convert db to most current
+        alembic_args = [
+            "--raiseerr",
+            f"-xdbPath=sqlite:////{file}",
+            "stamp",
+            "head"
+        ]
+        alembic.config.main(argv=alembic_args)
         # Create db from schema if no tables exist
         with open(schema_filename, "rt") as f:
             schema = f.read()
