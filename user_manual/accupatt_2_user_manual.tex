@@ -629,12 +629,37 @@
 
     \section{Changelog}
     \begin{itemize}
+        \item \textbf{2.0.11 - 30 May 2022}
+        \begin{itemize}
+            \item (fix) Passes added from Pass Manager cause plots to misbehave
+            \item (fix) Plots need resized after PDF generation
+            \item (fix) Card Plot Average shade by DSC interpolation algorithm
+            \item (enhancement) Plot visibility and colorizing
+            \item (feature) Non-deterministic config options moved to menu items
+            \begin{itemize}
+                \item String Plot Options
+                \begin{itemize}
+                    \item Swath Box - Enable showing of swath box
+                    \item Simulation View - Show one swath or all passes for overlap simulations
+                \end{itemize}
+                \item Card Plot Options
+                \begin{itemize}
+                    \item Swath Box - Enable showing of swath box
+                    \item Simulation View - Show one swath or all passes for overlap simulations
+                    \item Colorize by DSC for Individual, Average and Simulation plots
+                    \item Interpolate Colorization - Use linear spline or piecewise interpolation for calculated DSC shading between measured datapoints
+                \end{itemize}
+            \end{itemize}
+            \item (feature) Pass Manager - Shift Pass position in Pass list
+            \item (feature) Prompt to delete original scan image file after saving cropped ROIs to the datafile
+            \item (feature) Add [alembic] DB compatibility layer, supporting datafiles generated using 2.0.10 onwards in all future versions
+        \end{itemize}
         \item \textbf{2.0.10 - 22 May 2022}
         \begin{itemize}
             \item (fix) Simulation plots not clearing
             \item (fix) back and forth odd passes plotting incorrectly
             \item (fix) blank loading popup window on new series
-            \item (fix) multi-card-in-single-image minimum size (>5\% of width)
+            \item (fix) multi-card-in-single-image minimum size (\>5\% of width)
             \item (fix) auto-increment series numbering
             \item (fix) numeric series info fields unable to clear
             \item (fix) setting target excitation/emission wavelengths
