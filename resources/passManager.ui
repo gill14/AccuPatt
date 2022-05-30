@@ -50,6 +50,20 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="button_shift_up">
+       <property name="text">
+        <string>Shift Up</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="button_shift_down">
+       <property name="text">
+        <string>Shift Down</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <spacer name="horizontalSpacer_2">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>

@@ -210,8 +210,8 @@ class MainWindow(baseclass):
         self.current_file_changed[str].connect(self.cardWidget.onCurrentFileChanged)
         self.target_swath_changed.connect(self.stringWidget.setAdjustedSwathFromTargetSwath)
         self.target_swath_changed.connect(self.cardWidget.setAdjustedSwathFromTargetSwath)
-        self.pass_list_changed.connect(lambda x: self.stringWidget.updatePassListWidget(-1))
-        self.pass_list_changed.connect(lambda x: self.cardWidget.updatePassListWidget(-1))
+        self.pass_list_changed.connect(lambda: self.stringWidget.updatePassListWidget(-1))
+        self.pass_list_changed.connect(lambda: self.cardWidget.updatePassListWidget(-1))
         self.request_repaint.connect(self.stringWidget.repaint)
 
         # Setup Statusbar
@@ -405,7 +405,7 @@ class MainWindow(baseclass):
         # Save before opening to have a reversion point
         self.saveFile()
         # Create popup and send current appInfo vals to popup
-        e = PassManager(self.seriesData.passes, self)
+        e = PassManager(self.seriesData, self)
         # Connect Slot to retrieve Vals back from popup
         e.accepted.connect(self.onPassManagerAccepted)
         e.rejected.connect(self.onPassManagerRejected)

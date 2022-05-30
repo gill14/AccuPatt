@@ -3,8 +3,10 @@ import os
 import accupatt.config as cfg
 from accupatt.models.passData import Pass
 from PyQt6 import uic
-from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt, QVariant, pyqtSignal
+from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt, QVariant, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import QComboBox, QMessageBox, QStyledItemDelegate, QTableView
+
+from accupatt.models.seriesData import SeriesData
 
 Ui_Form, baseclass = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "passManager.ui")
@@ -13,12 +15,12 @@ Ui_Form, baseclass = uic.loadUiType(
 
 class PassManager(baseclass):
 
-    def __init__(self, passes=None, parent=None):
+    def __init__(self, seriesData: SeriesData=None, parent=None):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
-        self.tm = PassTable(passes, self)
+        self.tm = PassTable(seriesData.passes, self)
         self.tv: QTableView = self.ui.tableView
         self.tv.setModel(self.tm)
         self.tv.setItemDelegateForColumn(
@@ -33,9 +35,13 @@ class PassManager(baseclass):
         self.tv.setItemDelegateForColumn(
             14, ComboBoxDelegate(self, cfg.UNITS_TEMPERATURE)
         )
+        self.tv.verticalHeader().setVisible(False)
+        self.tv.selectionModel().selectionChanged.connect(self.selection_changed)
 
         self.ui.button_new_pass.clicked.connect(self.newPass)
         self.ui.button_delete_pass.clicked.connect(self.deletePass)
+        self.ui.button_shift_up.clicked.connect(self.shift_up)
+        self.ui.button_shift_down.clicked.connect(self.shift_down)
 
         self.show()
 
@@ -54,6 +60,21 @@ class PassManager(baseclass):
             if msg == QMessageBox.StandardButton.No:
                 return
         self.tm.removePass(self.ui.tableView.selectedIndexes())
+        
+    @pyqtSlot()
+    def selection_changed(self):
+        hasSelection = bool(self.tv.selectionModel().selectedRows())
+        self.ui.button_delete_pass.setEnabled(hasSelection)
+        self.ui.button_shift_up.setEnabled(hasSelection)
+        self.ui.button_shift_down.setEnabled(hasSelection)
+    
+    @pyqtSlot()
+    def shift_up(self):
+        self.tm.shiftRowsUp(self.tv.selectionModel().selectedRows())
+
+    @pyqtSlot()
+    def shift_down(self):
+        self.tm.shiftRowsDown(self.tv.selectionModel().selectedRows())
 
     def accept(self):
         # Update default if requested
@@ -111,7 +132,7 @@ class PassTable(QAbstractTableModel):
         self.pass_list = None
         if pass_list is not None:
             self.beginResetModel()
-            self.pass_list = pass_list
+            self.pass_list: list[Pass] = pass_list
             self.endResetModel()
 
     def rowCount(self, parent: QModelIndex()) -> int:
@@ -283,6 +304,54 @@ class PassTable(QAbstractTableModel):
         self.beginRemoveRows(QModelIndex(), row, row)
         self.pass_list.pop(row)
         self.endRemoveRows()
+
+    def shiftRowsUp(self, selectedRows):
+        sort_list = []
+        for index in selectedRows:
+            row = index.row()
+            sort_list.append(row)
+            # ensure shift is not out of list bounds
+            if row - 1 < 0:
+                return
+        sort_list.sort()
+        # Notify model of the move in progress
+        self.beginMoveRows(
+            QModelIndex(),
+            sort_list[0],
+            sort_list[len(sort_list)-1],
+            QModelIndex(),
+            sort_list[0] - 1
+        )
+        # Make the move on the model data
+        for row in sort_list:
+            self.pass_list.insert(row -1, self.pass_list.pop(row))
+        # Notify model move is complete
+        self.endMoveRows()
+        
+    def shiftRowsDown(self, selectedRows):
+        sort_list = []
+        for index in selectedRows:
+            row = index.row()
+            sort_list.append(row)
+            # ensure shift is not out of list bounds
+            if row + 1 >= len(self.pass_list):
+                return
+        sort_list.sort()
+        # QAbstractItemModel quirk, cant have new index inside moving index
+        # Notify model of the move in progress
+        self.beginMoveRows(
+            QModelIndex(),
+            sort_list[0],
+            sort_list[len(sort_list)-1],
+            QModelIndex(),
+            sort_list[len(sort_list)-1] + 1 + 1
+        )
+        # Make the move on the model data
+        sort_list.sort(reverse=True)
+        for row in sort_list:
+            self.pass_list.insert(row + 1, self.pass_list.pop(row))
+        # Notify model move is complete
+        self.endMoveRows()
 
     def flags(self, index):
         if not index.isValid():
