@@ -161,6 +161,9 @@ class LoadCards(baseclass):
                 roi.sigClicked.connect(self.roi_clicked)
                 roi.sigRemoveRequested.connect(self.remove_roi)
                 self.rois.append(roi)
+                
+        # Add Card Visibility dependent upon if cards avalable
+        self.ui.buttonAddCard.setEnabled(len(self.rois)<len(self.card_list))
 
     @pyqtSlot(str)
     def dpi_changed(self, newString):

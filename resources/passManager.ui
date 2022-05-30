@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>948</width>
-    <height>326</height>
+    <width>1000</width>
+    <height>335</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,35 +36,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QPushButton" name="button_new_pass">
-       <property name="text">
-        <string>Add New Pass</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="button_delete_pass">
-       <property name="text">
-        <string>Delete Pass</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="button_shift_up">
-       <property name="text">
-        <string>Shift Up</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="button_shift_down">
-       <property name="text">
-        <string>Shift Down</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_2">
+      <spacer name="horizontalSpacer_3">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -76,6 +48,67 @@
        </property>
       </spacer>
      </item>
+     <item>
+      <widget class="QPushButton" name="button_new_pass">
+       <property name="text">
+        <string>Add New Pass</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>icon_add.png</normaloff>icon_add.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="button_delete_pass">
+       <property name="text">
+        <string>Delete Pass</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>icon_remove.png</normaloff>icon_remove.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="button_shift_up">
+       <property name="text">
+        <string>Shift Up</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>icon_up.png</normaloff>icon_up.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="button_shift_down">
+       <property name="text">
+        <string>Shift Down</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>icon_down.png</normaloff>icon_down.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_4">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
       <widget class="QCheckBox" name="checkBoxUpdateDefaultNumberOfPasses">
        <property name="text">

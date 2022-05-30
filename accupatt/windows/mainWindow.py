@@ -140,6 +140,7 @@ class MainWindow(baseclass):
         actionColorizeSimulations.setCheckable(True)
         actionColorizeSimulations.setChecked(cfg.get_card_plot_colorize_simulations())
         actionColorizeSimulations.toggled[bool].connect(self.toggleCardColorizeSimulations)
+        actionColorizeSimulations.setEnabled(False)
         menuColorize.addAction(actionColorizeSimulations)
         menuColorize.addSeparator()
         actionColorizeInterpolate = QAction("Interpolate", menuColorize)
