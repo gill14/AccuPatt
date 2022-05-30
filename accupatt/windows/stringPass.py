@@ -85,7 +85,7 @@ class StringPass(baseclass):
             self.passData.string.data_ex[self.passData.name].values, dtype=float
         )
         self.plot_emission.setData(self.x, self.y)
-        self.plot_excitation.setData(self.x, self.y)
+        #self.plot_excitation.setData(self.x, self.y)
 
     def setup_and_clear_plot(self, showPopup=True):
         # Optionally prompt to proceed
