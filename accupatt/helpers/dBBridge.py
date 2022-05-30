@@ -16,6 +16,7 @@ from accupatt.models.seriesStringData import SeriesStringData
 from accupatt.models.sprayCard import SprayCard
 
 schema_filename = os.path.join(os.getcwd(), "resources", "schema.sql")
+alembic_ini = os.path.join(os.getcwd(), "resources", "alembic.ini")
 
 """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """''
 Loading
@@ -26,6 +27,7 @@ def load_from_db(file: str, s: SeriesData, load_only_info=False):
     # Use Alembic to convert db to most current
     alembic_args = [
         "--raiseerr",
+        f"-c{alembic_ini}",
         f"-xdbPath=sqlite:////{file}",
         "upgrade",
         "head",
@@ -339,6 +341,7 @@ def save_to_db(file: str, s: SeriesData):
         # Use Alembic to convert db to most current
         alembic_args = [
             "--raiseerr",
+            f"-c{alembic_ini}",
             f"-xdbPath=sqlite:////{file}",
             "stamp",
             "head"
