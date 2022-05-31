@@ -16,9 +16,9 @@ config = context.config
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-import accupatt.model as model
-target_metadata = model.Base.metadata
-#target_metadata = None
+#import accupatt.model as model
+#target_metadata = model.Base.metadata
+target_metadata = None
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

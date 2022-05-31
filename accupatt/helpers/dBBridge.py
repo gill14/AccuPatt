@@ -18,6 +18,7 @@ from accupatt.models.sprayCard import SprayCard
 schema_filename = os.path.join(os.getcwd(), "resources", "schema.sql")
 alembic_ini = os.path.join(os.getcwd(), "resources", "alembic.ini")
 
+
 """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """''
 Loading
 """ """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
@@ -336,17 +337,17 @@ def save_to_db(file: str, s: SeriesData):
     if not os.path.isfile(file):
         s.info.created = int(datetime.now().timestamp())
     s.info.modified = int(datetime.now().timestamp())
+    # Use Alembic to convert db to most current
+    alembic_args = [
+        "--raiseerr",
+        f"-c{alembic_ini}",
+        f"-xdbPath=sqlite:////{file}",
+        "stamp",
+        "head"
+    ]
+    alembic.config.main(argv=alembic_args)
     # Opens a file connection to the db
     with sqlite3.connect(file) as conn:
-        # Use Alembic to convert db to most current
-        alembic_args = [
-            "--raiseerr",
-            f"-c{alembic_ini}",
-            f"-xdbPath=sqlite:////{file}",
-            "stamp",
-            "head"
-        ]
-        alembic.config.main(argv=alembic_args)
         # Create db from schema if no tables exist
         with open(schema_filename, "rt") as f:
             schema = f.read()

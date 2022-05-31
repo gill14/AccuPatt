@@ -312,7 +312,7 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 
 [[package]]
 name = "pefile"
-version = "2021.9.3"
+version = "2022.5.30"
 description = "Python PE parsing module"
 category = "dev"
 optional = false
@@ -379,7 +379,7 @@ hook_testing = ["pytest (>=2.7.3)", "execnet (>=1.5.0)", "psutil"]
 
 [[package]]
 name = "pyinstaller-hooks-contrib"
-version = "2022.5"
+version = "2022.6"
 description = "Community maintained hooks for PyInstaller"
 category = "dev"
 optional = false
@@ -1042,7 +1042,7 @@ pathspec = [
     {file = "pathspec-0.9.0.tar.gz", hash = "sha256:e564499435a2673d586f6b2130bb5b95f04a3ba06f81b8f895b651a3c76aabb1"},
 ]
 pefile = [
-    {file = "pefile-2021.9.3.tar.gz", hash = "sha256:344a49e40a94e10849f0fe34dddc80f773a12b40675bf2f7be4b8be578bdd94a"},
+    {file = "pefile-2022.5.30.tar.gz", hash = "sha256:a5488a3dd1fd021ce33f969780b88fe0f7eebb76eb20996d7318f307612a045b"},
 ]
 pillow = [
     {file = "Pillow-9.1.1-cp310-cp310-macosx_10_10_x86_64.whl", hash = "sha256:42dfefbef90eb67c10c45a73a9bc1599d4dac920f7dfcbf4ec6b80cb620757fe"},
@@ -1106,8 +1106,8 @@ pyinstaller = [
     {file = "pyinstaller-4.10.tar.gz", hash = "sha256:7749c868d2e2dc84df7d6f65437226183c8a366f3a99bb2737785625c3a3cca1"},
 ]
 pyinstaller-hooks-contrib = [
-    {file = "pyinstaller-hooks-contrib-2022.5.tar.gz", hash = "sha256:90a05207ceea2f8c166f12c3add46e24c0ed6a78234e5f99320f8683d56e0dec"},
-    {file = "pyinstaller_hooks_contrib-2022.5-py2.py3-none-any.whl", hash = "sha256:d0ff4c13eda0104db6eb43c60641c19cdf2bc2d6a2a1f0855d26629c3dacc8b7"},
+    {file = "pyinstaller-hooks-contrib-2022.6.tar.gz", hash = "sha256:9dc611cf6667301e95384b4a0631b032bbffa16a0688f4cfa014d0c1e751d276"},
+    {file = "pyinstaller_hooks_contrib-2022.6-py2.py3-none-any.whl", hash = "sha256:e38bf9266c57be19647762ee63b012683beb6919c6bc2ecdc66ca174edec44a0"},
 ]
 pyparsing = [
     {file = "pyparsing-3.0.9-py3-none-any.whl", hash = "sha256:5026bae9a10eeaefb61dab2f09052b9f4307d44aee4eda64b309723d8d206bbc"},
