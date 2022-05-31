@@ -29,7 +29,7 @@ def load_from_db(file: str, s: SeriesData, load_only_info=False):
     alembic_args = [
         "--raiseerr",
         f"-c{alembic_ini}",
-        f"-xdbPath=sqlite:////{file}",
+        f"-xdbPath=sqlite:///{file}",
         "upgrade",
         "head",
     ]
@@ -341,7 +341,7 @@ def save_to_db(file: str, s: SeriesData):
     alembic_args = [
         "--raiseerr",
         f"-c{alembic_ini}",
-        f"-xdbPath=sqlite:////{file}",
+        f"-xdbPath=sqlite:///{file}",
         "stamp",
         "head"
     ]
