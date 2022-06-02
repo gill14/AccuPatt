@@ -1,3 +1,4 @@
+import matplotlib
 import numpy as np
 import pandas as pd
 from scipy import interpolate
@@ -33,9 +34,16 @@ class SeriesCardData:
         return True
     
     def _get_active_passes(self) -> list[Pass]:
-        return [
-            p for p in self.passes if p.cards_include_in_composite and p.has_card_data()
-        ]
+        activePasses: list[Pass] = []
+        for p in self.passes:
+            if not p.has_card_data():
+                continue
+            if not p.cards_include_in_composite:
+                continue
+            if not any([sc.include_in_composite for sc in p.cards.card_list]):
+                continue
+            activePasses.append(p)
+        return activePasses
 
     def _get_average(self) -> pd.DataFrame:
         
@@ -65,6 +73,10 @@ class SeriesCardData:
     def plotOverlay(self, mplWidget: MplWidget):
         # Setup and clear the plotter
         self._config_mpl_plotter(mplWidget)
+        mplWidget.canvas.ax.set_ylabel("Coverage")
+        mplWidget.canvas.ax.yaxis.set_major_formatter(
+            matplotlib.ticker.PercentFormatter(xmax=100, decimals=0)
+        )
         active_passes = self._get_active_passes()
         # Iterate over plottable passes
         for p in active_passes:
@@ -124,7 +136,6 @@ class SeriesCardData:
     def _config_mpl_plotter(self, mplWidget: MplWidget):
         mplWidget.canvas.ax.clear()
         mplWidget.canvas.ax.set_xlabel(f"Location ({self.swath_units})")
-        mplWidget.canvas.ax.set_yticks([])
 
     def plotRacetrack(
         self, mplWidget: MplWidget, swath_width: float, showEntireWindow=False
@@ -155,8 +166,6 @@ class SeriesCardData:
         # Setup and clear the plotter
         self._config_mpl_plotter(mplWidget)
         # Convenience accessor to average string modified data
-        # Setup and clear the plotter
-        self._config_mpl_plotter(mplWidget)
 
         avg = self._get_average()
         avgPass = PassCardData()

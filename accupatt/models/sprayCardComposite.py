@@ -94,13 +94,12 @@ class SprayCardComposite(SprayCard):
         ax.yaxis.set_major_formatter(
             matplotlib.ticker.PercentFormatter(xmax=1.0, decimals=0)
         )
-        ax.set_ylabel("Spray Volume")
+        ax.set_ylabel("Volume Fraction")
         # Populate data
         ax.hist(bins, bins, weights=binned_cov, rwidth=0.8)
-        for label in ax.get_xticklabels(which="major"):
-            label.set(rotation=30, horizontalalignment="right")
+        mplWidget.set_ticks_slanted()
+        mplWidget.has_legend = False
         # Plot
-        mplWidget.canvas.fig.set_tight_layout(True)
         mplWidget.canvas.draw()
 
     def _plotDistQuant(self, mplWidget: MplWidget, bins, binned_quant):
@@ -112,10 +111,9 @@ class SprayCardComposite(SprayCard):
         ax.set_ylabel("Number of Droplets")
         # Populate Data
         ax.hist(bins, bins, weights=binned_quant, rwidth=0.8)
-        for label in ax.get_xticklabels(which="major"):
-            label.set(rotation=30, horizontalalignment="right")
+        mplWidget.set_ticks_slanted()
+        mplWidget.has_legend = False
         # Plot
-        mplWidget.canvas.fig.set_tight_layout(True)
         mplWidget.canvas.draw()
 
     def _plotDistStatTable(self, tableWidget: QTableWidget):

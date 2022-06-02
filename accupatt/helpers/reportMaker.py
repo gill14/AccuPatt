@@ -1,8 +1,5 @@
 import math
 from io import BytesIO
-import matplotlib
-
-from matplotlib.figure import Figure
 
 import accupatt.config as cfg
 import cv2
@@ -526,15 +523,16 @@ class ReportMaker:
     ):
         canvas = plot_widget.canvas
         fig = canvas.fig
-        ax = canvas.ax
-        size = fig.get_size_inches()
-        fig.set_size_inches(width_in, height_in)
+        plot_widget.legend_outside = legend_outside
+        plot_widget.resize_inches(width_in, height_in)
         
+        canvas.draw()
         imgdata = BytesIO()
         fig.savefig(imgdata, format="svg")
         imgdata.seek(0)  # rewind the data
-        fig.set_size_inches(size)
-        canvas.draw()
+        
+        plot_widget.resize_inches_reset()
+        
         return svg2rlg(imgdata)
 
     def _table_string_cv(self, tableView):

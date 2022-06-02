@@ -47,7 +47,7 @@ Ui_Form_About, baseclass_about = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "about.ui")
 )
 testing = False
-testfile = "/Users/gill14/Library/Mobile Documents/com~apple~CloudDocs/Projects/AccuPatt/testing/TEST 01.db"
+testfile = "/Users/gill14/Library/Mobile Documents/com~apple~CloudDocs/Projects/AccuPatt/testing/N802EX 01.db"
 
 class MainWindow(baseclass):
     
@@ -544,26 +544,24 @@ class MainWindow(baseclass):
                     backAndForthWidget=self.stringWidget.plotWidgetBackAndForth,
                     tableView=self.stringWidget.tableWidgetCV,
                 )
-            for row, p in enumerate(self.seriesData.passes):
-                if (
-                    p.has_card_data()
-                    and p.cards_include_in_composite
-                    and any([sc.include_in_composite for sc in p.cards.card_list])
-                ):
-                    # Select the pass for droplet dist
-                    self.cardWidget.comboBoxDistPass.setCurrentIndex(row + 1)
-                    # self.ui.comboBoxCardDistCard.setCurrentIndex(0)
-                    reportMaker.report_safe_card_summary(
-                        # spatialDVWidget=self.ui.mplWidgetCardSpatial1,
-                        spatialCoverageWidget=self.cardWidget.plotWidgetPass,
-                        histogramNumberWidget=self.cardWidget.plotWidgetDropDist1,
-                        histogramCoverageWidget=self.cardWidget.plotWidgetDropDist2,
-                        tableView=self.cardWidget.tableWidgetCompositeStats,
-                        passData=p,
-                    )
-                    # Print cards for pass
-                    if cfg.get_report_card_include_images():
-                        reportMaker.report_card_individuals_concise(passData=p)
+            for row, p in enumerate(self.cardWidget.getActiveCardPasses()):
+                # Select the pass for individual plot
+                item = self.cardWidget.listWidgetPass.findItems(p.name,Qt.MatchFlag.MatchExactly)[0]
+                self.cardWidget.listWidgetPass.setCurrentItem(item)
+                # Select the pass for droplet dist
+                self.cardWidget.comboBoxDistPass.setCurrentIndex(row + 1)
+                # self.ui.comboBoxCardDistCard.setCurrentIndex(0)
+                reportMaker.report_safe_card_summary(
+                    # spatialDVWidget=self.ui.mplWidgetCardSpatial1,
+                    spatialCoverageWidget=self.cardWidget.plotWidgetPass,
+                    histogramNumberWidget=self.cardWidget.plotWidgetDropDist1,
+                    histogramCoverageWidget=self.cardWidget.plotWidgetDropDist2,
+                    tableView=self.cardWidget.tableWidgetCompositeStats,
+                    passData=p,
+                )
+                # Print cards for pass
+                if cfg.get_report_card_include_images():
+                    reportMaker.report_card_individuals_concise(passData=p)
             reportMaker.save()
             if sys.platform == "darwin":
                 subprocess.call(["open", savefile])

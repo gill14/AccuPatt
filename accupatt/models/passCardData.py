@@ -107,7 +107,6 @@ class PassCardData:
             # Legend
             ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
         # Draw the plots
-        mplWidget.canvas.fig.set_tight_layout(True)
         mplWidget.canvas.draw()
 
     def plotCoverage(

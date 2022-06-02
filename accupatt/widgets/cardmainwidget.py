@@ -102,6 +102,8 @@ class CardMainWidget(baseclass):
         self.setAdjustedSwathFromTargetSwath(replace_adjusted_swath=False, update_plots=False)
         # Update Adjusted Swath, then plot composites and simulations
         self.swathAdjustedChanged(swath=self.seriesData.cards.swath_adjusted)
+        # Update Dist Comboboxes/plots
+        self.distPassChanged(0)
           
     def processCards(self):
         card_list: list[SprayCard] = []
@@ -304,20 +306,22 @@ class CardMainWidget(baseclass):
     """
     
     @pyqtSlot(int)
-    def distPassChanged(self, mode: int):
+    def distPassChanged(self, index: int):
         with QSignalBlocker(self.comboBoxDistCard):
             self.comboBoxDistCard.clear()
-            i = self.comboBoxDistPass.currentIndex()
-            if i > 0:
+            self.comboBoxDistCard.setEnabled(index>0)
+            if index > 0:
                 self.comboBoxDistCard.addItem("Pass Composite")
+                passData = self.getActiveCardPasses()[index-1]
                 self.comboBoxDistCard.addItems(
-                    [c.name for c in self.seriesData.passes[i - 1].cards.card_list]
+                    [card.name for card in passData.cards.card_list]
                 )
-                self.comboBoxDistCard.setCurrentIndex(0)
-        self._updatePlots(distributions=True)
+            self.comboBoxDistCard.setCurrentIndex(0)
+        self.distCardChanged(0)
+        #self._updatePlots(distributions=True)
 
     @pyqtSlot(int)
-    def distCardChanged(self, mode: int):
+    def distCardChanged(self, index: int):
         self._updatePlots(distributions=True)
     
     """
@@ -375,9 +379,7 @@ class CardMainWidget(baseclass):
                 # "All (Series-Wise Composite)" option
                 composite.buildFromSeries(seriesData=self.seriesData)
             else:
-                distPassData = self.seriesData.passes[
-                    self.comboBoxDistPass.currentIndex() - 1
-                ]
+                distPassData = self.getActiveCardPasses()[self.comboBoxDistPass.currentIndex()-1]
                 # "Pass X" option
                 if self.comboBoxDistCard.currentIndex() == 0:
                     # "All (Pass-Wise Composite)" option
@@ -404,3 +406,15 @@ class CardMainWidget(baseclass):
         if (passIndex := self.listWidgetPass.currentRow()) != -1:
             passData = self.seriesData.passes[passIndex]
         return passData
+    
+    def getActiveCardPasses(self) -> list[Pass]:
+        activePasses: list[Pass] = []
+        for p in self.seriesData.passes:
+            if not p.has_card_data():
+                continue
+            if not p.cards_include_in_composite:
+                continue
+            if not any([sc.include_in_composite for sc in p.cards.card_list]):
+                continue
+            activePasses.append(p)
+        return activePasses
