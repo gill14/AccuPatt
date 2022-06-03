@@ -46,7 +46,7 @@ Ui_Form, baseclass = uic.loadUiType(
 Ui_Form_About, baseclass_about = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "about.ui")
 )
-testing = False
+testing = True
 testfile = "/Users/gill14/Library/Mobile Documents/com~apple~CloudDocs/Projects/AccuPatt/testing/N802EX 01.db"
 
 class MainWindow(baseclass):
@@ -185,6 +185,16 @@ class MainWindow(baseclass):
         for action in self.ui.menuCard_Images_per_Page.actions():
             ag_image_per_page.addAction(action)
         ag_image_per_page.triggered[QAction].connect(self.reportCardImagePerPageChanged)
+        # --> # --> # --> Logo
+        actionLogoEnabled: QAction = self.ui.actionInclude_Logo
+        actionLogoEnabled.setCheckable(True)
+        actionLogoEnabled.setChecked(cfg.get_logo_include_in_report())
+        actionLogoEnabled.toggled[bool].connect(self.logo_enabled_triggered)
+        actionLogoPath: QAction = self.ui.actionLogo_File
+        actionLogoPath.setText(cfg.get_logo_path())
+        actionLogoSelect: QAction = self.ui.actionSelect_Logo_File
+        actionLogoSelect.triggered.connect(self.select_logo_triggered)
+        
         # --> Setup Help Menu
         self.ui.actionAbout.triggered.connect(self.about)
         self.ui.actionUserManual.triggered.connect(self.openResourceUserManual)
@@ -535,7 +545,8 @@ class MainWindow(baseclass):
             filter="PDF Files (*.pdf)",
         )
         if savefile:
-            reportMaker = ReportMaker(file=savefile, seriesData=self.seriesData)
+            logo_path = cfg.get_logo_path() if cfg.get_logo_include_in_report() else ""
+            reportMaker = ReportMaker(file=savefile, seriesData=self.seriesData, logo_path=logo_path)
             if any([p.has_string_data() for p in self.seriesData.passes]):
                 reportMaker.report_safe_string(
                     overlayWidget=self.stringWidget.plotWidgetOverlay,
@@ -591,6 +602,26 @@ class MainWindow(baseclass):
             cfg.set_report_card_image_per_page(7)
         else:
             cfg.set_report_card_image_per_page(9)
+
+    @pyqtSlot(bool)
+    def logo_enabled_triggered(self, enabled: bool):
+        cfg.set_logo_include_in_report(enabled)
+    
+    @pyqtSlot()
+    def select_logo_triggered(self):
+        prev = cfg.get_logo_path()
+        initial = os.path.dirname(prev) if prev != "" else self.currentDirectory
+        file, _ = QFileDialog.getOpenFileName(
+                parent=self,
+                caption="Choose Logo Image",
+                directory=initial,
+                filter="Logo Image (*.png *.jpg)",
+            )
+        if file == "":
+            return
+        if os.path.exists(file):
+            cfg.set_logo_path(file)
+            self.ui.actionLogo_File.setText(file)
 
     @pyqtSlot()
     def reportManager(self):

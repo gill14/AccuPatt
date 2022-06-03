@@ -59,6 +59,31 @@ def set_datafile_dir(value: str):
     QSettings().setValue(_DATA_FILE_DIR, value)
 
 
+# Logo Stuff
+
+_LOGO_INCLUDE_IN_REPORT = "logo_include_in_report"
+LOGO_INCLUDE_IN_REPORT__DEFAULT = False
+
+def get_logo_include_in_report() -> bool:
+    return QSettings().value(
+        _LOGO_INCLUDE_IN_REPORT, defaultValue=LOGO_INCLUDE_IN_REPORT__DEFAULT, type=bool
+    )
+    
+def set_logo_include_in_report(value: bool):
+    QSettings().setValue(_LOGO_INCLUDE_IN_REPORT, value)
+    
+    
+_LOGO_PATH = "logo_path"
+LOGO_PATH__DEFAULT = ""
+
+def get_logo_path() -> str:
+    return QSettings().value(
+        _LOGO_PATH, defaultValue=LOGO_PATH__DEFAULT, type=str
+    )
+
+def set_logo_path(value: str):
+    QSettings().setValue(_LOGO_PATH, value)
+
 # Flyin Headers
 
 _FLYIN_NAME = "flyin_name"

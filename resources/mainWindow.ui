@@ -182,10 +182,20 @@
       <addaction name="actionOutline"/>
       <addaction name="actionMask"/>
      </widget>
+     <widget class="QMenu" name="menuLogo">
+      <property name="title">
+       <string>Logo</string>
+      </property>
+      <addaction name="actionInclude_Logo"/>
+      <addaction name="separator"/>
+      <addaction name="actionLogo_File"/>
+      <addaction name="actionSelect_Logo_File"/>
+     </widget>
      <addaction name="actionInclude_Card_Images"/>
      <addaction name="menuCard_Image_Type"/>
      <addaction name="menuCard_Images_per_Page"/>
      <addaction name="actionCompress_Card_Images"/>
+     <addaction name="menuLogo"/>
     </widget>
     <addaction name="actionCreate_Report"/>
     <addaction name="separator"/>
@@ -405,6 +415,24 @@
   <action name="actionhjh">
    <property name="text">
     <string>hjh</string>
+   </property>
+  </action>
+  <action name="actionInclude_Logo">
+   <property name="text">
+    <string>Include Logo</string>
+   </property>
+  </action>
+  <action name="actionLogo_File">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Logo File</string>
+   </property>
+  </action>
+  <action name="actionSelect_Logo_File">
+   <property name="text">
+    <string>Select Logo File</string>
    </property>
   </action>
  </widget>

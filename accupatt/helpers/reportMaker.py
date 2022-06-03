@@ -1,5 +1,6 @@
 import math
 from io import BytesIO
+import os
 
 import accupatt.config as cfg
 import cv2
@@ -9,19 +10,21 @@ from accupatt.models.sprayCard import SprayCard
 from accupatt.widgets.mplwidget import MplWidget
 from PIL import Image
 from reportlab.graphics import renderPDF
-from reportlab.lib import colors
+from reportlab.lib import colors, utils
+from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4, letter
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
+from reportlab.platypus import Image as PImage
 from reportlab.platypus import Frame, Paragraph, Table, TableStyle
 from reportlab.platypus.flowables import Flowable
 from svglib.svglib import svg2rlg
 
 
 class ReportMaker:
-    def __init__(self, file: str, seriesData: SeriesData):
+    def __init__(self, file: str, seriesData: SeriesData, logo_path: str):
         self.s = seriesData
         self.i = seriesData.info
 
@@ -35,6 +38,10 @@ class ReportMaker:
 
         self.style = ParagraphStyle(
             name="normal", fontName="Helvetica", fontSize=6, leading=10
+        )
+        
+        self.style_center = ParagraphStyle(
+            name="center", fontName="Helvetica", fontSize=8, leading=10, alignment=TA_CENTER
         )
 
         self.tablestyle = [
@@ -70,9 +77,29 @@ class ReportMaker:
         self.tablestyle_with_headers.remove(
             ("BACKGROUND", (0, 0), (0, -1), colors.lightgrey)
         )
+        
+        self.include_logo = os.path.exists(logo_path)
+        self.logo_path = logo_path
 
     def save(self):
         self.canvas.save()
+
+    def get_logo_image(self, max_width=2*inch, max_height=inch):
+        # Load Image to get dims
+        img = Image.open(self.logo_path)
+        img_byte_arr = BytesIO()
+        img.save(img_byte_arr, format=img.format)
+        img = ImageReader(img_byte_arr)
+        iw, ih = img.getSize()
+        aspect = ih / float(iw)
+        # Scale to max width
+        width = max_width
+        height = max_width * aspect
+        # Scale (down only) to max height if needed
+        if height > max_height:
+            height = max_height
+            width = height / aspect
+        return PImage(self.logo_path, width=width, height=height)
 
     def printHeaders(
         self,
@@ -86,6 +113,24 @@ class ReportMaker:
         string_include=False,
         cards_include=False,
     ):
+        # Header
+        head = Paragraph(
+                f"{self.i.flyin_name}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;{self.i.flyin_location}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;{self.i.flyin_date}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Analyst:&nbsp;{self.i.flyin_analyst}",
+                style=self.style_center,
+            )
+        f_0 = Frame(
+            self.bound_x_left,
+            700,
+            self.bound_width,
+            75,
+            leftPadding=0,
+            rightPadding=0,
+            bottomPadding=0,
+            topPadding=0,
+            showBoundary=1,
+        )
+        f_0.add(head, self.canvas)
+        
         # Build first row of tables
         line_1 = []
         if applicator:
@@ -102,7 +147,7 @@ class ReportMaker:
             t_1.wrapOn(self.canvas, 50, 30)
             f_1 = Frame(
                 self.bound_x_left,
-                700,
+                685,
                 self.bound_width,
                 75,
                 leftPadding=0,
@@ -114,8 +159,10 @@ class ReportMaker:
             f_1.addFromList([t_1], self.canvas)
         # Build second row of tables
         line_2 = []
-        if flyin:
-            line_2.append(self._header_flyin())
+        #if flyin:
+        #    line_2.append(self._header_flyin())
+        if self.include_logo:
+            line_2.append(self.get_logo_image(max_width=1.5*inch, max_height=75))
         if observables:
             line_2.append(
                 self._header_observables(
@@ -130,7 +177,7 @@ class ReportMaker:
             t_2.wrapOn(self.canvas, 50, 30)
             f_2 = Frame(
                 self.bound_x_left,
-                610,
+                595,
                 self.bound_width,
                 90,
                 leftPadding=0,
@@ -152,10 +199,10 @@ class ReportMaker:
         # Headers
         self.printHeaders(string_include=True)
         # String Plots
-        y_space = 25
-        y_tall = 140
+        y_space = 20
+        y_tall = 137
         y_short = 110
-        y = 435
+        y = 425
         renderPDF.draw(
             self._drawing_from_plot_widget(
                 overlayWidget, 0.8 * self.bound_width / inch, y_tall / inch
@@ -164,7 +211,7 @@ class ReportMaker:
             self.bound_x_left,
             y,
         )
-        y = y - y_space - y_tall
+        y = y - y_space - y_tall - 3
         renderPDF.draw(
             self._drawing_from_plot_widget(
                 averageWidget, 0.8 * self.bound_width / inch, y_tall / inch
@@ -218,7 +265,7 @@ class ReportMaker:
         y_space = 25
         y_tall = 140
         y_short = 110
-        y = 435
+        y = 425
         """renderPDF.draw(
             self._drawing_from_plot_widget(
                 spatialDVWidget,
