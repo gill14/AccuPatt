@@ -48,6 +48,8 @@ class LoadCards(baseclass):
         # Populate controls with static options, selections from persistent config
         self.ui.comboBoxDPI.addItems([str(dpi) for dpi in cfg.IMAGE_DPI_OPTIONS])
         self.ui.comboBoxDPI.setCurrentText(str(self.dpi))
+        self.ui.checkBoxFlipHorizontal.setChecked(cfg.get_image_flip_x())
+        self.ui.checkBoxFlipVertical.setChecked(cfg.get_image_flip_y())
         self.ui.comboBoxOrientation.addItems(cfg.ROI_ACQUISITION_ORIENTATIONS)
         self.ui.comboBoxOrientation.setCurrentIndex(
             cfg.ROI_ACQUISITION_ORIENTATIONS.index(self.orientation)
@@ -67,6 +69,8 @@ class LoadCards(baseclass):
 
         # Slots for controls
         self.ui.comboBoxDPI.currentTextChanged[str].connect(self.dpi_changed)
+        self.ui.checkBoxFlipHorizontal.toggled[bool].connect(self.flip_x_changed)
+        self.ui.checkBoxFlipVertical.toggled[bool].connect(self.flip_y_changed)
         self.ui.comboBoxOrientation.currentIndexChanged[int].connect(
             self.orientation_changed
         )
@@ -103,9 +107,11 @@ class LoadCards(baseclass):
         image_reader.setScaledSize(size_mod)
         self.img = image_reader.read()
         self.img = self.img.scaled(size_og.width(), size_og.height())
+        self.img = self.img.mirrored(horizontal=cfg.get_image_flip_x(), vertical=cfg.get_image_flip_y())
         self.img_pixmap = QPixmap.fromImage(self.img)
         self.img = QGraphicsPixmapItem(self.img_pixmap)
 
+        self.ui.plotWidget.clear()
         self.ui.plotWidget.addItem(self.img)
         self.ui.plotWidget.getPlotItem().invertY(True)
 
@@ -175,6 +181,16 @@ class LoadCards(baseclass):
             return
         self.show_image_characteristics()
 
+    @pyqtSlot(bool)
+    def flip_x_changed(self, isFlip: bool):
+        cfg.set_image_flip_x(isFlip)
+        self.plot_image()
+        
+    @pyqtSlot(bool)
+    def flip_y_changed(self, isFlip: bool):
+        cfg.set_image_flip_y(isFlip)
+        self.plot_image()
+        
     @pyqtSlot(int)
     def orientation_changed(self, newIndex):
         self.orientation = cfg.ROI_ACQUISITION_ORIENTATIONS[newIndex]
@@ -302,6 +318,11 @@ class LoadCards(baseclass):
             h = int(roi.size()[1])
             # Use CV to crop image roi
             img = cv2.imread(self.image_file)
+            # Flip as needed
+            if cfg.get_image_flip_x():
+                img = cv2.flip(img, 1)
+            if cfg.get_image_flip_y():
+                img = cv2.flip(img, 0)
             img_crop = img[y : y + h, x : x + w]
             # Save to bytestream
             _, buffer = cv2.imencode("*.png", img_crop)
@@ -381,7 +402,10 @@ class LoadCards(baseclass):
 
     def _find_rois(self, image_file):
         img = cv2.imread(image_file)
-
+        if cfg.get_image_flip_x():
+            img = cv2.flip(img, 1)
+        if cfg.get_image_flip_y():
+            img = cv2.flip(img, 0)
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         _, img_thresh = cv2.threshold(
             img_gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU

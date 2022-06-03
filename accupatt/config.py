@@ -417,6 +417,28 @@ def set_image_load_method(value: str):
     QSettings().setValue(_IMAGE_LOAD_METHOD, value)
 
 
+_IMAGE_FLIP_X = "image_flip_x"
+IMAGE_FLIP_X__DEFAULT = False
+
+def get_image_flip_x() -> bool:
+    return QSettings().value(
+        _IMAGE_FLIP_X, defaultValue=IMAGE_FLIP_X__DEFAULT, type=bool
+    )
+
+def set_image_flip_x(value: bool):
+    QSettings().setValue(_IMAGE_FLIP_X, value)
+    
+_IMAGE_FLIP_Y = "image_flip_y"
+IMAGE_FLIP_Y__DEFAULT = False
+
+def get_image_flip_y() -> bool:
+    return QSettings().value(
+        _IMAGE_FLIP_Y, defaultValue=IMAGE_FLIP_Y__DEFAULT, type=bool
+    )
+
+def set_image_flip_y(value: bool):
+    QSettings().setValue(_IMAGE_FLIP_Y, value)
+
 _ROI_ACQUISITION_ORIENTATION = "roi_acquisition_orientation"
 ROI_ACQUISITION_ORIENTATIONS = ["Horizontal", "Vertical"]
 ROI_ACQUISITION_ORIENTATION__DEFAULT = ROI_ACQUISITION_ORIENTATIONS[0]
