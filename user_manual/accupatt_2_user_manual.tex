@@ -527,7 +527,6 @@
         \item \textbf{spray-system:} 
         \begin{itemize}
             \item \textbf{swath-target:} float, units=[ft, m]
-            \item \textbf{swath-adjusted:} float
             \item \textbf{rate-target:} float, units=[gpa, l/ha]
             \item \textbf{boom-pressure:} float, units=[psi, bar, kpa]
             \item \textbf{boom-width:} float, units=[ft, m]
@@ -591,11 +590,13 @@
                 \item \textbf{smooth:} true/false, apply smoothing filter to pass
                 \item \textbf{smooth-window} float, x-domain window over which to apply smoothing
                 \item \textbf{smooth-order} integer, polynomial order for smoothing filter
+                \item \textbf{swath-adjusted:} float, units follow swath-target
             \end{itemize}
             \item \textbf{spray-cards:}
             \begin{itemize}
                 \item \textbf{center:} true/false, apply center-method to pass
                 \item \textbf{center-method:} text, option=[centroid, center-of-distribution]
+                \item \textbf{swath-adjusted:} float, units follow swath-target
                 \item \textbf{spray-cards:} [list]
                 \begin{itemize}
                     \item \textbf{id:} unique identifier, automatically generated
@@ -629,6 +630,15 @@
 
     \section{Changelog}
     \begin{itemize}
+        \item \textbf{2.0.12 - 8 June 2022}
+        \begin{itemize}
+            \item (fix) New Series not enabling main tab widget
+            \item (fix) Clearing plots on New Series
+            \item (enhancement) Plot rendering on/after PDF generation 
+            \item (enhancement) Move fly-in header info to single line header in PDF SAFE report
+            \item (feature) Option to flip input image vertically/horizontally in multi mode
+            \item (feature) Option to add a logo to PDF SAFE report
+        \end{itemize}
         \item \textbf{2.0.11 - 30 May 2022}
         \begin{itemize}
             \item (fix) Passes added from Pass Manager cause plots to misbehave
