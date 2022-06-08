@@ -46,7 +46,7 @@ Ui_Form, baseclass = uic.loadUiType(
 Ui_Form_About, baseclass_about = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "about.ui")
 )
-testing = True
+testing = False
 testfile = "/Users/gill14/Library/Mobile Documents/com~apple~CloudDocs/Projects/AccuPatt/testing/N802EX 01.db"
 
 class MainWindow(baseclass):

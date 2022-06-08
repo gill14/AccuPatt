@@ -95,7 +95,7 @@ class CardMainWidget(baseclass):
         # Process Cards to get stat data
         self.processCards()
         # Refresh listWidget
-        self.updatePassListWidget(index_to_select=-1)
+        self.updatePassListWidget()
         # Update the Pass Data Mod Options Silently, then plot individuals
         self.passSelectionChanged()
         # Update Adjusted Swath Control Limits Silently
@@ -183,7 +183,7 @@ class CardMainWidget(baseclass):
         # Replot and Recalculate composites
         self._updatePlots(composites=True, simulations=True, distributions=True)
 
-    def updatePassListWidget(self, index_to_select: int):
+    def updatePassListWidget(self, index_to_select: int = -1):
         with QSignalBlocker(self.listWidgetPass):
             self.listWidgetPass.clear()
             for p in self.seriesData.passes:
@@ -201,7 +201,8 @@ class CardMainWidget(baseclass):
                         if p.cards_include_in_composite
                         else Qt.CheckState.PartiallyChecked
                     )
-            self.listWidgetPass.setCurrentRow(index_to_select)
+            index = len(self.seriesData.passes)-1 if index_to_select == -1 else index_to_select
+            self.listWidgetPass.setCurrentRow(index)
         with QSignalBlocker(self.comboBoxDistPass):
             self.comboBoxDistPass.clear()
             self.comboBoxDistPass.addItem("Series Composite")

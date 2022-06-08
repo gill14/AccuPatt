@@ -101,7 +101,7 @@ class StringMainWidget(baseclass):
                 self.seriesData.string.simulated_adjascent_passes
             )
         # Update the Pass List Widget Silently
-        self.updatePassListWidget(index_to_select=-1)
+        self.updatePassListWidget()
         # Update the Pass Data Mod Options Silently, then plot individuals
         self.passSelectionChanged()
         # Create Average Pattern and apply Mods Silently
@@ -164,7 +164,7 @@ class StringMainWidget(baseclass):
         # Replot composites, simulations
         self._updatePlots(modify=True, composites=True, simulations=True)
 
-    def updatePassListWidget(self, index_to_select: int):
+    def updatePassListWidget(self, index_to_select: int = -1):
         with QSignalBlocker(self.listWidgetPass):
             self.listWidgetPass.clear()
             for p in self.seriesData.passes:
@@ -182,7 +182,8 @@ class StringMainWidget(baseclass):
                         if p.string_include_in_composite
                         else Qt.CheckState.PartiallyChecked
                     )
-            self.listWidgetPass.setCurrentRow(index_to_select)
+            index = len(self.seriesData.passes)-1 if index_to_select == -1 else index_to_select
+            self.listWidgetPass.setCurrentRow(index)
 
     """
     Edit Pass Button & Methods
