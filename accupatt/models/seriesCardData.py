@@ -58,6 +58,8 @@ class SeriesCardData:
             else:
                 dd = dd.merge(d.set_index("loc"), on="loc", how="outer", suffixes=[f"_{lastPassName}",f"_{p.name}"])
             lastPassName = p.name
+        if dd.empty:
+            return dd
         dd.set_index("loc", inplace=True)
         dd.sort_values(by="loc", axis=0, inplace=True)
         dd.interpolate(method="slinear", limit_area="inside", inplace=True)
@@ -102,6 +104,8 @@ class SeriesCardData:
         self._config_mpl_plotter(mplWidget)
 
         avg = self._get_average()
+        if avg.empty:
+            return
         avgPass = PassCardData()
         avgPass.center = self.center
         avgPass.center_method = self.center_method
