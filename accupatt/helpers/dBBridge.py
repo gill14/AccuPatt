@@ -7,12 +7,12 @@ from datetime import datetime
 import pandas as pd
 import accupatt.config as cfg
 from accupatt.models.appInfo import Nozzle
-from accupatt.models.passCardData import PassCardData
+from accupatt.models.passDataCard import PassDataCard
 from accupatt.models.passData import Pass
-from accupatt.models.passStringData import PassStringData
-from accupatt.models.seriesCardData import SeriesCardData
+from accupatt.models.passDataString import PassDataString
+from accupatt.models.seriesDataCard import SeriesDataCard
 from accupatt.models.seriesData import SeriesData
-from accupatt.models.seriesStringData import SeriesStringData
+from accupatt.models.seriesDataString import SeriesDataString
 from accupatt.models.sprayCard import SprayCard
 
 schema_filename = os.path.join(os.getcwd(), "resources", "schema.sql")
@@ -79,7 +79,7 @@ def _load_table_series(c: sqlite3.Cursor, s: SeriesData):
 
 
 def _load_table_series_string(c: sqlite3.Cursor, s: SeriesData):
-    ss: SeriesStringData = s.string
+    ss: SeriesDataString = s.string
     c.execute(
         """SELECT average_center, average_center_method, average_smooth, average_smooth_window, average_smooth_order, equalize_integrals, swath_adjusted, simulated_adjascent_passes FROM series_string WHERE series_id = ?""",
         (s.id,),
@@ -97,7 +97,7 @@ def _load_table_series_string(c: sqlite3.Cursor, s: SeriesData):
 
 
 def _load_table_series_spray_card(c: sqlite3.Cursor, s: SeriesData):
-    scd: SeriesCardData = s.cards
+    scd: SeriesDataCard = s.cards
     c.execute(
         """SELECT average_center, average_center_method, swath_adjusted, simulated_adjascent_passes FROM series_spray_card WHERE series_id = ?""",
         (s.id,),
@@ -201,7 +201,7 @@ def _load_table_nozzles(c: sqlite3.Cursor, s: SeriesData, alt_id: str = ""):
 
 def _load_table_passes(c: sqlite3.Cursor, s: SeriesData, file: str):
     c.execute(
-        """SELECT id, pass_name, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity, string_include_in_composite, cards_include_in_composite FROM passes WHERE series_id = ?""",
+        """SELECT id, pass_name, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity FROM passes WHERE series_id = ?""",
         (s.id,),
     )
     data = c.fetchall()
@@ -222,8 +222,6 @@ def _load_table_passes(c: sqlite3.Cursor, s: SeriesData, file: str):
             p.temperature,
             p.temperature_units,
             p.humidity,
-            p.string_include_in_composite,
-            p.cards_include_in_composite,
         ) = row
 
         _load_table_pass_string(c, p)
@@ -235,10 +233,10 @@ def _load_table_passes(c: sqlite3.Cursor, s: SeriesData, file: str):
 
 def _load_table_pass_string(c: sqlite3.Cursor, p: Pass):
     c.execute(
-        """SELECT excitation_wav, emission_wav, integration_time_ms, trim_left, trim_right, trim_vertical, rebase, center, center_method, smooth, smooth_window, smooth_order, data_loc_units, excitation_data, emission_data FROM pass_string WHERE pass_id = ?""",
+        """SELECT excitation_wav, emission_wav, integration_time_ms, trim_left, trim_right, trim_vertical, rebase, center, center_method, smooth, smooth_window, smooth_order, data_loc_units, excitation_data, emission_data, include_in_composite FROM pass_string WHERE pass_id = ?""",
         (p.id,),
     )
-    ps: PassStringData = p.string
+    ps: PassDataString = p.string
     (
         ps.wav_ex,
         ps.wav_em,
@@ -255,6 +253,7 @@ def _load_table_pass_string(c: sqlite3.Cursor, p: Pass):
         ps.data_loc_units,
         d_ex,
         d_em,
+        ps.include_in_composite,
     ) = c.fetchone()
     ps.data_ex = pd.read_json(d_ex)
     ps.data = pd.read_json(d_em)
@@ -262,13 +261,14 @@ def _load_table_pass_string(c: sqlite3.Cursor, p: Pass):
 
 def _load_table_pass_spray_card(c: sqlite3.Cursor, p: Pass):
     c.execute(
-        """SELECT center, center_method FROM pass_spray_card WHERE pass_id = ?""",
+        """SELECT center, center_method, include_in_composite FROM pass_spray_card WHERE pass_id = ?""",
         (p.id,),
     )
-    pcd: PassCardData = p.cards
+    pcd: PassDataCard = p.cards
     (
         pcd.center,
         pcd.center_method,
+        pcd.include_in_composite,
     ) = c.fetchone()
 
 
@@ -401,7 +401,7 @@ def _update_table_series(c: sqlite3.Cursor, s: SeriesData):
 
 
 def _update_table_series_string(c: sqlite3.Cursor, s: SeriesData):
-    ss: SeriesStringData = s.string
+    ss: SeriesDataString = s.string
     c.execute(
         """INSERT INTO series_string (series_id, average_center, average_center_method, average_smooth, average_smooth_window, average_smooth_order, equalize_integrals, swath_adjusted, simulated_adjascent_passes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(series_id) DO UPDATE SET
@@ -421,7 +421,7 @@ def _update_table_series_string(c: sqlite3.Cursor, s: SeriesData):
 
 
 def _update_table_series_spray_card(c: sqlite3.Cursor, s: SeriesData):
-    scd: SeriesCardData = s.cards
+    scd: SeriesDataCard = s.cards
     c.execute(
         """INSERT INTO series_spray_card (series_id, average_center, average_center_method, swath_adjusted, simulated_adjascent_passes) VALUES (?, ?, ?, ?, ?)
                     ON CONFLICT(series_id) DO UPDATE SET
@@ -519,9 +519,9 @@ def _update_table_passes(c: sqlite3.Cursor, s: SeriesData):
     p: Pass
     for p in s.passes:
         c.execute(
-            """INSERT INTO passes (id, series_id, pass_name, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity, string_include_in_composite, cards_include_in_composite) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """INSERT INTO passes (id, series_id, pass_name, pass_number, ground_speed, ground_speed_units, spray_height, spray_height_units, pass_heading, wind_direction, wind_speed, wind_speed_units, temperature, temperature_units, humidity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(id) DO UPDATE SET
-                    pass_name = excluded.pass_name, pass_number = excluded.pass_number, ground_speed = excluded.ground_speed, ground_speed_units = excluded.ground_speed_units, spray_height = excluded.spray_height, spray_height_units = excluded.spray_height_units, pass_heading = excluded.pass_heading, wind_direction = excluded.wind_direction, wind_speed = excluded.wind_speed, wind_speed_units = excluded.wind_speed_units, temperature = excluded.temperature, temperature_units = excluded.temperature_units, humidity = excluded.humidity, string_include_in_composite = excluded.string_include_in_composite, cards_include_in_composite = excluded.cards_include_in_composite""",
+                    pass_name = excluded.pass_name, pass_number = excluded.pass_number, ground_speed = excluded.ground_speed, ground_speed_units = excluded.ground_speed_units, spray_height = excluded.spray_height, spray_height_units = excluded.spray_height_units, pass_heading = excluded.pass_heading, wind_direction = excluded.wind_direction, wind_speed = excluded.wind_speed, wind_speed_units = excluded.wind_speed_units, temperature = excluded.temperature, temperature_units = excluded.temperature_units, humidity = excluded.humidity""",
             (
                 p.id,
                 s.id,
@@ -538,8 +538,6 @@ def _update_table_passes(c: sqlite3.Cursor, s: SeriesData):
                 p.temperature,
                 p.temperature_units,
                 p.humidity,
-                p.string_include_in_composite,
-                p.cards_include_in_composite,
             ),
         )
         _update_table_pass_string(c, p)
@@ -563,11 +561,11 @@ def _update_table_passes(c: sqlite3.Cursor, s: SeriesData):
 
 
 def _update_table_pass_string(c: sqlite3.Cursor, p: Pass):
-    ps: PassStringData = p.string
+    ps: PassDataString = p.string
     c.execute(
-        """INSERT INTO pass_string (pass_id, excitation_wav, emission_wav, integration_time_ms, trim_left, trim_right, trim_vertical, rebase, center, center_method, smooth, smooth_window, smooth_order, data_loc_units, excitation_data, emission_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """INSERT INTO pass_string (pass_id, excitation_wav, emission_wav, integration_time_ms, trim_left, trim_right, trim_vertical, rebase, center, center_method, smooth, smooth_window, smooth_order, data_loc_units, excitation_data, emission_data, include_in_composite) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(pass_id) DO UPDATE SET
-                    excitation_wav = excluded.excitation_wav, emission_wav = excluded.emission_wav, integration_time_ms = excluded.integration_time_ms, trim_left = excluded.trim_left, trim_right = excluded.trim_right, trim_vertical = excluded.trim_vertical, rebase = excluded.rebase, center = excluded.center, center_method = excluded.center_method, smooth = excluded.smooth, smooth_window = excluded.smooth_window, smooth_order = excluded.smooth_order, data_loc_units = excluded.data_loc_units, excitation_data = excluded.excitation_data, emission_data = excluded.emission_data""",
+                    excitation_wav = excluded.excitation_wav, emission_wav = excluded.emission_wav, integration_time_ms = excluded.integration_time_ms, trim_left = excluded.trim_left, trim_right = excluded.trim_right, trim_vertical = excluded.trim_vertical, rebase = excluded.rebase, center = excluded.center, center_method = excluded.center_method, smooth = excluded.smooth, smooth_window = excluded.smooth_window, smooth_order = excluded.smooth_order, data_loc_units = excluded.data_loc_units, excitation_data = excluded.excitation_data, emission_data = excluded.emission_data, include_in_composite = excluded.include_in_composite""",
         (
             p.id,
             ps.wav_ex,
@@ -585,20 +583,22 @@ def _update_table_pass_string(c: sqlite3.Cursor, p: Pass):
             ps.data_loc_units,
             ps.data_ex.to_json(),
             ps.data.to_json(),
+            ps.include_in_composite
         ),
     )
 
 
 def _update_table_pass_spray_card(c: sqlite3.Cursor, p: Pass):
-    pcd: PassCardData = p.cards
+    pcd: PassDataCard = p.cards
     c.execute(
-        """INSERT INTO pass_spray_card (pass_id, center, center_method) VALUES (?, ?, ?)
+        """INSERT INTO pass_spray_card (pass_id, center, center_method, include_in_composite) VALUES (?, ?, ?, ?)
                     ON CONFLICT(pass_id) DO UPDATE SET
-                    center = excluded.center, center_method = excluded.center_method""",
+                    center = excluded.center, center_method = excluded.center_method, include_in_composite = excluded.include_in_composite""",
         (
             p.id,
             pcd.center,
             pcd.center_method,
+            pcd.include_in_composite,
         ),
     )
 

@@ -94,9 +94,7 @@ CREATE TABLE IF NOT EXISTS passes (
     wind_speed_units            TEXT,
     temperature                 REAL,
     temperature_units           TEXT,
-    humidity                    REAL,
-    string_include_in_composite INTEGER,
-    cards_include_in_composite  INTEGER
+    humidity                    REAL
 );
 CREATE TABLE IF NOT EXISTS pass_string (
     pass_id                 TEXT PRIMARY KEY REFERENCES passes(id),
@@ -114,12 +112,14 @@ CREATE TABLE IF NOT EXISTS pass_string (
     smooth_order            INTEGER,
     data_loc_units          TEXT,
     excitation_data         TEXT,
-    emission_data           TEXT
+    emission_data           TEXT,
+    include_in_composite    INTEGER
 );
 CREATE TABLE IF NOT EXISTS pass_spray_card (
     pass_id                 TEXT PRIMARY KEY REFERENCES passes(id),
     center                  INTEGER,
-    center_method           TEXT
+    center_method           TEXT,
+    include_in_composite    INTEGER
 );
 CREATE TABLE IF NOT EXISTS spray_cards (
     id                              TEXT PRIMARY KEY,
