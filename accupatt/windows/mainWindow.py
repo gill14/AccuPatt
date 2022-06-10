@@ -13,9 +13,9 @@ from accupatt.helpers.exportExcel import export_all_to_excel, safe_report
 from accupatt.helpers.reportMaker import ReportMaker
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
-from accupatt.widgets.cardmainwidget import CardMainWidget
+from accupatt.widgets.tabWidgetCards import TabWidgetCards
 from accupatt.widgets.seriesinfowidget import SeriesInfoWidget
-from accupatt.widgets.stringmainwidget import StringMainWidget
+from accupatt.widgets.tabWidgetString import TabWidgetString
 from accupatt.windows.passManager import PassManager
 
 from accupatt.widgets import (
@@ -24,7 +24,8 @@ from accupatt.widgets import (
     passinfowidget,
     singlecardwidget,
     splitcardwidget,
-    stringmainwidget,
+    tabWidgetString,
+    tabWidgetCards
 )
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
@@ -210,10 +211,10 @@ class MainWindow(baseclass):
         self.tabWidget: QTabWidget = self.ui.tabWidget
         self.tabWidget.setEnabled(False)
         self.seriesInfoWidget: SeriesInfoWidget = self.ui.widgetSeriesInfo
-        self.seriesInfoWidget.target_swath_changed.connect(lambda x: self.target_swath_changed.emit())
-        self.stringWidget: StringMainWidget = self.ui.stringMainWidget
+        self.seriesInfoWidget.target_swath_changed.connect(lambda: self.target_swath_changed.emit())
+        self.stringWidget: TabWidgetString = self.ui.stringMainWidget
         self.stringWidget.request_file_save.connect(self.saveFile)
-        self.cardWidget: CardMainWidget = self.ui.cardMainWidget
+        self.cardWidget: TabWidgetCards = self.ui.cardMainWidget
         self.cardWidget.request_file_save.connect(self.saveFile)
 
         # Outbound Signals
@@ -547,7 +548,7 @@ class MainWindow(baseclass):
         if savefile:
             logo_path = cfg.get_logo_path() if cfg.get_logo_include_in_report() else ""
             reportMaker = ReportMaker(file=savefile, seriesData=self.seriesData, logo_path=logo_path)
-            if any([p.has_string_data() for p in self.seriesData.passes]):
+            if any([p.string.has_data() for p in self.seriesData.passes]):
                 reportMaker.report_safe_string(
                     overlayWidget=self.stringWidget.plotWidgetOverlay,
                     averageWidget=self.stringWidget.plotWidgetAverage,

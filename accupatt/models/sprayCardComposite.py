@@ -30,7 +30,7 @@ class SprayCardComposite(SprayCard):
     def buildFromSeries(self, seriesData: SeriesData):
         cards: list[SprayCard] = []
         for p in seriesData.passes:
-            if p.cards_include_in_composite:
+            if p.cards.include_in_composite:
                 for card in p.cards.card_list:
                     cards.append(card)
         self._buildFromList(cards)

@@ -216,8 +216,8 @@ def export_all_to_excel(series: SeriesData, saveFile: str):
             p.temperature,
             p.temperature_units,
             p.humidity,
-            p.string_include_in_composite,
-            p.cards_include_in_composite,
+            p.string.include_in_composite,
+            p.cards.include_in_composite,
             p.string.wav_ex,
             p.string.wav_em,
             p.string.trim_l,
@@ -261,7 +261,7 @@ def export_all_to_excel(series: SeriesData, saveFile: str):
     ws = wb.create_sheet("Card Data")
     col_pass_name = 2
     for j, p in enumerate(s.passes):
-        if p.has_card_data():
+        if p.cards.has_data():
             ws.cell(1, col_pass_name, p.name)
             ws.merge_cells(
                 start_row=1,

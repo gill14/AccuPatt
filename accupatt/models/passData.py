@@ -2,9 +2,9 @@ import uuid
 
 import accupatt.config as cfg
 import numpy as np
-from accupatt.models.passCardData import PassCardData
+from accupatt.models.passDataCard import PassDataCard
 
-from accupatt.models.passStringData import PassStringData
+from accupatt.models.passDataString import PassDataString
 from accupatt.models.sprayCard import SprayCard
 
 
@@ -31,18 +31,9 @@ class Pass:
         self.temperature_units = cfg.get_unit_temperature()
         self.humidity: float = 0
         # String Data
-        self.string = PassStringData(name=self.name)
+        self.string = PassDataString(name=self.name)
         # Card Data
-        self.cards = PassCardData()
-        # Include in Composite by default
-        self.string_include_in_composite = True
-        self.cards_include_in_composite = True
-
-    def has_string_data(self) -> bool:
-        return not self.string.data.empty
-
-    def has_card_data(self) -> bool:
-        return len(self.cards.card_list) > 0
+        self.cards = PassDataCard(name=self.name)
 
     """
     GET methods return a tuple of (value, units, value_string, value_units_string)

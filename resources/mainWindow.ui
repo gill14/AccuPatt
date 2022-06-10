@@ -72,7 +72,7 @@
          <number>5</number>
         </property>
         <item>
-         <widget class="StringMainWidget" name="stringMainWidget" native="true"/>
+         <widget class="TabWidgetString" name="stringMainWidget" native="true"/>
         </item>
        </layout>
       </widget>
@@ -91,7 +91,7 @@
          <number>5</number>
         </property>
         <item>
-         <widget class="CardMainWidget" name="cardMainWidget" native="true"/>
+         <widget class="TabWidgetCards" name="cardMainWidget" native="true"/>
         </item>
        </layout>
       </widget>
@@ -444,15 +444,15 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>StringMainWidget</class>
+   <class>TabWidgetString</class>
    <extends>QWidget</extends>
-   <header>accupatt/widgets/stringmainwidget.h</header>
+   <header>accupatt/widgets/tabWidgetString.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>CardMainWidget</class>
+   <class>TabWidgetCards</class>
    <extends>QWidget</extends>
-   <header>accupatt/widgets/cardmainwidget.h</header>
+   <header>accupatt/widgets/tabWidgetCards.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

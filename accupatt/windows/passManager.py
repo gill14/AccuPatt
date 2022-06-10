@@ -51,7 +51,7 @@ class PassManager(baseclass):
     def deletePass(self):
         row = self.ui.tableView.selectedIndexes()[0].row()
         p: Pass = self.tm.pass_list[row]
-        if p.has_string_data() or p.has_card_data():
+        if p.string.has_data() or p.cards.has_data():
             msg = QMessageBox.question(
                 self,
                 "Are You Sure?",
@@ -164,42 +164,42 @@ class PassTable(QAbstractTableModel):
             if role == Qt.ItemDataRole.CheckStateRole:
                 return (
                     Qt.CheckState.Checked
-                    if p.has_string_data()
+                    if p.string.has_data()
                     else Qt.CheckState.Unchecked
                 )
             elif role == Qt.ItemDataRole.DisplayRole:
-                return "Yes" if p.has_string_data() else "No"
+                return "Yes" if p.string.has_data() else "No"
         elif col == 2:
             if role == Qt.ItemDataRole.CheckStateRole:
                 return (
                     Qt.CheckState.Checked
-                    if p.string_include_in_composite
+                    if p.string.include_in_composite
                     else Qt.CheckState.Unchecked
                 )
             elif role == Qt.ItemDataRole.DisplayRole:
-                return "Yes" if p.string_include_in_composite else "No"
+                return "Yes" if p.string.include_in_composite else "No"
             elif role == Qt.ItemDataRole.EditRole:
-                return p.string_include_in_composite
+                return p.string.include_in_composite
         elif col == 3:
             if role == Qt.ItemDataRole.CheckStateRole:
                 return (
                     Qt.CheckState.Checked
-                    if p.has_card_data()
+                    if p.cards.has_data()
                     else Qt.CheckState.Unchecked
                 )
             elif role == Qt.ItemDataRole.DisplayRole:
-                return "Yes" if p.has_card_data() else "No"
+                return "Yes" if p.cards.has_data() else "No"
         elif col == 4:
             if role == Qt.ItemDataRole.CheckStateRole:
                 return (
                     Qt.CheckState.Checked
-                    if p.cards_include_in_composite
+                    if p.cards.include_in_composite
                     else Qt.CheckState.Unchecked
                 )
             elif role == Qt.ItemDataRole.DisplayRole:
-                return "Yes" if p.cards_include_in_composite else "No"
+                return "Yes" if p.cards.include_in_composite else "No"
             elif role == Qt.ItemDataRole.EditRole:
-                return p.cards_include_in_composite
+                return p.cards.include_in_composite
         elif col == 5:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
                 return f"{p.ground_speed:g}"
@@ -247,13 +247,13 @@ class PassTable(QAbstractTableModel):
         elif col == 1:
             pass
         elif col == 2:
-            p.string_include_in_composite = (
+            p.string.include_in_composite = (
                 Qt.CheckState(value) == Qt.CheckState.Checked
             )
         elif col == 3:
             pass
         elif col == 4:
-            p.cards_include_in_composite = Qt.CheckState(value) == Qt.CheckState.Checked
+            p.cards.include_in_composite = Qt.CheckState(value) == Qt.CheckState.Checked
         elif col == 5:
             p.set_ground_speed(value)
         elif col == 6:
@@ -360,12 +360,12 @@ class PassTable(QAbstractTableModel):
         col = index.column()
         p: Pass = self.pass_list[row]
         if col == 1:
-            if p.has_string_data():
+            if p.string.has_data():
                 return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
             else:
                 return Qt.ItemFlag.ItemIsSelectable
         elif col == 2:
-            if p.has_string_data():
+            if p.string.has_data():
                 return (
                     Qt.ItemFlag.ItemIsEnabled
                     | Qt.ItemFlag.ItemIsSelectable
@@ -374,12 +374,12 @@ class PassTable(QAbstractTableModel):
             else:
                 return Qt.ItemFlag.ItemIsSelectable
         elif col == 3:
-            if p.has_card_data():
+            if p.cards.has_data():
                 return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
             else:
                 return Qt.ItemFlag.ItemIsSelectable
         elif col == 4:
-            if p.has_card_data():
+            if p.cards.has_data():
                 return (
                     Qt.ItemFlag.ItemIsEnabled
                     | Qt.ItemFlag.ItemIsSelectable

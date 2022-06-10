@@ -64,7 +64,7 @@ class StringPass(baseclass):
         self.setup_and_clear_plot(showPopup=False)
 
         # Load in pattern data from pass object if available
-        if passData.has_string_data():
+        if passData.string.has_data():
             self.load_data_from_pass()
 
         self.show()

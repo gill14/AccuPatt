@@ -4,18 +4,17 @@ import pandas as pd
 from scipy import interpolate
 import accupatt.config as cfg
 from accupatt.helpers.atomizationModel import AtomizationModel
+from accupatt.models.passDataBase import PassDataBase
 
 from accupatt.models.sprayCard import SprayCard
 from accupatt.widgets.mplwidget import MplWidget
 
 
-class PassCardData:
-    def __init__(self):
+class PassDataCard(PassDataBase):
+    def __init__(self, name):
+        super().__init__(name=name)
         # Card Data
         self.card_list: list[SprayCard] = []
-        # Card Data Mod options
-        self.center = True
-        self.center_method = cfg.get_center_method()
 
     def _get_data_from_card_list(self):
         scs: list[SprayCard] = sorted(
@@ -177,4 +176,16 @@ class PassCardData:
         # Must set ylim after plotting
         mplWidget.canvas.ax.set_ylim(bottom=0, auto=None)
         mplWidget.canvas.draw()
-        
+    
+    """
+    Conveneince
+    """    
+
+    def has_data(self) -> bool:
+        return len(self.card_list) > 0
+    
+    def is_active(self) -> bool:
+        has_data = self.has_data()
+        included = self.include_in_composite
+        has_included_card = any([sc.include_in_composite for sc in self.card_list])
+        return (has_data and included and has_included_card)

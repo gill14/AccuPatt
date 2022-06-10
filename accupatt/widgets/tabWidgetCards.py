@@ -1,21 +1,14 @@
 import os
 
 import accupatt.config as cfg
-from PyQt6 import uic
-from PyQt6.QtCore import QSortFilterProxyModel, Qt, QTimer, pyqtSignal, pyqtSlot, QSignalBlocker
+from PyQt6.QtCore import QSortFilterProxyModel, Qt, QTimer, pyqtSlot, QSignalBlocker
 from PyQt6.QtWidgets import (
-    QPushButton,
-    QCheckBox,
     QComboBox,
     QHeaderView,
-    QListWidget,
     QListWidgetItem,
     QProgressDialog,
-    QSlider,
-    QSpinBox,
     QTableWidget,
     QTableView,
-    QTabWidget,
 )
 from pyqtgraph import PlotWidget
 from accupatt.helpers.cardStatTabelModel import CardStatTableModel, ComboBoxDelegate
@@ -25,48 +18,18 @@ from accupatt.models.seriesData import SeriesData
 from accupatt.models.sprayCard import SprayCard
 from accupatt.models.sprayCardComposite import SprayCardComposite
 from accupatt.widgets.mplwidget import MplWidget
+from accupatt.widgets.tabWidgetBase import TabWidgetBase
 from accupatt.windows.cardManager import CardManager
 
-Ui_Form, baseclass = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "cardMainWidget.ui")
-)
 
-
-class CardMainWidget(baseclass):
-
-    request_file_save = pyqtSignal()
+class TabWidgetCards(TabWidgetBase):
 
     def __init__(self, parent, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.ui = Ui_Form()
-        self.ui.setupUi(self)
-        self.parent = parent
-        # Typed UI Accessors, connect built-in signals to custom slots
-        self.listWidgetPass: QListWidget = self.ui.listWidgetPass
-        self.listWidgetPass.itemSelectionChanged.connect(self.passSelectionChanged)
-        self.listWidgetPass.itemChanged[QListWidgetItem].connect(self.passItemChanged)
-        self.buttonEditPass: QPushButton = self.ui.buttonEditPass
-        self.buttonEditPass.clicked.connect(self.editPass)
-        self.checkBoxPassCenter: QCheckBox = self.ui.checkBoxPassCenter
-        self.checkBoxPassCenter.stateChanged[int].connect(self.passCenterChanged)
-        self.checkBoxSeriesCenter: QCheckBox = self.ui.checkBoxSeriesCenter
-        self.checkBoxSeriesCenter.stateChanged[int].connect(self.seriesCenterChanged)
-        self.spinBoxSwathAdjusted: QSpinBox = self.ui.spinBoxSwathAdjusted
-        self.spinBoxSwathAdjusted.valueChanged[int].connect(self.swathAdjustedChanged)
-        self.sliderSimulatedSwath: QSlider = self.ui.sliderSimulatedSwath
-        self.sliderSimulatedSwath.valueChanged[int].connect(self.swathAdjustedChanged)
-        self.tabWidget: QTabWidget = self.ui.tabWidget
+        super().__init__(ui_file=os.path.join(os.getcwd(), "resources", "cardMainWidget.ui"), parent=parent, *args, **kwargs)
+        
         self.plotWidgetPass: PlotWidget = self.ui.plotWidgetPass
         self.tableViewPass: QTableView = self.ui.tableViewPass
-        self.plotWidgetOverlay: MplWidget = self.ui.plotWidgetOverlay
-        self.plotWidgetAverage: MplWidget = self.ui.plotWidgetAverage
-        self.plotWidgetRacetrack: MplWidget = self.ui.plotWidgetRacetrack
-        self.plotWidgetBackAndForth: MplWidget = self.ui.plotWidgetBackAndForth
-        self.spinBoxSimulatedPasses: QSpinBox = self.ui.spinBoxSimulatedPasses
-        self.spinBoxSimulatedPasses.valueChanged[int].connect(
-            self.simulatedPassesChanged
-        )
-        self.tableWidgetCV: QTableWidget = self.ui.tableWidgetCV
+        
         self.comboBoxDistPass: QComboBox = self.ui.comboBoxDistPass
         self.comboBoxDistPass.currentIndexChanged[int].connect(self.distPassChanged)
         self.comboBoxDistCard: QComboBox = self.ui.comboBoxDistCard
@@ -74,7 +37,6 @@ class CardMainWidget(baseclass):
         self.plotWidgetDropDist1: MplWidget = self.ui.plotWidgetDropDist1
         self.plotWidgetDropDist2: MplWidget = self.ui.plotWidgetDropDist2
         self.tableWidgetCompositeStats: QTableWidget = self.ui.tableWidgetCompositeStats
-        
         
         # Flag for accepting file saved signals
         self.delayed_request_open_edit_pass = False
@@ -149,7 +111,7 @@ class CardMainWidget(baseclass):
             self.spinBoxSwathAdjusted.setValue(swath)
             self.spinBoxSwathAdjusted.setSuffix(" " + swath_units)
         if update_plots:
-            self._updatePlots(composites=True, simulations=True)
+            self.updatePlots(composites=True, simulations=True)
     
     @pyqtSlot(str)
     def onCurrentFileChanged(self, file: str):
@@ -161,15 +123,13 @@ class CardMainWidget(baseclass):
     
     @pyqtSlot()
     def passSelectionChanged(self):
-        if passData := self._getCurrentPass():
-            # Modify Capture/Edit Pass Button Text
-            prefix = "Edit" if passData.has_card_data() else "Capture"
-            self.buttonEditPass.setText(f"{prefix} {passData.name}")
+        if passData := self.getCurrentPass():
+            self.updateEditButton(passData.cards.has_data(), passData.name)
             # Set Pass Data Mod Options
             with QSignalBlocker(self.checkBoxPassCenter):
                 self.checkBoxPassCenter.setChecked(passData.cards.center)
             # Replot individual
-            self._updatePlots(individuals=True)
+            self.updatePlots(individuals=True)
 
     @pyqtSlot(QListWidgetItem)
     def passItemChanged(self, item: QListWidgetItem):
@@ -179,9 +139,9 @@ class CardMainWidget(baseclass):
             item.setCheckState(Qt.CheckState.PartiallyChecked)
         # Update SeriesData -> Pass object
         p = self.seriesData.passes[self.listWidgetPass.row(item)]
-        p.cards_include_in_composite = (item.checkState() == Qt.CheckState.Checked)
+        p.cards.include_in_composite = (item.checkState() == Qt.CheckState.Checked)
         # Replot and Recalculate composites
-        self._updatePlots(composites=True, simulations=True, distributions=True)
+        self.updatePlots(composites=True, simulations=True, distributions=True)
 
     def updatePassListWidget(self, index_to_select: int = -1):
         with QSignalBlocker(self.listWidgetPass):
@@ -190,7 +150,7 @@ class CardMainWidget(baseclass):
                 item = QListWidgetItem(p.name, self.listWidgetPass)
                 item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
                 item.setCheckState(Qt.CheckState.Unchecked)
-                if p.has_card_data():
+                if p.cards.has_data():
                     item.setFlags(
                         Qt.ItemFlag.ItemIsEnabled
                         | Qt.ItemFlag.ItemIsSelectable
@@ -198,7 +158,7 @@ class CardMainWidget(baseclass):
                     )
                     item.setCheckState(
                         Qt.CheckState.Checked
-                        if p.cards_include_in_composite
+                        if p.cards.include_in_composite
                         else Qt.CheckState.PartiallyChecked
                     )
             index = len(self.seriesData.passes)-1 if index_to_select == -1 else index_to_select
@@ -206,7 +166,7 @@ class CardMainWidget(baseclass):
         with QSignalBlocker(self.comboBoxDistPass):
             self.comboBoxDistPass.clear()
             self.comboBoxDistPass.addItem("Series Composite")
-            self.comboBoxDistPass.addItems([p.name for p in self.seriesData.passes if p.has_card_data()])
+            self.comboBoxDistPass.addItems([p.name for p in self.seriesData.passes if p.cards.has_data()])
 
     """
     Edit Pass Button & Methods
@@ -215,7 +175,7 @@ class CardMainWidget(baseclass):
     @pyqtSlot()
     def editPass(self):
         # Get a handle on the currently selected pass
-        passData = self._getCurrentPass()
+        passData = self.getCurrentPass()
         # Trigger file save if filapath needed
         if self.currentFile == None or self.currentFile == "":
             self.delayed_request_open_edit_pass = True
@@ -226,7 +186,7 @@ class CardMainWidget(baseclass):
             passData=passData,
             seriesData=self.seriesData,
             filepath=self.currentFile,
-            parent=self.parent,
+            parent=self.parent(),
         )
         # Connect Slot to save file each time the data is changed
         # This is prudent as card images are added
@@ -246,7 +206,7 @@ class CardMainWidget(baseclass):
         )
         # Repopulates card list widget, updates rest of ui
         self.passSelectionChanged()
-        self._updatePlots(composites=True, simulations=True, distributions=True)
+        self.updatePlots(composites=True, simulations=True, distributions=True)
     
     @pyqtSlot(str)
     def _acceptFileSaveSignal(self, file: str):
@@ -260,10 +220,21 @@ class CardMainWidget(baseclass):
     
     @pyqtSlot(int)
     def passCenterChanged(self, checkstate):
-        self._getCurrentPass().cards.center = (
+        self.getCurrentPass().cards.center = (
             Qt.CheckState(checkstate) == Qt.CheckState.Checked
         )
-        self._updatePlots(composites=True, simulations=True)
+        self.updatePlots(composites=True, simulations=True)
+        
+    @pyqtSlot(int)
+    def passSmoothChanged(self, checkstate):
+        pass
+    
+    @pyqtSlot()
+    def clickedAdvancedOptionsPass(self):
+        pass
+
+    def _advancedOptionsPassUpdated(self):
+        pass
     
     """
     Series Data Mod Options
@@ -274,7 +245,18 @@ class CardMainWidget(baseclass):
         self.seriesData.cards.center = (
             Qt.CheckState(checkstate) == Qt.CheckState.Checked
         )
-        self._updatePlots(composites=True, simulations=True)
+        self.updatePlots(composites=True, simulations=True)
+    
+    @pyqtSlot(int)
+    def seriesSmoothChanged(self, checkstate):
+        pass
+    
+    @pyqtSlot()
+    def clickedAdvancedOptionsSeries(self):
+        pass
+
+    def _advancedOptionsSeriesUpdated(self):
+        pass
         
     @pyqtSlot(int)
     def swathAdjustedChanged(self, swath: int):
@@ -283,7 +265,7 @@ class CardMainWidget(baseclass):
             self.spinBoxSwathAdjusted.setValue(swath)
         with QSignalBlocker(self.sliderSimulatedSwath):
             self.sliderSimulatedSwath.setValue(swath)
-        self._updatePlots(composites=True, simulations=True)
+        self.updatePlots(composites=True, simulations=True)
 
     """
     Individual Passes Tab
@@ -291,7 +273,7 @@ class CardMainWidget(baseclass):
 
     @pyqtSlot()
     def passStatTableValueChanged(self):
-        self._updatePlots(individuals=True, composites=True, simulations=True)
+        self.updatePlots(individuals=True, composites=True, simulations=True)
     
     """
     Simulations Tab
@@ -300,7 +282,7 @@ class CardMainWidget(baseclass):
     @pyqtSlot(int)
     def simulatedPassesChanged(self, numAdjascentPasses: int):
         self.seriesData.cards.simulated_adjascent_passes = numAdjascentPasses
-        self._updatePlots(simulations=True)
+        self.updatePlots(simulations=True)
     
     """
     Distributions Tab
@@ -319,103 +301,89 @@ class CardMainWidget(baseclass):
                 )
             self.comboBoxDistCard.setCurrentIndex(0)
         self.distCardChanged(0)
-        #self._updatePlots(distributions=True)
 
     @pyqtSlot(int)
     def distCardChanged(self, index: int):
-        self._updatePlots(distributions=True)
+        self.updatePlots(distributions=True)
     
     """
-    Internal plot trigger
+    Plot triggers
     """
     
-    def _updatePlots(self,individuals=False,composites=False,simulations=False,distributions=False,):
-        passData = self._getCurrentPass()
-        if individuals:
-            if (passData := self._getCurrentPass()) != None:
-                passData.cards.plotCoverage(
-                    mplWidget=self.plotWidgetPass,
-                    loc_units=self.seriesData.info.swath_units,
-                    colorize=cfg.get_card_plot_colorize_pass(),
-                    mod=False,
-                )
-                model = CardStatTableModel()
-                proxyModel = QSortFilterProxyModel()
-                proxyModel.setSourceModel(model)
-                self.tableViewPass.setModel(proxyModel)
-                self.tableViewPass.setItemDelegateForColumn(
-                    3, ComboBoxDelegate(self.tableViewPass, cfg.UNITS_LENGTH_LARGE)
-                )
-                self.tableViewPass.horizontalHeader().setSectionResizeMode(
-                    QHeaderView.ResizeMode.ResizeToContents
-                )
-                model.loadCards(passData.cards.card_list)
-                model.valueChanged.connect(self.passStatTableValueChanged)
-        if composites:
-            self.seriesData.cards.plotOverlay(mplWidget=self.plotWidgetOverlay)
-            self.seriesData.cards.plotAverage(
-                mplWidget=self.plotWidgetAverage,
-                colorize=cfg.get_card_plot_colorize_average(),
-            )
-        if simulations:
-            showEntireWindow = (
-                cfg.get_card_simulation_view_window()==cfg.CARD_SIMULATINO_VIEW_WINDOW_ALL
-            )
-            self.seriesData.cards.plotRacetrack(
-                mplWidget=self.plotWidgetRacetrack,
-                swath_width=self.seriesData.cards.swath_adjusted,
-                showEntireWindow=showEntireWindow,
-            )
-            self.seriesData.cards.plotBackAndForth(
-                mplWidget=self.plotWidgetBackAndForth,
-                swath_width=self.seriesData.cards.swath_adjusted,
-                showEntireWindow=showEntireWindow,
-            )
-            self.seriesData.cards.plotCVTable(
-                self.tableWidgetCV, self.seriesData.cards.swath_adjusted
-            )
-        if distributions:
-            composite = SprayCardComposite()
-            if self.comboBoxDistPass.currentIndex() == 0:
-                # "All (Series-Wise Composite)" option
-                composite.buildFromSeries(seriesData=self.seriesData)
-            else:
-                distPassData = self.getActiveCardPasses()[self.comboBoxDistPass.currentIndex()-1]
-                # "Pass X" option
-                if self.comboBoxDistCard.currentIndex() == 0:
-                    # "All (Pass-Wise Composite)" option
-                    composite.buildFromPass(passData=distPassData)
-                elif self.comboBoxDistCard.currentIndex() > 0:
-                    # "Card X" option
-                    card = distPassData.cards.card_list[
-                        self.comboBoxDistCard.currentIndex() - 1
-                    ]
-                    composite.buildFromCard(card)
-            composite.plotDistribution(
-                mplWidget1=self.plotWidgetDropDist1,
-                mplWidget2=self.plotWidgetDropDist2,
-                tableWidget=self.tableWidgetCompositeStats,
-            )
+    def modify_triggered(self):
+        self.processCards()
+        
+    def individuals_triggered(self, passData: Pass):
+        passData.cards.plotCoverage(
+            mplWidget=self.plotWidgetPass,
+            loc_units=self.seriesData.info.swath_units,
+            colorize=cfg.get_card_plot_colorize_pass(),
+            mod=False,
+        )
+        model = CardStatTableModel()
+        proxyModel = QSortFilterProxyModel()
+        proxyModel.setSourceModel(model)
+        self.tableViewPass.setModel(proxyModel)
+        self.tableViewPass.setItemDelegateForColumn(
+            3, ComboBoxDelegate(self.tableViewPass, cfg.UNITS_LENGTH_LARGE)
+        )
+        self.tableViewPass.horizontalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.ResizeToContents
+        )
+        model.loadCards(passData.cards.card_list)
+        model.valueChanged.connect(self.passStatTableValueChanged)
+        
+    def composites_triggered(self):
+        self.seriesData.cards.plotOverlay(mplWidget=self.plotWidgetOverlay)
+        self.seriesData.cards.plotAverage(
+            mplWidget=self.plotWidgetAverage,
+            colorize=cfg.get_card_plot_colorize_average(),
+        )
+    
+    def simulations_triggered(self):
+        showEntireWindow = (
+            cfg.get_card_simulation_view_window()==cfg.CARD_SIMULATINO_VIEW_WINDOW_ALL
+        )
+        self.seriesData.cards.plotRacetrack(
+            mplWidget=self.plotWidgetRacetrack,
+            swath_width=self.seriesData.cards.swath_adjusted,
+            showEntireWindow=showEntireWindow,
+        )
+        self.seriesData.cards.plotBackAndForth(
+            mplWidget=self.plotWidgetBackAndForth,
+            swath_width=self.seriesData.cards.swath_adjusted,
+            showEntireWindow=showEntireWindow,
+        )
+        self.seriesData.cards.plotCVTable(
+            self.tableWidgetCV, self.seriesData.cards.swath_adjusted
+        )  
+        
+    def distributions_triggered(self):
+        composite = SprayCardComposite()
+        if self.comboBoxDistPass.currentIndex() == 0:
+            # "All (Series-Wise Composite)" option
+            composite.buildFromSeries(seriesData=self.seriesData)
+        else:
+            distPassData = self.getActiveCardPasses()[self.comboBoxDistPass.currentIndex()-1]
+            # "Pass X" option
+            if self.comboBoxDistCard.currentIndex() == 0:
+                # "All (Pass-Wise Composite)" option
+                composite.buildFromPass(passData=distPassData)
+            elif self.comboBoxDistCard.currentIndex() > 0:
+                # "Card X" option
+                card = distPassData.cards.card_list[
+                    self.comboBoxDistCard.currentIndex() - 1
+                ]
+                composite.buildFromCard(card)
+        composite.plotDistribution(
+            mplWidget1=self.plotWidgetDropDist1,
+            mplWidget2=self.plotWidgetDropDist2,
+            tableWidget=self.tableWidgetCompositeStats,
+        )   
     
     """
     Convenience Accessors
     """
-
-    def _getCurrentPass(self) -> Pass:
-        passData: Pass = None
-        # Check if a pass is selected
-        if (passIndex := self.listWidgetPass.currentRow()) != -1:
-            passData = self.seriesData.passes[passIndex]
-        return passData
     
     def getActiveCardPasses(self) -> list[Pass]:
-        activePasses: list[Pass] = []
-        for p in self.seriesData.passes:
-            if not p.has_card_data():
-                continue
-            if not p.cards_include_in_composite:
-                continue
-            if not any([sc.include_in_composite for sc in p.cards.card_list]):
-                continue
-            activePasses.append(p)
-        return activePasses
+        return [p for p in self.seriesData.passes if p.cards.is_active()]

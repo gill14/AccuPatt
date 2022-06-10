@@ -4,8 +4,8 @@ import numpy as np
 from accupatt.helpers.atomizationModel import AtomizationModelMulti
 from accupatt.models.appInfo import AppInfo
 from accupatt.models.passData import Pass
-from accupatt.models.seriesCardData import SeriesCardData
-from accupatt.models.seriesStringData import SeriesStringData
+from accupatt.models.seriesDataCard import SeriesDataCard
+from accupatt.models.seriesDataString import SeriesDataString
 
 
 class SeriesData:
@@ -17,10 +17,10 @@ class SeriesData:
             self.id = str(uuid.uuid4())
         self.info = AppInfo()
         self.passes: list[Pass] = []
-        self.string = SeriesStringData(
+        self.string = SeriesDataString(
             self.passes, self.info.swath, self.info.swath_units
         )
-        self.cards = SeriesCardData(self.passes, self.info.swath, self.info.swath_units)
+        self.cards = SeriesDataCard(self.passes, self.info.swath, self.info.swath_units)
 
     """
     Common pass observable sharing
@@ -134,15 +134,11 @@ class SeriesData:
     def get_includable_passes(self, string_included, cards_included):
         includablePasses: list[Pass] = []
         for p in self.passes:
-            include = True
-            if string_included and (
-                not p.has_string_data() or not p.string_include_in_composite
-            ):
-                include = False
-            if cards_included and (
-                not p.has_card_data() or not p.cards_include_in_composite
-            ):
-                include = False
+            include = False
+            if string_included and p.string.is_active():
+                include = True
+            if cards_included and p.cards.is_active():
+                include = True
             if include:
                 includablePasses.append(p)
         return includablePasses

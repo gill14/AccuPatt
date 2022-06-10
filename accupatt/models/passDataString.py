@@ -5,10 +5,12 @@ import scipy.signal as sig
 from pyqtgraph import InfiniteLine, PlotWidget, setConfigOptions
 from pyqtgraph.functions import mkPen
 
+from accupatt.models.passDataBase import PassDataBase
 
-class PassStringData:
+
+class PassDataString(PassDataBase):
     def __init__(self, name):
-        self.name = name
+        super().__init__(name=name)
         # String Data Collection
         self.wav_ex = cfg.get_spec_wav_ex()
         self.wav_em = cfg.get_spec_wav_em()
@@ -23,11 +25,6 @@ class PassStringData:
         self.trim_r = 0
         self.trim_v = 0.0
         self.rebase = False
-        self.center = True
-        self.center_method = cfg.get_center_method()
-        self.smooth = True
-        self.smooth_window = cfg.get_string_smooth_window()
-        self.smooth_order = cfg.get_string_smooth_order()
 
     def modifyData(self, loc_units=None):
         if self.data.empty:
@@ -261,3 +258,15 @@ class PassStringData:
         pyqtplotwidget.plotItem.setLabel(axis="left", text="Relative Dye Intensity")
         pyqtplotwidget.plotItem.showGrid(x=True, y=True)
         pyqtplotwidget.plotItem.addLegend(offset=(5, 5))
+
+    """
+    Conveneince
+    """    
+
+    def has_data(self) -> bool:
+        return not self.data.empty
+    
+    def is_active(self) -> bool:
+        has_data = self.has_data()
+        included = self.include_in_composite
+        return (has_data and included)
