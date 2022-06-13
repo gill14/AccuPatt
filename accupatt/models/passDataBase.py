@@ -1,11 +1,11 @@
-import accupatt.config as cfg
+from accupatt.models.OptBase import OptBase
 
-class PassDataBase:
+class PassDataBase(OptBase):
     def __init__(self, name):
-        self.name = name
+        super().__init__(name=name)
         self.include_in_composite = True
-        self.center = True
-        self.center_method = cfg.get_center_method()
-        self.smooth = True
-        self.smooth_window = cfg.get_string_smooth_window()
-        self.smooth_order = cfg.get_string_smooth_order()
+        
+    def has_data() -> bool:
+        # MUST override in inherited class
+        pass
+        

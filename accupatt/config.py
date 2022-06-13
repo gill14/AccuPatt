@@ -238,26 +238,26 @@ def set_center_method(value: str):
     QSettings().setValue(_CENTER_METHOD, value)
 
 
-_STRING_SMOOTH_WINDOW = "string_smooth_window"
+_SMOOTH_WINDOW = "smooth_window"
 
 
-def get_string_smooth_window() -> float:
-    return QSettings().value(_STRING_SMOOTH_WINDOW, defaultValue=4, type=float)
+def get_smooth_window() -> float:
+    return QSettings().value(_SMOOTH_WINDOW, defaultValue=4, type=float)
 
 
-def set_string_smooth_window(value: float):
-    QSettings().setValue(_STRING_SMOOTH_WINDOW, value)
+def set_smooth_window(value: float):
+    QSettings().setValue(_SMOOTH_WINDOW, value)
 
 
-_STRING_SMOOTH_ORDER = "string_smooth_order"
+_SMOOTH_ORDER = "smooth_order"
 
 
-def get_string_smooth_order() -> int:
-    return QSettings().value(_STRING_SMOOTH_ORDER, defaultValue=3, type=int)
+def get_smooth_order() -> int:
+    return QSettings().value(_SMOOTH_ORDER, defaultValue=3, type=int)
 
 
-def set_string_smooth_order(value: int):
-    QSettings().setValue(_STRING_SMOOTH_ORDER, value)
+def set_smooth_order(value: int):
+    QSettings().setValue(_SMOOTH_ORDER, value)
 
 
 _STRING_SIMULATION_VIEW_WINDOW = "string_simulation_view_window"

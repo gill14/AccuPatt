@@ -840,6 +840,23 @@
           <item>
            <widget class="QLineEdit" name="pilotLineEdit"/>
           </item>
+          <item>
+           <widget class="QPushButton" name="buttonLoadBusiness">
+            <property name="toolTip">
+             <string>Load Business Information From File</string>
+            </property>
+            <property name="toolTipDuration">
+             <number>5000</number>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>icon_adjust.png</normaloff>icon_adjust.png</iconset>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
         <item>
@@ -1204,8 +1221,6 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>lineEditRegNum</tabstop>
-  <tabstop>lineEditSeriesNum</tabstop>
   <tabstop>pilotLineEdit</tabstop>
   <tabstop>businessLineEdit</tabstop>
   <tabstop>streetLineEdit</tabstop>
@@ -1214,6 +1229,8 @@
   <tabstop>zipLineEdit</tabstop>
   <tabstop>phoneLineEdit</tabstop>
   <tabstop>emailLineEdit</tabstop>
+  <tabstop>lineEditRegNum</tabstop>
+  <tabstop>lineEditSeriesNum</tabstop>
   <tabstop>comboBoxMake</tabstop>
   <tabstop>comboBoxModel</tabstop>
   <tabstop>lineEditWingspan</tabstop>
@@ -1235,16 +1252,7 @@
   <tabstop>lineEditDate</tabstop>
   <tabstop>dateEdit</tabstop>
   <tabstop>lineEditAnalyst</tabstop>
-  <tabstop>comboBoxWingspanUnits</tabstop>
-  <tabstop>comboBoxUnitsSwath</tabstop>
-  <tabstop>comboBoxUnitsRate</tabstop>
-  <tabstop>comboBoxUnitsPressure</tabstop>
-  <tabstop>comboBoxUnitsBoomWidth</tabstop>
-  <tabstop>comboBoxUnitsBoomDrop</tabstop>
-  <tabstop>comboBoxUnitsNozzleSpacing</tabstop>
-  <tabstop>comboBoxNozzleSet</tabstop>
-  <tabstop>pushButtonNozzleSetAdd</tabstop>
-  <tabstop>pushButtonNozzleSetRemove</tabstop>
+  <tabstop>buttonLoadBusiness</tabstop>
  </tabstops>
  <resources/>
  <connections/>

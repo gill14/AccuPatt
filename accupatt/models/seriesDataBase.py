@@ -1,23 +1,20 @@
 import numpy as np
 import pandas as pd
 import accupatt.config as cfg
+from accupatt.models.OptBase import OptBase
 from accupatt.models.passData import Pass
 from accupatt.widgets.mplwidget import MplWidget
 from scipy.stats import variation
 
 from PyQt6.QtWidgets import QTableWidget
 
-class SeriesDataBase:
+class SeriesDataBase(OptBase):
     def __init__(self, passes: list[Pass], target_swath: int, swath_units: str):
+        super().__init__(name='series')
         self.passes = passes
         self.swath_units = swath_units
         self.swath_adjusted = target_swath if target_swath > 0 else 50
         # Options
-        self.smooth = True
-        self.smooth_window = cfg.get_string_smooth_window()
-        self.smooth_order = cfg.get_string_smooth_order()
-        self.center = True
-        self.center_method = cfg.get_center_method()
         self.swath_adjusted = target_swath if target_swath > 0 else 50
         self.simulated_adjascent_passes = 2
         

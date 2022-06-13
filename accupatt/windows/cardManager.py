@@ -244,28 +244,6 @@ class CardManager(baseclass):
         if len(excepts := self.passInfoWidget.validate_fields(p)) > 0:
             QMessageBox.warning(self, "Invalid Data", "\n".join(excepts))
             return
-        # If all checks out, process each card and show progress
-        prog = QProgressDialog(self)
-        prog.setMinimumDuration(0)
-        prog.setWindowModality(Qt.WindowModality.WindowModal)
-        card_list: list[SprayCard] = self.cardTable.tm.card_list
-        for i, card in enumerate(card_list):
-            if i == 0:
-                prog.setRange(0, len(card_list))
-            prog.setValue(i)
-            prog.setLabelText(f"Processing {card.name} and caching droplet statistics")
-            # Process image
-            if not card.current and card.has_image:
-                card.images_processed()
-            # Cache droplet stats
-            if not card.stats.current and card.has_image:
-                card.stats.set_volumetric_stats()
-
-            if prog.wasCanceled():
-                return
-
-            if i == len(card_list) - 1:
-                prog.setValue(i + 1)
         # If all checks out, update config, notify requestor and close
         cfg.set_card_defined_set(self.ui.comboBoxDefinedSet.currentText())
         cfg.set_image_load_method(self.ui.comboBoxLoadMethod.currentText())

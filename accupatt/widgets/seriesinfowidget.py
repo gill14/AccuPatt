@@ -4,10 +4,13 @@ import accupatt.config as cfg
 import numpy as np
 import pandas as pd
 from accupatt.helpers.atomizationModel import AtomizationModel
+from accupatt.helpers.dBBridge import load_from_db
 from accupatt.models.appInfo import AppInfo, Nozzle
 from PyQt6 import uic
 from PyQt6.QtCore import QDate, QDateTime, pyqtSignal, pyqtSlot, QSignalBlocker
-from PyQt6.QtWidgets import QComboBox, QMessageBox
+from PyQt6.QtWidgets import QComboBox, QFileDialog, QMessageBox
+
+from accupatt.models.seriesData import SeriesData
 
 Ui_Form, baseclass = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "seriesInfo.ui")
@@ -128,6 +131,8 @@ class SeriesInfoWidget(baseclass):
         # Email
         self.ui.emailLineEdit.setText(info.email)
         self.ui.emailLineEdit.editingFinished.connect(self._commit_email)
+        # Load Business
+        self.ui.buttonLoadBusiness.clicked.connect(self._load_business_from_file)
 
     @pyqtSlot()
     def _commit_pilot(self):
@@ -160,6 +165,27 @@ class SeriesInfoWidget(baseclass):
     @pyqtSlot()
     def _commit_email(self):
         self.info.email = self.ui.emailLineEdit.text()
+        
+    @pyqtSlot()
+    def _load_business_from_file(self):
+        print("triggered")
+        file, _ = QFileDialog.getOpenFileName(
+                parent=self,
+                caption="Choose File",
+                directory=cfg.get_datafile_dir(),
+                filter="AccuPatt (*.db)",
+            )
+        if file == "":
+            return
+        series = SeriesData()
+        load_from_db(file, s=series)
+        self.ui.businessLineEdit.setText(series.info.business)
+        self.ui.streetLineEdit.setText(series.info.street)
+        self.ui.cityLineEdit.setText(series.info.city)
+        self.ui.stateLineEdit.setText(series.info.state)
+        self.ui.zipLineEdit.setText(series.info.zip)
+        self.ui.phoneLineEdit.setText(series.info.phone)
+        self.ui.emailLineEdit.setText(series.info.email)
 
     """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """''
     Notes

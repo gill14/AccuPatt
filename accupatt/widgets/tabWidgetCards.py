@@ -5,7 +5,6 @@ from PyQt6.QtCore import QSortFilterProxyModel, Qt, QTimer, pyqtSlot, QSignalBlo
 from PyQt6.QtWidgets import (
     QComboBox,
     QHeaderView,
-    QListWidgetItem,
     QProgressDialog,
     QTableWidget,
     QTableView,
@@ -25,7 +24,7 @@ from accupatt.windows.cardManager import CardManager
 class TabWidgetCards(TabWidgetBase):
 
     def __init__(self, parent, *args, **kwargs):
-        super().__init__(ui_file=os.path.join(os.getcwd(), "resources", "cardMainWidget.ui"), parent=parent, *args, **kwargs)
+        super().__init__(ui_file=os.path.join(os.getcwd(), "resources", "cardMainWidget.ui"), subtype='cards', parent=parent, *args, **kwargs)
         
         self.plotWidgetPass: PlotWidget = self.ui.plotWidgetPass
         self.tableViewPass: QTableView = self.ui.tableViewPass
@@ -46,24 +45,7 @@ class TabWidgetCards(TabWidgetBase):
     """
 
     def setData(self, seriesData: SeriesData):
-        self.seriesData = seriesData
-        # Populate Series Data Mod Options Silently
-        with QSignalBlocker(self.checkBoxSeriesCenter):
-            self.checkBoxSeriesCenter.setChecked(self.seriesData.cards.center)
-        with QSignalBlocker(self.spinBoxSimulatedPasses):
-            self.spinBoxSimulatedPasses.setValue(
-                self.seriesData.cards.simulated_adjascent_passes
-            )
-        # Process Cards to get stat data
-        self.processCards()
-        # Refresh listWidget
-        self.updatePassListWidget()
-        # Update the Pass Data Mod Options Silently, then plot individuals
-        self.passSelectionChanged()
-        # Update Adjusted Swath Control Limits Silently
-        self.setAdjustedSwathFromTargetSwath(replace_adjusted_swath=False, update_plots=False)
-        # Update Adjusted Swath, then plot composites and simulations
-        self.swathAdjustedChanged(swath=self.seriesData.cards.swath_adjusted)
+        super().setData(seriesData=seriesData)
         # Update Dist Comboboxes/plots
         self.distPassChanged(0)
           
@@ -72,8 +54,9 @@ class TabWidgetCards(TabWidgetBase):
         card_identifier_list: list[str] = []
         for p in self.seriesData.passes:
             for c in p.cards.card_list:
-                card_list.append(c)
-                card_identifier_list.append(f"{p.name} - {c.name}")
+                if c.has_image and (not c.current or not c.stats.current):
+                    card_list.append(c)
+                    card_identifier_list.append(f"{p.name} - {c.name}")
         if not card_list:
             return
         prog = QProgressDialog(self)
@@ -85,33 +68,11 @@ class TabWidgetCards(TabWidgetBase):
             prog.setLabelText(
                 f"Processing {card_identifier_list[i]} and caching droplet statistics"
             )
-            if card.has_image:
-                # Process image
-                card.images_processed()
-                # Cache droplet stats
-                card.stats.set_volumetric_stats()
+            card.images_processed()
+            card.stats.set_volumetric_stats()
             if prog.wasCanceled():
                 return
         prog.setValue(len(card_list))
-            
-    @pyqtSlot()
-    def setAdjustedSwathFromTargetSwath(self, replace_adjusted_swath=True, update_plots=True):
-        swath = self.seriesData.info.swath
-        swath_units = self.seriesData.info.swath_units
-        # Update Card Adjusted Swath
-        if replace_adjusted_swath:
-            self.seriesData.cards.swath_adjusted = swath
-            self.seriesData.cards.swath_units = swath_units
-        # Update UI
-        with QSignalBlocker(self.sliderSimulatedSwath):
-            self.sliderSimulatedSwath.setValue(swath)
-            self.sliderSimulatedSwath.setMinimum(round(0.5 * float(swath)))
-            self.sliderSimulatedSwath.setMaximum(round(1.5 * float(swath)))
-        with QSignalBlocker(self.spinBoxSwathAdjusted):
-            self.spinBoxSwathAdjusted.setValue(swath)
-            self.spinBoxSwathAdjusted.setSuffix(" " + swath_units)
-        if update_plots:
-            self.updatePlots(composites=True, simulations=True)
     
     @pyqtSlot(str)
     def onCurrentFileChanged(self, file: str):
@@ -120,49 +81,9 @@ class TabWidgetCards(TabWidgetBase):
     """
     Pass List Widget
     """
-    
-    @pyqtSlot()
-    def passSelectionChanged(self):
-        if passData := self.getCurrentPass():
-            self.updateEditButton(passData.cards.has_data(), passData.name)
-            # Set Pass Data Mod Options
-            with QSignalBlocker(self.checkBoxPassCenter):
-                self.checkBoxPassCenter.setChecked(passData.cards.center)
-            # Replot individual
-            self.updatePlots(individuals=True)
-
-    @pyqtSlot(QListWidgetItem)
-    def passItemChanged(self, item: QListWidgetItem):
-        # Checkstate on item changed
-        # If new state is unchecked, make it partial
-        if item.checkState() == Qt.CheckState.Unchecked:
-            item.setCheckState(Qt.CheckState.PartiallyChecked)
-        # Update SeriesData -> Pass object
-        p = self.seriesData.passes[self.listWidgetPass.row(item)]
-        p.cards.include_in_composite = (item.checkState() == Qt.CheckState.Checked)
-        # Replot and Recalculate composites
-        self.updatePlots(composites=True, simulations=True, distributions=True)
 
     def updatePassListWidget(self, index_to_select: int = -1):
-        with QSignalBlocker(self.listWidgetPass):
-            self.listWidgetPass.clear()
-            for p in self.seriesData.passes:
-                item = QListWidgetItem(p.name, self.listWidgetPass)
-                item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
-                item.setCheckState(Qt.CheckState.Unchecked)
-                if p.cards.has_data():
-                    item.setFlags(
-                        Qt.ItemFlag.ItemIsEnabled
-                        | Qt.ItemFlag.ItemIsSelectable
-                        | Qt.ItemFlag.ItemIsUserCheckable
-                    )
-                    item.setCheckState(
-                        Qt.CheckState.Checked
-                        if p.cards.include_in_composite
-                        else Qt.CheckState.PartiallyChecked
-                    )
-            index = len(self.seriesData.passes)-1 if index_to_select == -1 else index_to_select
-            self.listWidgetPass.setCurrentRow(index)
+        super().updatePassListWidget(index_to_select)
         with QSignalBlocker(self.comboBoxDistPass):
             self.comboBoxDistPass.clear()
             self.comboBoxDistPass.addItem("Series Composite")
@@ -174,39 +95,24 @@ class TabWidgetCards(TabWidgetBase):
     
     @pyqtSlot()
     def editPass(self):
-        # Get a handle on the currently selected pass
-        passData = self.getCurrentPass()
-        # Trigger file save if filapath needed
-        if self.currentFile == None or self.currentFile == "":
-            self.delayed_request_open_edit_pass = True
-            self.request_file_save.emit()
-            return
-        # Open the Edit Card List window for currently selected pass
-        e = CardManager(
-            passData=passData,
-            seriesData=self.seriesData,
-            filepath=self.currentFile,
-            parent=self.parent(),
-        )
-        # Connect Slot to save file each time the data is changed
-        # This is prudent as card images are added
-        e.passDataChanged.connect(lambda: self.request_file_save.emit())
-        # Connect Slot to handle the accept and close of Card Manager
-        e.accepted.connect(self.cardManagerOnClose)
-        # Start Loop
-        e.exec()
-
-    @pyqtSlot()
-    def cardManagerOnClose(self):
-        # Save all changes
-        self.request_file_save.emit()
-        # Handles checking of card pass list widget
-        self.updatePassListWidget(
-            index_to_select=self.listWidgetPass.currentRow()
-        )
-        # Repopulates card list widget, updates rest of ui
-        self.passSelectionChanged()
-        self.updatePlots(composites=True, simulations=True, distributions=True)
+        if passData := self.getCurrentPass():
+            # Trigger file save if filapath needed
+            if self.currentFile == None or self.currentFile == "":
+                self.delayed_request_open_edit_pass = True
+                self.request_file_save.emit()
+                return
+            # Open the Edit Card List window for currently selected pass
+            e = CardManager(
+                passData=passData,
+                seriesData=self.seriesData,
+                filepath=self.currentFile,
+                parent=self.parent(),
+            )
+            # Connect Slot to save file each time the data is changed
+            # This is prudent as card images are added
+            e.passDataChanged.connect(lambda: self.request_file_save.emit())
+            e.accepted.connect(self.onEditPassAccepted)
+            e.exec()
     
     @pyqtSlot(str)
     def _acceptFileSaveSignal(self, file: str):
@@ -218,54 +124,9 @@ class TabWidgetCards(TabWidgetBase):
     Pass Data Mod Options
     """
     
-    @pyqtSlot(int)
-    def passCenterChanged(self, checkstate):
-        self.getCurrentPass().cards.center = (
-            Qt.CheckState(checkstate) == Qt.CheckState.Checked
-        )
-        self.updatePlots(composites=True, simulations=True)
-        
-    @pyqtSlot(int)
-    def passSmoothChanged(self, checkstate):
-        pass
-    
-    @pyqtSlot()
-    def clickedAdvancedOptionsPass(self):
-        pass
-
-    def _advancedOptionsPassUpdated(self):
-        pass
-    
     """
     Series Data Mod Options
     """
-    
-    @pyqtSlot(int)
-    def seriesCenterChanged(self, checkstate):
-        self.seriesData.cards.center = (
-            Qt.CheckState(checkstate) == Qt.CheckState.Checked
-        )
-        self.updatePlots(composites=True, simulations=True)
-    
-    @pyqtSlot(int)
-    def seriesSmoothChanged(self, checkstate):
-        pass
-    
-    @pyqtSlot()
-    def clickedAdvancedOptionsSeries(self):
-        pass
-
-    def _advancedOptionsSeriesUpdated(self):
-        pass
-        
-    @pyqtSlot(int)
-    def swathAdjustedChanged(self, swath: int):
-        self.seriesData.cards.swath_adjusted = swath
-        with QSignalBlocker(self.spinBoxSwathAdjusted):
-            self.spinBoxSwathAdjusted.setValue(swath)
-        with QSignalBlocker(self.sliderSimulatedSwath):
-            self.sliderSimulatedSwath.setValue(swath)
-        self.updatePlots(composites=True, simulations=True)
 
     """
     Individual Passes Tab
@@ -278,11 +139,6 @@ class TabWidgetCards(TabWidgetBase):
     """
     Simulations Tab
     """
-    
-    @pyqtSlot(int)
-    def simulatedPassesChanged(self, numAdjascentPasses: int):
-        self.seriesData.cards.simulated_adjascent_passes = numAdjascentPasses
-        self.updatePlots(simulations=True)
     
     """
     Distributions Tab
@@ -310,7 +166,7 @@ class TabWidgetCards(TabWidgetBase):
     Plot triggers
     """
     
-    def modify_triggered(self):
+    def reprocess_triggered(self):
         self.processCards()
         
     def individuals_triggered(self, passData: Pass):

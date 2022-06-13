@@ -82,6 +82,7 @@ class SeriesDataCard(SeriesDataBase):
 
         avg = self._get_average()
         if avg.empty:
+            mplWidget.canvas.draw()
             return
         avgPass = PassDataCard(name="average")
         avgPass.center = self.center
