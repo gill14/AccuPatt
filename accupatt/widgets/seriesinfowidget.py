@@ -27,7 +27,11 @@ class SeriesInfoWidget(baseclass):
         super().__init__(*args, **kwargs)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
-        self.info = None
+        self.info = AppInfo()
+        self.init_flyin()
+        self.init_series()
+        self.init_applicator()
+        self.init_notes()
         self.init_aircraft()
         self.init_spray_system()
         self.init_nozzles()
@@ -46,20 +50,19 @@ class SeriesInfoWidget(baseclass):
     Fly-In
     """ """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
 
+    def init_flyin(self):
+       self.ui.lineEditName.editingFinished.connect(self._commit_name) 
+       self.ui.lineEditLocation.editingFinished.connect(self._commit_location)
+       self.ui.dateEdit.dateChanged[QDate].connect(self._dateEdit_changed)
+       self.ui.lineEditAnalyst.editingFinished.connect(self._commit_analyst)
+    
     def fill_flyin(self, info: AppInfo):
-        # Name
         self.ui.lineEditName.setText(info.flyin_name)
-        self.ui.lineEditName.editingFinished.connect(self._commit_name)
-        # Location
         self.ui.lineEditLocation.setText(info.flyin_location)
-        self.ui.lineEditLocation.editingFinished.connect(self._commit_location)
-        # Date
         self.ui.lineEditDate.setText(info.flyin_date)
         self.ui.dateEdit.setDateTime(QDateTime.currentDateTime())
-        self.ui.dateEdit.dateChanged[QDate].connect(self._dateEdit_changed)
-        # Analyst
         self.ui.lineEditAnalyst.setText(info.flyin_analyst)
-        self.ui.lineEditAnalyst.editingFinished.connect(self._commit_analyst)
+        
 
     @pyqtSlot()
     def _commit_name(self):
@@ -86,13 +89,13 @@ class SeriesInfoWidget(baseclass):
     Series
     """ """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
 
-    def fill_series(self, info: AppInfo):
-        # Registration Number
-        self.ui.lineEditRegNum.setText(info.regnum)
+    def init_series(self):
         self.ui.lineEditRegNum.editingFinished.connect(self._commit_regnum)
-        # Series Number
-        self.ui.lineEditSeriesNum.setText(str(info.series))
         self.ui.lineEditSeriesNum.editingFinished.connect(self._commit_seriesnum)
+    
+    def fill_series(self, info: AppInfo):
+        self.ui.lineEditRegNum.setText(info.regnum)
+        self.ui.lineEditSeriesNum.setText(str(info.series))
 
     @pyqtSlot()
     def _commit_regnum(self):
@@ -106,33 +109,28 @@ class SeriesInfoWidget(baseclass):
     Applicator
     """ """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
 
-    def fill_applicator(self, info: AppInfo):
-        # Pilot
-        self.ui.pilotLineEdit.setText(info.pilot)
+    def init_applicator(self):
         self.ui.pilotLineEdit.editingFinished.connect(self._commit_pilot)
-        # Business
-        self.ui.businessLineEdit.setText(info.business)
         self.ui.businessLineEdit.editingFinished.connect(self._commit_business)
-        # Street
-        self.ui.streetLineEdit.setText(info.street)
         self.ui.streetLineEdit.editingFinished.connect(self._commit_street)
-        # City
-        self.ui.cityLineEdit.setText(info.city)
         self.ui.cityLineEdit.editingFinished.connect(self._commit_city)
-        # State
-        self.ui.stateLineEdit.setText(info.state)
-        self.ui.stateLineEdit.editingFinished.connect(self._commit_state)
-        # ZIP
-        self.ui.zipLineEdit.setText(info.zip)
+        self.ui.cityLineEdit.editingFinished.connect(self._commit_city)
         self.ui.zipLineEdit.editingFinished.connect(self._commit_zip)
-        # Phone
-        self.ui.phoneLineEdit.setText(info.phone)
         self.ui.phoneLineEdit.editingFinished.connect(self._commit_phone)
-        # Email
-        self.ui.emailLineEdit.setText(info.email)
         self.ui.emailLineEdit.editingFinished.connect(self._commit_email)
-        # Load Business
         self.ui.buttonLoadBusiness.clicked.connect(self._load_business_from_file)
+        
+    
+    def fill_applicator(self, info: AppInfo):
+        self.ui.pilotLineEdit.setText(info.pilot)
+        self.ui.businessLineEdit.setText(info.business)
+        self.ui.streetLineEdit.setText(info.street)
+        self.ui.cityLineEdit.setText(info.city)
+        self.ui.stateLineEdit.setText(info.state)
+        self.ui.zipLineEdit.setText(info.zip)
+        self.ui.phoneLineEdit.setText(info.phone)
+        self.ui.emailLineEdit.setText(info.email)
+        
 
     @pyqtSlot()
     def _commit_pilot(self):
@@ -191,15 +189,15 @@ class SeriesInfoWidget(baseclass):
     Notes
     """ """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
 
-    def fill_notes(self, info: AppInfo):
-        # Setup Notes
-        self.ui.plainTextEditNotesSetup.setPlainText(info.notes_setup)
+    def init_notes(self):
         self.ui.plainTextEditNotesSetup.textChanged.connect(self._commit_notes_setup)
-        # Analyst Notes
-        self.ui.plainTextEditNotesAnalyst.setPlainText(info.notes_analyst)
         self.ui.plainTextEditNotesAnalyst.textChanged.connect(
             self._commit_notes_analyst
         )
+
+    def fill_notes(self, info: AppInfo):
+        self.ui.plainTextEditNotesSetup.setPlainText(info.notes_setup)
+        self.ui.plainTextEditNotesAnalyst.setPlainText(info.notes_analyst)
 
     @pyqtSlot()
     def _commit_notes_setup(self):
@@ -224,24 +222,19 @@ class SeriesInfoWidget(baseclass):
         self.ui.comboBoxWingspanUnits.setCurrentText(cfg.UNIT_FT)
         self.ui.comboBoxWinglets.addItems(["Yes", "No"])
         self.ui.comboBoxWinglets.setCurrentIndex(-1)
-
-    def fill_aircraft(self, info: AppInfo):
-        # Aircraft Make
-        self.ui.comboBoxMake.setCurrentText(info.make)
-        # Aircraft Model
-        self.ui.comboBoxModel.setCurrentText(info.model)
         self.ui.comboBoxModel.currentTextChanged[str].connect(self._on_model_selected)
-        # Wingspan Units
-        self.ui.comboBoxWingspanUnits.setCurrentText(info.wingspan_units)
         self.ui.comboBoxWingspanUnits.currentTextChanged[str].connect(
             self._commit_wingspan_units
         )
-        # Wingspan
-        self.ui.lineEditWingspan.setText(info.strip_num(info.wingspan, zeroBlank=True))
         self.ui.lineEditWingspan.editingFinished.connect(self._commit_wingspan)
-        # Winglets
-        self.ui.comboBoxWinglets.setCurrentText(info.winglets)
         self.ui.comboBoxWinglets.currentTextChanged[str].connect(self._commit_winglets)
+
+    def fill_aircraft(self, info: AppInfo):
+        self.ui.comboBoxMake.setCurrentText(info.make)
+        self.ui.comboBoxModel.setCurrentText(info.model)
+        self.ui.comboBoxWingspanUnits.setCurrentText(info.wingspan_units)
+        self.ui.lineEditWingspan.setText(info.strip_num(info.wingspan, zeroBlank=True))
+        self.ui.comboBoxWinglets.setCurrentText(info.winglets)
 
     @pyqtSlot(str)
     def _on_make_selected(self, make):
@@ -308,66 +301,55 @@ class SeriesInfoWidget(baseclass):
         self.ui.comboBoxUnitsBoomDrop.setCurrentText(cfg.UNIT_IN)
         self.ui.comboBoxUnitsNozzleSpacing.addItems(cfg.UNITS_LENGTH_SMALL)
         self.ui.comboBoxUnitsNozzleSpacing.setCurrentText(cfg.UNIT_IN)
-
-    def fill_spray_system(self, info: AppInfo):
-        # Target Swath
-        self.ui.lineEditSwath.setText(info.strip_num(info.swath, zeroBlank=True))
         self.ui.lineEditSwath.editingFinished.connect(self._commit_swath)
-        # Target Swath Units
-        self.ui.comboBoxUnitsSwath.setCurrentText(info.swath_units)
         self.ui.comboBoxUnitsSwath.currentTextChanged[str].connect(
             self._commit_swath_units
         )
-        # Target Rate
-        self.ui.lineEditRate.setText(f"{info.strip_num(info.rate, zeroBlank=True)}")
         self.ui.lineEditRate.editingFinished.connect(self._commit_rate)
-        # Target Rate Units
-        self.ui.comboBoxUnitsRate.setCurrentText(info.rate_units)
         self.ui.comboBoxUnitsRate.currentTextChanged[str].connect(
             self._commit_rate_units
         )
-        # Pressure
-        self.ui.lineEditPressure.setText(
-            f"{info.strip_num(info.pressure, zeroBlank=True)}"
-        )
         self.ui.lineEditPressure.editingFinished.connect(self._commit_pressure)
-        # Pressure Units
-        self.ui.comboBoxUnitsPressure.setCurrentText(info.pressure_units)
         self.ui.comboBoxUnitsPressure.currentTextChanged[str].connect(
             self._commit_pressure_units
         )
-        # Boom Width
-        self.ui.lineEditBoomWidth.setText(
-            f"{info.strip_num(info.boom_width, zeroBlank=True)}"
-        )
         self.ui.lineEditBoomWidth.editingFinished.connect(self._commit_boom_width)
-        # Boom Width Units
-        self.ui.comboBoxUnitsBoomWidth.setCurrentText(info.boom_width_units)
         self.ui.comboBoxUnitsBoomWidth.currentTextChanged[str].connect(
             self._commit_boom_width_units
         )
-        # Boom Drop
-        self.ui.lineEditBoomDrop.setText(
-            f"{info.strip_num(info.boom_drop, zeroBlank=True)}"
-        )
         self.ui.lineEditBoomDrop.editingFinished.connect(self._commit_boom_drop)
-        # Boom Drop Units
-        self.ui.comboBoxUnitsBoomDrop.setCurrentText(info.boom_drop_units)
         self.ui.comboBoxUnitsBoomDrop.currentTextChanged[str].connect(
             self._commit_boom_drop_units
-        )
-        # Nozzle Spacing
-        self.ui.lineEditNozzleSpacing.setText(
-            f"{info.strip_num(info.nozzle_spacing, zeroBlank=True)}"
         )
         self.ui.lineEditNozzleSpacing.editingFinished.connect(
             self._commit_nozzle_spacing
         )
-        # Nozzle Spacing Units
-        self.ui.comboBoxUnitsNozzleSpacing.setCurrentText(info.nozzle_spacing_units)
         self.ui.comboBoxUnitsNozzleSpacing.currentTextChanged[str].connect(
             self._commit_nozzle_spacing_units
         )
+
+    def fill_spray_system(self, info: AppInfo):
+        self.ui.lineEditSwath.setText(info.strip_num(info.swath, zeroBlank=True))
+        self.ui.comboBoxUnitsSwath.setCurrentText(info.swath_units)
+        self.ui.lineEditRate.setText(f"{info.strip_num(info.rate, zeroBlank=True)}")
+        self.ui.comboBoxUnitsRate.setCurrentText(info.rate_units)
+        self.ui.lineEditPressure.setText(
+            f"{info.strip_num(info.pressure, zeroBlank=True)}"
+        )
+        self.ui.comboBoxUnitsPressure.setCurrentText(info.pressure_units)
+        self.ui.lineEditBoomWidth.setText(
+            f"{info.strip_num(info.boom_width, zeroBlank=True)}"
+        )
+        self.ui.comboBoxUnitsBoomWidth.setCurrentText(info.boom_width_units)
+        self.ui.lineEditBoomDrop.setText(
+            f"{info.strip_num(info.boom_drop, zeroBlank=True)}"
+        )
+        self.ui.comboBoxUnitsBoomDrop.setCurrentText(info.boom_drop_units)
+        self.ui.lineEditNozzleSpacing.setText(
+            f"{info.strip_num(info.nozzle_spacing, zeroBlank=True)}"
+        )
+        self.ui.comboBoxUnitsNozzleSpacing.setCurrentText(info.nozzle_spacing_units)
+        
 
     @pyqtSlot()
     def _commit_swath(self):
@@ -431,6 +413,12 @@ class SeriesInfoWidget(baseclass):
         self.ui.comboBoxNT.addItems(sorted(AtomizationModel.nozzles_extended))
         self.ui.comboBoxNT.setCurrentIndex(-1)
         self.ui.comboBoxNT.currentTextChanged[str].connect(self._on_nozzle_selected)
+        self.ui.comboBoxNozzleSet.currentIndexChanged[int].connect(self._on_nozzle_set_changed)
+        self.ui.comboBoxNS.currentTextChanged[str].connect(self._commit_nozzle_size)
+        self.ui.comboBoxND.currentTextChanged[str].connect(
+            self._commit_nozzle_deflection
+        )
+        self.ui.lineEditNQ.editingFinished.connect(self._commit_nozzle_quantity)
 
     def fill_nozzles(self, info: AppInfo):
         cb_set: QComboBox = self.ui.comboBoxNozzleSet
@@ -441,12 +429,7 @@ class SeriesInfoWidget(baseclass):
         # Populate Nozzle Set ComboBox Items
         for n in info.nozzles:
             cb_set.addItem(f"Nozzle Set {n.id}")
-        cb_set.currentIndexChanged[int].connect(self._on_nozzle_set_changed)
-        self.ui.comboBoxNS.currentTextChanged[str].connect(self._commit_nozzle_size)
-        self.ui.comboBoxND.currentTextChanged[str].connect(
-            self._commit_nozzle_deflection
-        )
-        self.ui.lineEditNQ.editingFinished.connect(self._commit_nozzle_quantity)
+        
         cb_set.setCurrentIndex(0)
         self._on_nozzle_set_changed(0)
 
