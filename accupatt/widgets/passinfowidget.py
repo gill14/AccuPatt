@@ -14,8 +14,10 @@ class PassInfoWidget(baseclass):
         super().__init__(*args, **kwargs)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
+        self.passData = None
 
     def fill_from_pass(self, passData: Pass):
+        self.passData = passData
         _, gs_unit, gs, _ = passData.get_ground_speed()
         self.ui.lineEditGS.setText(gs)
         self.ui.comboBoxUnitsGS.addItems(cfg.UNITS_GROUND_SPEED)
@@ -45,8 +47,8 @@ class PassInfoWidget(baseclass):
     empty list if no exceptions.
     """
 
-    def validate_fields(self, passData: Pass) -> list[str]:
-        p = passData
+    def validate_fields(self) -> list[str]:
+        p = self.passData
         excepts = []
         # Ground Speed
         if not p.set_ground_speed(

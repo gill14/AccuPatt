@@ -43,7 +43,7 @@ class SeriesData:
 
     def _fill_zeros_with_last(self, arr):
         prev = np.arange(len(arr))
-        prev[arr == 0] = 0
+        prev[arr == -1] = 0
         prev = np.maximum.accumulate(prev)
         return arr[prev]
 
@@ -56,80 +56,92 @@ class SeriesData:
         self, units=None, string_included=False, cards_included=False
     ) -> tuple[int, str, str]:
         passes = self.get_includable_passes(string_included, cards_included)
-        if len(passes) < 1:
-            return 0, "-", "-"
         units = (
             units
             if units
             else self._get_common_unit([p.ground_speed_units for p in passes])
         )
-        value = round(np.mean([p.get_airspeed(units)[0] for p in passes]))
-        return value, units, f"{value} {units}"
+        values = np.array([p.get_airspeed(units)[0] for p in passes])
+        values = values[values>=0]
+        if values.size == 0:
+            return 0, "-", "-"
+        value = values.mean()
+        return value, units, f"{value:.3g} {units}"
 
     def get_spray_height_mean(
         self, units=None, string_included=False, cards_included=False
     ) -> tuple[float, str, str]:
         passes = self.get_includable_passes(string_included, cards_included)
-        if len(passes) < 1:
-            return 0, "-", "-"
         units = (
             units
             if units
             else self._get_common_unit([p.spray_height_units for p in passes])
         )
-        value = np.mean([p.get_spray_height(units)[0] for p in passes])
-        return value, units, f"{value:.1f} {units}"
+        values = np.array([p.get_spray_height(units)[0] for p in passes])
+        values = values[values>=0]
+        if values.size == 0:
+            return 0, "-", "-"
+        value = values.mean()
+        return value, units, f"{value:.3g} {units}"
 
     def get_wind_speed_mean(
         self, units=None, string_included=False, cards_included=False
     ) -> tuple[float, str, str]:
         passes = self.get_includable_passes(string_included, cards_included)
-        if len(passes) < 1:
-            return 0, "-", "-"
         units = (
             units
             if units
             else self._get_common_unit([p.wind_speed_units for p in passes])
         )
-        value = np.mean([p.get_wind_speed(units)[0] for p in passes])
-        return value, units, f"{value:.1f} {units}"
+        values = np.array([p.get_wind_speed(units)[0] for p in passes])
+        values = values[values>=0]
+        if values.size == 0:
+            return 0, "-", "-"
+        value = values.mean()
+        return value, units, f"{value:.2g} {units}"
 
     def get_crosswind_mean(
         self, units=None, string_included=False, cards_included=False
     ) -> tuple[float, str, str]:
         passes = self.get_includable_passes(string_included, cards_included)
-        if len(passes) < 1:
-            return 0, "-", "-"
         units = (
             units
             if units
             else self._get_common_unit([p.wind_speed_units for p in passes])
         )
-        value = np.mean([p.get_crosswind(units)[0] for p in passes])
-        return value, units, f"{value:.1f} {units}"
+        values = np.array([p.get_crosswind(units)[0] for p in passes])
+        values = values[values!=-1]
+        if values.size == 0:
+            return 0, "-", "-"
+        value = values.mean()
+        return value, units, f"{value:.2g} {units}"
 
     def get_temperature_mean(
         self, units=None, string_included=False, cards_included=False
     ) -> tuple[float, str, str]:
         passes = self.get_includable_passes(string_included, cards_included)
-        if len(passes) < 1:
-            return 0, "-", "-"
         units = (
             units
             if units
             else self._get_common_unit([p.temperature_units for p in passes])
         )
-        value = np.mean([p.get_temperature(units)[0] for p in passes])
-        return value, units, f"{value:.1f} {units}"
+        values = np.array([p.get_temperature(units)[0] for p in passes])
+        values = values[values>=0]
+        if values.size == 0:
+            return 0, "-", "-"
+        value = values.mean()
+        return value, units, f"{value:.3g} {units}"
 
     def get_humidity_mean(
         self, string_included=False, cards_included=False
     ) -> tuple[float, str, str]:
         passes = self.get_includable_passes(string_included, cards_included)
-        if len(passes) < 1:
+        values = np.array([p.get_humidity()[0] for p in passes])
+        values = values[values>=0]
+        if values.size == 0:
             return 0, "-", "-"
-        value = np.mean([p.get_humidity()[0] for p in passes])
-        return value, "%", f"{value:.1f}%"
+        value = values.mean()
+        return value, "%", f"{value:.3g}%"
 
     def get_includable_passes(self, string_included, cards_included):
         includablePasses: list[Pass] = []

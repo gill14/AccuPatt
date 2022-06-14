@@ -175,7 +175,7 @@ class TabWidgetBase(QWidget):
     
     @pyqtSlot()
     def onEditPassAccepted(self):
-        self.seriesData.fill_common_pass_observables()
+        #self.seriesData.fill_common_pass_observables()
         self.request_file_save.emit()
         self.updatePassListWidget(index_to_select=self.listWidgetPass.currentRow())
         self.updateEditButton(has_data=self.getPassOpt().has_data(), pass_name=self.getCurrentPass().name)

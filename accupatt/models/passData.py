@@ -19,17 +19,17 @@ class Pass:
         if self.name == "":
             self.name = "Pass " + str(self.number)
         # Pass Info
-        self.ground_speed: float = 0
+        self.ground_speed: float = -1
         self.ground_speed_units = cfg.get_unit_ground_speed()
-        self.spray_height: float = 0
+        self.spray_height: float = -1
         self.spray_height_units = cfg.get_unit_spray_height()
-        self.pass_heading: int = 0
-        self.wind_direction: int = 0
-        self.wind_speed: float = 0
+        self.pass_heading: int = -1
+        self.wind_direction: int = -1
+        self.wind_speed: float = -1
         self.wind_speed_units = cfg.get_unit_wind_speed()
-        self.temperature: float = 0
+        self.temperature: float = -1
         self.temperature_units = cfg.get_unit_temperature()
-        self.humidity: float = 0
+        self.humidity: float = -1
         # String Data
         self.string = PassDataString(name=self.name)
         # Card Data
@@ -40,6 +40,8 @@ class Pass:
     """
 
     def get_airspeed(self, units=None) -> tuple[int, str, str, str]:
+        if self.ground_speed < 0 or self.wind_speed < 0 or self.wind_direction < 0 or self.pass_heading < 0:
+            return -1, units if units else self.ground_speed_units, "", ""
         # Convert gs and ws to mph and save to temp vars
         gs = self._convert_speed_to_mph(self.ground_speed, self.ground_speed_units)
         ws = self._convert_speed_to_mph(self.wind_speed, self.wind_speed_units)
@@ -54,6 +56,8 @@ class Pass:
         return airspeed, units, f"{airspeed}", f"{airspeed} {units}"
 
     def get_crosswind(self, units=None) -> tuple[float, str, str, str]:
+        if self.wind_speed < 0 or self.wind_direction < 0 or self.pass_heading < 0:
+            return -1, units if units else self.wind_speed_units, "", ""
         # Convert ws to mph and save to temp var
         ws = self._convert_speed_to_mph(self.wind_speed, self.wind_speed_units)
         # Calculate crosswind in mph (inverse of ph to go with convention of flyin collection)
@@ -67,6 +71,8 @@ class Pass:
         return crosswind, units, f"{crosswind:.1f}", f"{crosswind:.1f} {units}"
 
     def get_ground_speed(self, units=None) -> tuple[int, str, str, str]:
+        if self.ground_speed < 0:
+            return -1, units if units else self.ground_speed_units, "", ""
         # Convert gs to mph and save to temp var
         gs = self._convert_speed_to_mph(self.ground_speed, self.ground_speed_units)
         # Use requested units, default to ground_speed_units
@@ -76,6 +82,8 @@ class Pass:
         return gs, units, f"{gs}", f"{gs} {units}"
 
     def get_spray_height(self, units=None) -> tuple[float, str, str, str]:
+        if self.spray_height < 0:
+            return -1, units if units else self.spray_height_units, "", ""
         # Convert sh to ft and save to temp var
         sh = (
             self.spray_height * cfg.FT_PER_M
@@ -89,6 +97,8 @@ class Pass:
         return sh, units, f"{sh:g}", f"{sh:.1f} {units}"
 
     def get_pass_heading(self) -> tuple[int, str, str, str]:
+        if self.pass_heading < 0:
+            return -1, cfg.UNIT_DEG, "", ""
         return (
             self.pass_heading,
             cfg.UNIT_DEG,
@@ -97,6 +107,8 @@ class Pass:
         )
 
     def get_wind_direction(self) -> tuple[int, str, str, str]:
+        if self.wind_direction < 0:
+            return -1, cfg.UNIT_DEG, "", ""
         return (
             self.wind_direction,
             cfg.UNIT_DEG,
@@ -105,6 +117,8 @@ class Pass:
         )
 
     def get_wind_speed(self, units=None) -> tuple[float, str, str, str]:
+        if self.wind_speed < 0:
+            return -1, units if units else self.wind_speed_units, "", ""
         # Convert ws to mph and save to temp var
         ws = self._convert_speed_to_mph(self.wind_speed, self.wind_speed_units)
         # Use requested units, default to wind_speed_units
@@ -114,6 +128,8 @@ class Pass:
         return ws, units, f"{ws:g}", f"{ws:.1f} {units}"
 
     def get_temperature(self, units=None) -> tuple[float, str, str, str]:
+        if self.temperature < 0:
+            return -1, units if units else self.temperature_units, "", ""
         # Convert t to deg-F and save to temp var
         t = (
             (self.temperature * (9 / 5)) + 32
@@ -127,6 +143,8 @@ class Pass:
         return t, units, f"{t:g}", f"{t:.1f} {units}"
 
     def get_humidity(self) -> tuple[float, str, str, str]:
+        if self.humidity < 0:
+            return -1, "%", "", ""
         return self.humidity, "%", f"{self.humidity:g}", f"{self.humidity:.1f}%"
 
     def _convert_speed_to_mph(self, value, unit) -> float:
@@ -148,65 +166,79 @@ class Pass:
     """
 
     def set_ground_speed(self, val, units=None) -> bool:
-        val = 0 if val == "" else val
-        try:
-            self.ground_speed = float(val)
-        except ValueError:
+        val, isValid = self._resolve_input(val)
+        if isValid:
+            self.ground_speed = val
+        else:
             return False
         if units:
             self.ground_speed_units = units
         return True
 
     def set_spray_height(self, val, units=None) -> bool:
-        val = 0 if val == "" else val
-        try:
-            self.spray_height = float(val)
-        except ValueError:
+        val, isValid = self._resolve_input(val)
+        if isValid:
+            self.spray_height = val
+        else:
             return False
         if units:
             self.spray_height_units = units
         return True
 
     def set_pass_heading(self, val) -> bool:
-        val = 0 if val == "" else val
-        try:
-            self.pass_heading = int(val)
-        except ValueError:
+        val, isValid = self._resolve_input(val, var_type=int)
+        if isValid:
+            self.pass_heading = val
+        else:
             return False
         return True
 
     def set_wind_direction(self, val) -> bool:
-        val = 0 if val == "" else val
-        try:
-            self.wind_direction = int(val)
-        except ValueError:
+        val, isValid = self._resolve_input(val, var_type=int)
+        if isValid:
+            self.wind_direction = val
+        else:
             return False
         return True
 
     def set_wind_speed(self, val, units=None) -> bool:
-        val = 0 if val == "" else val
-        try:
-            self.wind_speed = float(val)
-        except ValueError:
+        val, isValid = self._resolve_input(val)
+        if isValid:
+            self.wind_speed = val
+        else:
             return False
         if units:
             self.wind_speed_units = units
         return True
 
     def set_temperature(self, val, units=None) -> bool:
-        val = 0 if val == "" else val
-        try:
-            self.temperature = float(val)
-        except ValueError:
+        val, isValid = self._resolve_input(val)
+        if isValid:
+            self.temperature = val
+        else:
             return False
         if units:
             self.temperature_units = units
         return True
 
     def set_humidity(self, val) -> bool:
-        val = 0 if val == "" else val
-        try:
-            self.humidity = float(val)
-        except ValueError:
+        val, isValid = self._resolve_input(val)
+        if isValid:
+            self.humidity = val
+        else:
             return False
         return True
+    
+    def _resolve_input(self, val, var_type=float) -> tuple():
+        # If blanked, set it to null value, but return OK
+        if val=="":
+            return (-1, True)
+        # Try and set the var value, return NOT OK if error
+        try:
+            if var_type==int:
+                return (int(val), True)
+            else:
+                return (float(val), True)
+        except ValueError:
+            return (-1, False)
+        

@@ -205,7 +205,7 @@ class StringPass(baseclass):
         p = self.passData
         # Validate fields will set values to the pass object if valid
         # If any passInfo fields invalid, show user and return to current window
-        if len(excepts := self.passInfoWidget.validate_fields(p)) > 0:
+        if len(excepts := self.passInfoWidget.validate_fields()) > 0:
             QMessageBox.warning(self, "Invalid Data", "\n".join(excepts))
             return
         # Pattern

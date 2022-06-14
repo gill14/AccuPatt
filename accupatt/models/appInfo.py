@@ -48,21 +48,21 @@ class AppInfo:
     make: str = ""
     model: str = ""
     wingspan: float = 0
-    wingspan_units: str = "ft"
+    wingspan_units: str = field(default_factory=cfg.get_unit_wingspan)
     winglets: str = "No"
 
     swath: int = 0
-    swath_units = "ft"
+    swath_units: str = field(default_factory=cfg.get_unit_swath)
     rate: float = 0
-    rate_units: str = ""
+    rate_units: str = field(default_factory=cfg.get_unit_rate)
     pressure: float = 0
-    pressure_units: str = ""
+    pressure_units: str = field(default_factory=cfg.get_unit_pressure)
     boom_width: float = 0
-    boom_width_units: str = ""
+    boom_width_units: str = field(default_factory=cfg.get_unit_boom_width)
     boom_drop: float = 0
-    boom_drop_units: str = ""
+    boom_drop_units: str = field(default_factory=cfg.get_unit_boom_drop)
     nozzle_spacing: float = 0
-    nozzle_spacing_units: str = ""
+    nozzle_spacing_units: str = field(default_factory=cfg.get_unit_nozzle_spacing)
 
     nozzles: list[Nozzle] = field(default_factory=list)
 
@@ -121,6 +121,16 @@ class AppInfo:
 
     def string_boom_width(self) -> str:
         if self.boom_width > 0:
+            # Calculate and use percent boom width if able
+            if self.wingspan > 0 and self.boom_width_units!="%" and self.boom_width_units!="" and self.wingspan_units!="":
+                ws = self.wingspan if self.wingspan_units==cfg.UNIT_FT else self.wingspan * cfg.FT_PER_M
+                print(ws)
+                print(self.boom_width)
+                print(self.boom_width_units)
+                bw = self.boom_width if self.boom_width_units==cfg.UNIT_FT else self.boom_width * cfg.FT_PER_M
+                print(bw)
+                return f"{((bw / ws) * 100):.2g}%"
+                
             return f"{self.strip_num(self.boom_width)} {self.boom_width_units}"
         else:
             return ""
@@ -191,6 +201,9 @@ class AppInfo:
         self.wingspan = float(string)
         return True
 
+    def set_wingspan_units(self, string):
+        self.wingspan_units = string
+
     def set_swath(self, string) -> bool:
         try:
             int(float(string))
@@ -198,6 +211,9 @@ class AppInfo:
             return False
         self.swath = int(float(string))
         return True
+    
+    def set_swath_units(self, string):
+        self.swath_units = string
 
     def set_rate(self, string) -> bool:
         if string == "":
@@ -209,6 +225,9 @@ class AppInfo:
         self.rate = float(string)
         return True
 
+    def set_rate_units(self, string):
+        self.rate_units = string
+
     def set_pressure(self, string) -> bool:
         if string == "":
             string = "0"
@@ -218,6 +237,9 @@ class AppInfo:
             return False
         self.pressure = float(string)
         return True
+
+    def set_pressure_units(self, string):
+        self.pressure_units = string
 
     def set_boom_width(self, string) -> bool:
         if string == "":
@@ -229,6 +251,9 @@ class AppInfo:
         self.boom_width = float(string)
         return True
 
+    def set_boom_width_units(self, string):
+        self.boom_width_units = string
+
     def set_boom_drop(self, string) -> bool:
         if string == "":
             string = "0"
@@ -239,6 +264,9 @@ class AppInfo:
         self.boom_drop = float(string)
         return True
 
+    def set_boom_drop_units(self, string):
+        self.boom_drop_units = string
+
     def set_nozzle_spacing(self, string) -> bool:
         if string == "":
             string = "0"
@@ -248,6 +276,9 @@ class AppInfo:
             return False
         self.nozzle_spacing = float(string)
         return True
+
+    def set_nozzle_spacing_units(self, string):
+        self.nozzle_spacing_units = string
 
     def set_num(self, field, string, type) -> bool:
         try:

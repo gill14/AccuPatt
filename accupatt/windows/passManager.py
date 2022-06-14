@@ -202,37 +202,37 @@ class PassTable(QAbstractTableModel):
                 return p.cards.include_in_composite
         elif col == 5:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
-                return f"{p.ground_speed:g}"
+                return p.get_ground_speed()[2]
         elif col == 6:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
-                return p.ground_speed_units
+                return p.get_ground_speed()[1]
         elif col == 7:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
-                return f"{p.spray_height:g}"
+                return p.get_spray_height()[2]
         elif col == 8:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
-                return p.spray_height_units
+                return p.get_spray_height()[1]
         elif col == 9:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
-                return f"{p.pass_heading:g}"
+                return p.get_pass_heading()[2]
         elif col == 10:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
-                return f"{p.wind_direction:g}"
+                return p.get_wind_direction()[2]
         elif col == 11:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
-                return f"{p.wind_speed:g}"
+                return p.get_wind_speed()[2]
         elif col == 12:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
-                return p.wind_speed_units
+                return p.get_wind_speed()[1]
         elif col == 13:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
-                return f"{p.temperature:g}"
+                return p.get_temperature()[2]
         elif col == 14:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
-                return p.temperature_units
+                return p.get_temperature()[1]
         elif col == 15:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
-                return p.humidity
+                return p.get_humidity()[2]
         else:
             return QVariant()
 

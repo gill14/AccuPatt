@@ -219,7 +219,7 @@ class SeriesInfoWidget(baseclass):
         self.ui.comboBoxMake.currentTextChanged[str].connect(self._on_make_selected)
 
         self.ui.comboBoxWingspanUnits.addItems(cfg.UNITS_LENGTH_LARGE)
-        self.ui.comboBoxWingspanUnits.setCurrentText(cfg.UNIT_FT)
+        self.ui.comboBoxWingspanUnits.setCurrentIndex(-1)
         self.ui.comboBoxWinglets.addItems(["Yes", "No"])
         self.ui.comboBoxWinglets.setCurrentIndex(-1)
         self.ui.comboBoxModel.currentTextChanged[str].connect(self._on_model_selected)
@@ -232,7 +232,9 @@ class SeriesInfoWidget(baseclass):
     def fill_aircraft(self, info: AppInfo):
         self.ui.comboBoxMake.setCurrentText(info.make)
         self.ui.comboBoxModel.setCurrentText(info.model)
-        self.ui.comboBoxWingspanUnits.setCurrentText(info.wingspan_units)
+        with QSignalBlocker(self.ui.comboBoxWingspanUnits):
+            self.ui.comboBoxWingspanUnits.setCurrentIndex(-1)    
+            self.ui.comboBoxWingspanUnits.setCurrentText(info.wingspan_units)
         self.ui.lineEditWingspan.setText(info.strip_num(info.wingspan, zeroBlank=True))
         self.ui.comboBoxWinglets.setCurrentText(info.winglets)
 
@@ -273,7 +275,8 @@ class SeriesInfoWidget(baseclass):
 
     @pyqtSlot(str)
     def _commit_wingspan_units(self, text):
-        self.info.wingspan_units = text
+        self.info.set_wingspan_units(text)
+        cfg.set_unit_wingspan(text)
 
     @pyqtSlot()
     def _commit_wingspan(self):
@@ -289,18 +292,18 @@ class SeriesInfoWidget(baseclass):
 
     def init_spray_system(self):
         self.ui.comboBoxUnitsSwath.addItems(cfg.UNITS_LENGTH_LARGE)
-        self.ui.comboBoxUnitsSwath.setCurrentText(cfg.UNIT_FT)
+        self.ui.comboBoxUnitsSwath.setCurrentIndex(-1)
         self.ui.comboBoxUnitsRate.addItems(cfg.UNITS_RATE)
-        self.ui.comboBoxUnitsRate.setCurrentText(cfg.UNIT_GPA)
+        self.ui.comboBoxUnitsRate.setCurrentIndex(-1)
         self.ui.comboBoxUnitsPressure.addItems(cfg.UNITS_PRESSURE)
-        self.ui.comboBoxUnitsPressure.setCurrentText(cfg.UNIT_PSI)
+        self.ui.comboBoxUnitsPressure.setCurrentIndex(-1)
         self.ui.comboBoxUnitsBoomWidth.addItems(cfg.UNITS_LENGTH_LARGE)
         self.ui.comboBoxUnitsBoomWidth.addItem("%")
-        self.ui.comboBoxUnitsBoomWidth.setCurrentText(cfg.UNIT_FT)
+        self.ui.comboBoxUnitsBoomWidth.setCurrentIndex(-1)
         self.ui.comboBoxUnitsBoomDrop.addItems(cfg.UNITS_LENGTH_SMALL)
-        self.ui.comboBoxUnitsBoomDrop.setCurrentText(cfg.UNIT_IN)
+        self.ui.comboBoxUnitsBoomDrop.setCurrentIndex(-1)
         self.ui.comboBoxUnitsNozzleSpacing.addItems(cfg.UNITS_LENGTH_SMALL)
-        self.ui.comboBoxUnitsNozzleSpacing.setCurrentText(cfg.UNIT_IN)
+        self.ui.comboBoxUnitsNozzleSpacing.setCurrentIndex(-1)
         self.ui.lineEditSwath.editingFinished.connect(self._commit_swath)
         self.ui.comboBoxUnitsSwath.currentTextChanged[str].connect(
             self._commit_swath_units
@@ -330,25 +333,37 @@ class SeriesInfoWidget(baseclass):
 
     def fill_spray_system(self, info: AppInfo):
         self.ui.lineEditSwath.setText(info.strip_num(info.swath, zeroBlank=True))
-        self.ui.comboBoxUnitsSwath.setCurrentText(info.swath_units)
+        with QSignalBlocker(self.ui.comboBoxUnitsSwath):
+            self.ui.comboBoxUnitsSwath.setCurrentIndex(-1)
+            self.ui.comboBoxUnitsSwath.setCurrentText(info.swath_units)
         self.ui.lineEditRate.setText(f"{info.strip_num(info.rate, zeroBlank=True)}")
-        self.ui.comboBoxUnitsRate.setCurrentText(info.rate_units)
+        with QSignalBlocker(self.ui.comboBoxUnitsRate):
+            self.ui.comboBoxUnitsRate.setCurrentIndex(-1)    
+            self.ui.comboBoxUnitsRate.setCurrentText(info.rate_units)
         self.ui.lineEditPressure.setText(
             f"{info.strip_num(info.pressure, zeroBlank=True)}"
         )
-        self.ui.comboBoxUnitsPressure.setCurrentText(info.pressure_units)
+        with QSignalBlocker(self.ui.comboBoxUnitsPressure):
+            self.ui.comboBoxUnitsPressure.setCurrentIndex(-1)    
+            self.ui.comboBoxUnitsPressure.setCurrentText(info.pressure_units)
         self.ui.lineEditBoomWidth.setText(
             f"{info.strip_num(info.boom_width, zeroBlank=True)}"
         )
-        self.ui.comboBoxUnitsBoomWidth.setCurrentText(info.boom_width_units)
+        with QSignalBlocker(self.ui.comboBoxUnitsBoomWidth):
+            self.ui.comboBoxUnitsBoomWidth.setCurrentIndex(-1)    
+            self.ui.comboBoxUnitsBoomWidth.setCurrentText(info.boom_width_units)
         self.ui.lineEditBoomDrop.setText(
             f"{info.strip_num(info.boom_drop, zeroBlank=True)}"
         )
-        self.ui.comboBoxUnitsBoomDrop.setCurrentText(info.boom_drop_units)
+        with QSignalBlocker(self.ui.comboBoxUnitsBoomDrop):
+            self.ui.comboBoxUnitsBoomDrop.setCurrentIndex(-1)    
+            self.ui.comboBoxUnitsBoomDrop.setCurrentText(info.boom_drop_units)
         self.ui.lineEditNozzleSpacing.setText(
             f"{info.strip_num(info.nozzle_spacing, zeroBlank=True)}"
         )
-        self.ui.comboBoxUnitsNozzleSpacing.setCurrentText(info.nozzle_spacing_units)
+        with QSignalBlocker(self.ui.comboBoxUnitsNozzleSpacing):
+            self.ui.comboBoxUnitsNozzleSpacing.setCurrentIndex(-1)    
+            self.ui.comboBoxUnitsNozzleSpacing.setCurrentText(info.nozzle_spacing_units)
         
 
     @pyqtSlot()
@@ -358,7 +373,8 @@ class SeriesInfoWidget(baseclass):
 
     @pyqtSlot(str)
     def _commit_swath_units(self, text):
-        self.info.swath_units = text
+        self.info.set_swath_units(text)
+        cfg.set_unit_swath(text)
         self.target_swath_changed.emit()
 
     @pyqtSlot()
@@ -367,7 +383,8 @@ class SeriesInfoWidget(baseclass):
 
     @pyqtSlot(str)
     def _commit_rate_units(self, text):
-        self.info.rate_units = text
+        self.info.set_rate_units(text)
+        cfg.set_unit_rate(text)
 
     @pyqtSlot()
     def _commit_pressure(self):
@@ -375,7 +392,8 @@ class SeriesInfoWidget(baseclass):
 
     @pyqtSlot(str)
     def _commit_pressure_units(self, text):
-        self.info.pressure_units = text
+        self.info.set_pressure_units(text)
+        cfg.set_unit_pressure(text)
 
     @pyqtSlot()
     def _commit_boom_width(self):
@@ -383,7 +401,8 @@ class SeriesInfoWidget(baseclass):
 
     @pyqtSlot(str)
     def _commit_boom_width_units(self, text):
-        self.info.boom_drop_units = text
+        self.info.set_boom_width_units(text)
+        cfg.set_unit_boom_width(text)
 
     @pyqtSlot()
     def _commit_boom_drop(self):
@@ -391,7 +410,8 @@ class SeriesInfoWidget(baseclass):
 
     @pyqtSlot(str)
     def _commit_boom_drop_units(self, text):
-        self.info.boom_drop_units = text
+        self.info.set_boom_drop_units(text)
+        cfg.set_unit_boom_drop(text)
 
     @pyqtSlot()
     def _commit_nozzle_spacing(self):
@@ -399,7 +419,8 @@ class SeriesInfoWidget(baseclass):
 
     @pyqtSlot(str)
     def _commit_nozzle_spacing_units(self, text):
-        self.info.nozzle_spacing_units = text
+        self.info.set_nozzle_spacing_units(text)
+        cfg.set_unit_nozzle_spacing(text)
 
     """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """''
     Nozzles

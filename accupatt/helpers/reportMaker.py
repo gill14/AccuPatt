@@ -541,12 +541,12 @@ class ReportMaker:
             string_included=string_included, cards_included=cards_included
         ):
             row1.append(p.name)
-            row2.append(p.get_airspeed(airspeed_units)[2])
-            row3.append(p.get_spray_height(spray_height_units)[2])
-            row4.append(p.get_wind_speed(wind_speed_units)[2])
-            row5.append(p.get_crosswind(crosswind_speed_units)[2])
-            row6.append("-")
-            row7.append("-")
+            row2.append(p.get_airspeed(airspeed_units)[2] if p.get_airspeed()[0] >= 0 else "-")
+            row3.append(p.get_spray_height(spray_height_units)[2] if p.get_spray_height()[0] >= 0 else "-")
+            row4.append(p.get_wind_speed(wind_speed_units)[2] if p.get_wind_speed()[0] >= 0 else "-")
+            row5.append(p.get_crosswind(crosswind_speed_units)[2] if p.get_crosswind()[0] != 0 else "-")
+            row6.append(p.get_temperature(temperature_units)[2] if p.get_temperature()[0] >= 0 else "-")
+            row7.append(p.get_humidity()[2] if p.get_humidity()[0] >= 0 else "-")
         row1.append("Average")
         row2.append(airspeed_string)
         row3.append(spray_height_string)

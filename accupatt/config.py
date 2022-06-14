@@ -129,6 +129,85 @@ def get_flyin_analyst() -> str:
 def set_flyin_analyst(value: str):
     QSettings().setValue(_FLYIN_ANALYST, value)
 
+# Series Info
+
+_UNIT_WINGSPAN = "unit_wingspan"
+UNIT_WINGSPAN__DEFAULT = UNIT_FT
+
+def get_unit_wingspan() -> str:
+    return QSettings().value(
+        _UNIT_WINGSPAN, defaultValue=UNIT_WINGSPAN__DEFAULT, type=str
+    )
+    
+def set_unit_wingspan(value: str):
+    QSettings().setValue(_UNIT_WINGSPAN, value)
+
+_UNIT_SWATH = "unit_swath"
+UNIT_SWATH__DEFAULT = UNIT_FT
+
+def get_unit_swath() -> str:
+    return QSettings().value(
+        _UNIT_SWATH, defaultValue=UNIT_SWATH__DEFAULT, type=str
+    )
+    
+def set_unit_swath(value: str):
+    QSettings().setValue(_UNIT_SWATH, value)
+    
+_UNIT_RATE = "unit_rate"
+UNIT_RATE__DEFAULT = UNIT_GPA
+
+def get_unit_rate() -> str:
+    return QSettings().value(
+        _UNIT_RATE, defaultValue=UNIT_RATE__DEFAULT, type=str
+    )
+    
+def set_unit_rate(value: str):
+    QSettings().setValue(_UNIT_RATE, value)
+    
+_UNIT_PRESSURE = "unit_pressure"
+UNIT_PRESSURE__DEFAULT = UNIT_PSI
+
+def get_unit_pressure() -> str:
+    return QSettings().value(
+        _UNIT_PRESSURE, defaultValue=UNIT_PRESSURE__DEFAULT, type=str
+    )
+    
+def set_unit_pressure(value: str):
+    QSettings().setValue(_UNIT_PRESSURE, value)
+    
+_UNIT_BOOM_WIDTH = "unit_boom_width"
+UNIT_BOOM_WIDTH__DEFAULT = UNIT_FT
+
+def get_unit_boom_width() -> str:
+    return QSettings().value(
+        _UNIT_BOOM_WIDTH, defaultValue=UNIT_BOOM_WIDTH__DEFAULT, type=str
+    )
+    
+def set_unit_boom_width(value: str):
+    QSettings().setValue(_UNIT_BOOM_WIDTH, value)
+    
+_UNIT_BOOM_DROP = "unit_boom_drop"
+UNIT_BOOM_DROP__DEFAULT = UNIT_IN
+
+def get_unit_boom_drop() -> str:
+    return QSettings().value(
+        _UNIT_BOOM_DROP, defaultValue=UNIT_BOOM_DROP__DEFAULT, type=str
+    )
+    
+def set_unit_boom_drop(value: str):
+    QSettings().setValue(_UNIT_BOOM_DROP, value)
+    
+_UNIT_NOZZLE_SPACING = "unit_nozzle_spacing"
+UNIT_NOZZLE_SPACING__DEFAULT = UNIT_IN
+
+def get_unit_nozzle_spacing() -> str:
+    return QSettings().value(
+        _UNIT_NOZZLE_SPACING, defaultValue=UNIT_NOZZLE_SPACING__DEFAULT, type=str
+    )
+    
+def set_unit_nozzle_spacing(value: str):
+    QSettings().setValue(_UNIT_NOZZLE_SPACING, value)
+
 
 # Pass Observable Data
 
