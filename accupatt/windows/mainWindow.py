@@ -152,7 +152,8 @@ class MainWindow(baseclass):
         menuCardPlotOptions.addMenu(menuColorize)
         self.ui.action_reset_defaults.triggered.connect(self.resetDefaults)
         # --> Setup Export to Excel Menu
-        self.ui.action_safe_report.triggered.connect(self.exportSAFEAttendeeLog)
+        self.ui.action_SAFE_log_from_files.triggered.connect(self.exportSAFELogFromFiles)
+        self.ui.action_SAFE_log_from_directory.triggered.connect(self.exportSAFELogFromDirectory)
         self.ui.action_detailed_report.triggered.connect(self.exportAllRawData)
         # --> Setup Report Menu
         self.ui.actionCreate_Report.triggered.connect(self.makeReport)
@@ -509,7 +510,7 @@ class MainWindow(baseclass):
             )
 
     @pyqtSlot()
-    def exportSAFEAttendeeLog(self):
+    def exportSAFELogFromFiles(self):
         files, _ = QFileDialog.getOpenFileNames(
             parent=self,
             caption="Select Files to Include",
@@ -526,6 +527,34 @@ class MainWindow(baseclass):
             )
         if files and savefile:
             safe_report(files, savefile)
+
+    @pyqtSlot()
+    def exportSAFELogFromDirectory(self):
+        directory = QFileDialog.getExistingDirectory(
+            parent=self,
+            caption="Select Files to Include",
+            directory=self.currentDirectory,
+            options=(QFileDialog.Option.ShowDirsOnly)
+        )
+        if not directory:
+            return
+        filenames = []
+        for root, _, files in os.walk(directory):
+            for file in files:
+                if file.endswith(".db"):
+                    filenames.append(os.path.join(directory, root, file))
+            
+        if len(filenames) < 1:
+            return
+        savefile, _ = QFileDialog.getSaveFileName(
+            parent=self,
+            caption="Save S.A.F.E. Attendee Log As",
+            directory=directory + os.path.sep + "Operation SAFE Attendee Log.xlsx",
+            filter="Excel Files (*.xlsx)",
+        )
+        if savefile:
+            safe_report(filenames, savefile)
+        
 
     @pyqtSlot()
     def exportAllRawData(self):

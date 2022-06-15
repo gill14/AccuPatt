@@ -206,7 +206,14 @@
     <property name="title">
      <string>Export to Excel</string>
     </property>
-    <addaction name="action_safe_report"/>
+    <widget class="QMenu" name="menuOperation_S_A_F_E_Attendee_Log">
+     <property name="title">
+      <string>Operation S.A.F.E. Attendee Log</string>
+     </property>
+     <addaction name="action_SAFE_log_from_files"/>
+     <addaction name="action_SAFE_log_from_directory"/>
+    </widget>
+    <addaction name="menuOperation_S_A_F_E_Attendee_Log"/>
     <addaction name="separator"/>
     <addaction name="action_detailed_report"/>
    </widget>
@@ -268,11 +275,6 @@
   <action name="action_select_File_Aircraft">
    <property name="text">
     <string>Select File Aircraft</string>
-   </property>
-  </action>
-  <action name="action_safe_report">
-   <property name="text">
-    <string>Operation S.A.F.E. Attendee Log</string>
    </property>
   </action>
   <action name="action_detailed_report">
@@ -433,6 +435,16 @@
   <action name="actionSelect_Logo_File">
    <property name="text">
     <string>Select Logo File</string>
+   </property>
+  </action>
+  <action name="action_SAFE_log_from_files">
+   <property name="text">
+    <string>From Files</string>
+   </property>
+  </action>
+  <action name="action_SAFE_log_from_directory">
+   <property name="text">
+    <string>From Directory</string>
    </property>
   </action>
  </widget>
