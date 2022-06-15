@@ -119,7 +119,7 @@ class SeriesInfoWidget(baseclass):
         self.ui.businessLineEdit.editingFinished.connect(self._commit_business)
         self.ui.streetLineEdit.editingFinished.connect(self._commit_street)
         self.ui.cityLineEdit.editingFinished.connect(self._commit_city)
-        self.ui.cityLineEdit.editingFinished.connect(self._commit_city)
+        self.ui.stateLineEdit.editingFinished.connect(self._commit_state)
         self.ui.zipLineEdit.editingFinished.connect(self._commit_zip)
         self.ui.phoneLineEdit.editingFinished.connect(self._commit_phone)
         self.ui.emailLineEdit.editingFinished.connect(self._commit_email)
@@ -183,12 +183,19 @@ class SeriesInfoWidget(baseclass):
         series = SeriesData()
         load_from_db(file, s=series)
         self.ui.businessLineEdit.setText(series.info.business)
+        self._commit_business()
         self.ui.streetLineEdit.setText(series.info.street)
+        self._commit_street()
         self.ui.cityLineEdit.setText(series.info.city)
+        self._commit_city()
         self.ui.stateLineEdit.setText(series.info.state)
+        self._commit_state()
         self.ui.zipLineEdit.setText(series.info.zip)
+        self._commit_zip()
         self.ui.phoneLineEdit.setText(series.info.phone)
+        self._commit_phone()
         self.ui.emailLineEdit.setText(series.info.email)
+        self._commit_email()
 
     """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """''
     Notes
