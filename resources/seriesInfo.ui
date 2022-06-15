@@ -19,7 +19,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_7">
+  <layout class="QVBoxLayout" name="verticalLayout_10">
    <item>
     <layout class="QGridLayout" name="gridLayout">
      <item row="0" column="1">
@@ -39,7 +39,7 @@
           <item>
            <widget class="QLabel" name="label_29">
             <property name="text">
-             <string>Reg. #: </string>
+             <string>Reg. # / Series: </string>
             </property>
            </widget>
           </item>
@@ -47,29 +47,9 @@
            <widget class="QLineEdit" name="lineEditRegNum">
             <property name="maximumSize">
              <size>
-              <width>125</width>
+              <width>75</width>
               <height>16777215</height>
              </size>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_26">
-          <item>
-           <widget class="QLabel" name="label_30">
-            <property name="minimumSize">
-             <size>
-              <width>150</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Series:</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
             </property>
            </widget>
           </item>
@@ -1158,35 +1138,65 @@
       </widget>
      </item>
      <item row="1" column="2">
-      <widget class="QGroupBox" name="groupBox">
-       <property name="font">
-        <font>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
+      <layout class="QVBoxLayout" name="verticalLayout_7">
+       <property name="spacing">
+        <number>1</number>
        </property>
-       <layout class="QVBoxLayout" name="verticalLayout_6">
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_9">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_20">
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="buttonPassObservables">
+           <property name="text">
+            <string>Pass Observables</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="title">
+          <string>Notes</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_6">
           <item>
-           <widget class="QLabel" name="label_27">
-            <property name="text">
-             <string>Setup Notes:</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPlainTextEdit" name="plainTextEditNotesSetup"/>
-          </item>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_8">
+           <layout class="QVBoxLayout" name="verticalLayout_9">
             <item>
-             <widget class="QLabel" name="label_28">
+             <widget class="QLabel" name="label_27">
               <property name="text">
-               <string>Analyst Notes: </string>
+               <string>Setup Notes:</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -1194,14 +1204,31 @@
              </widget>
             </item>
             <item>
-             <widget class="QPlainTextEdit" name="plainTextEditNotesAnalyst"/>
+             <widget class="QPlainTextEdit" name="plainTextEditNotesSetup"/>
+            </item>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_8">
+              <item>
+               <widget class="QLabel" name="label_28">
+                <property name="text">
+                 <string>Analyst Notes (not printed on report): </string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPlainTextEdit" name="plainTextEditNotesAnalyst"/>
+              </item>
+             </layout>
             </item>
            </layout>
           </item>
          </layout>
-        </item>
-       </layout>
-      </widget>
+        </widget>
+       </item>
+      </layout>
      </item>
     </layout>
    </item>
@@ -1230,7 +1257,6 @@
   <tabstop>phoneLineEdit</tabstop>
   <tabstop>emailLineEdit</tabstop>
   <tabstop>lineEditRegNum</tabstop>
-  <tabstop>lineEditSeriesNum</tabstop>
   <tabstop>comboBoxMake</tabstop>
   <tabstop>comboBoxModel</tabstop>
   <tabstop>lineEditWingspan</tabstop>

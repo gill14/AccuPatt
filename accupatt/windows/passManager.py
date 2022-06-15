@@ -15,7 +15,7 @@ Ui_Form, baseclass = uic.loadUiType(
 
 class PassManager(baseclass):
 
-    def __init__(self, seriesData: SeriesData=None, parent=None):
+    def __init__(self, seriesData: SeriesData=None, filler_mode=False, parent=None):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -23,19 +23,19 @@ class PassManager(baseclass):
         self.tm = PassTable(seriesData.passes, self)
         self.tv: QTableView = self.ui.tableView
         self.tv.setModel(self.tm)
-        self.tv.setItemDelegateForColumn(
+        self.tv.setItemDelegateForRow(
             6, ComboBoxDelegate(self, cfg.UNITS_GROUND_SPEED)
         )
-        self.tv.setItemDelegateForColumn(
+        self.tv.setItemDelegateForRow(
             8, ComboBoxDelegate(self, cfg.UNITS_SPRAY_HEIGHT)
         )
-        self.tv.setItemDelegateForColumn(
+        self.tv.setItemDelegateForRow(
             12, ComboBoxDelegate(self, cfg.UNITS_WIND_SPEED)
         )
-        self.tv.setItemDelegateForColumn(
+        self.tv.setItemDelegateForRow(
             14, ComboBoxDelegate(self, cfg.UNITS_TEMPERATURE)
         )
-        self.tv.verticalHeader().setVisible(False)
+        self.tv.horizontalHeader().setVisible(False)
         self.tv.selectionModel().selectionChanged.connect(self.selection_changed)
 
         self.ui.button_new_pass.clicked.connect(self.newPass)
@@ -44,13 +44,19 @@ class PassManager(baseclass):
         self.ui.button_shift_down.clicked.connect(self.shift_down)
 
         self.show()
+        
+        if filler_mode:
+            hidden_rows = [1,2,3,4,6,8,12,14]
+            for row in hidden_rows:
+                self.tv.hideRow(row)
+            self.resize(700, 400)
 
     def newPass(self):
         self.tm.addPass()
 
     def deletePass(self):
-        row = self.ui.tableView.selectedIndexes()[0].row()
-        p: Pass = self.tm.pass_list[row]
+        col = self.ui.tableView.selectedIndexes()[0].column()
+        p: Pass = self.tm.pass_list[col]
         if p.string.has_data() or p.cards.has_data():
             msg = QMessageBox.question(
                 self,
@@ -63,18 +69,18 @@ class PassManager(baseclass):
         
     @pyqtSlot()
     def selection_changed(self):
-        hasSelection = bool(self.tv.selectionModel().selectedRows())
+        hasSelection = bool(self.tv.selectionModel().selectedColumns())
         self.ui.button_delete_pass.setEnabled(hasSelection)
         self.ui.button_shift_up.setEnabled(hasSelection)
         self.ui.button_shift_down.setEnabled(hasSelection)
     
     @pyqtSlot()
     def shift_up(self):
-        self.tm.shiftRowsUp(self.tv.selectionModel().selectedRows())
+        self.tm.shiftRowsUp(self.tv.selectionModel().selectedColumns())
 
     @pyqtSlot()
     def shift_down(self):
-        self.tm.shiftRowsDown(self.tv.selectionModel().selectedRows())
+        self.tm.shiftRowsDown(self.tv.selectionModel().selectedColumns())
 
     def accept(self):
         # Update default if requested
@@ -136,17 +142,17 @@ class PassTable(QAbstractTableModel):
             self.endResetModel()
 
     def rowCount(self, parent: QModelIndex()) -> int:
-        return len(self.pass_list)
-
-    def columnCount(self, parent: QModelIndex()) -> int:
         return len(self.headers)
 
-    def headerData(self, column, orientation, role=Qt.ItemDataRole.DisplayRole):
+    def columnCount(self, parent: QModelIndex()) -> int:
+        return len(self.pass_list)
+
+    def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
         if (
             role == Qt.ItemDataRole.DisplayRole
-            and orientation == Qt.Orientation.Horizontal
+            and orientation == Qt.Orientation.Vertical
         ):
-            return QVariant(self.headers[column])
+            return QVariant(self.headers[section])
         return QVariant()
 
     def data(self, index, role):
@@ -154,13 +160,13 @@ class PassTable(QAbstractTableModel):
             return Qt.AlignmentFlag.AlignCenter
         row = index.row()
         col = index.column()
-        p: Pass = self.pass_list[row]
-        if col == 0:
+        p: Pass = self.pass_list[col]
+        if row == 0:
             if role == Qt.ItemDataRole.DisplayRole:
                 return p.name
             elif role == Qt.ItemDataRole.EditRole:
                 return p.name
-        elif col == 1:
+        elif row == 1:
             if role == Qt.ItemDataRole.CheckStateRole:
                 return (
                     Qt.CheckState.Checked
@@ -169,7 +175,7 @@ class PassTable(QAbstractTableModel):
                 )
             elif role == Qt.ItemDataRole.DisplayRole:
                 return "Yes" if p.string.has_data() else "No"
-        elif col == 2:
+        elif row == 2:
             if role == Qt.ItemDataRole.CheckStateRole:
                 return (
                     Qt.CheckState.Checked
@@ -180,7 +186,7 @@ class PassTable(QAbstractTableModel):
                 return "Yes" if p.string.include_in_composite else "No"
             elif role == Qt.ItemDataRole.EditRole:
                 return p.string.include_in_composite
-        elif col == 3:
+        elif row == 3:
             if role == Qt.ItemDataRole.CheckStateRole:
                 return (
                     Qt.CheckState.Checked
@@ -189,7 +195,7 @@ class PassTable(QAbstractTableModel):
                 )
             elif role == Qt.ItemDataRole.DisplayRole:
                 return "Yes" if p.cards.has_data() else "No"
-        elif col == 4:
+        elif row == 4:
             if role == Qt.ItemDataRole.CheckStateRole:
                 return (
                     Qt.CheckState.Checked
@@ -200,37 +206,37 @@ class PassTable(QAbstractTableModel):
                 return "Yes" if p.cards.include_in_composite else "No"
             elif role == Qt.ItemDataRole.EditRole:
                 return p.cards.include_in_composite
-        elif col == 5:
+        elif row == 5:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
                 return p.get_ground_speed()[2]
-        elif col == 6:
+        elif row == 6:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
                 return p.get_ground_speed()[1]
-        elif col == 7:
+        elif row == 7:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
                 return p.get_spray_height()[2]
-        elif col == 8:
+        elif row == 8:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
                 return p.get_spray_height()[1]
-        elif col == 9:
+        elif row == 9:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
                 return p.get_pass_heading()[2]
-        elif col == 10:
+        elif row == 10:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
                 return p.get_wind_direction()[2]
-        elif col == 11:
+        elif row == 11:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
                 return p.get_wind_speed()[2]
-        elif col == 12:
+        elif row == 12:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
                 return p.get_wind_speed()[1]
-        elif col == 13:
+        elif row == 13:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
                 return p.get_temperature()[2]
-        elif col == 14:
+        elif row == 14:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
                 return p.get_temperature()[1]
-        elif col == 15:
+        elif row == 15:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
                 return p.get_humidity()[2]
         else:
@@ -241,40 +247,40 @@ class PassTable(QAbstractTableModel):
             return False
         row = index.row()
         col = index.column()
-        p: Pass = self.pass_list[row]
-        if col == 0:
+        p: Pass = self.pass_list[col]
+        if row == 0:
             p.name = value
-        elif col == 1:
+        elif row == 1:
             pass
-        elif col == 2:
+        elif row == 2:
             p.string.include_in_composite = (
                 Qt.CheckState(value) == Qt.CheckState.Checked
             )
-        elif col == 3:
+        elif row == 3:
             pass
-        elif col == 4:
+        elif row == 4:
             p.cards.include_in_composite = Qt.CheckState(value) == Qt.CheckState.Checked
-        elif col == 5:
+        elif row == 5:
             p.set_ground_speed(value)
-        elif col == 6:
+        elif row == 6:
             p.ground_speed_units = value
-        elif col == 7:
+        elif row == 7:
             p.set_spray_height(value)
-        elif col == 8:
+        elif row == 8:
             p.spray_height_units = value
-        elif col == 9:
+        elif row == 9:
             p.set_pass_heading(value)
-        elif col == 10:
+        elif row == 10:
             p.set_wind_direction(value)
-        elif col == 11:
+        elif row == 11:
             p.set_wind_speed(value)
-        elif col == 12:
+        elif row == 12:
             p.wind_speed_units = value
-        elif col == 13:
+        elif row == 13:
             p.set_temperature(value)
-        elif col == 14:
+        elif row == 14:
             p.temperature_units = value
-        elif col == 15:
+        elif row == 15:
             p.set_humidity(value)
         else:
             return False
@@ -294,28 +300,28 @@ class PassTable(QAbstractTableModel):
                 nextIndex = max(p_nums) + 1
         else:
             nextIndex = 1
-        self.beginInsertRows(QModelIndex(), len(self.pass_list), len(self.pass_list))
+        self.beginInsertColumns(QModelIndex(), len(self.pass_list), len(self.pass_list))
         # Create pass and add it to listwidget
         self.pass_list.append(Pass(number=nextIndex))
-        self.endInsertRows()
+        self.endInsertColumns()
 
     def removePass(self, selectedIndexes):
-        row = selectedIndexes[0].row()
-        self.beginRemoveRows(QModelIndex(), row, row)
-        self.pass_list.pop(row)
-        self.endRemoveRows()
+        col = selectedIndexes[0].column()
+        self.beginRemoveColumns(QModelIndex(), col, col)
+        self.pass_list.pop(col)
+        self.endRemoveColumns()
 
-    def shiftRowsUp(self, selectedRows):
+    def shiftRowsUp(self, selectedColumns):
         sort_list = []
-        for index in selectedRows:
-            row = index.row()
-            sort_list.append(row)
+        for index in selectedColumns:
+            col = index.column()
+            sort_list.append(col)
             # ensure shift is not out of list bounds
-            if row - 1 < 0:
+            if col - 1 < 0:
                 return
         sort_list.sort()
         # Notify model of the move in progress
-        self.beginMoveRows(
+        self.beginMoveColumns(
             QModelIndex(),
             sort_list[0],
             sort_list[len(sort_list)-1],
@@ -323,23 +329,23 @@ class PassTable(QAbstractTableModel):
             sort_list[0] - 1
         )
         # Make the move on the model data
-        for row in sort_list:
-            self.pass_list.insert(row -1, self.pass_list.pop(row))
+        for col in sort_list:
+            self.pass_list.insert(col -1, self.pass_list.pop(col))
         # Notify model move is complete
-        self.endMoveRows()
+        self.endMoveColumns()
         
-    def shiftRowsDown(self, selectedRows):
+    def shiftRowsDown(self, selectedColumns):
         sort_list = []
-        for index in selectedRows:
-            row = index.row()
-            sort_list.append(row)
+        for index in selectedColumns:
+            col = index.column()
+            sort_list.append(col)
             # ensure shift is not out of list bounds
-            if row + 1 >= len(self.pass_list):
+            if col + 1 >= len(self.pass_list):
                 return
         sort_list.sort()
         # QAbstractItemModel quirk, cant have new index inside moving index
         # Notify model of the move in progress
-        self.beginMoveRows(
+        self.beginMoveColumns(
             QModelIndex(),
             sort_list[0],
             sort_list[len(sort_list)-1],
@@ -348,23 +354,23 @@ class PassTable(QAbstractTableModel):
         )
         # Make the move on the model data
         sort_list.sort(reverse=True)
-        for row in sort_list:
-            self.pass_list.insert(row + 1, self.pass_list.pop(row))
+        for col in sort_list:
+            self.pass_list.insert(col + 1, self.pass_list.pop(col))
         # Notify model move is complete
-        self.endMoveRows()
+        self.endMoveColumns()
 
     def flags(self, index):
         if not index.isValid():
             return None
         row = index.row()
         col = index.column()
-        p: Pass = self.pass_list[row]
-        if col == 1:
+        p: Pass = self.pass_list[col]
+        if row == 1:
             if p.string.has_data():
                 return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
             else:
                 return Qt.ItemFlag.ItemIsSelectable
-        elif col == 2:
+        elif row == 2:
             if p.string.has_data():
                 return (
                     Qt.ItemFlag.ItemIsEnabled
@@ -373,12 +379,12 @@ class PassTable(QAbstractTableModel):
                 )
             else:
                 return Qt.ItemFlag.ItemIsSelectable
-        elif col == 3:
+        elif row == 3:
             if p.cards.has_data():
                 return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
             else:
                 return Qt.ItemFlag.ItemIsSelectable
-        elif col == 4:
+        elif row == 4:
             if p.cards.has_data():
                 return (
                     Qt.ItemFlag.ItemIsEnabled

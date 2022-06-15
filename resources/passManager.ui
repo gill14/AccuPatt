@@ -9,27 +9,30 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1000</width>
-    <height>335</height>
+    <width>700</width>
+    <height>594</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Pass Manager</string>
   </property>
   <property name="sizeGripEnabled">
-   <bool>false</bool>
+   <bool>true</bool>
   </property>
   <property name="modal">
    <bool>true</bool>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="sizeConstraint">
+    <enum>QLayout::SetDefaultConstraint</enum>
+   </property>
    <item>
     <widget class="QTableView" name="tableView">
      <property name="selectionMode">
       <enum>QAbstractItemView::SingleSelection</enum>
      </property>
      <property name="selectionBehavior">
-      <enum>QAbstractItemView::SelectRows</enum>
+      <enum>QAbstractItemView::SelectColumns</enum>
      </property>
     </widget>
    </item>
@@ -73,22 +76,14 @@
      <item>
       <widget class="QPushButton" name="button_shift_up">
        <property name="text">
-        <string>Shift Up</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>icon_up.png</normaloff>icon_up.png</iconset>
+        <string>Shift Left</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="button_shift_down">
        <property name="text">
-        <string>Shift Down</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>icon_down.png</normaloff>icon_down.png</iconset>
+        <string>Shift Right</string>
        </property>
       </widget>
      </item>

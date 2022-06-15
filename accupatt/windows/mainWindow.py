@@ -212,6 +212,7 @@ class MainWindow(baseclass):
         self.tabWidget.setEnabled(False)
         self.seriesInfoWidget: SeriesInfoWidget = self.ui.widgetSeriesInfo
         self.seriesInfoWidget.target_swath_changed.connect(lambda: self.target_swath_changed.emit())
+        self.seriesInfoWidget.request_open_pass_filler.connect(self.openPassFiller)
         self.stringWidget: TabWidgetString = self.ui.stringMainWidget
         self.stringWidget.request_file_save.connect(self.saveFile)
         self.cardWidget: TabWidgetCards = self.ui.cardMainWidget
@@ -413,11 +414,11 @@ class MainWindow(baseclass):
         self.cardWidget.setData(self.seriesData)
 
     @pyqtSlot()
-    def openPassManager(self):
+    def openPassManager(self, filler_mode=False):
         # Save before opening to have a reversion point
         self.saveFile()
         # Create popup and send current appInfo vals to popup
-        e = PassManager(self.seriesData, self)
+        e = PassManager(self.seriesData, filler_mode=filler_mode, parent=self)
         # Connect Slot to retrieve Vals back from popup
         e.accepted.connect(self.onPassManagerAccepted)
         e.rejected.connect(self.onPassManagerRejected)
@@ -433,6 +434,10 @@ class MainWindow(baseclass):
     def onPassManagerRejected(self):
         # Reload datafile, abandoning changes made
         self.openFile(file=self.currentFile)    
+
+    @pyqtSlot()
+    def openPassFiller(self):
+        self.openPassManager(filler_mode=True)
 
     """
     String Plot Options

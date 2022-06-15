@@ -22,6 +22,7 @@ class SeriesInfoWidget(baseclass):
     aircraftFile = os.path.join(os.getcwd(), "resources", "AgAircraftData.xlsx")
 
     target_swath_changed = pyqtSignal()
+    request_open_pass_filler = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -35,6 +36,7 @@ class SeriesInfoWidget(baseclass):
         self.init_aircraft()
         self.init_spray_system()
         self.init_nozzles()
+        self.ui.buttonPassObservables.clicked.connect(self._openPassDataFiller)
 
     def fill_from_info(self, info: AppInfo):
         self.info = info
@@ -45,6 +47,9 @@ class SeriesInfoWidget(baseclass):
         self.fill_aircraft(info)
         self.fill_spray_system(info)
         self.fill_nozzles(info)
+
+    def _openPassDataFiller(self):
+        self.request_open_pass_filler.emit()
 
     """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """''
     Fly-In
