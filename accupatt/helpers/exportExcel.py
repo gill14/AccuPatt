@@ -53,8 +53,11 @@ def safe_report(filesToInclude: list[str], saveFile: str):
                 row = cell.row
 
         # Line Entry for each file
-        ws.cell(row, 1, s.info.pilot.split(" ", 1)[1])
-        ws.cell(row, 2, s.info.pilot.split(" ", 1)[0])
+        pilot_split = s.info.pilot.rsplit(" ", 1)
+        pilot_first = pilot_split[0] if len(pilot_split)==1 else ""
+        pilot_last = pilot_split[1] if len(pilot_split)==2 else ""
+        ws.cell(row, 1, pilot_last)
+        ws.cell(row, 2, pilot_first)
         ws.cell(row, 3, s.info.business)
         ws.cell(row, 6, s.info.regnum)
         ws.cell(row, 7, s.info.make + " " + s.info.model)
