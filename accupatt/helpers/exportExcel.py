@@ -54,8 +54,8 @@ def safe_report(filesToInclude: list[str], saveFile: str):
 
         # Line Entry for each file
         pilot_split = s.info.pilot.rsplit(" ", 1)
-        pilot_first = pilot_split[0] if len(pilot_split)>=1 else ""
-        pilot_last = pilot_split[1] if len(pilot_split)==2 else ""
+        pilot_first = pilot_split[0] if len(pilot_split) >= 1 else ""
+        pilot_last = pilot_split[1] if len(pilot_split) == 2 else ""
         ws.cell(row, 1, pilot_last)
         ws.cell(row, 2, pilot_first)
         ws.cell(row, 3, s.info.business)

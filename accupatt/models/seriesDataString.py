@@ -18,11 +18,7 @@ class SeriesDataString(SeriesDataBase):
         self.average = Pass(name="Average")
 
     def modifyPatterns(self):
-        active_passes = [
-            p
-            for p in self.passes
-            if p.string.is_active()
-        ]
+        active_passes = [p for p in self.passes if p.string.is_active()]
         if len(active_passes) == 0:
             return
         # Apply individual pattern modifications
@@ -78,11 +74,7 @@ class SeriesDataString(SeriesDataBase):
         # Setup and clear the plotter
         self._config_mpl_plotter(mplWidget)
         # Filter plottable passes
-        active_passes = [
-            p
-            for p in self.passes
-            if p.string.is_active()
-        ]
+        active_passes = [p for p in self.passes if p.string.is_active()]
         # Iterate over plottable passes
         for p in active_passes:
             # Numpy-ize dataframe columns to plot
@@ -111,24 +103,24 @@ class SeriesDataString(SeriesDataBase):
             mplWidget.canvas.ax.plot(
                 x[y != 0], y[y != 0], color="black", linewidth=2, label="Average"
             )
-            mplWidget.canvas.ax.fill_between(
-                x[y != 0],
-                0,
-                y[y != 0],
-                alpha=0.7
-            )
+            mplWidget.canvas.ax.fill_between(x[y != 0], 0, y[y != 0], alpha=0.7)
             if cfg.get_string_plot_average_swath_box():
                 # Find average deposition inside swath width
                 a_c = a[(a["loc"] >= -swath_width / 2) & (a["loc"] <= swath_width / 2)]
                 a_c_mean = a_c["Average"].mean(axis="rows")
                 # Plot rectangle, w = swath width, h = (1/2)* average dep inside swath width
                 mplWidget.canvas.ax.plot(
-                    [-swath_width/2, -swath_width/2, swath_width/2, swath_width/2],
-                    [0, a_c_mean/2, a_c_mean/2, 0],
+                    [
+                        -swath_width / 2,
+                        -swath_width / 2,
+                        swath_width / 2,
+                        swath_width / 2,
+                    ],
+                    [0, a_c_mean / 2, a_c_mean / 2, 0],
                     color="black",
                     linewidth=1,
-                    dashes=(3,2),
-                    label="Effective Swath"
+                    dashes=(3, 2),
+                    label="Effective Swath",
                 )
             # Add a legend
             mplWidget.canvas.ax.legend()
@@ -141,6 +133,6 @@ class SeriesDataString(SeriesDataBase):
 
     def get_average_mod(self):
         return self.average.string.data_mod
-    
+
     def get_average_y_label(self):
         return "Average"

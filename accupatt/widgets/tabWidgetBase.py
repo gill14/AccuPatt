@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
     QSpinBox,
     QTableWidget,
     QTabWidget,
-    QWidget
+    QWidget,
 )
 from accupatt.models.passData import Pass
 from accupatt.models.passDataBase import PassDataBase
@@ -18,19 +18,20 @@ from accupatt.models.seriesDataBase import SeriesDataBase
 from accupatt.widgets.mplwidget import MplWidget
 from accupatt.windows.editOptBase import EditOptBase
 
+
 class TabWidgetBase(QWidget):
-    
+
     request_file_save = pyqtSignal()
-    
+
     def __init__(self, ui_file, subtype, parent, *args, **kwargs):
         super().__init__(*args, **kwargs)
         ui_form, _ = uic.loadUiType(ui_file)
-        self.ui  = ui_form()
+        self.ui = ui_form()
         self.ui.setupUi(self)
         # Whether String or Cards
         self.subtype = subtype
         self.seriesData = SeriesData()
-        #self.parent = parent
+        # self.parent = parent
         # Typed UI Accessors, connect built-in signals to custom slots
         self.listWidgetPass: QListWidget = self.ui.listWidgetPass
         self.listWidgetPass.itemSelectionChanged.connect(self.passSelectionChanged)
@@ -67,11 +68,11 @@ class TabWidgetBase(QWidget):
             self.simulatedPassesChanged
         )
         self.tableWidgetCV: QTableWidget = self.ui.tableWidgetCV
-    
+
     """
     External Method to fill data
     """
-    
+
     def setData(self, seriesData: SeriesData):
         self.seriesData = seriesData
         # Populate Series Data Mod options silently
@@ -90,12 +91,16 @@ class TabWidgetBase(QWidget):
         # Silently update Pass Data Mod Opts, then plot individuals
         self.passSelectionChanged()
         # Silently update adjusted swath control limits
-        self.setAdjustedSwathFromTargetSwath(replace_adjusted_swath=False, update_plots=False)
+        self.setAdjustedSwathFromTargetSwath(
+            replace_adjusted_swath=False, update_plots=False
+        )
         # Update Adjusted Swath, then plot composites and simulations
         self.swathAdjustedChanged(swath=self.getSeriesOpt().swath_adjusted)
-        
+
     @pyqtSlot()
-    def setAdjustedSwathFromTargetSwath(self, replace_adjusted_swath=True, update_plots=True):
+    def setAdjustedSwathFromTargetSwath(
+        self, replace_adjusted_swath=True, update_plots=True
+    ):
         swath = self.seriesData.info.swath
         swath_units = self.seriesData.info.swath_units
         opt = self.getSeriesOpt()
@@ -113,14 +118,14 @@ class TabWidgetBase(QWidget):
             self.spinBoxSwathAdjusted.setSuffix(" " + swath_units)
         if update_plots:
             self.updatePlots(modify=True, composites=True, simulations=True)
-        
+
     """
     Pass List Widget
     """
-    
+
     @pyqtSlot()
     def passSelectionChanged(self):
-        if not (passData:=self.getCurrentPass()):
+        if not (passData := self.getCurrentPass()):
             return
         opt = self.getPassOpt(passData)
         with QSignalBlocker(self.checkBoxPassCenter):
@@ -130,7 +135,7 @@ class TabWidgetBase(QWidget):
         self.updateEditButton(opt.has_data(), passData.name)
         # Update Plots
         self.updatePlots(individuals=True)
-    
+
     @pyqtSlot(QListWidgetItem)
     def passItemChanged(self, item: QListWidgetItem):
         # Checkstate on item changed
@@ -139,10 +144,14 @@ class TabWidgetBase(QWidget):
             item.setCheckState(Qt.CheckState.PartiallyChecked)
         # Update SeriesData -> Pass object
         p = self.seriesData.passes[self.listWidgetPass.row(item)]
-        self.getPassOpt(p).include_in_composite = (item.checkState() == Qt.CheckState.Checked)
+        self.getPassOpt(p).include_in_composite = (
+            item.checkState() == Qt.CheckState.Checked
+        )
         # Replot composites, simulations
-        self.updatePlots(modify=True, composites=True, simulations=True, distributions=True)
-    
+        self.updatePlots(
+            modify=True, composites=True, simulations=True, distributions=True
+        )
+
     def updatePassListWidget(self, index_to_select: int = -1):
         with QSignalBlocker(self.listWidgetPass):
             self.listWidgetPass.clear()
@@ -161,88 +170,107 @@ class TabWidgetBase(QWidget):
                         if self.getPassOpt(p).include_in_composite
                         else Qt.CheckState.PartiallyChecked
                     )
-            index = len(self.seriesData.passes)-1 if index_to_select == -1 else index_to_select
+            index = (
+                len(self.seriesData.passes) - 1
+                if index_to_select == -1
+                else index_to_select
+            )
             self.listWidgetPass.setCurrentRow(index)
-    
+
     """
     Edit Pass Button & Methods
     """
-    
+
     @pyqtSlot()
     def editPass(self):
         # Inherited class should override
         pass
-    
+
     @pyqtSlot()
     def onEditPassAccepted(self):
-        #self.seriesData.fill_common_pass_observables()
+        # self.seriesData.fill_common_pass_observables()
         self.request_file_save.emit()
         self.updatePassListWidget(index_to_select=self.listWidgetPass.currentRow())
-        self.updateEditButton(has_data=self.getPassOpt().has_data(), pass_name=self.getCurrentPass().name)
+        self.updateEditButton(
+            has_data=self.getPassOpt().has_data(), pass_name=self.getCurrentPass().name
+        )
         self.tabWidget.setCurrentIndex(0)
-        self.updatePlots(process=True, modify=True, individuals=True, composites=True, simulations=True, distributions=True)
-    
+        self.updatePlots(
+            process=True,
+            modify=True,
+            individuals=True,
+            composites=True,
+            simulations=True,
+            distributions=True,
+        )
+
     def updateEditButton(self, has_data, pass_name):
         prefix = "Edit" if has_data else "Capture"
         self.buttonEditPass.setText(f"{prefix} {pass_name}")
-    
+
     """
     Pass Data Mod Options
     """
-    
+
     @pyqtSlot(int)
     def passSmoothChanged(self, checkstate):
         if self.getCurrentPass():
-            self.getPassOpt().smooth = Qt.CheckState(checkstate) == Qt.CheckState.Checked
-            self.updatePlots(modify=True, individuals=True, composites=True, simulations=True)
-            
+            self.getPassOpt().smooth = (
+                Qt.CheckState(checkstate) == Qt.CheckState.Checked
+            )
+            self.updatePlots(
+                modify=True, individuals=True, composites=True, simulations=True
+            )
+
     @pyqtSlot(int)
     def passCenterChanged(self, checkstate):
         if self.getCurrentPass():
-            self.getPassOpt().center = Qt.CheckState(checkstate) == Qt.CheckState.Checked
+            self.getPassOpt().center = (
+                Qt.CheckState(checkstate) == Qt.CheckState.Checked
+            )
             self.updatePlots(modify=True, composites=True, simulations=True)
-            
+
     @pyqtSlot()
     def clickedAdvancedOptionsPass(self):
         if self.getCurrentPass():
-            e = EditOptBase(optBase=self.getPassOpt(), 
-                            window_units=self.seriesData.info.swath_units, 
-                            parent=self.parent())
+            e = EditOptBase(
+                optBase=self.getPassOpt(),
+                window_units=self.seriesData.info.swath_units,
+                parent=self.parent(),
+            )
             e.accepted.connect(self._advancedOptionsPassUpdated)
-    
+
     def _advancedOptionsPassUpdated(self):
         self.updatePlots(
             modify=True, individuals=False, composites=True, simulations=True
         )
-            
+
     """
     Series Data Mod Options
     """
 
     @pyqtSlot(int)
     def seriesCenterChanged(self, checkstate):
-        self.getSeriesOpt().center = (
-            Qt.CheckState(checkstate) == Qt.CheckState.Checked
-        )
+        self.getSeriesOpt().center = Qt.CheckState(checkstate) == Qt.CheckState.Checked
         self.updatePlots(modify=True, composites=True, simulations=True)
-        
+
     @pyqtSlot(int)
     def seriesSmoothChanged(self, checkstate):
-        self.getSeriesOpt().smooth = (
-            Qt.CheckState(checkstate) == Qt.CheckState.Checked
-        )
+        self.getSeriesOpt().smooth = Qt.CheckState(checkstate) == Qt.CheckState.Checked
         self.updatePlots(modify=True, composites=True, simulations=True)
-        
+
     @pyqtSlot()
     def clickedAdvancedOptionsSeries(self):
-        e = EditOptBase(optBase=self.getSeriesOpt(), 
-                        window_units=self.seriesData.info.swath_units, 
-                        parent=self.parent())
+        e = EditOptBase(
+            optBase=self.getSeriesOpt(),
+            window_units=self.seriesData.info.swath_units,
+            parent=self.parent(),
+        )
         e.accepted.connect(self._advancedOptionsSeriesUpdated)
-    
+
     def _advancedOptionsSeriesUpdated(self):
         self.updatePlots(modify=True, composites=True, simulations=True)
-        
+
     @pyqtSlot(int)
     def swathAdjustedChanged(self, swath: int):
         self.getSeriesOpt().swath_adjusted = swath
@@ -251,7 +279,7 @@ class TabWidgetBase(QWidget):
         with QSignalBlocker(self.sliderSimulatedSwath):
             self.sliderSimulatedSwath.setValue(swath)
         self.updatePlots(composites=True, simulations=True)
-    
+
     """
     Simulations Tab
     """
@@ -260,17 +288,25 @@ class TabWidgetBase(QWidget):
     def simulatedPassesChanged(self, numAdjascentPasses):
         self.getSeriesOpt().simulated_adjascent_passes = numAdjascentPasses
         self.updatePlots(simulations=True)
-    
+
     """
     plot triggers
     """
-    
-    def updatePlots(self, process=False, modify=False, individuals=False, composites=False, simulations=False, distributions=False):
+
+    def updatePlots(
+        self,
+        process=False,
+        modify=False,
+        individuals=False,
+        composites=False,
+        simulations=False,
+        distributions=False,
+    ):
         if process:
             self.reprocess_triggered()
         if modify:
             self.modify_triggered()
-        if individuals and (p:=self.getCurrentPass()):
+        if individuals and (p := self.getCurrentPass()):
             self.individuals_triggered(passData=p)
         if composites:
             self.composites_triggered()
@@ -278,11 +314,11 @@ class TabWidgetBase(QWidget):
             self.simulations_triggered()
         if distributions:
             self.distributions_triggered()
-            
+
     def reprocess_triggered(self):
         # Should override in inherited_class
         pass
-    
+
     def modify_triggered(self):
         # Should override in inherited_class
         pass
@@ -290,19 +326,19 @@ class TabWidgetBase(QWidget):
     def individuals_triggered(self):
         # Should override in inherited_class
         pass
-    
+
     def composites_triggered(self):
         # Should override in inherited_class
         pass
-    
+
     def simulations_triggered(self):
         # Should override in inherited_class
         pass
-    
+
     def distributions_triggered(self):
         # Should override in inherited_class
         pass
-    
+
     """
     Convenience Accessors
     """
@@ -313,20 +349,21 @@ class TabWidgetBase(QWidget):
         if (passIndex := self.listWidgetPass.currentRow()) != -1:
             passData = self.seriesData.passes[passIndex]
         return passData
-    
+
     def getSeriesOpt(self) -> SeriesDataBase:
-        if self.subtype == 'string':
+        if self.subtype == "string":
             return self.seriesData.string
-        elif self.subtype == 'cards':
-            return self.seriesData.cards  
+        elif self.subtype == "cards":
+            return self.seriesData.cards
         else:
             return SeriesDataBase()
-    
+
     def getPassOpt(self, passData: Pass = None) -> PassDataBase:
-        if passData == None: passData = self.getCurrentPass()
-        if self.subtype == 'string':
+        if passData == None:
+            passData = self.getCurrentPass()
+        if self.subtype == "string":
             return passData.string
-        elif self.subtype == 'cards':
+        elif self.subtype == "cards":
             return passData.cards
         else:
             return PassDataBase()

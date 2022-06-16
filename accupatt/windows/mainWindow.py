@@ -25,7 +25,7 @@ from accupatt.widgets import (
     singlecardwidget,
     splitcardwidget,
     tabWidgetString,
-    tabWidgetCards
+    tabWidgetCards,
 )
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
@@ -50,14 +50,15 @@ Ui_Form_About, baseclass_about = uic.loadUiType(
 testing = False
 testfile = "/Users/gill14/Library/Mobile Documents/com~apple~CloudDocs/Projects/AccuPatt/testing/N802EX 01.db"
 
+
 class MainWindow(baseclass):
-    
+
     file_saved = pyqtSignal(str)
     current_file_changed = pyqtSignal(str)
     pass_list_changed = pyqtSignal()
     target_swath_changed = pyqtSignal()
     request_repaint = pyqtSignal()
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ui = Ui_Form()
@@ -94,11 +95,17 @@ class MainWindow(baseclass):
         menuStringSimView = QMenu("Simulation View", menuStringPlotOptions)
         actionStringSimSwath = QAction("One Swath", menuStringSimView)
         actionStringSimSwath.setCheckable(True)
-        actionStringSimSwath.setChecked(cfg.get_string_simulation_view_window()==cfg.STRING_SIMULATION_VIEW_WINDOW_ONE)
+        actionStringSimSwath.setChecked(
+            cfg.get_string_simulation_view_window()
+            == cfg.STRING_SIMULATION_VIEW_WINDOW_ONE
+        )
         actionStringSimAll = QAction("All Passes", menuStringSimView)
         actionStringSimAll.setCheckable(True)
-        actionStringSimAll.setChecked(cfg.get_string_simulation_view_window()==cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL)
-        menuStringSimView.addActions([actionStringSimSwath,actionStringSimAll])
+        actionStringSimAll.setChecked(
+            cfg.get_string_simulation_view_window()
+            == cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL
+        )
+        menuStringSimView.addActions([actionStringSimSwath, actionStringSimAll])
         actionGroupStringSimView = QActionGroup(menuStringSimView)
         actionGroupStringSimView.addAction(actionStringSimSwath)
         actionGroupStringSimView.addAction(actionStringSimAll)
@@ -115,11 +122,17 @@ class MainWindow(baseclass):
         menuCardSimView = QMenu("Simulation View", menuCardPlotOptions)
         actionCardSimSwath = QAction("One Swath", menuCardSimView)
         actionCardSimSwath.setCheckable(True)
-        actionCardSimSwath.setChecked(cfg.get_string_simulation_view_window()==cfg.STRING_SIMULATION_VIEW_WINDOW_ONE)
+        actionCardSimSwath.setChecked(
+            cfg.get_string_simulation_view_window()
+            == cfg.STRING_SIMULATION_VIEW_WINDOW_ONE
+        )
         actionCardSimAll = QAction("All Passes", menuCardSimView)
         actionCardSimAll.setCheckable(True)
-        actionCardSimAll.setChecked(cfg.get_string_simulation_view_window()==cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL)
-        menuCardSimView.addActions([actionCardSimSwath,actionCardSimAll])
+        actionCardSimAll.setChecked(
+            cfg.get_string_simulation_view_window()
+            == cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL
+        )
+        menuCardSimView.addActions([actionCardSimSwath, actionCardSimAll])
         actionGroupCardSimView = QActionGroup(menuCardSimView)
         actionGroupCardSimView.addAction(actionCardSimSwath)
         actionGroupCardSimView.addAction(actionCardSimAll)
@@ -140,20 +153,28 @@ class MainWindow(baseclass):
         actionColorizeSimulations = QAction("Simulation Plots", menuColorize)
         actionColorizeSimulations.setCheckable(True)
         actionColorizeSimulations.setChecked(cfg.get_card_plot_colorize_simulations())
-        actionColorizeSimulations.toggled[bool].connect(self.toggleCardColorizeSimulations)
+        actionColorizeSimulations.toggled[bool].connect(
+            self.toggleCardColorizeSimulations
+        )
         actionColorizeSimulations.setEnabled(False)
         menuColorize.addAction(actionColorizeSimulations)
         menuColorize.addSeparator()
         actionColorizeInterpolate = QAction("Interpolate", menuColorize)
         actionColorizeInterpolate.setCheckable(True)
         actionColorizeInterpolate.setChecked(cfg.get_card_plot_colorize_interpolate())
-        actionColorizeInterpolate.toggled[bool].connect(self.toggleCardColorizeInterpolate)
+        actionColorizeInterpolate.toggled[bool].connect(
+            self.toggleCardColorizeInterpolate
+        )
         menuColorize.addAction(actionColorizeInterpolate)
         menuCardPlotOptions.addMenu(menuColorize)
         self.ui.action_reset_defaults.triggered.connect(self.resetDefaults)
         # --> Setup Export to Excel Menu
-        self.ui.action_SAFE_log_from_files.triggered.connect(self.exportSAFELogFromFiles)
-        self.ui.action_SAFE_log_from_directory.triggered.connect(self.exportSAFELogFromDirectory)
+        self.ui.action_SAFE_log_from_files.triggered.connect(
+            self.exportSAFELogFromFiles
+        )
+        self.ui.action_SAFE_log_from_directory.triggered.connect(
+            self.exportSAFELogFromDirectory
+        )
         self.ui.action_detailed_report.triggered.connect(self.exportAllRawData)
         # --> Setup Report Menu
         self.ui.actionCreate_Report.triggered.connect(self.makeReport)
@@ -196,7 +217,7 @@ class MainWindow(baseclass):
         actionLogoPath.setText(cfg.get_logo_path())
         actionLogoSelect: QAction = self.ui.actionSelect_Logo_File
         actionLogoSelect.triggered.connect(self.select_logo_triggered)
-        
+
         # --> Setup Help Menu
         self.ui.actionAbout.triggered.connect(self.about)
         self.ui.actionUserManual.triggered.connect(self.openResourceUserManual)
@@ -212,7 +233,9 @@ class MainWindow(baseclass):
         self.tabWidget: QTabWidget = self.ui.tabWidget
         self.tabWidget.setEnabled(False)
         self.seriesInfoWidget: SeriesInfoWidget = self.ui.widgetSeriesInfo
-        self.seriesInfoWidget.target_swath_changed.connect(lambda: self.target_swath_changed.emit())
+        self.seriesInfoWidget.target_swath_changed.connect(
+            lambda: self.target_swath_changed.emit()
+        )
         self.seriesInfoWidget.request_open_pass_filler.connect(self.openPassFiller)
         self.stringWidget: TabWidgetString = self.ui.stringMainWidget
         self.stringWidget.request_file_save.connect(self.saveFile)
@@ -222,9 +245,15 @@ class MainWindow(baseclass):
         # Outbound Signals
         self.file_saved[str].connect(self.cardWidget._acceptFileSaveSignal)
         self.current_file_changed[str].connect(self.cardWidget.onCurrentFileChanged)
-        self.target_swath_changed.connect(self.stringWidget.setAdjustedSwathFromTargetSwath)
-        self.target_swath_changed.connect(self.cardWidget.setAdjustedSwathFromTargetSwath)
-        self.pass_list_changed.connect(lambda: self.stringWidget.updatePassListWidget(-1))
+        self.target_swath_changed.connect(
+            self.stringWidget.setAdjustedSwathFromTargetSwath
+        )
+        self.target_swath_changed.connect(
+            self.cardWidget.setAdjustedSwathFromTargetSwath
+        )
+        self.pass_list_changed.connect(
+            lambda: self.stringWidget.updatePassListWidget(-1)
+        )
         self.pass_list_changed.connect(lambda: self.cardWidget.updatePassListWidget(-1))
         self.request_repaint.connect(self.stringWidget.repaint)
 
@@ -236,7 +265,7 @@ class MainWindow(baseclass):
         self.show()
         # Testing
         if testing:
-            self.openFile(file = testfile)
+            self.openFile(file=testfile)
 
     """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """''
     Menubar
@@ -392,9 +421,11 @@ class MainWindow(baseclass):
             text = ""
         self.status_label_file.setText(text)
         self.change_statusbar_save()
-        self.action_save.setEnabled(file=="" or (len(file)>3 and file[-2:]!="xlsx"))
+        self.action_save.setEnabled(
+            file == "" or (len(file) > 3 and file[-2:] != "xlsx")
+        )
         self.current_file_changed.emit(file)
-        
+
     def change_statusbar_save(self):
         if self.currentFile == "":
             text = "No Data File"
@@ -434,7 +465,7 @@ class MainWindow(baseclass):
 
     def onPassManagerRejected(self):
         # Reload datafile, abandoning changes made
-        self.openFile(file=self.currentFile)    
+        self.openFile(file=self.currentFile)
 
     @pyqtSlot()
     def openPassFiller(self):
@@ -451,45 +482,47 @@ class MainWindow(baseclass):
 
     @pyqtSlot(QAction)
     def toggleStringSimView(self, action: QAction):
-        if action.text()=="One Swath":
+        if action.text() == "One Swath":
             view = cfg.STRING_SIMULATION_VIEW_WINDOW_ONE
         else:
             view = cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL
         cfg.set_string_simulation_view_window(view)
         self.stringWidget._updatePlots(simulations=True)
-    
+
     """
     Card Plot Options
     """
-    
+
     @pyqtSlot(bool)
     def toggleCardCrosshair(self, checked: bool):
         cfg.set_card_plot_average_swath_box(checked)
-        self.cardWidget._updatePlots(composites=True)    
-        
+        self.cardWidget._updatePlots(composites=True)
+
     @pyqtSlot(bool)
     def toggleCardColorizePass(self, checked: bool):
         cfg.set_card_plot_colorize_pass(checked)
         self.cardWidget._updatePlots(individuals=True)
-        
+
     @pyqtSlot(bool)
     def toggleCardColorizeAverage(self, checked: bool):
         cfg.set_card_plot_colorize_average(checked)
         self.cardWidget._updatePlots(composites=True)
-        
+
     @pyqtSlot(bool)
     def toggleCardColorizeSimulations(self, checked: bool):
         cfg.set_card_plot_colorize_simulations(checked)
         self.cardWidget._updatePlots(simulations=True)
-        
+
     @pyqtSlot(bool)
     def toggleCardColorizeInterpolate(self, checked: bool):
         cfg.set_card_plot_colorize_interpolate(checked)
-        self.cardWidget._updatePlots(individuals=True, composites=True, simulations=True)
-        
+        self.cardWidget._updatePlots(
+            individuals=True, composites=True, simulations=True
+        )
+
     @pyqtSlot(QAction)
     def toggleCardSimView(self, action: QAction):
-        if action.text()=="One Swath":
+        if action.text() == "One Swath":
             view = cfg.CARD_SIMULATION_VIEW_WINDOW_ONE
         else:
             view = cfg.CARD_SIMULATINO_VIEW_WINDOW_ALL
@@ -534,7 +567,7 @@ class MainWindow(baseclass):
             parent=self,
             caption="Select Files to Include",
             directory=self.currentDirectory,
-            options=(QFileDialog.Option.ShowDirsOnly)
+            options=(QFileDialog.Option.ShowDirsOnly),
         )
         if not directory:
             return
@@ -543,7 +576,7 @@ class MainWindow(baseclass):
             for file in files:
                 if file.endswith(".db"):
                     filenames.append(os.path.join(directory, root, file))
-            
+
         if len(filenames) < 1:
             return
         savefile, _ = QFileDialog.getSaveFileName(
@@ -554,7 +587,6 @@ class MainWindow(baseclass):
         )
         if savefile:
             safe_report(filenames, savefile)
-        
 
     @pyqtSlot()
     def exportAllRawData(self):
@@ -581,7 +613,9 @@ class MainWindow(baseclass):
         )
         if savefile:
             logo_path = cfg.get_logo_path() if cfg.get_logo_include_in_report() else ""
-            reportMaker = ReportMaker(file=savefile, seriesData=self.seriesData, logo_path=logo_path)
+            reportMaker = ReportMaker(
+                file=savefile, seriesData=self.seriesData, logo_path=logo_path
+            )
             if any([p.string.has_data() for p in self.seriesData.passes]):
                 reportMaker.report_safe_string(
                     overlayWidget=self.stringWidget.plotWidgetOverlay,
@@ -592,7 +626,9 @@ class MainWindow(baseclass):
                 )
             for row, p in enumerate(self.cardWidget.getActiveCardPasses()):
                 # Select the pass for individual plot
-                item = self.cardWidget.listWidgetPass.findItems(p.name,Qt.MatchFlag.MatchExactly)[0]
+                item = self.cardWidget.listWidgetPass.findItems(
+                    p.name, Qt.MatchFlag.MatchExactly
+                )[0]
                 self.cardWidget.listWidgetPass.setCurrentItem(item)
                 # Select the pass for droplet dist
                 self.cardWidget.comboBoxDistPass.setCurrentIndex(row + 1)
@@ -641,17 +677,17 @@ class MainWindow(baseclass):
     @pyqtSlot(bool)
     def logo_enabled_triggered(self, enabled: bool):
         cfg.set_logo_include_in_report(enabled)
-    
+
     @pyqtSlot()
     def select_logo_triggered(self):
         prev = cfg.get_logo_path()
         initial = os.path.dirname(prev) if prev != "" else self.currentDirectory
         file, _ = QFileDialog.getOpenFileName(
-                parent=self,
-                caption="Choose Logo Image",
-                directory=initial,
-                filter="Logo Image (*.png *.jpg)",
-            )
+            parent=self,
+            caption="Choose Logo Image",
+            directory=initial,
+            filter="Logo Image (*.png *.jpg)",
+        )
         if file == "":
             return
         if os.path.exists(file):
@@ -696,6 +732,7 @@ class MainWindow(baseclass):
             subprocess.call(["open", file])
         elif sys.platform == "win32":
             os.startfile(file)
+
 
 class About(baseclass_about):
     def __init__(self, parent=None):

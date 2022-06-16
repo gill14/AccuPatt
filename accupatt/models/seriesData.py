@@ -62,7 +62,7 @@ class SeriesData:
             else self._get_common_unit([p.ground_speed_units for p in passes])
         )
         values = np.array([p.get_airspeed(units)[0] for p in passes])
-        values = values[values>=0]
+        values = values[values >= 0]
         if values.size == 0:
             return 0, "-", "-"
         value = values.mean()
@@ -78,7 +78,7 @@ class SeriesData:
             else self._get_common_unit([p.spray_height_units for p in passes])
         )
         values = np.array([p.get_spray_height(units)[0] for p in passes])
-        values = values[values>=0]
+        values = values[values >= 0]
         if values.size == 0:
             return 0, "-", "-"
         value = values.mean()
@@ -94,7 +94,7 @@ class SeriesData:
             else self._get_common_unit([p.wind_speed_units for p in passes])
         )
         values = np.array([p.get_wind_speed(units)[0] for p in passes])
-        values = values[values>=0]
+        values = values[values >= 0]
         if values.size == 0:
             return 0, "-", "-"
         value = values.mean()
@@ -110,7 +110,7 @@ class SeriesData:
             else self._get_common_unit([p.wind_speed_units for p in passes])
         )
         values = np.array([p.get_crosswind(units)[0] for p in passes])
-        values = values[values!=-1]
+        values = values[values != -1]
         if values.size == 0:
             return 0, "-", "-"
         value = values.mean()
@@ -126,7 +126,7 @@ class SeriesData:
             else self._get_common_unit([p.temperature_units for p in passes])
         )
         values = np.array([p.get_temperature(units)[0] for p in passes])
-        values = values[values>=0]
+        values = values[values >= 0]
         if values.size == 0:
             return 0, "-", "-"
         value = values.mean()
@@ -137,7 +137,7 @@ class SeriesData:
     ) -> tuple[float, str, str]:
         passes = self.get_includable_passes(string_included, cards_included)
         values = np.array([p.get_humidity()[0] for p in passes])
-        values = values[values>=0]
+        values = values[values >= 0]
         if values.size == 0:
             return 0, "-", "-"
         value = values.mean()

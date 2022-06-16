@@ -137,10 +137,12 @@ class PassDataCard(PassDataBase):
             # Colorize
             if colorize:
                 # Get a np array of dsc's calculated for each interpolated loc
-                kind = "linear" if cfg.get_card_plot_colorize_interpolate() else "nearest"
-                interpolator = interpolate.interp1d(d["loc"], d["dv01"], kind = kind)
+                kind = (
+                    "linear" if cfg.get_card_plot_colorize_interpolate() else "nearest"
+                )
+                interpolator = interpolate.interp1d(d["loc"], d["dv01"], kind=kind)
                 dv01_i = interpolator(locs_i)
-                interpolator = interpolate.interp1d(d["loc"], d["dv05"], kind = kind)
+                interpolator = interpolate.interp1d(d["loc"], d["dv05"], kind=kind)
                 dv05_i = interpolator(locs_i)
                 dsc_i = np.array(
                     [
@@ -160,32 +162,27 @@ class PassDataCard(PassDataBase):
                         np.ma.masked_where(dsc_i != category, cov_i),
                         color=color,
                         alpha=0.7,
-                        label=category
+                        label=category,
                     )
                 ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
             else:
-                ax.fill_between(
-                    locs_i,
-                    0,
-                    cov_i,
-                    alpha=0.7
-                )
+                ax.fill_between(locs_i, 0, cov_i, alpha=0.7)
             # Plot base coverage without dsc fill
             ax.plot(locs_i, cov_i, color="black")
         # Draw the plots
         # Must set ylim after plotting
         mplWidget.canvas.ax.set_ylim(bottom=0, auto=None)
         mplWidget.canvas.draw()
-    
+
     """
     Conveneince
-    """    
+    """
 
     def has_data(self) -> bool:
         return len(self.card_list) > 0
-    
+
     def is_active(self) -> bool:
         has_data = self.has_data()
         included = self.include_in_composite
         has_included_card = any([sc.include_in_composite for sc in self.card_list])
-        return (has_data and included and has_included_card)
+        return has_data and included and has_included_card

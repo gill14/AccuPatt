@@ -26,18 +26,20 @@ class MplWidget(QtWidgets.QWidget):
         self.has_legend = True
         self.legend_outside = False
         self.ticks_slanted = False
-     
+
     def set_ticks_slanted(self):
         self.ticks_slanted = True
         for label in self.canvas.ax.get_xticklabels(which="major"):
             label.set(rotation=30, horizontalalignment="right")
-    
-    def resize_inches(self, width_inches: float, height_inches:float):
+
+    def resize_inches(self, width_inches: float, height_inches: float):
         fig = self.canvas.fig
         self.figure_size_original = fig.get_size_inches()
         fig.set_size_inches(width_inches, height_inches)
         if self.legend_outside:
-            self.canvas.ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize=6)
+            self.canvas.ax.legend(
+                loc="center left", bbox_to_anchor=(1, 0.5), fontsize=6
+            )
         elif self.has_legend:
             self.canvas.ax.legend(fontsize=6)
         self.canvas.ax.tick_params(axis="both", which="major", labelsize=6)
@@ -46,17 +48,18 @@ class MplWidget(QtWidgets.QWidget):
         self.ylab_size_original = self.canvas.ax.yaxis.label.get_size()
         self.canvas.ax.yaxis.label.set_size(6)
         self.canvas.draw()
-        
+
     def resize_inches_reset(self):
         self.canvas.fig.set_size_inches(self.figure_size_original)
         if self.legend_outside:
             self.canvas.ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
         elif self.has_legend:
             self.canvas.ax.legend()
-        self.canvas.ax.tick_params(axis="both", which="major", top=False, right=False, reset=True)
+        self.canvas.ax.tick_params(
+            axis="both", which="major", top=False, right=False, reset=True
+        )
         if self.ticks_slanted:
             self.set_ticks_slanted()
         self.canvas.ax.xaxis.label.set_size(self.xlab_size_original)
         self.canvas.ax.yaxis.label.set_size(self.ylab_size_original)
         self.canvas.draw()
-        

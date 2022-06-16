@@ -12,21 +12,25 @@ from accupatt.windows.stringPass import StringPass
 
 
 class TabWidgetString(TabWidgetBase):
-
     def __init__(self, parent, *args, **kwargs):
-        super().__init__(ui_file=os.path.join(os.getcwd(), "resources", "stringMainWidget.ui"), subtype='string', parent=parent, *args, **kwargs)
-        
+        super().__init__(
+            ui_file=os.path.join(os.getcwd(), "resources", "stringMainWidget.ui"),
+            subtype="string",
+            parent=parent,
+            *args,
+            **kwargs,
+        )
+
         self.checkBoxPassRebase: QCheckBox = self.ui.checkBoxPassRebase
         self.checkBoxPassRebase.stateChanged[int].connect(self.passRebaseChanged)
-        
+
         self.checkBoxSeriesEqualize: QCheckBox = self.ui.checkBoxSeriesEqualize
         self.checkBoxSeriesEqualize.stateChanged[int].connect(
             self.seriesEqualizeChanged
         )
-        
+
         self.plotWidgetIndividual: PlotWidget = self.ui.plotWidgetIndividual
         self.plotWidgetIndividualTrim: PlotWidget = self.ui.plotWidgetIndividualTrim
-        
 
     """
     External Method to fill data
@@ -45,7 +49,7 @@ class TabWidgetString(TabWidgetBase):
 
     @pyqtSlot()
     def passSelectionChanged(self):
-        if not (passData:=self.getCurrentPass()):
+        if not (passData := self.getCurrentPass()):
             return
         self.checkBoxPassCenter.setEnabled(not passData.string.rebase)
         with QSignalBlocker(self.checkBoxPassRebase):
@@ -125,7 +129,7 @@ class TabWidgetString(TabWidgetBase):
 
     def modify_triggered(self):
         self.seriesData.string.modifyPatterns()
-        
+
     def individuals_triggered(self, passData: Pass):
         # Plot Individual
         line_left, line_right, line_vertical = passData.string.plotIndividual(
@@ -139,12 +143,10 @@ class TabWidgetString(TabWidgetBase):
         ):
             line_left.sigPositionChangeFinished.connect(self._updateTrimL)
             line_right.sigPositionChangeFinished.connect(self._updateTrimR)
-            line_vertical.sigPositionChangeFinished.connect(
-                self._updateTrimFloor
-            )
+            line_vertical.sigPositionChangeFinished.connect(self._updateTrimFloor)
         # Plot Individual Trim
         passData.string.plotIndividualTrim(self.plotWidgetIndividualTrim)
-        
+
     def composites_triggered(self):
         self.seriesData.string.plotOverlay(self.plotWidgetOverlay)
         self.seriesData.string.plotAverage(
@@ -153,7 +155,8 @@ class TabWidgetString(TabWidgetBase):
 
     def simulations_triggered(self):
         showEntireWindow = (
-            cfg.get_string_simulation_view_window()==cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL
+            cfg.get_string_simulation_view_window()
+            == cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL
         )
         self.seriesData.string.plotRacetrack(
             mplWidget=self.plotWidgetRacetrack,
@@ -167,5 +170,4 @@ class TabWidgetString(TabWidgetBase):
         )
         self.seriesData.string.plotCVTable(
             self.tableWidgetCV, self.seriesData.string.swath_adjusted
-        )   
-
+        )

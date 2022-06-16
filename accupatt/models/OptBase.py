@@ -1,5 +1,6 @@
 import accupatt.config as cfg
 
+
 class OptBase:
     def __init__(self, name):
         self.name = name

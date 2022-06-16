@@ -56,18 +56,17 @@ class SeriesInfoWidget(baseclass):
     """ """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
 
     def init_flyin(self):
-       self.ui.lineEditName.editingFinished.connect(self._commit_name) 
-       self.ui.lineEditLocation.editingFinished.connect(self._commit_location)
-       self.ui.dateEdit.dateChanged[QDate].connect(self._dateEdit_changed)
-       self.ui.lineEditAnalyst.editingFinished.connect(self._commit_analyst)
-    
+        self.ui.lineEditName.editingFinished.connect(self._commit_name)
+        self.ui.lineEditLocation.editingFinished.connect(self._commit_location)
+        self.ui.dateEdit.dateChanged[QDate].connect(self._dateEdit_changed)
+        self.ui.lineEditAnalyst.editingFinished.connect(self._commit_analyst)
+
     def fill_flyin(self, info: AppInfo):
         self.ui.lineEditName.setText(info.flyin_name)
         self.ui.lineEditLocation.setText(info.flyin_location)
         self.ui.lineEditDate.setText(info.flyin_date)
         self.ui.dateEdit.setDateTime(QDateTime.currentDateTime())
         self.ui.lineEditAnalyst.setText(info.flyin_analyst)
-        
 
     @pyqtSlot()
     def _commit_name(self):
@@ -97,7 +96,7 @@ class SeriesInfoWidget(baseclass):
     def init_series(self):
         self.ui.lineEditRegNum.editingFinished.connect(self._commit_regnum)
         self.ui.lineEditSeriesNum.editingFinished.connect(self._commit_seriesnum)
-    
+
     def fill_series(self, info: AppInfo):
         self.ui.lineEditRegNum.setText(info.regnum)
         self.ui.lineEditSeriesNum.setText(str(info.series))
@@ -124,8 +123,7 @@ class SeriesInfoWidget(baseclass):
         self.ui.phoneLineEdit.editingFinished.connect(self._commit_phone)
         self.ui.emailLineEdit.editingFinished.connect(self._commit_email)
         self.ui.buttonLoadBusiness.clicked.connect(self._load_business_from_file)
-        
-    
+
     def fill_applicator(self, info: AppInfo):
         self.ui.pilotLineEdit.setText(info.pilot)
         self.ui.businessLineEdit.setText(info.business)
@@ -135,7 +133,6 @@ class SeriesInfoWidget(baseclass):
         self.ui.zipLineEdit.setText(info.zip)
         self.ui.phoneLineEdit.setText(info.phone)
         self.ui.emailLineEdit.setText(info.email)
-        
 
     @pyqtSlot()
     def _commit_pilot(self):
@@ -168,16 +165,16 @@ class SeriesInfoWidget(baseclass):
     @pyqtSlot()
     def _commit_email(self):
         self.info.email = self.ui.emailLineEdit.text()
-        
+
     @pyqtSlot()
     def _load_business_from_file(self):
         print("triggered")
         file, _ = QFileDialog.getOpenFileName(
-                parent=self,
-                caption="Choose File",
-                directory=cfg.get_datafile_dir(),
-                filter="AccuPatt (*.db)",
-            )
+            parent=self,
+            caption="Choose File",
+            directory=cfg.get_datafile_dir(),
+            filter="AccuPatt (*.db)",
+        )
         if file == "":
             return
         series = SeriesData()
@@ -245,7 +242,7 @@ class SeriesInfoWidget(baseclass):
         self.ui.comboBoxMake.setCurrentText(info.make)
         self.ui.comboBoxModel.setCurrentText(info.model)
         with QSignalBlocker(self.ui.comboBoxWingspanUnits):
-            self.ui.comboBoxWingspanUnits.setCurrentIndex(-1)    
+            self.ui.comboBoxWingspanUnits.setCurrentIndex(-1)
             self.ui.comboBoxWingspanUnits.setCurrentText(info.wingspan_units)
         self.ui.lineEditWingspan.setText(info.strip_num(info.wingspan, zeroBlank=True))
         self.ui.comboBoxWinglets.setCurrentText(info.winglets)
@@ -350,33 +347,32 @@ class SeriesInfoWidget(baseclass):
             self.ui.comboBoxUnitsSwath.setCurrentText(info.swath_units)
         self.ui.lineEditRate.setText(f"{info.strip_num(info.rate, zeroBlank=True)}")
         with QSignalBlocker(self.ui.comboBoxUnitsRate):
-            self.ui.comboBoxUnitsRate.setCurrentIndex(-1)    
+            self.ui.comboBoxUnitsRate.setCurrentIndex(-1)
             self.ui.comboBoxUnitsRate.setCurrentText(info.rate_units)
         self.ui.lineEditPressure.setText(
             f"{info.strip_num(info.pressure, zeroBlank=True)}"
         )
         with QSignalBlocker(self.ui.comboBoxUnitsPressure):
-            self.ui.comboBoxUnitsPressure.setCurrentIndex(-1)    
+            self.ui.comboBoxUnitsPressure.setCurrentIndex(-1)
             self.ui.comboBoxUnitsPressure.setCurrentText(info.pressure_units)
         self.ui.lineEditBoomWidth.setText(
             f"{info.strip_num(info.boom_width, zeroBlank=True)}"
         )
         with QSignalBlocker(self.ui.comboBoxUnitsBoomWidth):
-            self.ui.comboBoxUnitsBoomWidth.setCurrentIndex(-1)    
+            self.ui.comboBoxUnitsBoomWidth.setCurrentIndex(-1)
             self.ui.comboBoxUnitsBoomWidth.setCurrentText(info.boom_width_units)
         self.ui.lineEditBoomDrop.setText(
             f"{info.strip_num(info.boom_drop, zeroBlank=True)}"
         )
         with QSignalBlocker(self.ui.comboBoxUnitsBoomDrop):
-            self.ui.comboBoxUnitsBoomDrop.setCurrentIndex(-1)    
+            self.ui.comboBoxUnitsBoomDrop.setCurrentIndex(-1)
             self.ui.comboBoxUnitsBoomDrop.setCurrentText(info.boom_drop_units)
         self.ui.lineEditNozzleSpacing.setText(
             f"{info.strip_num(info.nozzle_spacing, zeroBlank=True)}"
         )
         with QSignalBlocker(self.ui.comboBoxUnitsNozzleSpacing):
-            self.ui.comboBoxUnitsNozzleSpacing.setCurrentIndex(-1)    
+            self.ui.comboBoxUnitsNozzleSpacing.setCurrentIndex(-1)
             self.ui.comboBoxUnitsNozzleSpacing.setCurrentText(info.nozzle_spacing_units)
-        
 
     @pyqtSlot()
     def _commit_swath(self):
@@ -446,7 +442,9 @@ class SeriesInfoWidget(baseclass):
         self.ui.comboBoxNT.addItems(sorted(AtomizationModel.nozzles_extended))
         self.ui.comboBoxNT.setCurrentIndex(-1)
         self.ui.comboBoxNT.currentTextChanged[str].connect(self._on_nozzle_selected)
-        self.ui.comboBoxNozzleSet.currentIndexChanged[int].connect(self._on_nozzle_set_changed)
+        self.ui.comboBoxNozzleSet.currentIndexChanged[int].connect(
+            self._on_nozzle_set_changed
+        )
         self.ui.comboBoxNS.currentTextChanged[str].connect(self._commit_nozzle_size)
         self.ui.comboBoxND.currentTextChanged[str].connect(
             self._commit_nozzle_deflection
@@ -462,7 +460,7 @@ class SeriesInfoWidget(baseclass):
         # Populate Nozzle Set ComboBox Items
         for n in info.nozzles:
             cb_set.addItem(f"Nozzle Set {n.id}")
-        
+
         cb_set.setCurrentIndex(0)
         self._on_nozzle_set_changed(0)
 

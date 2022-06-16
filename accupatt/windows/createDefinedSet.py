@@ -56,10 +56,10 @@ class CreateDefinedSet(baseclass):
         self.units_cb: QComboBox = self.ui.comboBoxUnits
         self.units_cb.addItems(cfg.UNITS_LENGTH_LARGE)
         self.units_cb.setCurrentText(cfg.UNIT_FT)
-        
+
         self.buttonProcessOptions: QPushButton = self.ui.buttonProcessOptions
         self.buttonProcessOptions.clicked.connect(self.select_process_options)
-        
+
         self.buttonSpreadFactors: QPushButton = self.ui.buttonSpreadFactors
         self.buttonSpreadFactors.clicked.connect(self.select_spread_factors)
 
@@ -67,7 +67,7 @@ class CreateDefinedSet(baseclass):
 
         self.step_rb.toggle()
         self.step_rb_toggled(True)
-        
+
         # Container to store settings
         self.sprayCard = SprayCard()
 
@@ -118,18 +118,22 @@ class CreateDefinedSet(baseclass):
         p = Pass(name="Pass")
         p.cards.card_list.append(self.sprayCard)
         s.passes.append(p)
-        e = EditThreshold(sprayCard=self.sprayCard, passData=p, seriesData=s, parent=self)
+        e = EditThreshold(
+            sprayCard=self.sprayCard, passData=p, seriesData=s, parent=self
+        )
         e.ui.checkBoxApplyToAllPass.setEnabled(False)
         e.ui.checkBoxApplyToAllSeries.setEnabled(False)
         e.exec()
-        
+
     @pyqtSlot()
     def select_spread_factors(self):
         s = SeriesData()
         p = Pass(name="Pass")
         p.cards.card_list.append(self.sprayCard)
         s.passes.append(p)
-        e = EditSpreadFactors(sprayCard=self.sprayCard, passData=p, seriesData=s, parent=self)
+        e = EditSpreadFactors(
+            sprayCard=self.sprayCard, passData=p, seriesData=s, parent=self
+        )
         e.ui.checkBoxApplyToAllPass.setEnabled(False)
         e.ui.checkBoxApplyToAllSeries.setEnabled(False)
         e.exec()

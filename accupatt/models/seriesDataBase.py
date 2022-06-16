@@ -8,27 +8,28 @@ from scipy.stats import variation
 
 from PyQt6.QtWidgets import QTableWidget
 
+
 class SeriesDataBase(OptBase):
     def __init__(self, passes: list[Pass], target_swath: int, swath_units: str):
-        super().__init__(name='series')
+        super().__init__(name="series")
         self.passes = passes
         self.swath_units = swath_units
         self.swath_adjusted = target_swath if target_swath > 0 else 50
         # Options
         self.swath_adjusted = target_swath if target_swath > 0 else 50
         self.simulated_adjascent_passes = 2
-        
+
     def get_average_mod(self):
-        '''
+        """
         This should be overriden by inheriting class
-        '''
-        return pd.DataFrame()    
-    
+        """
+        return pd.DataFrame()
+
     def get_average_y_label(self):
-        '''
+        """
         This should be overriden by inheriting class
-        '''
-        
+        """
+
     def set_swath_adjusted(self, string) -> bool:
         try:
             int(float(string))
@@ -36,7 +37,7 @@ class SeriesDataBase(OptBase):
             return False
         self.swath_adjusted = int(float(string))
         return True
-    
+
     def plotRacetrack(
         self, mplWidget: MplWidget, swath_width: float, showEntireWindow=False
     ):
@@ -54,7 +55,7 @@ class SeriesDataBase(OptBase):
             mirrorAdjascent=True,
             label="Back & Forth",
         )
-    
+
     def _plotSimulation(
         self,
         mplWidget: MplWidget,
@@ -67,15 +68,21 @@ class SeriesDataBase(OptBase):
         average_df = self.get_average_mod()
         average_y_label = self.get_average_y_label()
         if not average_df.empty:
-            xfill, y_fills, labels = self._get_fill_arrays(swath_width=swath_width,
-                                  average_df=average_df,
-                                  average_y_label=average_y_label,
-                                  mirrorAdjascent=mirrorAdjascent)
+            xfill, y_fills, labels = self._get_fill_arrays(
+                swath_width=swath_width,
+                average_df=average_df,
+                average_y_label=average_y_label,
+                mirrorAdjascent=mirrorAdjascent,
+            )
             # Plot the fills cumulatively in order of generation: C, L1, R1, L2, R2, etc.
             y_fill_cum = np.zeros(xfill.size)
             for i in range(len(y_fills)):
                 mplWidget.canvas.ax.fill_between(
-                    xfill, y_fill_cum, y_fill_cum + y_fills[i], label=labels[i], alpha=0.8
+                    xfill,
+                    y_fill_cum,
+                    y_fill_cum + y_fills[i],
+                    label=labels[i],
+                    alpha=0.8,
                 )
                 y_fill_cum = y_fill_cum + y_fills[i]
             # Plot a solid line on the cumulative deposition
@@ -104,7 +111,7 @@ class SeriesDataBase(OptBase):
         mplWidget.canvas.ax.set_ylim(bottom=0, auto=None)
         # Plot it
         mplWidget.canvas.draw()
-    
+
     def plotCVTable(self, tableWidget: QTableWidget, swath_width: float):
         average_df = self.get_average_mod()
         average_y_label = self.get_average_y_label()
@@ -127,12 +134,20 @@ class SeriesDataBase(OptBase):
             # Calc and Print BF CV
             bf_cv = self._calcCV(average_df, average_y_label, _sw, True)
             item_bf.setText(f"{bf_cv} %")
-    
-    def _calcCV(self, average_df: pd.DataFrame, average_y_label: str, swath_width: float, mirrorAdjascent=False):
-        xfill, y_fills, _ = self._get_fill_arrays(swath_width=swath_width,
-                              average_df=average_df,
-                              average_y_label=average_y_label,
-                              mirrorAdjascent=mirrorAdjascent)
+
+    def _calcCV(
+        self,
+        average_df: pd.DataFrame,
+        average_y_label: str,
+        swath_width: float,
+        mirrorAdjascent=False,
+    ):
+        xfill, y_fills, _ = self._get_fill_arrays(
+            swath_width=swath_width,
+            average_df=average_df,
+            average_y_label=average_y_label,
+            mirrorAdjascent=mirrorAdjascent,
+        )
         y_fill_cum = np.zeros(xfill.size)
         for i in range(len(y_fills)):
             y_fill_cum = y_fill_cum + y_fills[i]
@@ -141,13 +156,17 @@ class SeriesDataBase(OptBase):
             np.where(((xfill >= -swath_width / 2) & (xfill <= swath_width / 2)))
         ]
         return round(variation(y_fill_cum_center, axis=0) * 100)
-        
-        
-    
-    def _get_fill_arrays(self, swath_width: float, average_df: pd.DataFrame, average_y_label: str, mirrorAdjascent=False,) -> tuple[np.array, list[np.array], list[str]]:
-        '''
+
+    def _get_fill_arrays(
+        self,
+        swath_width: float,
+        average_df: pd.DataFrame,
+        average_y_label: str,
+        mirrorAdjascent=False,
+    ) -> tuple[np.array, list[np.array], list[str]]:
+        """
         Returns xfill, yfills[], labels
-        '''
+        """
         # Original average data
         x0 = np.array(average_df["loc"], dtype=float)
         y0 = np.array(average_df[average_y_label], dtype=float)
@@ -169,11 +188,9 @@ class SeriesDataBase(OptBase):
         # Interpolate the original y-values to the new x-domain
         y_fills = []
         for i in range(len(x_arrays)):
-            y_fills.append(
-                np.interp(xfill, x_arrays[i], y_arrays[i], left=0, right=0)
-            )
+            y_fills.append(np.interp(xfill, x_arrays[i], y_arrays[i], left=0, right=0))
         return (xfill, y_fills, labels)
-    
+
     def _config_mpl_plotter(self, mplWidget: MplWidget):
         mplWidget.canvas.ax.clear()
         mplWidget.canvas.ax.set_xlabel(f"Location ({self.swath_units})")

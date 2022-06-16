@@ -35,7 +35,9 @@ class EditOptBase(baseclass):
         self.ui.radioButtonCentroid.setChecked(
             self.opt.center_method == cfg.CENTER_METHOD_CENTROID
         )
-        self.ui.radioButtonCOD.setChecked(self.opt.center_method == cfg.CENTER_METHOD_COD)
+        self.ui.radioButtonCOD.setChecked(
+            self.opt.center_method == cfg.CENTER_METHOD_COD
+        )
 
     def _reset_defaults(self):
         self.ui.labelName.setText(self.opt.name)
@@ -47,7 +49,9 @@ class EditOptBase(baseclass):
         self.ui.radioButtonCentroid.setChecked(
             cfg.get_center_method() == cfg.CENTER_METHOD_CENTROID
         )
-        self.ui.radioButtonCOD.setChecked(cfg.get_center_method() == cfg.CENTER_METHOD_COD)
+        self.ui.radioButtonCOD.setChecked(
+            cfg.get_center_method() == cfg.CENTER_METHOD_COD
+        )
 
     def accept(self):
         # Capture/Cast values

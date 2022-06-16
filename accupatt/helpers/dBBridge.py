@@ -343,7 +343,7 @@ def save_to_db(file: str, s: SeriesData):
         f"-c{alembic_ini}",
         f"-xdbPath=sqlite:///{file}",
         "stamp",
-        "head"
+        "head",
     ]
     alembic.config.main(argv=alembic_args)
     # Opens a file connection to the db
@@ -583,7 +583,7 @@ def _update_table_pass_string(c: sqlite3.Cursor, p: Pass):
             ps.data_loc_units,
             ps.data_ex.to_json(),
             ps.data.to_json(),
-            ps.include_in_composite
+            ps.include_in_composite,
         ),
     )
 

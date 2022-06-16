@@ -40,7 +40,12 @@ class Pass:
     """
 
     def get_airspeed(self, units=None) -> tuple[int, str, str, str]:
-        if self.ground_speed < 0 or self.wind_speed < 0 or self.wind_direction < 0 or self.pass_heading < 0:
+        if (
+            self.ground_speed < 0
+            or self.wind_speed < 0
+            or self.wind_direction < 0
+            or self.pass_heading < 0
+        ):
             return -1, units if units else self.ground_speed_units, "", ""
         # Convert gs and ws to mph and save to temp vars
         gs = self._convert_speed_to_mph(self.ground_speed, self.ground_speed_units)
@@ -228,17 +233,16 @@ class Pass:
         else:
             return False
         return True
-    
+
     def _resolve_input(self, val, var_type=float) -> tuple():
         # If blanked, set it to null value, but return OK
-        if val=="":
+        if val == "":
             return (-1, True)
         # Try and set the var value, return NOT OK if error
         try:
-            if var_type==int:
+            if var_type == int:
                 return (int(val), True)
             else:
                 return (float(val), True)
         except ValueError:
             return (-1, False)
-        

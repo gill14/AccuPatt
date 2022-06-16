@@ -3,7 +3,14 @@ import os
 import accupatt.config as cfg
 from accupatt.models.passData import Pass
 from PyQt6 import uic
-from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt, QVariant, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import (
+    QAbstractTableModel,
+    QModelIndex,
+    Qt,
+    QVariant,
+    pyqtSignal,
+    pyqtSlot,
+)
 from PyQt6.QtWidgets import QComboBox, QMessageBox, QStyledItemDelegate, QTableView
 
 from accupatt.models.seriesData import SeriesData
@@ -14,8 +21,7 @@ Ui_Form, baseclass = uic.loadUiType(
 
 
 class PassManager(baseclass):
-
-    def __init__(self, seriesData: SeriesData=None, filler_mode=False, parent=None):
+    def __init__(self, seriesData: SeriesData = None, filler_mode=False, parent=None):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -23,18 +29,10 @@ class PassManager(baseclass):
         self.tm = PassTable(seriesData.passes, self)
         self.tv: QTableView = self.ui.tableView
         self.tv.setModel(self.tm)
-        self.tv.setItemDelegateForRow(
-            6, ComboBoxDelegate(self, cfg.UNITS_GROUND_SPEED)
-        )
-        self.tv.setItemDelegateForRow(
-            8, ComboBoxDelegate(self, cfg.UNITS_SPRAY_HEIGHT)
-        )
-        self.tv.setItemDelegateForRow(
-            12, ComboBoxDelegate(self, cfg.UNITS_WIND_SPEED)
-        )
-        self.tv.setItemDelegateForRow(
-            14, ComboBoxDelegate(self, cfg.UNITS_TEMPERATURE)
-        )
+        self.tv.setItemDelegateForRow(6, ComboBoxDelegate(self, cfg.UNITS_GROUND_SPEED))
+        self.tv.setItemDelegateForRow(8, ComboBoxDelegate(self, cfg.UNITS_SPRAY_HEIGHT))
+        self.tv.setItemDelegateForRow(12, ComboBoxDelegate(self, cfg.UNITS_WIND_SPEED))
+        self.tv.setItemDelegateForRow(14, ComboBoxDelegate(self, cfg.UNITS_TEMPERATURE))
         self.tv.horizontalHeader().setVisible(False)
         self.tv.selectionModel().selectionChanged.connect(self.selection_changed)
 
@@ -44,9 +42,9 @@ class PassManager(baseclass):
         self.ui.button_shift_down.clicked.connect(self.shift_down)
 
         self.show()
-        
+
         if filler_mode:
-            hidden_rows = [1,2,3,4,6,8,12,14]
+            hidden_rows = [1, 2, 3, 4, 6, 8, 12, 14]
             for row in hidden_rows:
                 self.tv.hideRow(row)
             self.resize(700, 400)
@@ -66,14 +64,14 @@ class PassManager(baseclass):
             if msg == QMessageBox.StandardButton.No:
                 return
         self.tm.removePass(self.ui.tableView.selectedIndexes())
-        
+
     @pyqtSlot()
     def selection_changed(self):
         hasSelection = bool(self.tv.selectionModel().selectedColumns())
         self.ui.button_delete_pass.setEnabled(hasSelection)
         self.ui.button_shift_up.setEnabled(hasSelection)
         self.ui.button_shift_down.setEnabled(hasSelection)
-    
+
     @pyqtSlot()
     def shift_up(self):
         self.tm.shiftRowsUp(self.tv.selectionModel().selectedColumns())
@@ -324,16 +322,16 @@ class PassTable(QAbstractTableModel):
         self.beginMoveColumns(
             QModelIndex(),
             sort_list[0],
-            sort_list[len(sort_list)-1],
+            sort_list[len(sort_list) - 1],
             QModelIndex(),
-            sort_list[0] - 1
+            sort_list[0] - 1,
         )
         # Make the move on the model data
         for col in sort_list:
-            self.pass_list.insert(col -1, self.pass_list.pop(col))
+            self.pass_list.insert(col - 1, self.pass_list.pop(col))
         # Notify model move is complete
         self.endMoveColumns()
-        
+
     def shiftRowsDown(self, selectedColumns):
         sort_list = []
         for index in selectedColumns:
@@ -348,9 +346,9 @@ class PassTable(QAbstractTableModel):
         self.beginMoveColumns(
             QModelIndex(),
             sort_list[0],
-            sort_list[len(sort_list)-1],
+            sort_list[len(sort_list) - 1],
             QModelIndex(),
-            sort_list[len(sort_list)-1] + 1 + 1
+            sort_list[len(sort_list) - 1] + 1 + 1,
         )
         # Make the move on the model data
         sort_list.sort(reverse=True)

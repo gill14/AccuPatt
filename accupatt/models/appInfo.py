@@ -122,15 +122,28 @@ class AppInfo:
     def string_boom_width(self) -> str:
         if self.boom_width > 0:
             # Calculate and use percent boom width if able
-            if self.wingspan > 0 and self.boom_width_units!="%" and self.boom_width_units!="" and self.wingspan_units!="":
-                ws = self.wingspan if self.wingspan_units==cfg.UNIT_FT else self.wingspan * cfg.FT_PER_M
+            if (
+                self.wingspan > 0
+                and self.boom_width_units != "%"
+                and self.boom_width_units != ""
+                and self.wingspan_units != ""
+            ):
+                ws = (
+                    self.wingspan
+                    if self.wingspan_units == cfg.UNIT_FT
+                    else self.wingspan * cfg.FT_PER_M
+                )
                 print(ws)
                 print(self.boom_width)
                 print(self.boom_width_units)
-                bw = self.boom_width if self.boom_width_units==cfg.UNIT_FT else self.boom_width * cfg.FT_PER_M
+                bw = (
+                    self.boom_width
+                    if self.boom_width_units == cfg.UNIT_FT
+                    else self.boom_width * cfg.FT_PER_M
+                )
                 print(bw)
                 return f"{((bw / ws) * 100):.2g}%"
-                
+
             return f"{self.strip_num(self.boom_width)} {self.boom_width_units}"
         else:
             return ""
@@ -211,7 +224,7 @@ class AppInfo:
             return False
         self.swath = int(float(string))
         return True
-    
+
     def set_swath_units(self, string):
         self.swath_units = string
 

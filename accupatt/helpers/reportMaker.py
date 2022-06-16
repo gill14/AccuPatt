@@ -39,9 +39,13 @@ class ReportMaker:
         self.style = ParagraphStyle(
             name="normal", fontName="Helvetica", fontSize=6, leading=10
         )
-        
+
         self.style_center = ParagraphStyle(
-            name="center", fontName="Helvetica", fontSize=8, leading=10, alignment=TA_CENTER
+            name="center",
+            fontName="Helvetica",
+            fontSize=8,
+            leading=10,
+            alignment=TA_CENTER,
         )
 
         self.tablestyle = [
@@ -77,14 +81,14 @@ class ReportMaker:
         self.tablestyle_with_headers.remove(
             ("BACKGROUND", (0, 0), (0, -1), colors.lightgrey)
         )
-        
+
         self.include_logo = os.path.exists(logo_path)
         self.logo_path = logo_path
 
     def save(self):
         self.canvas.save()
 
-    def get_logo_image(self, max_width=2*inch, max_height=inch):
+    def get_logo_image(self, max_width=2 * inch, max_height=inch):
         # Load Image to get dims
         img = Image.open(self.logo_path)
         img_byte_arr = BytesIO()
@@ -115,9 +119,9 @@ class ReportMaker:
     ):
         # Header
         head = Paragraph(
-                f"{self.i.flyin_name}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;{self.i.flyin_location}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;{self.i.flyin_date}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Analyst:&nbsp;{self.i.flyin_analyst}",
-                style=self.style_center,
-            )
+            f"{self.i.flyin_name}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;{self.i.flyin_location}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;{self.i.flyin_date}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Analyst:&nbsp;{self.i.flyin_analyst}",
+            style=self.style_center,
+        )
         f_0 = Frame(
             self.bound_x_left,
             700,
@@ -130,7 +134,7 @@ class ReportMaker:
             showBoundary=1,
         )
         f_0.add(head, self.canvas)
-        
+
         # Build first row of tables
         line_1 = []
         if applicator:
@@ -159,10 +163,10 @@ class ReportMaker:
             f_1.addFromList([t_1], self.canvas)
         # Build second row of tables
         line_2 = []
-        #if flyin:
+        # if flyin:
         #    line_2.append(self._header_flyin())
         if self.include_logo:
-            line_2.append(self.get_logo_image(max_width=1.5*inch, max_height=75))
+            line_2.append(self.get_logo_image(max_width=1.5 * inch, max_height=75))
         if observables:
             line_2.append(
                 self._header_observables(
@@ -541,11 +545,29 @@ class ReportMaker:
             string_included=string_included, cards_included=cards_included
         ):
             row1.append(p.name)
-            row2.append(p.get_airspeed(airspeed_units)[2] if p.get_airspeed()[0] >= 0 else "-")
-            row3.append(p.get_spray_height(spray_height_units)[2] if p.get_spray_height()[0] >= 0 else "-")
-            row4.append(p.get_wind_speed(wind_speed_units)[2] if p.get_wind_speed()[0] >= 0 else "-")
-            row5.append(p.get_crosswind(crosswind_speed_units)[2] if p.get_crosswind()[0] != 0 else "-")
-            row6.append(p.get_temperature(temperature_units)[2] if p.get_temperature()[0] >= 0 else "-")
+            row2.append(
+                p.get_airspeed(airspeed_units)[2] if p.get_airspeed()[0] >= 0 else "-"
+            )
+            row3.append(
+                p.get_spray_height(spray_height_units)[2]
+                if p.get_spray_height()[0] >= 0
+                else "-"
+            )
+            row4.append(
+                p.get_wind_speed(wind_speed_units)[2]
+                if p.get_wind_speed()[0] >= 0
+                else "-"
+            )
+            row5.append(
+                p.get_crosswind(crosswind_speed_units)[2]
+                if p.get_crosswind()[0] != 0
+                else "-"
+            )
+            row6.append(
+                p.get_temperature(temperature_units)[2]
+                if p.get_temperature()[0] >= 0
+                else "-"
+            )
             row7.append(p.get_humidity()[2] if p.get_humidity()[0] >= 0 else "-")
         row1.append("Average")
         row2.append(airspeed_string)
@@ -572,14 +594,14 @@ class ReportMaker:
         fig = canvas.fig
         plot_widget.legend_outside = legend_outside
         plot_widget.resize_inches(width_in, height_in)
-        
+
         canvas.draw()
         imgdata = BytesIO()
         fig.savefig(imgdata, format="svg")
         imgdata.seek(0)  # rewind the data
-        
+
         plot_widget.resize_inches_reset()
-        
+
         return svg2rlg(imgdata)
 
     def _table_string_cv(self, tableView):

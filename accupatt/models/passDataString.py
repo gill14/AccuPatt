@@ -261,12 +261,12 @@ class PassDataString(PassDataBase):
 
     """
     Conveneince
-    """    
+    """
 
     def has_data(self) -> bool:
         return not self.data.empty
-    
+
     def is_active(self) -> bool:
         has_data = self.has_data()
         included = self.include_in_composite
-        return (has_data and included)
+        return has_data and included

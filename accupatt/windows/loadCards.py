@@ -107,7 +107,9 @@ class LoadCards(baseclass):
         image_reader.setScaledSize(size_mod)
         self.img = image_reader.read()
         self.img = self.img.scaled(size_og.width(), size_og.height())
-        self.img = self.img.mirrored(horizontal=cfg.get_image_flip_x(), vertical=cfg.get_image_flip_y())
+        self.img = self.img.mirrored(
+            horizontal=cfg.get_image_flip_x(), vertical=cfg.get_image_flip_y()
+        )
         self.img_pixmap = QPixmap.fromImage(self.img)
         self.img = QGraphicsPixmapItem(self.img_pixmap)
 
@@ -167,9 +169,9 @@ class LoadCards(baseclass):
                 roi.sigClicked.connect(self.roi_clicked)
                 roi.sigRemoveRequested.connect(self.remove_roi)
                 self.rois.append(roi)
-                
+
         # Add Card Visibility dependent upon if cards avalable
-        self.ui.buttonAddCard.setEnabled(len(self.rois)<len(self.card_list))
+        self.ui.buttonAddCard.setEnabled(len(self.rois) < len(self.card_list))
 
     @pyqtSlot(str)
     def dpi_changed(self, newString):
@@ -185,12 +187,12 @@ class LoadCards(baseclass):
     def flip_x_changed(self, isFlip: bool):
         cfg.set_image_flip_x(isFlip)
         self.plot_image()
-        
+
     @pyqtSlot(bool)
     def flip_y_changed(self, isFlip: bool):
         cfg.set_image_flip_y(isFlip)
         self.plot_image()
-        
+
     @pyqtSlot(int)
     def orientation_changed(self, newIndex):
         self.orientation = cfg.ROI_ACQUISITION_ORIENTATIONS[newIndex]
@@ -343,11 +345,11 @@ class LoadCards(baseclass):
         msg.setParent(self)
         msg.setIcon(QMessageBox.Icon.Question)
         msg.setText("Delete Original File?")
-        msg.setInformativeText("All chosen regions have been cropped from the original image and sucessfully saved to the database.")
-        msg.setWindowModality(Qt.WindowModality.WindowModal)
-        button_delete = msg.addButton(
-            "Delete", QMessageBox.ButtonRole.ActionRole
+        msg.setInformativeText(
+            "All chosen regions have been cropped from the original image and sucessfully saved to the database."
         )
+        msg.setWindowModality(Qt.WindowModality.WindowModal)
+        button_delete = msg.addButton("Delete", QMessageBox.ButtonRole.ActionRole)
         button_do_not_delete = msg.addButton(
             "Do Not Delete", QMessageBox.ButtonRole.ActionRole
         )
@@ -355,7 +357,6 @@ class LoadCards(baseclass):
         msg.exec()
         if msg.clickedButton() == button_delete:
             os.remove(self.image_file)
-            
 
     def _sort_rois(self, orientation, order):
         rois_original = self.roi_rectangles.copy()

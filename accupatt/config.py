@@ -64,25 +64,28 @@ def set_datafile_dir(value: str):
 _LOGO_INCLUDE_IN_REPORT = "logo_include_in_report"
 LOGO_INCLUDE_IN_REPORT__DEFAULT = False
 
+
 def get_logo_include_in_report() -> bool:
     return QSettings().value(
         _LOGO_INCLUDE_IN_REPORT, defaultValue=LOGO_INCLUDE_IN_REPORT__DEFAULT, type=bool
     )
-    
+
+
 def set_logo_include_in_report(value: bool):
     QSettings().setValue(_LOGO_INCLUDE_IN_REPORT, value)
-    
-    
+
+
 _LOGO_PATH = "logo_path"
 LOGO_PATH__DEFAULT = ""
 
+
 def get_logo_path() -> str:
-    return QSettings().value(
-        _LOGO_PATH, defaultValue=LOGO_PATH__DEFAULT, type=str
-    )
+    return QSettings().value(_LOGO_PATH, defaultValue=LOGO_PATH__DEFAULT, type=str)
+
 
 def set_logo_path(value: str):
     QSettings().setValue(_LOGO_PATH, value)
+
 
 # Flyin Headers
 
@@ -129,82 +132,99 @@ def get_flyin_analyst() -> str:
 def set_flyin_analyst(value: str):
     QSettings().setValue(_FLYIN_ANALYST, value)
 
+
 # Series Info
 
 _UNIT_WINGSPAN = "unit_wingspan"
 UNIT_WINGSPAN__DEFAULT = UNIT_FT
 
+
 def get_unit_wingspan() -> str:
     return QSettings().value(
         _UNIT_WINGSPAN, defaultValue=UNIT_WINGSPAN__DEFAULT, type=str
     )
-    
+
+
 def set_unit_wingspan(value: str):
     QSettings().setValue(_UNIT_WINGSPAN, value)
+
 
 _UNIT_SWATH = "unit_swath"
 UNIT_SWATH__DEFAULT = UNIT_FT
 
+
 def get_unit_swath() -> str:
-    return QSettings().value(
-        _UNIT_SWATH, defaultValue=UNIT_SWATH__DEFAULT, type=str
-    )
-    
+    return QSettings().value(_UNIT_SWATH, defaultValue=UNIT_SWATH__DEFAULT, type=str)
+
+
 def set_unit_swath(value: str):
     QSettings().setValue(_UNIT_SWATH, value)
-    
+
+
 _UNIT_RATE = "unit_rate"
 UNIT_RATE__DEFAULT = UNIT_GPA
 
+
 def get_unit_rate() -> str:
-    return QSettings().value(
-        _UNIT_RATE, defaultValue=UNIT_RATE__DEFAULT, type=str
-    )
-    
+    return QSettings().value(_UNIT_RATE, defaultValue=UNIT_RATE__DEFAULT, type=str)
+
+
 def set_unit_rate(value: str):
     QSettings().setValue(_UNIT_RATE, value)
-    
+
+
 _UNIT_PRESSURE = "unit_pressure"
 UNIT_PRESSURE__DEFAULT = UNIT_PSI
+
 
 def get_unit_pressure() -> str:
     return QSettings().value(
         _UNIT_PRESSURE, defaultValue=UNIT_PRESSURE__DEFAULT, type=str
     )
-    
+
+
 def set_unit_pressure(value: str):
     QSettings().setValue(_UNIT_PRESSURE, value)
-    
+
+
 _UNIT_BOOM_WIDTH = "unit_boom_width"
 UNIT_BOOM_WIDTH__DEFAULT = UNIT_FT
+
 
 def get_unit_boom_width() -> str:
     return QSettings().value(
         _UNIT_BOOM_WIDTH, defaultValue=UNIT_BOOM_WIDTH__DEFAULT, type=str
     )
-    
+
+
 def set_unit_boom_width(value: str):
     QSettings().setValue(_UNIT_BOOM_WIDTH, value)
-    
+
+
 _UNIT_BOOM_DROP = "unit_boom_drop"
 UNIT_BOOM_DROP__DEFAULT = UNIT_IN
+
 
 def get_unit_boom_drop() -> str:
     return QSettings().value(
         _UNIT_BOOM_DROP, defaultValue=UNIT_BOOM_DROP__DEFAULT, type=str
     )
-    
+
+
 def set_unit_boom_drop(value: str):
     QSettings().setValue(_UNIT_BOOM_DROP, value)
-    
+
+
 _UNIT_NOZZLE_SPACING = "unit_nozzle_spacing"
 UNIT_NOZZLE_SPACING__DEFAULT = UNIT_IN
+
 
 def get_unit_nozzle_spacing() -> str:
     return QSettings().value(
         _UNIT_NOZZLE_SPACING, defaultValue=UNIT_NOZZLE_SPACING__DEFAULT, type=str
     )
-    
+
+
 def set_unit_nozzle_spacing(value: str):
     QSettings().setValue(_UNIT_NOZZLE_SPACING, value)
 
@@ -373,6 +393,7 @@ def get_string_plot_average_swath_box() -> bool:
 def set_string_plot_average_swath_box(value: bool):
     QSettings().setValue(_STRING_PLOT_AVERAGE_SWATH_BOX, value)
 
+
 # String Drive
 
 STRING_DRIVE_FWD_START = "AD+\r"
@@ -499,24 +520,30 @@ def set_image_load_method(value: str):
 _IMAGE_FLIP_X = "image_flip_x"
 IMAGE_FLIP_X__DEFAULT = False
 
+
 def get_image_flip_x() -> bool:
     return QSettings().value(
         _IMAGE_FLIP_X, defaultValue=IMAGE_FLIP_X__DEFAULT, type=bool
     )
 
+
 def set_image_flip_x(value: bool):
     QSettings().setValue(_IMAGE_FLIP_X, value)
-    
+
+
 _IMAGE_FLIP_Y = "image_flip_y"
 IMAGE_FLIP_Y__DEFAULT = False
+
 
 def get_image_flip_y() -> bool:
     return QSettings().value(
         _IMAGE_FLIP_Y, defaultValue=IMAGE_FLIP_Y__DEFAULT, type=bool
     )
 
+
 def set_image_flip_y(value: bool):
     QSettings().setValue(_IMAGE_FLIP_Y, value)
+
 
 _ROI_ACQUISITION_ORIENTATION = "roi_acquisition_orientation"
 ROI_ACQUISITION_ORIENTATIONS = ["Horizontal", "Vertical"]
@@ -905,6 +932,7 @@ def get_card_plot_average_swath_box() -> bool:
 def set_card_plot_average_swath_box(value: bool):
     QSettings().setValue(_CARD_PLOT_AVERAGE_SWATH_BOX, value)
 
+
 _CARD_PLOT_COLORIZE_PASS = "card_plot_colorize_pass"
 CARD_PLOT_COLORIZE_PASS__DEFAULT = True
 
@@ -919,7 +947,8 @@ def get_card_plot_colorize_pass() -> bool:
 
 def set_card_plot_colorize_pass(value: bool):
     QSettings().setValue(_CARD_PLOT_COLORIZE_PASS, value)
-    
+
+
 _CARD_PLOT_COLORIZE_AVERAGE = "card_plot_colorize_average"
 CARD_PLOT_COLORIZE_AVERAGE__DEFAULT = True
 
@@ -934,6 +963,7 @@ def get_card_plot_colorize_average() -> bool:
 
 def set_card_plot_colorize_average(value: bool):
     QSettings().setValue(_CARD_PLOT_COLORIZE_AVERAGE, value)
+
 
 _CARD_PLOT_COLORIZE_SIMULATIONS = "card_plot_colorize_simulations"
 CARD_PLOT_COLORIZE_SIMULATIONS__DEFAULT = True
@@ -950,6 +980,7 @@ def get_card_plot_colorize_simulations() -> bool:
 def set_card_plot_colorize_simulations(value: bool):
     QSettings().setValue(_CARD_PLOT_COLORIZE_SIMULATIONS, value)
 
+
 _CARD_PLOT_COLORIZE_INTERPOLATE = "card_plot_colorize_interpolate"
 CARD_PLOT_COLORIZE_INTERPOLATE__DEFAULT = True
 
@@ -964,6 +995,7 @@ def get_card_plot_colorize_interpolate() -> bool:
 
 def set_card_plot_colorize_interpolate(value: bool):
     QSettings().setValue(_CARD_PLOT_COLORIZE_INTERPOLATE, value)
+
 
 _CARD_SIMULATION_VIEW_WINDOW = "card_simulation_view_window"
 CARD_SIMULATION_VIEW_WINDOW_ONE = "one"
@@ -981,9 +1013,11 @@ def get_card_simulation_view_window() -> str:
 def set_card_simulation_view_window(value=str):
     QSettings().setValue(_CARD_SIMULATION_VIEW_WINDOW, value)
 
+
 # SprayCard Prefab Sets
 
 _CARD_DEFINED_SETS = "card_defined_sets"
+
 
 def get_card_set_base(set_name: str, card_names: list[str]) -> dict:
     base = dict()
@@ -991,7 +1025,7 @@ def get_card_set_base(set_name: str, card_names: list[str]) -> dict:
     base["card_name"] = card_names
     q = len(card_names)
     base[_THRESHOLD_TYPE] = [THRESHOLD_TYPE_HSB] * q
-    base[_THRESHOLD_GRAYSCALE_METHOD] =  [get_threshold_grayscale_method()] * q
+    base[_THRESHOLD_GRAYSCALE_METHOD] = [get_threshold_grayscale_method()] * q
     base[_THRESHOLD_GRAYSCALE] = [get_threshold_grayscale()] * q
     base[_THRESHOLD_HSB_HUE_MIN] = [get_threshold_hsb_hue_min()] * q
     base[_THRESHOLD_HSB_HUE_MAX] = [get_threshold_hsb_hue_max()] * q
@@ -1010,26 +1044,47 @@ def get_card_set_base(set_name: str, card_names: list[str]) -> dict:
     base[_SPREAD_FACTOR_B] = [get_spread_factor_b()] * q
     base[_SPREAD_FACTOR_C] = [get_spread_factor_c()] * q
     return base
-    
+
 
 def get_card_set_safe_white():
     set_name = "SAFE Fly-In (White Cards)"
-    card_names = ["L-32","L-24","L-16","L-8","Center","R-8","R-16","R-24","R-32"]
+    card_names = [
+        "L-32",
+        "L-24",
+        "L-16",
+        "L-8",
+        "Center",
+        "R-8",
+        "R-16",
+        "R-24",
+        "R-32",
+    ]
     base = get_card_set_base(set_name, card_names)
     base["location"] = [-32, -24, -16, -8, 0, 8, 16, 24, 32]
     base["location_unit"] = [UNIT_FT] * len(base["location"])
     base[_THRESHOLD_TYPE] = [THRESHOLD_TYPE_HSB] * len(base["location"])
     return base
 
+
 def get_card_set_safe_wsp():
     set_name = "SAFE Fly-In (WSP)"
-    card_names = ["L-32","L-24","L-16","L-8","Center","R-8","R-16","R-24","R-32"]
+    card_names = [
+        "L-32",
+        "L-24",
+        "L-16",
+        "L-8",
+        "Center",
+        "R-8",
+        "R-16",
+        "R-24",
+        "R-32",
+    ]
     base = get_card_set_base(set_name, card_names)
     base["location"] = [-32, -24, -16, -8, 0, 8, 16, 24, 32]
     base["location_unit"] = [UNIT_FT] * len(base["location"])
     base[_THRESHOLD_TYPE] = [THRESHOLD_TYPE_GRAYSCALE] * len(base["location"])
     return base
-    
+
 
 CARD_DEFINED_SETS__DEFAULT = [get_card_set_safe_wsp(), get_card_set_safe_white()]
 
@@ -1047,8 +1102,9 @@ def get_card_defined_sets() -> str:
             _CARD_DEFINED_SETS,
             defaultValue=json.dumps(CARD_DEFINED_SETS__DEFAULT),
             type=str,
-        )   
+        )
     return sets
+
 
 def temporary_converter():
     print("Converting...")
@@ -1069,6 +1125,7 @@ def temporary_converter():
         new_sets_list.append(base)
     new_sets = json.dumps(new_sets_list)
     set_card_defined_sets(new_sets)
+
 
 def set_card_defined_sets(value: str):
     QSettings().setValue(_CARD_DEFINED_SETS, value)
