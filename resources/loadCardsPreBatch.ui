@@ -110,7 +110,11 @@
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="comboBoxDpi"/>
+      <widget class="QComboBox" name="comboBoxDpi">
+       <property name="editable">
+        <bool>true</bool>
+       </property>
+      </widget>
      </item>
      <item>
       <spacer name="horizontalSpacer_4">
