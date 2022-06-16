@@ -104,7 +104,7 @@
 
     \subsubsection{Pass Observables}
     In addition to \textbf{Application Info}, which is collected on a per-series basis, there is some observable data which is typically collected on a per-pass basis. These are frequently referred to here and in the program as \textbf{Pass Observables} since they consist solely of measured values obtained at the time of the application.\par
-    These values can be entered in several locations for the convenience of the analyst. Typically, they are entered from either the \textbf{Capture/Edit String} winodw or the \textbf{Card Manager} window for any individual pass. Alternatively, choosing \textbf{Options $\rightarrow$ Pass Manager} from the menu will open the \textbf{Pass Manager} window (Figure~\ref{fig:pass_manager}) which contains a table with rows for each pass and columns for each pass observable parameter. In addition to the editable fields for pass observables, the pass name itself may be changed here. There are also checkboxes to facilitate the inclusion/exclusion of string and/or card data from series-wise calculations and plots.\par
+    These values can be entered in several locations for the convenience of the analyst. They are entered by use of the \textbf{Pass Observables} button on the \textbf{Application Info} tab or alternately from either the \textbf{Capture/Edit String} winodw or the \textbf{Card Manager} window for any individual pass. Choosing \textbf{Options $\rightarrow$ Pass Manager} from the menu will open the \textbf{Pass Manager} window (Figure~\ref{fig:pass_manager}) which contains a table with rows for each pass and columns for each pass observable parameter. In addition to the editable fields for pass observables, the pass name itself may be changed here. There are also checkboxes to facilitate the inclusion/exclusion of string and/or card data from series-wise calculations and plots.\par
     The \textbf{Pass Manager} window also provides buttons to add or remove passes from the series. There is no functional limit to the number of passes per series. A checkbox is provided which, if checked, will update the default number of passes to add to all future series.
     \begin{figure}[hb]
         \centering
@@ -343,6 +343,7 @@
     The image may be panned or zoomed-upon. To decrease RAM consuption, large images are shown in lower resolution here, but full-resolution ROIs will be cropped out of the original image using a scaled coordinate system. The following options are available to adjust the method for which these ROI's are drawn:
     \begin{itemize}
         \item \textbf{Pixels Per Inch:} Automatically set by the image metadata, but user-adjustable. This is used in conjunction with the image pixel dimensions to show calculated image dimensions. These are provided only to allow verification by the user of proper pixels per inch setting.
+        \item \textbf{Flip Horizontal/Vertical:} Flips the entire image about the center axes. Allows for multiple configurations of physical card placement on the scanner glass. 
         \item \textbf{Orientation:} Used in conjunction with order to decide automatic assigning of names to cards. Either vertical or horizontal.
         \item \textbf{Order:} Used in conjunction with orientation to dictate automatic assigning of names to cards. Either Increaseing or decreasing.
         \item \textbf{Sampling Area:} After cards are located, the percentage of width and height to draw the rectangular ROI.
@@ -361,7 +362,7 @@
     \FloatBarrier
 
     \subsubsection{One File per Card}
-    For images which are already cropped appropriately, they can be directly uploaded to the datafile (Figure~\ref{fig:card_upload_singles}). Selected files [right column] can be dragged to alter the order to match the proper order of declared card names. An \textbf{Assert DPI} menu allows setting of image DPI as automatic (set by image metadata) or to one of several common values. This setting will affect the upload of each file.
+    For images which are already cropped appropriately, they can be directly uploaded to the datafile (Figure~\ref{fig:card_upload_singles}). Selected files [right column] can be dragged to alter the order to match the proper order of declared card names. An \textbf{Assert DPI} menu allows setting of image DPI as automatic (set by image metadata) or to one of several common values. It may also optionally be supplied via direct-type entry. This setting will affect the upload of each file.
     \begin{figure}[hb]
         \centering
         \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_upload_singles.png}}
@@ -561,8 +562,6 @@
         \begin{itemize}
             \item \textbf{pass-id:} unique identifier, automatically generated
             \item \textbf{name:} editable text, default is 'Pass ' + position in passes list at creation
-            \item \textbf{string-include-in-composite:} True/False, include pass in series-wise calculations/plots
-            \item \textbf{cards-include-in-composite:} True/False, include pass in series-wise calculations/plots
             \item \textbf{observables:} 
             \begin{itemize}
                 \item \textbf{ground-speed:} float, units=[mph, kph, kn]
@@ -591,12 +590,14 @@
                 \item \textbf{smooth-window} float, x-domain window over which to apply smoothing
                 \item \textbf{smooth-order} integer, polynomial order for smoothing filter
                 \item \textbf{swath-adjusted:} float, units follow swath-target
+                \item \textbf{include-in-composite:} True/False, include pass in series-wise calculations/plots
             \end{itemize}
             \item \textbf{spray-cards:}
             \begin{itemize}
                 \item \textbf{center:} true/false, apply center-method to pass
                 \item \textbf{center-method:} text, option=[centroid, center-of-distribution]
                 \item \textbf{swath-adjusted:} float, units follow swath-target
+                \item \textbf{include-in-composite:} True/False, include pass in series-wise calculations/plots
                 \item \textbf{spray-cards:} [list]
                 \begin{itemize}
                     \item \textbf{id:} unique identifier, automatically generated
@@ -630,6 +631,18 @@
 
     \section{Changelog}
     \begin{itemize}
+        \item \textbf{2.0.13 - 16 June 2022}
+        \begin{itemize}
+            \item (fix) series info units not saving to datafile if not explicity selected
+            \item (enhancement) Defined Set Manager, create set from regular spacing, add all card process options and spread factors
+            \item (enhancement) Pass Manager, changed to column-based
+            \item (feature) Meaningfully handle missing pass observables, showing as dashes on the report and excluding from series-wise averages
+            \item (feature) Show boom width as percentage on report if both wingspan and boom-width are provided
+            \item (feature) Button to fill in only business info from a previous file.
+            \item (feature) Button to fill in pass observables from all passes in one screen
+            \item (feature) series info units retain persistent user-defined defaults
+            \item (feature) Export SAFE Log from chosen files or from chosen directory, recursively searching for all datafiles within that directory
+        \end{itemize}
         \item \textbf{2.0.12 - 8 June 2022}
         \begin{itemize}
             \item (fix) New Series not enabling main tab widget
