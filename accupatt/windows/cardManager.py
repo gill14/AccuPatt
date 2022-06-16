@@ -241,7 +241,7 @@ class CardManager(baseclass):
     def accept(self):
         p = self.passData
         # If any passInfo fields invalid, show user and return to current window
-        if len(excepts := self.passInfoWidget.validate_fields(p)) > 0:
+        if len(excepts := self.passInfoWidget.validate_fields()) > 0:
             QMessageBox.warning(self, "Invalid Data", "\n".join(excepts))
             return
         # If all checks out, update config, notify requestor and close

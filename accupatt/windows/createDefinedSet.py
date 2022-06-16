@@ -1,10 +1,16 @@
+import copy
 import os
 
 import accupatt.config as cfg
 from accupatt.models.sprayCard import SprayCard
+from accupatt.models.seriesData import SeriesData
+from accupatt.models.passData import Pass
 from PyQt6 import uic
 from PyQt6.QtCore import pyqtSlot, pyqtSignal
-from PyQt6.QtWidgets import QComboBox, QLineEdit, QMessageBox, QRadioButton
+from PyQt6.QtWidgets import QComboBox, QLineEdit, QMessageBox, QPushButton, QRadioButton
+from accupatt.windows.editSpreadFactors import EditSpreadFactors
+
+from accupatt.windows.editThreshold import EditThreshold
 
 Ui_Form, baseclass = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "createDefinedSet.ui")
@@ -50,15 +56,20 @@ class CreateDefinedSet(baseclass):
         self.units_cb: QComboBox = self.ui.comboBoxUnits
         self.units_cb.addItems(cfg.UNITS_LENGTH_LARGE)
         self.units_cb.setCurrentText(cfg.UNIT_FT)
-
-        self.thresh_cb: QComboBox = self.ui.comboBoxThresholdType
-        self.thresh_cb.addItems(cfg.THRESHOLD_TYPES)
-        self.thresh_cb.setCurrentText(cfg.THRESHOLD_TYPE__DEFAULT)
+        
+        self.buttonProcessOptions: QPushButton = self.ui.buttonProcessOptions
+        self.buttonProcessOptions.clicked.connect(self.select_process_options)
+        
+        self.buttonSpreadFactors: QPushButton = self.ui.buttonSpreadFactors
+        self.buttonSpreadFactors.clicked.connect(self.select_spread_factors)
 
         self.show()
 
         self.step_rb.toggle()
         self.step_rb_toggled(True)
+        
+        # Container to store settings
+        self.sprayCard = SprayCard()
 
     @pyqtSlot(bool)
     def step_rb_toggled(self, checked):
@@ -101,6 +112,28 @@ class CreateDefinedSet(baseclass):
             self.step_le.setText(str(self.step))
             return True
 
+    @pyqtSlot()
+    def select_process_options(self):
+        s = SeriesData()
+        p = Pass(name="Pass")
+        p.cards.card_list.append(self.sprayCard)
+        s.passes.append(p)
+        e = EditThreshold(sprayCard=self.sprayCard, passData=p, seriesData=s, parent=self)
+        e.ui.checkBoxApplyToAllPass.setEnabled(False)
+        e.ui.checkBoxApplyToAllSeries.setEnabled(False)
+        e.exec()
+        
+    @pyqtSlot()
+    def select_spread_factors(self):
+        s = SeriesData()
+        p = Pass(name="Pass")
+        p.cards.card_list.append(self.sprayCard)
+        s.passes.append(p)
+        e = EditSpreadFactors(sprayCard=self.sprayCard, passData=p, seriesData=s, parent=self)
+        e.ui.checkBoxApplyToAllPass.setEnabled(False)
+        e.ui.checkBoxApplyToAllSeries.setEnabled(False)
+        e.exec()
+
     def accept(self):
         if not self.process_location():
             msg = QMessageBox.warning(
@@ -111,10 +144,10 @@ class CreateDefinedSet(baseclass):
 
         cards = []
         for i in range(self.quantity):
-            card = SprayCard(name=f"Card {i+1}")
+            card = copy.copy(self.sprayCard)
+            card.name = f"Card {i+1}"
             card.location = self.initial + (self.step * i)
             card.location_units = self.units_cb.currentText()
-            card.threshold_type = self.thresh_cb.currentText()
             cards.append(card)
         self.setConfirmed.emit(cards)
 

@@ -984,59 +984,98 @@ def set_card_simulation_view_window(value=str):
 # SprayCard Prefab Sets
 
 _CARD_DEFINED_SETS = "card_defined_sets"
-CARD_SET_SAFE_WSP = {
-    "set_name": "SAFE Fly-In (WSP)",
-    "card_name": [
-        "L-32",
-        "L-24",
-        "L-16",
-        "L-8",
-        "Center",
-        "R-8",
-        "R-16",
-        "R-24",
-        "R-32",
-    ],
-    "location": [-32, -24, -16, -8, 0, 8, 16, 24, 32],
-    "location_unit": [UNIT_FT] * 9,
-    "threshold_type": [THRESHOLD_TYPE_GRAYSCALE] * 9,
-    "dpi": [1200] * 9,
-}
-CARD_SET_SAFE_WHITE = {
-    "set_name": "SAFE Fly-In (White Cards)",
-    "card_name": [
-        "L-32",
-        "L-24",
-        "L-16",
-        "L-8",
-        "Center",
-        "R-8",
-        "R-16",
-        "R-24",
-        "R-32",
-    ],
-    "location": [-32, -24, -16, -8, 0, 8, 16, 24, 32],
-    "location_unit": [UNIT_FT] * 9,
-    "threshold_type": [THRESHOLD_TYPE_HSB] * 9,
-    "dpi": [1200] * 9,
-}
-CARD_DEFINED_SETS__DEFAULT = [CARD_SET_SAFE_WSP, CARD_SET_SAFE_WHITE]
+
+def get_card_set_base(set_name: str, card_names: list[str]) -> dict:
+    base = dict()
+    base["set_name"] = set_name
+    base["card_name"] = card_names
+    q = len(card_names)
+    base[_THRESHOLD_TYPE] = [THRESHOLD_TYPE_HSB] * q
+    base[_THRESHOLD_GRAYSCALE_METHOD] =  [get_threshold_grayscale_method()] * q
+    base[_THRESHOLD_GRAYSCALE] = [get_threshold_grayscale()] * q
+    base[_THRESHOLD_HSB_HUE_MIN] = [get_threshold_hsb_hue_min()] * q
+    base[_THRESHOLD_HSB_HUE_MAX] = [get_threshold_hsb_hue_max()] * q
+    base[_THRESHOLD_HSB_HUE_PASS] = [get_threshold_hsb_hue_pass()] * q
+    base[_THRESHOLD_HSB_SATURATION_MIN] = [get_threshold_hsb_saturation_min()] * q
+    base[_THRESHOLD_HSB_SATURATION_MAX] = [get_threshold_hsb_saturation_max()] * q
+    base[_THRESHOLD_HSB_SATURATION_PASS] = [get_threshold_hsb_saturation_pass()] * q
+    base[_THRESHOLD_HSB_BRIGHTNESS_MIN] = [get_threshold_hsb_brightness_min()] * q
+    base[_THRESHOLD_HSB_BRIGHTNESS_MAX] = [get_threshold_hsb_brightness_max()] * q
+    base[_THRESHOLD_HSB_BRIGHTNESS_PASS] = [get_threshold_hsb_brightness_pass()] * q
+    base[_WATERSHED] = [get_watershed()] * q
+    base[_MIN_STAIN_AREA_PX] = [get_min_stain_area_px()] * q
+    base[_STAIN_APPROXIMATION_METHOD] = [get_stain_approximation_method()] * q
+    base[_SPREAD_METHOD] = [get_spread_factor_equation()] * q
+    base[_SPREAD_FACTOR_A] = [get_spread_factor_a()] * q
+    base[_SPREAD_FACTOR_B] = [get_spread_factor_b()] * q
+    base[_SPREAD_FACTOR_C] = [get_spread_factor_c()] * q
+    return base
+    
+
+def get_card_set_safe_white():
+    set_name = "SAFE Fly-In (White Cards)"
+    card_names = ["L-32","L-24","L-16","L-8","Center","R-8","R-16","R-24","R-32"]
+    base = get_card_set_base(set_name, card_names)
+    base["location"] = [-32, -24, -16, -8, 0, 8, 16, 24, 32]
+    base["location_unit"] = [UNIT_FT] * len(base["location"])
+    base[_THRESHOLD_TYPE] = [THRESHOLD_TYPE_HSB] * len(base["location"])
+    return base
+
+def get_card_set_safe_wsp():
+    set_name = "SAFE Fly-In (WSP)"
+    card_names = ["L-32","L-24","L-16","L-8","Center","R-8","R-16","R-24","R-32"]
+    base = get_card_set_base(set_name, card_names)
+    base["location"] = [-32, -24, -16, -8, 0, 8, 16, 24, 32]
+    base["location_unit"] = [UNIT_FT] * len(base["location"])
+    base[_THRESHOLD_TYPE] = [THRESHOLD_TYPE_GRAYSCALE] * len(base["location"])
+    return base
+    
+
+CARD_DEFINED_SETS__DEFAULT = [get_card_set_safe_wsp(), get_card_set_safe_white()]
 
 
 def get_card_defined_sets() -> str:
-    return QSettings().value(
+    sets = QSettings().value(
         _CARD_DEFINED_SETS,
         defaultValue=json.dumps(CARD_DEFINED_SETS__DEFAULT),
         type=str,
     )
+    sets_list: list[dict] = json.loads(sets)
+    if any([_THRESHOLD_GRAYSCALE not in s.keys() for s in sets_list]):
+        temporary_converter()
+        sets = QSettings().value(
+            _CARD_DEFINED_SETS,
+            defaultValue=json.dumps(CARD_DEFINED_SETS__DEFAULT),
+            type=str,
+        )   
+    return sets
 
+def temporary_converter():
+    print("Converting...")
+    old_sets = QSettings().value(
+        _CARD_DEFINED_SETS,
+        defaultValue=json.dumps(CARD_DEFINED_SETS__DEFAULT),
+        type=str,
+    )
+    old_sets_list: list[dict] = json.loads(old_sets)
+    new_sets_list = []
+    for set in old_sets_list:
+        set_name = set["set_name"]
+        card_names = set["card_name"]
+        base = get_card_set_base(set_name, card_names)
+        base["location"] = set["location"]
+        base["location_unit"] = set["location_unit"]
+        base["threshold_type"] = set["threshold_type"]
+        new_sets_list.append(base)
+    new_sets = json.dumps(new_sets_list)
+    set_card_defined_sets(new_sets)
 
 def set_card_defined_sets(value: str):
     QSettings().setValue(_CARD_DEFINED_SETS, value)
 
 
 _CARD_DEFINED_SET = "card_defined_set"
-CARD_DEFINED_SET__DEFAULT = CARD_SET_SAFE_WHITE["set_name"]
+CARD_DEFINED_SET__DEFAULT = get_card_set_safe_white()["set_name"]
 
 
 def get_card_defined_set() -> str:

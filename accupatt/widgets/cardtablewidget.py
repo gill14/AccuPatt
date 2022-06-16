@@ -101,6 +101,7 @@ class CardTableWidget(baseclass):
         self.tm.loadCards(card_list)
         self.filepath = filepath
         self.selection_changed()
+        self.tv.resizeColumnsToContents()
 
     def add_cards_to_table(self, card_list: list[SprayCard]):
         rows = self.tm.addCards(card_list)
@@ -111,6 +112,7 @@ class CardTableWidget(baseclass):
             | QItemSelectionModel.SelectionFlag.Rows
         )
         [self.tv.selectionModel().select(index, mode) for index in indexes]
+        self.tv.resizeColumnsToContents()
 
     def set_defined_set_mode(self):
         self.tm.definedSetMode = True
@@ -135,6 +137,7 @@ class CardTableWidget(baseclass):
     def add_card(self):
         self.tm.addCard(filepath=self.filepath)
         self.passDataChanged.emit()
+        self.tv.resizeColumnsToContents()
 
     @pyqtSlot()
     def remove_cards(self):

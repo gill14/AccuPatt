@@ -217,6 +217,8 @@ class EditThreshold(baseclass):
         self.ui.checkBoxApplyToAllPass.setEnabled(not boo)
 
     def updateSprayCardView(self):
+        if not self.sprayCard.has_image:
+            return
         # Left Image (1) Right Image (2)
         cvImg1, cvImg2 = self.sprayCard.images_processed()
         self.ui.splitCardWidget.updateSprayCardView(cvImg1, cvImg2)

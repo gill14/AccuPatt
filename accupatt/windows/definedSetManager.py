@@ -48,6 +48,7 @@ class DefinedSetManager(baseclass):
         self.cardTable.set_defined_set_mode()
         self.cardTable.tv.hideColumn(1)
         self.cardTable.tv.hideColumn(4)
+        self.cardTable.tv.hideColumn(5)
         # Set and select initial value for listview
         self.lv.selectionModel().currentChanged[QModelIndex, QModelIndex].connect(
             self.current_set_changed
@@ -131,9 +132,27 @@ class DefinedSet:
         for i, c in enumerate(self.cards):
             c.location = set_dict["location"][i]
             c.location_units = set_dict["location_unit"][i]
-            c.threshold_type = set_dict["threshold_type"][i]
-            c.dpi = set_dict["dpi"][i]
-            c.has_image = True
+            c.threshold_type = set_dict[cfg._THRESHOLD_TYPE][i]
+            c.threshold_method_grayscale = set_dict[cfg._THRESHOLD_GRAYSCALE_METHOD][i]
+            c.threshold_grayscale = set_dict[cfg._THRESHOLD_GRAYSCALE][i]
+            c.threshold_color_hue_min = set_dict[cfg._THRESHOLD_HSB_HUE_MIN][i]
+            c.threshold_color_hue_max = set_dict[cfg._THRESHOLD_HSB_HUE_MAX][i]
+            c.threshold_color_hue_pass = set_dict[cfg._THRESHOLD_HSB_HUE_PASS][i]
+            c.threshold_color_saturation_min = set_dict[cfg._THRESHOLD_HSB_SATURATION_MIN][i]
+            c.threshold_color_saturation_max = set_dict[cfg._THRESHOLD_HSB_SATURATION_MAX][i]
+            c.threshold_color_saturation_pass = set_dict[cfg._THRESHOLD_HSB_SATURATION_PASS][i]
+            c.threshold_color_brightness_min = set_dict[cfg._THRESHOLD_HSB_BRIGHTNESS_MIN][i]
+            c.threshold_color_brightness_max = set_dict[cfg._THRESHOLD_HSB_BRIGHTNESS_MAX][i]
+            c.threshold_color_brightness_pass = set_dict[cfg._THRESHOLD_HSB_BRIGHTNESS_PASS][i]
+            c.watershed = set_dict[cfg._WATERSHED][i]
+            c.min_stain_area_px = set_dict[cfg._WATERSHED][i]
+            c.stain_approximation_method = set_dict[cfg._STAIN_APPROXIMATION_METHOD][i]
+            c.spread_method = set_dict[cfg._SPREAD_METHOD][i]
+            c.spread_factor_a = set_dict[cfg._SPREAD_FACTOR_A][i]
+            c.spread_factor_b = set_dict[cfg._SPREAD_FACTOR_B][i]
+            c.spread_factor_c = set_dict[cfg._SPREAD_FACTOR_C][i]
+            #c.dpi = set_dict["dpi"][i]
+            #c.has_image = True
 
     def toJSON(self):
         d = {}
@@ -141,8 +160,26 @@ class DefinedSet:
         d["card_name"] = [c.name for c in self.cards]
         d["location"] = [c.location for c in self.cards]
         d["location_unit"] = [c.location_units for c in self.cards]
-        d["threshold_type"] = [c.threshold_type for c in self.cards]
-        d["dpi"] = [c.dpi for c in self.cards]
+        d[cfg._THRESHOLD_TYPE] = [c.threshold_type for c in self.cards]
+        d[cfg._THRESHOLD_GRAYSCALE_METHOD] = [c.threshold_method_grayscale for c in self.cards]
+        d[cfg._THRESHOLD_GRAYSCALE] = [c.threshold_grayscale for c in self.cards]
+        d[cfg._THRESHOLD_HSB_HUE_MIN] = [c.threshold_color_hue_min for c in self.cards]
+        d[cfg._THRESHOLD_HSB_HUE_MAX] = [c.threshold_color_hue_max for c in self.cards]
+        d[cfg._THRESHOLD_HSB_HUE_PASS] = [c.threshold_color_hue_pass for c in self.cards]
+        d[cfg._THRESHOLD_HSB_SATURATION_MIN] = [c.threshold_color_saturation_min for c in self.cards]
+        d[cfg._THRESHOLD_HSB_SATURATION_MAX] = [c.threshold_color_saturation_max for c in self.cards]
+        d[cfg._THRESHOLD_HSB_SATURATION_PASS] = [c.threshold_color_saturation_pass for c in self.cards]
+        d[cfg._THRESHOLD_HSB_BRIGHTNESS_MIN] = [c.threshold_color_brightness_min for c in self.cards]
+        d[cfg._THRESHOLD_HSB_BRIGHTNESS_MAX] = [c.threshold_color_brightness_max for c in self.cards]
+        d[cfg._THRESHOLD_HSB_BRIGHTNESS_PASS] = [c.threshold_color_brightness_pass for c in self.cards]
+        d[cfg._WATERSHED] = [c.watershed for c in self.cards]
+        d[cfg._MIN_STAIN_AREA_PX] = [c.min_stain_area_px for c in self.cards]
+        d[cfg._STAIN_APPROXIMATION_METHOD] = [c.stain_approximation_method for c in self.cards]
+        d[cfg._SPREAD_METHOD] = [c.spread_method for c in self.cards]
+        d[cfg._SPREAD_FACTOR_A] = [c.spread_factor_a for c in self.cards]
+        d[cfg._SPREAD_FACTOR_B] = [c.spread_factor_b for c in self.cards]
+        d[cfg._SPREAD_FACTOR_C] = [c.spread_factor_c for c in self.cards]
+        #d["dpi"] = [c.dpi for c in self.cards]
         return d
 
 
