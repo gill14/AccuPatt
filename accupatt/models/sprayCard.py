@@ -1,9 +1,16 @@
 from dataclasses import dataclass
 import math
+import time
 import uuid
 
 import accupatt.config as cfg
 import cv2
+import imutils
+from skimage.color import label2rgb
+from skimage.feature import peak_local_max
+from skimage.measure import find_contours, label as sklabel, regionprops
+from skimage.segmentation import watershed, clear_border
+from scipy import ndimage
 import numpy as np
 from accupatt.helpers.atomizationModel import AtomizationModel
 
@@ -46,6 +53,7 @@ class SprayCard:
         self.area_px2 = 0.0
         self.stain_areas_all_px2 = []
         self.stain_areas_valid_px2 = []
+        self.stains = []
         self.stats = SprayCardStats(sprayCard=self)
         # Flag for currency
         self.current = False
@@ -338,6 +346,7 @@ class SprayCardImageProcessor:
         self.threshold_grayscale_calculated, self.img_thresh = self._image_threshold(
             img=self.img_src
         )
+        self.sprayCard.area_px2 = self.img_src.shape[0] * self.img_src.shape[1]
 
     def draw_and_log_stains(self):
         # img_src = self.sprayCard.image_original()
@@ -363,6 +372,109 @@ class SprayCardImageProcessor:
 
         return img_overlay, img_binary
 
+    def process_stains(self):
+        sc = self.sprayCard
+        image_t = self.img_thresh
+        pre = time.perf_counter()
+        if self.sprayCard.watershed:
+            # Generate markers as local maxima of distance to background
+            distance = cv2.distanceTransform(image_t, cv2.DIST_L2, cv2.DIST_MASK_PRECISE)
+            coords = peak_local_max(distance, min_distance=10, labels=image_t)
+            mask = np.zeros(distance.shape, dtype=bool)
+            mask[tuple(coords.T)] = True
+            markers, _ = ndimage.label(mask)
+            labels = watershed(-distance, markers, mask=image_t)
+        else:
+            labels = sklabel(image_t)
+        cnts = find_contours(labels, level=0)
+        #cnts = imutils.grab_contours(cnts)
+        cnts_cv = []
+        for c in cnts:
+            c_cv = []
+            for pt in c:
+                intify = [int(pt[1]), int(pt[0])]
+                c_cv.append(intify)
+            cnts_cv.append(np.array(c_cv).astype(int))
+        print(f"contour diff: {(labels).max} -> {len(cnts_cv)}")
+        cnts = cnts_cv
+        post = time.perf_counter()
+        print(f"new_labeling in {post-pre:.4f} sec")
+        # Iterate over labels, saving as categorized contours
+        pre = time.perf_counter()
+        tic = 0.0
+        for i, c in enumerate(cnts):
+            #if i == 0:
+            #    continue
+            # log to stain list
+            x, y, w, h = cv2.boundingRect(c)
+            area = cv2.contourArea(c) # Need to update for approximations
+            is_too_small = area < sc.min_stain_area_px
+            #print(f"x={x}, y={y}, w={w}, h={h}, iw={image_t.shape[1]-1}, ih={image_t.shape[0]-1}")
+            is_edge = (
+                True
+                if x <= 0
+                or y <= 0
+                or (x + w) >= image_t.shape[1] - 1
+                or (y + h) >= image_t.shape[0] - 1
+                else False
+            )
+            is_include = not is_too_small and not is_edge
+            sc.stains.append({"index":i, 
+                              "contour":c, 
+                              "area":cv2.contourArea(c), 
+                              "is_too_small":is_too_small,
+                              "is_edge":is_edge,
+                              "is_include":is_include})
+        post = time.perf_counter()
+        print(f"new_find_contours_sum in {tic:.4f} sec")
+        print(f"new_contourizing in {post-pre:.4f} sec")
+
+    def get_overlay_image(self):
+        sc = self.sprayCard
+        img = self.img_src
+        cv2.drawContours(img, 
+                         [stain["contour"] for stain in sc.stains if stain["is_too_small"]],
+                         -1,
+                         cfg.COLOR_STAIN_OUTLINE,
+                         -1)
+        cv2.drawContours(img, 
+                         [stain["contour"] for stain in sc.stains if stain["is_edge"]],
+                         -1,
+                         cfg.COLOR_STAIN_OUTLINE,
+                         -1)
+        cv2.drawContours(img, 
+                         [stain["contour"] for stain in sc.stains if stain["is_include"]],
+                         -1,
+                         cfg.COLOR_STAIN_OUTLINE,
+                         -1)
+        return img
+    
+    def get_mask_image(self):
+        sc = self.sprayCard
+        img = np.zeros((self.img_src.shape[0], self.img_src.shape[1], 3), np.uint8)
+        img[:] = (255, 255, 255)
+        cv2.drawContours(img, 
+                         [stain["contour"] for stain in sc.stains if stain["is_too_small"]],
+                         -1,
+                         cfg.COLOR_STAIN_FILL_ALL,
+                         -1)
+        cv2.drawContours(img, 
+                         [stain["contour"] for stain in sc.stains if stain["is_edge"]],
+                         -1,
+                         cfg.COLOR_STAIN_FILL_EDGE,
+                         -1)
+        cv2.drawContours(img, 
+                         [stain["contour"] for stain in sc.stains if stain["is_include"]],
+                         -1,
+                         cfg.COLOR_STAIN_FILL_VALID,
+                         -1)
+        cv2.drawContours(img, 
+                         [stain["contour"] for stain in sc.stains if stain["is_include"]],
+                         -1,
+                         (255,255,255),
+                         1)
+        return img
+    
     def _image_threshold(self, img):
         if self.sprayCard.threshold_type == cfg.THRESHOLD_TYPE_GRAYSCALE:
             return self._image_threshold_grayscale(img)
@@ -457,7 +569,7 @@ class SprayCardImageProcessor:
             mask_bri = cv2.bitwise_or(mask_bri_low, mask_bri_high)
         # Merge layers and return
         return 0, cv2.bitwise_and(cv2.bitwise_and(mask_hue, mask_sat), mask_bri)
-
+    
     def _image_watershed(self, img_src, img_thresh, contours_original):
         thresh = img_thresh
         # noise removal

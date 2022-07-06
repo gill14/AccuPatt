@@ -22,6 +22,8 @@ superqt = "^0.2.5"
 PyQt6 = "^6.2.2"
 SQLAlchemy = "^1.4.36"
 alembic = "^1.7.7"
+scikit-image = "^0.19.3"
+imutils = "^0.5.4"
 
 [tool.poetry.dev-dependencies]
 pyinstaller = "^4.9"
