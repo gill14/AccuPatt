@@ -98,9 +98,11 @@ CREATE TABLE IF NOT EXISTS passes (
 );
 CREATE TABLE IF NOT EXISTS pass_string (
     pass_id                 TEXT PRIMARY KEY REFERENCES passes(id),
+    dye                     TEXT,
     excitation_wav          INTEGER,
     emission_wav            INTEGER,
     integration_time_ms     INTEGER,
+    boxcar_width            INTEGER,
     trim_left               INTEGER,
     trim_right              INTEGER,
     trim_vertical           REAL,
