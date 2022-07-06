@@ -4,6 +4,7 @@ import pandas as pd
 import scipy.signal as sig
 from pyqtgraph import InfiniteLine, PlotWidget, setConfigOptions
 from pyqtgraph.functions import mkPen
+from accupatt.models.dye import Dye
 
 from accupatt.models.passDataBase import PassDataBase
 
@@ -12,9 +13,7 @@ class PassDataString(PassDataBase):
     def __init__(self, name):
         super().__init__(name=name)
         # String Data Collection
-        self.wav_ex = cfg.get_spec_wav_ex()
-        self.wav_em = cfg.get_spec_wav_em()
-        self.integration_time_ms = cfg.get_spec_int_time_millis()
+        self.dye = Dye.fromConfig()
         # String Data
         self.data_ex = pd.DataFrame()  # Holds Excitation Data
         self.data = pd.DataFrame()  # Holds original Data

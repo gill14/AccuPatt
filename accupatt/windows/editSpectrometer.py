@@ -2,115 +2,87 @@ import os
 
 import numpy as np
 from PyQt6 import uic
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import pyqtSignal, QSignalBlocker
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QPushButton, QComboBox, QLineEdit, QMessageBox
 from seabreeze.spectrometers import Spectrometer
+
+from accupatt.models.dye import Dye
+import accupatt.config as cfg
+from accupatt.windows.definedDyeManager import DyeManager
+from accupatt.windows.testSpectrometer import TestSpectrometer
 
 Ui_Form, baseclass = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "editSpectrometer.ui")
 )
 
-icon_file = os.path.join(os.getcwd(), "resources", "refresh.png")
-
-
 class EditSpectrometer(baseclass):
 
-    wav_ex_changed = pyqtSignal(int)
-    wav_em_changed = pyqtSignal(int)
-    integration_time_ms_changed = pyqtSignal(int)
+    dye_changed = pyqtSignal(str)
 
-    def __init__(self, spectrometer, wav_ex, wav_em, integration_time_ms, parent=None):
+    def __init__(self, spectrometer: Spectrometer, dye: Dye, parent=None):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
         self.spec = spectrometer
-
-        self.ui.lineEditEx.setText(str(wav_ex))
-        self.ui.lineEditEm.setText(str(wav_em))
-        self.ui.lineEditIntegrationTime.setText(str(integration_time_ms))
-
-        # Hook up signals
-        self.ui.buttonRefresh.setIcon(QIcon(icon_file))
-        self.ui.buttonRefresh.clicked.connect(self.refresh_spec)
-        self.ui.lineEditEx.textChanged.connect(self.refresh_spec)
-        self.ui.lineEditEm.textChanged.connect(self.refresh_spec)
-
+        self.dye = dye
+        
+        self.le_spectrometer: QLineEdit = self.ui.lineEditSpectrometer
+        
+        self.b_refresh: QPushButton = self.ui.buttonRefresh
+        self.b_refresh.clicked.connect(self.refresh_spec)
+        
+        self.cb_dye: QComboBox = self.ui.comboBoxDye
+        
+        self.b_dye_manager: QPushButton = self.ui.buttonDyeManager
+        self.b_dye_manager.clicked.connect(self.open_dye_manager)
+        
+        self.b_test_spectrometer: QPushButton = self.ui.buttonTestSpectrometer
+        self.b_test_spectrometer.clicked.connect(self.test_spectrometer)
+        
         self.refresh_spec()
-
-        self.show()
-
+        self.refresh_dyes()
+        
     def refresh_spec(self):
         if self.spec == None:
             try:
                 self.spec = Spectrometer.from_first_available()
             except:
-                self.ui.labelSpec.setText("Spectrometer: None")
-                self.ui.labelEx.setText("")
-                self.ui.labelEm.setText("")
-                self.ui.labelSerialNumber.setText("")
+                self.le_spectrometer.setText("")
+                self.b_test_spectrometer.setEnabled(False)
                 return
-        self.ui.labelSerialNumber.setText(
-            f"Spectrometer Serial Number: {self.spec.serial_number}"
-        )
-        self.ui.labelSpec.setText(f"Spectrometer: {self.spec.model}")
-        wav = self.spec.wavelengths()
-        # Check that wav_ex is a number
-        try:
-            pix_ex = np.abs(wav - float(self.ui.lineEditEx.text())).argmin()
-            wav_ex = wav[pix_ex]
-            self.ui.labelEx.setText(
-                f"Actual Excitation is {self.strip_num(wav_ex)}nm at pixel #{pix_ex}"
-            )
-        except:
-            self.ui.labelEx.setText("Invalid Target Excitation Wavelength")
-        # Check that wav_em is a number
-        try:
-            pix_em = np.abs(wav - int(self.ui.lineEditEm.text())).argmin()
-            wav_em = wav[pix_em]
-            self.ui.labelEm.setText(
-                f"Actual Emission is {self.strip_num(wav_em)}nm at pixel #{pix_em}"
-            )
-        except:
-            self.ui.labelEm.setText("Invalid Target Emission Wavelength")
-
-    def strip_num(self, x) -> str:
-        if type(x) is str:
-            if x == "":
-                x = 0
-        if float(x).is_integer():
-            return str(int(float(x)))
-        else:
-            return f"{round(float(x), 2):.2f}"
-
+        self.le_spectrometer.setText(self.spec.model)
+        self.b_test_spectrometer.setEnabled(True)
+        
+    def refresh_dyes(self):
+        dye_names = [Dye.fromDict(d).name for d in cfg.get_defined_dyes()]
+        with QSignalBlocker(self.cb_dye):
+            self.cb_dye.clear()
+            self.cb_dye.addItems(dye_names)
+            # Guard if previously selected dye is deleted in Dye Manager, default to 1st item
+            if self.dye.name in dye_names:
+                self.cb_dye.setCurrentText(self.dye.name)
+            else:
+                self.dye_name = dye_names[0]
+                self.cb_dye.setCurrentText(self.dye_name)
+    
+    def open_dye_manager(self):
+        e = DyeManager(parent=self)
+        e.finished.connect(lambda: self.refresh_dyes())
+        e.exec()
+        
+    def test_spectrometer(self):
+        # Use whatever dye is currently selected
+        dye = Dye.fromConfig(name=self.cb_dye.currentText())
+        TestSpectrometer(spectrometer=self.spec, dye = dye, parent=self).exec()
+            
     def accept(self):
-        excepts = []
-        # Save Excitation Wavelength
-        try:
-            self.wav_ex_changed.emit(int(self.ui.lineEditEx.text()))
-        except:
-            excepts.append(
-                "-TARGET EXCITATION WAVELENGTH cannot be converted to an INTEGER"
-            )
-        try:
-            self.wav_em_changed.emit(int(self.ui.lineEditEm.text()))
-        except:
-            excepts.append(
-                "-TARGET EMISSION WAVELENGTH cannot be converted to an INTEGER"
-            )
-        try:
-            self.integration_time_ms_changed.emit(
-                int(self.ui.lineEditIntegrationTime.text())
-            )
-        except:
-            excepts.append("-INTEGRATION TIME cannot be converted to an INTEGER")
-        # If any invalid, show user and return to current window
-        if len(excepts) > 0:
-            QMessageBox.warning(self, "Invalid Data", "\n".join(excepts))
-            return
-        # Release spectrometer
-        # if self.spec:
-        #    self.spec.close()
-        # If all checks out, notify requestor and close
+        # Notify parent of dye change
+        self.dye_changed.emit(self.cb_dye.currentText())
+        # Update chosen dye in config
+        cfg.set_defined_dye(self.cb_dye.currentText())
+        
         super().accept()
+                
+        

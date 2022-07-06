@@ -233,14 +233,16 @@ def _load_table_passes(c: sqlite3.Cursor, s: SeriesData, file: str):
 
 def _load_table_pass_string(c: sqlite3.Cursor, p: Pass):
     c.execute(
-        """SELECT excitation_wav, emission_wav, integration_time_ms, trim_left, trim_right, trim_vertical, rebase, center, center_method, smooth, smooth_window, smooth_order, data_loc_units, excitation_data, emission_data, include_in_composite FROM pass_string WHERE pass_id = ?""",
+        """SELECT dye, excitation_wav, emission_wav, integration_time_ms, boxcar_width, trim_left, trim_right, trim_vertical, rebase, center, center_method, smooth, smooth_window, smooth_order, data_loc_units, excitation_data, emission_data, include_in_composite FROM pass_string WHERE pass_id = ?""",
         (p.id,),
     )
     ps: PassDataString = p.string
     (
-        ps.wav_ex,
-        ps.wav_em,
-        ps.integration_time_ms,
+        ps.dye.name,
+        ps.dye.wavelength_excitation,
+        ps.dye.wavelength_emission,
+        ps.dye.integration_time_milliseconds,
+        ps.dye.boxcar_width,
         ps.trim_l,
         ps.trim_r,
         ps.trim_v,
@@ -563,14 +565,16 @@ def _update_table_passes(c: sqlite3.Cursor, s: SeriesData):
 def _update_table_pass_string(c: sqlite3.Cursor, p: Pass):
     ps: PassDataString = p.string
     c.execute(
-        """INSERT INTO pass_string (pass_id, excitation_wav, emission_wav, integration_time_ms, trim_left, trim_right, trim_vertical, rebase, center, center_method, smooth, smooth_window, smooth_order, data_loc_units, excitation_data, emission_data, include_in_composite) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """INSERT INTO pass_string (pass_id, dye, excitation_wav, emission_wav, integration_time_ms, boxcar_width, trim_left, trim_right, trim_vertical, rebase, center, center_method, smooth, smooth_window, smooth_order, data_loc_units, excitation_data, emission_data, include_in_composite) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(pass_id) DO UPDATE SET
-                    excitation_wav = excluded.excitation_wav, emission_wav = excluded.emission_wav, integration_time_ms = excluded.integration_time_ms, trim_left = excluded.trim_left, trim_right = excluded.trim_right, trim_vertical = excluded.trim_vertical, rebase = excluded.rebase, center = excluded.center, center_method = excluded.center_method, smooth = excluded.smooth, smooth_window = excluded.smooth_window, smooth_order = excluded.smooth_order, data_loc_units = excluded.data_loc_units, excitation_data = excluded.excitation_data, emission_data = excluded.emission_data, include_in_composite = excluded.include_in_composite""",
+                    dye = excluded.dye, excitation_wav = excluded.excitation_wav, emission_wav = excluded.emission_wav, integration_time_ms = excluded.integration_time_ms, boxcar_width = excluded.boxcar_width, trim_left = excluded.trim_left, trim_right = excluded.trim_right, trim_vertical = excluded.trim_vertical, rebase = excluded.rebase, center = excluded.center, center_method = excluded.center_method, smooth = excluded.smooth, smooth_window = excluded.smooth_window, smooth_order = excluded.smooth_order, data_loc_units = excluded.data_loc_units, excitation_data = excluded.excitation_data, emission_data = excluded.emission_data, include_in_composite = excluded.include_in_composite""",
         (
             p.id,
-            ps.wav_ex,
-            ps.wav_em,
-            ps.integration_time_ms,
+            ps.dye.name,
+            ps.dye.wavelength_excitation,
+            ps.dye.wavelength_emission,
+            ps.dye.integration_time_milliseconds,
+            ps.dye.boxcar_width,
             ps.trim_l,
             ps.trim_r,
             ps.trim_v,

@@ -444,47 +444,52 @@ def set_string_speed(value: float):
 
 
 # Spectrometer
+    
+_DEFINED_DYES = "defined_dyes"
+    
+def gen_dye_dict(name, w_ex, w_em, it, bx) -> dict:
+    dye = dict()
+    dye["name"] = name
+    dye["wavelength_excitation"] = w_ex
+    dye["wavelength_emission"] = w_em
+    dye["integration_time_milliseconds"] = it
+    dye["boxcar_width"] = bx
+    return dye
 
-SPEC_WAV_EX_RHODAMINE = 525
-SPEC_WAV_EM_RHODAMINE = 575
+DEFINED_DYES__DEFAULT = [
+    gen_dye_dict("Rhodamine WT", 525, 575, 100, 0),
+    gen_dye_dict("Pyranine", 425, 495, 100, 0),
+    gen_dye_dict("Topline", 425, 502, 100, 0),
+    gen_dye_dict("PTSA", 365, 410, 100, 0)
+]
 
-_SPEC_WAV_EX = "spectrometer_wavelength_excitation_nm"
-SPEC_WAV_EX__DEFAULT = SPEC_WAV_EX_RHODAMINE
+def get_defined_dyes() -> list[dict]:
+    #set_defined_dyes(json.dumps(DEFINED_DYES__DEFAULT))
+    dyes = QSettings().value(
+        _DEFINED_DYES,
+        defaultValue=json.dumps(DEFINED_DYES__DEFAULT),
+        type=str,
+    )
+    dyes_list: list[dict] = json.loads(dyes)
+    return dyes_list
 
-
-def get_spec_wav_ex() -> int:
-    return QSettings().value(_SPEC_WAV_EX, defaultValue=SPEC_WAV_EX__DEFAULT, type=int)
-
-
-def set_spec_wav_ex(value: int):
-    QSettings().setValue(_SPEC_WAV_EX, value)
-
-
-_SPEC_WAV_EM = "spectrometer_wavelength_emission_nm"
-SPEC_WAV_EM__DEFAULT = SPEC_WAV_EM_RHODAMINE
-
-
-def get_spec_wav_em() -> int:
-    return QSettings().value(_SPEC_WAV_EM, defaultValue=SPEC_WAV_EM__DEFAULT, type=int)
+def set_defined_dyes(value: str):
+    QSettings().setValue(_DEFINED_DYES, value)
 
 
-def set_spec_wav_em(value: int):
-    QSettings().setValue(_SPEC_WAV_EM, value)
+_DEFINED_DYE = "defined_dye"
+DEFINED_DYE__DEFAULT = DEFINED_DYES__DEFAULT[0]["name"]
 
 
-_SPEC_INT_TIME_MS = "spectrometer_integration_time_ms"
-SPEC_INT_TIME_MS__DEFAULT = 100
-
-
-def get_spec_int_time_millis() -> int:
+def get_defined_dye() -> str:
     return QSettings().value(
-        _SPEC_INT_TIME_MS, defaultValue=SPEC_INT_TIME_MS__DEFAULT, type=int
+        _DEFINED_DYE, defaultValue=DEFINED_DYE__DEFAULT, type=str
     )
 
 
-def set_spec_int_time_millis(value: int):
-    QSettings().setValue(_SPEC_INT_TIME_MS, value)
-
+def set_defined_dye(value: str):
+    QSettings().setValue(_DEFINED_DYE, value)
+    
 
 # SprayCard Image Loading Operations / Attributes
 

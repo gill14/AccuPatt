@@ -188,7 +188,6 @@ def load_from_accupatt_1_file(file, s: SeriesData):
     df_ex.columns = cols
 
     # Pull patterns and place them into seriesData.passes list by name (created above)
-    p: Pass
     for p in s.passes:
         p.string.trim_l = (
             0 if np.isnan(trims.at[0, p.name]) else int(trims.at[0, p.name])
