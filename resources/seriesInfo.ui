@@ -24,12 +24,6 @@
     <layout class="QGridLayout" name="gridLayout">
      <item row="0" column="1">
       <widget class="QGroupBox" name="groupBox">
-       <property name="font">
-        <font>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
        <property name="title">
         <string>Aircraft Info</string>
        </property>
@@ -215,12 +209,6 @@
      </item>
      <item row="1" column="1">
       <widget class="QGroupBox" name="groupBox">
-       <property name="font">
-        <font>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
        <property name="title">
         <string>Spray System Info</string>
        </property>
@@ -596,12 +584,6 @@
      </item>
      <item row="0" column="0">
       <widget class="QGroupBox" name="groupBox">
-       <property name="font">
-        <font>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
        <property name="title">
         <string>Fly-In Info</string>
        </property>
@@ -798,12 +780,6 @@
      </item>
      <item row="1" column="0">
       <widget class="QGroupBox" name="groupBoxApplicator">
-       <property name="font">
-        <font>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
        <property name="title">
         <string>Applicator Info</string>
        </property>
@@ -954,12 +930,6 @@
      </item>
      <item row="0" column="2">
       <widget class="QGroupBox" name="groupBox_5">
-       <property name="font">
-        <font>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
        <property name="title">
         <string>Nozzle Info</string>
        </property>
@@ -1018,12 +988,6 @@
               <height>0</height>
              </size>
             </property>
-            <property name="font">
-             <font>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
             <property name="editable">
              <bool>true</bool>
             </property>
@@ -1047,12 +1011,6 @@
               <height>0</height>
              </size>
             </property>
-            <property name="font">
-             <font>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
             <property name="editable">
              <bool>true</bool>
             </property>
@@ -1075,12 +1033,6 @@
               <width>125</width>
               <height>0</height>
              </size>
-            </property>
-            <property name="font">
-             <font>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
             </property>
             <property name="editable">
              <bool>true</bool>
@@ -1110,12 +1062,6 @@
               <width>50</width>
               <height>16777215</height>
              </size>
-            </property>
-            <property name="font">
-             <font>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
             </property>
            </widget>
           </item>
@@ -1181,12 +1127,6 @@
        </item>
        <item>
         <widget class="QGroupBox" name="groupBox">
-         <property name="font">
-          <font>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
          <property name="title">
           <string>Notes</string>
          </property>
@@ -1257,6 +1197,7 @@
   <tabstop>phoneLineEdit</tabstop>
   <tabstop>emailLineEdit</tabstop>
   <tabstop>lineEditRegNum</tabstop>
+  <tabstop>lineEditSeriesNum</tabstop>
   <tabstop>comboBoxMake</tabstop>
   <tabstop>comboBoxModel</tabstop>
   <tabstop>lineEditWingspan</tabstop>
@@ -1271,6 +1212,7 @@
   <tabstop>comboBoxNS</tabstop>
   <tabstop>comboBoxND</tabstop>
   <tabstop>lineEditNQ</tabstop>
+  <tabstop>buttonPassObservables</tabstop>
   <tabstop>plainTextEditNotesSetup</tabstop>
   <tabstop>plainTextEditNotesAnalyst</tabstop>
   <tabstop>lineEditName</tabstop>
