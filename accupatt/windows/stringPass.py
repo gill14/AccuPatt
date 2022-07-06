@@ -55,6 +55,9 @@ class StringPass(baseclass):
         self.button_string_drive: QPushButton = self.ui.buttonEditStringDrive
         self.button_string_drive.clicked.connect(self.editStringDrive)
 
+        # Setup plot and init data vars
+        self.setup_and_clear_plot(showPopup=False)
+
         # Setup Spectrometer and String Drive
         self.spec = None
         self.spec_connected = False
@@ -62,12 +65,6 @@ class StringPass(baseclass):
         self.ser_connected = False
         self.setupSpectrometer()
         self.setupStringDrive()
-
-        # Enable/Disable Start and Abort buttons as applicable
-        self.enableButtons()
-
-        # Setup plot
-        self.setup_and_clear_plot(showPopup=False)
 
         # Load in pattern data from pass object if available
         if passData.string.has_data():
@@ -79,14 +76,18 @@ class StringPass(baseclass):
                 self.passData.string.data_ex[self.passData.name].values, dtype=float
             )
             self.plot_emission.setData(self.x, self.y)
-            # Disable Edit Spec if data already present to prevent overwrite of origination info
+            # Disable Edit if data already present to prevent overwrite of origination info
             self.button_spec.setEnabled(False)
+            self.button_string_drive.setEnabled(False)
+            
+        # Enable/Disable Start and Abort buttons as applicable
+        self.enableButtons()
 
         self.show()
 
     def setup_and_clear_plot(self, showPopup=True):
         # Optionally prompt to proceed
-        if showPopup and not self.y == []:
+        if showPopup and self.y.size != 0:
             msg = QMessageBox.question(
                 self,
                 "Are You Sure?",
@@ -95,9 +96,9 @@ class StringPass(baseclass):
             if msg == QMessageBox.StandardButton.No:
                 return False
         # Init arrays
-        self.x = []
-        self.y = []
-        self.y_ex = []
+        self.x = np.array([])
+        self.y = np.array([])
+        self.y_ex = np.array([])
         # Configuration options
         pyqtgraph.setConfigOptions(antialias=True)
         pyqtgraph.setConfigOption("background", "k")
@@ -116,8 +117,9 @@ class StringPass(baseclass):
         self.plotWidget.plotItem.setLabel(axis="left", text="Relative Dye Intensity")
         self.plotWidget.plotItem.showGrid(x=True, y=True)
         self.plotWidget.setXRange(-cfg.get_string_length() / 2, cfg.get_string_length() / 2)
-        # Ensure Edit spec is enabled (disabled after has_data)
+        # Ensure Edit is enabled (disabled after has_data)
         self.button_spec.setEnabled(True)
+        self.button_string_drive.setEnabled(True)
         return True
 
     def plotFrame(self):
@@ -143,6 +145,7 @@ class StringPass(baseclass):
         self.enableButtons(start=False, abort=False)
         # Disable Edit spec to preserve origination params
         self.button_spec.setEnabled(False)
+        self.button_string_drive.setEnabled(False)
 
     @pyqtSlot()
     def click_start(self):
@@ -158,14 +161,14 @@ class StringPass(baseclass):
             self.timer_trigger = QTimer(self)
             # Set local vars from config
             self.location_start = -cfg.get_string_length()/2
-            self.speed_per_milli = cfg.get_string_speed() * 1000.0
+            self.speed_per_milli = cfg.get_string_speed() / 1000.0
             # Get a handle on pixels for chosen wavelengths
             wavelengths = self.spec.wavelengths()
             self.pix_ex = np.abs(wavelengths - self.passData.string.dye.wavelength_excitation).argmin()
             bw = self.passData.string.dye.boxcar_width
             self.pix_em = [
-                    np.abs(self.x - (self.passData.string.dye.wavelength_emission-(bw/2))).argmin(),
-                    np.abs(self.x - (self.passData.string.dye.wavelength_emission+(bw/2))).argmin()
+                    np.abs(wavelengths - (self.passData.string.dye.wavelength_emission-(bw/2))).argmin(),
+                    np.abs(wavelengths - (self.passData.string.dye.wavelength_emission+(bw/2))).argmin()
                 ]
             # Set the intervals and timeouts
             self.timer.setSingleShot(True)
@@ -197,7 +200,7 @@ class StringPass(baseclass):
             self.enableButtons(clear=False, abort=False)
 
     def reject(self):
-        if not self.y == []:
+        if self.y.size != 0:
             msg = QMessageBox.question(
                 self, "Are You Sure?", f"Abandon data/changes for {self.passData.name}?"
             )
@@ -244,6 +247,9 @@ class StringPass(baseclass):
         if not self.spec_connected or not self.ser_connected:
             start = False
             abort = False
+        if self.y.size != 0:
+            start = False
+            abort = False
         self.button_start.setEnabled(start)
         self.button_abort.setEnabled(abort)
         self.button_clear.setEnabled(clear)
@@ -281,6 +287,7 @@ class StringPass(baseclass):
         self.cb_string_drive.setEnabled(True)
         self.cb_string_drive.setChecked(True)
         self.ser_connected = True
+        self.label_string_drive.setToolTip(f"Flightline Length: {cfg.get_string_length()} {self.passData.string.data_loc_units}\nSpeed: {cfg.get_string_speed()} {self.passData.string.data_loc_units}/s")
         # Enale/Disable manual drive buttons
         self.enableButtons()
 
@@ -349,4 +356,5 @@ class StringPass(baseclass):
     @pyqtSlot(str)
     def dye_changed(self, dye_name: str):
         self.passData.string.dye = Dye.fromConfig(dye_name)
-        self.label_spec.setToolTip(f"Dye: {self.passData.string.dye.name}\nExcitation: {self.passData.string.dye.wavelength_excitation} nm\nEmission: {self.passData.string.dye.wavelength_emission} nm")
+        self.setupSpectrometer()
+        #self.label_spec.setToolTip(f"Dye: {self.passData.string.dye.name}\nExcitation: {self.passData.string.dye.wavelength_excitation} nm\nEmission: {self.passData.string.dye.wavelength_emission} nm")
