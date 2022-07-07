@@ -1,3 +1,4 @@
+from itertools import compress
 import os
 
 import accupatt.config as cfg
@@ -5,6 +6,7 @@ from PyQt6.QtCore import QSortFilterProxyModel, Qt, QTimer, pyqtSlot, QSignalBlo
 from PyQt6.QtWidgets import (
     QComboBox,
     QHeaderView,
+    QMessageBox,
     QProgressDialog,
     QTableWidget,
     QTableView,
@@ -78,6 +80,9 @@ class TabWidgetCards(TabWidgetBase):
             if prog.wasCanceled():
                 return
         prog.setValue(len(card_list))
+        # Notify of cards which exceeded max stain limit
+        if any([c.flag_max_stain_limit_reached for c in card_list]):
+            QMessageBox.warning(self, "Max Stain Limit Exceeded", f"The following cards were unable to be processed due to the number of detected stains exceeding the user-defined limit: [{', '.join(compress(card_identifier_list,[c.name for c in card_list if c.flag_max_stain_limit_reached]))}]")
 
     @pyqtSlot(str)
     def onCurrentFileChanged(self, file: str):

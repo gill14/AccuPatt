@@ -356,7 +356,11 @@ class LoadCards(baseclass):
         msg.setDefaultButton(button_do_not_delete)
         msg.exec()
         if msg.clickedButton() == button_delete:
-            os.remove(self.image_file)
+            msg2 = QMessageBox.question(msg, "", "Are you sure? THIS CANNOT BE UNDONE.")
+            if msg2 == QMessageBox.StandardButton.No:
+                return
+            if msg2 == QMessageBox.StandardButton.Yes:
+                os.remove(self.image_file)
 
     def _sort_rois(self, orientation, order):
         rois_original = self.roi_rectangles.copy()

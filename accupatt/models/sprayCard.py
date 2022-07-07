@@ -50,6 +50,7 @@ class SprayCard:
         self.spread_factor_b = cfg.get_spread_factor_b()
         self.spread_factor_c = cfg.get_spread_factor_c()
         # Initialize stain stats
+        self.flag_max_stain_limit_reached = False
         self.area_px2 = 0.0
         self.stain_areas_all_px2 = []
         self.stain_areas_valid_px2 = []
@@ -347,6 +348,9 @@ class SprayCardImageProcessor:
             img=self.img_src
         )
         self.sprayCard.area_px2 = self.img_src.shape[0] * self.img_src.shape[1]
+        # Clear stain lists
+        self.sprayCard.stain_areas_all_px2 = []
+        self.sprayCard.stain_areas_valid_px2 = []
 
     def draw_and_log_stains(self):
         # img_src = self.sprayCard.image_original()
@@ -355,6 +359,13 @@ class SprayCardImageProcessor:
         contours, _ = cv2.findContours(
             self.img_thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
         )
+        self.sprayCard.flag_max_stain_limit_reached = False
+        if len(contours) > cfg.get_max_stain_count():
+            self.sprayCard.flag_max_stain_limit_reached = True
+            img = np.zeros((self.img_src.shape[0], self.img_src.shape[1], 3), np.uint8)
+            img[:] = (0, 0, 255)
+            return self.img_src, img
+            
         # Watershed Segmentation
         if self.sprayCard.watershed:
             # Find all contours via watershed

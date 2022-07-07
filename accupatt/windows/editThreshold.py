@@ -1,11 +1,12 @@
 import copy
 import os
+import numpy as np
 
 from superqt import QLabeledRangeSlider, QLabeledSlider
 import accupatt.config as cfg
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSlot, QSignalBlocker
-from PyQt6.QtWidgets import QDialogButtonBox
+from PyQt6.QtWidgets import QCheckBox, QComboBox, QDialogButtonBox, QLineEdit, QMessageBox, QPushButton, QRadioButton, QSpinBox
 
 from accupatt.models.sprayCard import SprayCard
 
@@ -25,6 +26,8 @@ class EditThreshold(baseclass):
         # Get a handle to seriesData and passData to enable "Apply to all cards on save"
         self.seriesData = seriesData
         self.passData = passData
+        
+        self.fit = "horizontal"
 
         # Threshold Type Combobox - Sets contents of Threshold GroupBox
         self.ui.comboBoxThresholdType.addItems(cfg.THRESHOLD_TYPES)
@@ -88,39 +91,15 @@ class EditThreshold(baseclass):
         )
         rs_bri.valueChanged[tuple].connect(self.updateBrightness)
 
-        """self.ui.hll.clicked.connect(self.hll)
-        self.ui.hlh.clicked.connect(self.hlh)
-        self.ui.hhl.clicked.connect(self.hhl)
-        self.ui.hhh.clicked.connect(self.hhh)
-        self.ui.sll.clicked.connect(self.sll)
-        self.ui.slh.clicked.connect(self.slh)
-        self.ui.shl.clicked.connect(self.shl)
-        self.ui.shh.clicked.connect(self.shh)
-        self.ui.bll.clicked.connect(self.bll)
-        self.ui.blh.clicked.connect(self.blh)
-        self.ui.bhl.clicked.connect(self.bhl)
-        self.ui.bhh.clicked.connect(self.bhh)"""
+        self.buttonAdvancedOptions: QPushButton = self.ui.buttonAdvancedOptions
+        self.buttonAdvancedOptions.clicked.connect(self._clicked_advanced_options)
 
-        # Populate Watershed
-        self.ui.checkBoxWatershed.setCheckState(
-            Qt.CheckState.Checked
-            if self.sprayCard.watershed
-            else Qt.CheckState.Unchecked
-        )
-        self.ui.checkBoxWatershed.stateChanged[int].connect(self.toggleWatershed)
-
-        # Populate Stain Approx Method
-        self.ui.comboBoxApproximationMethod.addItems(cfg.STAIN_APPROXIMATION_METHODS)
-        self.ui.comboBoxApproximationMethod.setCurrentText(
-            self.sprayCard.stain_approximation_method
-        )
-        self.ui.comboBoxApproximationMethod.currentIndexChanged[int].connect(
-            self.update_approx_method
-        )
-
-        # Populate Min Stain Size
-        self.ui.spinBoxMinSize.setValue(self.sprayCard.min_stain_area_px)
-        self.ui.spinBoxMinSize.valueChanged[int].connect(self.updateMinSize)
+        self.rb_horizontal: QRadioButton = self.ui.radioButtonHorizontal
+        self.rb_horizontal.toggled[bool].connect(self._clicked_rb_horizontal)
+        self.rb_horizontal.setChecked(True)
+        
+        self.rb_vertical: QRadioButton = self.ui.radioButtonVertical
+        self.rb_vertical.toggled[bool].connect(self._clicked_rb_vertical)
 
         # Signals for saving
         self.ui.checkBoxApplyToAllSeries.toggled[bool].connect(
@@ -192,21 +171,22 @@ class EditThreshold(baseclass):
         self.sprayCard.set_threshold_color_brightness(min=vals[0], max=vals[1])
         self.updateSprayCardView()
 
-    @pyqtSlot(int)
-    def toggleWatershed(self, checkstate):
-        self.sprayCard.watershed = Qt.CheckState(checkstate) == Qt.CheckState.Checked
-        self.updateSprayCardView()
+    @pyqtSlot()
+    def _clicked_advanced_options(self):
+        e = ProcessOptionsAdvanced(self.sprayCard, parent=self)
+        e.accepted.connect(self.updateSprayCardView)
+        e.exec()
 
-    @pyqtSlot(int)
-    def updateMinSize(self, val):
-        self.sprayCard.min_stain_area_px = val
+    @pyqtSlot(bool)
+    def _clicked_rb_horizontal(self, isChecked: bool):
+        if isChecked:
+            self.fit = "horizontal"
         self.updateSprayCardView()
-
-    @pyqtSlot(int)
-    def update_approx_method(self, index):
-        self.sprayCard.stain_approximation_method = cfg.STAIN_APPROXIMATION_METHODS[
-            index
-        ]
+        
+    @pyqtSlot(bool)
+    def _clicked_rb_vertical(self, isChecked: bool):
+        if isChecked:
+            self.fit = "vertical"
         self.updateSprayCardView()
 
     def toggleApplyToAllSeries(self, boo: bool):
@@ -221,7 +201,7 @@ class EditThreshold(baseclass):
             return
         # Left Image (1) Right Image (2)
         cvImg1, cvImg2 = self.sprayCard.images_processed()
-        self.ui.splitCardWidget.updateSprayCardView(cvImg1, cvImg2)
+        self.ui.splitCardWidget.updateSprayCardView(cvImg1, cvImg2, self.fit)
         self.ui.labelGrayscaleThresholdCalculated.clear()
         if self.sprayCard.threshold_type == cfg.THRESHOLD_TYPE_GRAYSCALE:
             if (
@@ -232,7 +212,6 @@ class EditThreshold(baseclass):
                     "Calculated = "
                     + str(int(self.sprayCard.threshold_grayscale_calculated))
                 )
-
     def _restore_defaults(self):
         sc = self.sprayCard
         if sc.threshold_type == cfg.THRESHOLD_TYPE_GRAYSCALE:
@@ -348,6 +327,7 @@ class EditThreshold(baseclass):
                             bandpass=sc.threshold_color_brightness_pass,
                         )
                         # Set Additional Options
+                        card.flag_max_stain_limit_reached = sc.flag_max_stain_limit_reached
                         card.watershed = sc.watershed
                         card.min_stain_area_px = sc.min_stain_area_px
                         card.stain_approximation_method = sc.stain_approximation_method
@@ -379,4 +359,56 @@ class EditThreshold(baseclass):
             cfg.set_min_stain_area_px(sc.min_stain_area_px)
             cfg.set_stain_approximation_method(sc.stain_approximation_method)
         # Notify requestor
+        super().accept()
+
+
+Ui_Form_2, baseclass_2 = uic.loadUiType(
+    os.path.join(os.getcwd(), "resources", "processOptionsAdvanced.ui")
+)
+
+class ProcessOptionsAdvanced(baseclass_2):
+    def __init__(self, sprayCard: SprayCard, parent=None):
+        super().__init__(parent=parent)
+        self.ui = Ui_Form_2()
+        self.ui.setupUi(self)
+        
+        self.sprayCard = sprayCard
+        
+        # Max stain count
+        self.le_max: QLineEdit = self.ui.lineEditMaxStains
+        self.le_max.setText(str(cfg.get_max_stain_count()))
+        
+        # Populate Watershed
+        self.cb_watershed: QCheckBox = self.ui.checkBoxWatershed
+        self.cb_watershed.setCheckState(
+            Qt.CheckState.Checked
+            if self.sprayCard.watershed
+            else Qt.CheckState.Unchecked
+        )
+
+        # Populate Stain Approx Method
+        self.cb_approx: QComboBox = self.ui.comboBoxApproximationMethod
+        self.cb_approx.addItems(cfg.STAIN_APPROXIMATION_METHODS)
+        self.cb_approx.setCurrentText(
+            self.sprayCard.stain_approximation_method
+        )
+
+        # Populate Min Stain Size
+        self.sb_min: QSpinBox = self.ui.spinBoxMinSize
+        self.sb_min.setValue(self.sprayCard.min_stain_area_px)
+        
+        self.show()
+        
+    def accept(self):
+        try:
+            int(self.le_max.text())
+        except:
+            msg = QMessageBox.information(self, "Value Error", "Max Stain Count must be an integer")
+            msg.exec()
+            if msg == QMessageBox.StandardButton.Ok:
+                return
+        cfg.set_max_stain_count(self.le_max.text())
+        self.sprayCard.watershed = self.cb_watershed.isChecked()
+        self.sprayCard.min_stain_area_px = self.sb_min.value()
+        self.sprayCard.stain_approximation_method = self.cb_approx.currentText()
         super().accept()

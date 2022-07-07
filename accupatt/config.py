@@ -850,6 +850,16 @@ def get_stain_approximation_method() -> str:
 def set_stain_approximation_method(value: str):
     QSettings().setValue(_STAIN_APPROXIMATION_METHOD, value)
 
+_MAX_STAIN_COUNT = "max_stain_count"
+MAX_STAIN_COUNT = 2000
+
+def get_max_stain_count() -> int:
+    return QSettings().value(
+        _MAX_STAIN_COUNT, defaultValue=MAX_STAIN_COUNT, type=int
+    )
+    
+def set_max_stain_count(value: int):
+    QSettings().setValue(_MAX_STAIN_COUNT, value)
 
 # SprayCard Processed Image Colors
 
