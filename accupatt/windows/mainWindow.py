@@ -478,7 +478,7 @@ class MainWindow(baseclass):
     @pyqtSlot(bool)
     def toggleStringCrosshair(self, checked: bool):
         cfg.set_string_plot_average_swath_box(checked)
-        self.stringWidget._updatePlots(composites=True)
+        self.stringWidget.updatePlots(composites=True)
 
     @pyqtSlot(QAction)
     def toggleStringSimView(self, action: QAction):
@@ -487,7 +487,7 @@ class MainWindow(baseclass):
         else:
             view = cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL
         cfg.set_string_simulation_view_window(view)
-        self.stringWidget._updatePlots(simulations=True)
+        self.stringWidget.updatePlots(simulations=True)
 
     """
     Card Plot Options
@@ -496,27 +496,27 @@ class MainWindow(baseclass):
     @pyqtSlot(bool)
     def toggleCardCrosshair(self, checked: bool):
         cfg.set_card_plot_average_swath_box(checked)
-        self.cardWidget._updatePlots(composites=True)
+        self.cardWidget.updatePlots(composites=True)
 
     @pyqtSlot(bool)
     def toggleCardColorizePass(self, checked: bool):
         cfg.set_card_plot_colorize_pass(checked)
-        self.cardWidget._updatePlots(individuals=True)
+        self.cardWidget.updatePlots(individuals=True)
 
     @pyqtSlot(bool)
     def toggleCardColorizeAverage(self, checked: bool):
         cfg.set_card_plot_colorize_average(checked)
-        self.cardWidget._updatePlots(composites=True)
+        self.cardWidget.updatePlots(composites=True)
 
     @pyqtSlot(bool)
     def toggleCardColorizeSimulations(self, checked: bool):
         cfg.set_card_plot_colorize_simulations(checked)
-        self.cardWidget._updatePlots(simulations=True)
+        self.cardWidget.updatePlots(simulations=True)
 
     @pyqtSlot(bool)
     def toggleCardColorizeInterpolate(self, checked: bool):
         cfg.set_card_plot_colorize_interpolate(checked)
-        self.cardWidget._updatePlots(
+        self.cardWidget.updatePlots(
             individuals=True, composites=True, simulations=True
         )
 
@@ -527,7 +527,7 @@ class MainWindow(baseclass):
         else:
             view = cfg.CARD_SIMULATINO_VIEW_WINDOW_ALL
         cfg.set_card_simulation_view_window(view)
-        self.cardWidget._updatePlots(simulations=True)
+        self.cardWidget.updatePlots(simulations=True)
 
     @pyqtSlot()
     def resetDefaults(self):
