@@ -8,6 +8,7 @@ import cv2
 import imutils
 from skimage.color import label2rgb
 from skimage.feature import peak_local_max
+from skimage.filters import sobel
 from skimage.measure import find_contours, label as sklabel, regionprops
 from skimage.segmentation import watershed, clear_border
 from scipy import ndimage
@@ -386,78 +387,60 @@ class SprayCardImageProcessor:
     def process_stains(self):
         sc = self.sprayCard
         image_t = self.img_thresh
-        pre = time.perf_counter()
         if self.sprayCard.watershed:
             # Generate markers as local maxima of distance to background
             distance = cv2.distanceTransform(image_t, cv2.DIST_L2, cv2.DIST_MASK_PRECISE)
-            coords = peak_local_max(distance, min_distance=10, labels=image_t)
+            coords = peak_local_max(distance, min_distance=4, threshold_abs=0, threshold_rel=0, labels=image_t)
             mask = np.zeros(distance.shape, dtype=bool)
             mask[tuple(coords.T)] = True
             markers, _ = ndimage.label(mask)
-            labels = watershed(-distance, markers, mask=image_t)
+            labels = watershed(-distance, markers, mask=image_t, watershed_line=True)
         else:
             labels = sklabel(image_t)
-        cnts = find_contours(labels, level=0)
-        #cnts = imutils.grab_contours(cnts)
-        cnts_cv = []
-        for c in cnts:
-            c_cv = []
+        # Iterate over each generated label
+        for r in regionprops(labels):
+            # Skip background
+            if r.label==0:
+                continue
+            # Take local region (bbox) binary image and get the contour of current label
+            img_binary_padded = np.pad(r.image, 1, mode="constant", constant_values=False)
+            c = find_contours(img_binary_padded, fully_connected="high", positive_orientation="high")[0]
+            # Get bbox vals for offsetting local region
+            x1, y1, x2, y2 = r.bbox
+            # Convert to cv2 image array, applying offsets (-1 for padding above)
+            c_ = []
             for pt in c:
-                intify = [int(pt[1]), int(pt[0])]
-                c_cv.append(intify)
-            cnts_cv.append(np.array(c_cv).astype(int))
-        print(f"contour diff: {(labels).max} -> {len(cnts_cv)}")
-        cnts = cnts_cv
-        post = time.perf_counter()
-        print(f"new_labeling in {post-pre:.4f} sec")
-        # Iterate over labels, saving as categorized contours
-        pre = time.perf_counter()
-        tic = 0.0
-        for i, c in enumerate(cnts):
-            #if i == 0:
-            #    continue
-            # log to stain list
-            x, y, w, h = cv2.boundingRect(c)
-            area = cv2.contourArea(c) # Need to update for approximations
-            is_too_small = area < sc.min_stain_area_px
-            #print(f"x={x}, y={y}, w={w}, h={h}, iw={image_t.shape[1]-1}, ih={image_t.shape[0]-1}")
+                c_.append([int(pt[1]+y1-1), int(pt[0]+x1-1)])
+            c = np.array(c_).astype(int)
+            # Check for mimimum area
+            is_too_small = r.area<sc.min_stain_area_px
+            # Check if touching edge
             is_edge = (
                 True
-                if x <= 0
-                or y <= 0
-                or (x + w) >= image_t.shape[1] - 1
-                or (y + h) >= image_t.shape[0] - 1
+                if x1 <= 0
+                or y1 <= 0
+                or x2 >= image_t.shape[0] - 1
+                or y2 >= image_t.shape[1] - 1
                 else False
             )
+            # Valid unless otherwise declared
             is_include = not is_too_small and not is_edge
-            sc.stains.append({"index":i, 
+            # Add it to the stains list for later use
+            sc.stains.append({"index":r.label, 
                               "contour":c, 
-                              "area":cv2.contourArea(c), 
+                              "area":r.area, 
                               "is_too_small":is_too_small,
                               "is_edge":is_edge,
                               "is_include":is_include})
-        post = time.perf_counter()
-        print(f"new_find_contours_sum in {tic:.4f} sec")
-        print(f"new_contourizing in {post-pre:.4f} sec")
 
     def get_overlay_image(self):
         sc = self.sprayCard
         img = self.img_src
         cv2.drawContours(img, 
-                         [stain["contour"] for stain in sc.stains if stain["is_too_small"]],
-                         -1,
-                         cfg.COLOR_STAIN_OUTLINE,
-                         -1)
-        cv2.drawContours(img, 
-                         [stain["contour"] for stain in sc.stains if stain["is_edge"]],
-                         -1,
-                         cfg.COLOR_STAIN_OUTLINE,
-                         -1)
-        cv2.drawContours(img, 
                          [stain["contour"] for stain in sc.stains if stain["is_include"]],
                          -1,
                          cfg.COLOR_STAIN_OUTLINE,
-                         -1)
+                         1)
         return img
     
     def get_mask_image(self):

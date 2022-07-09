@@ -863,10 +863,10 @@ def set_max_stain_count(value: int):
 
 # SprayCard Processed Image Colors
 
-COLOR_STAIN_OUTLINE = (138, 43, 226)  # Red-Pink
-COLOR_STAIN_FILL_ALL = (0, 0, 255)  # Red
+COLOR_STAIN_OUTLINE = (226, 43, 138)  # Red-Pink
+COLOR_STAIN_FILL_ALL = (255, 0, 0)  # Red
 COLOR_STAIN_FILL_EDGE = (238, 130, 238)  # Violet
-COLOR_STAIN_FILL_VALID = (255, 0, 0)  # Blue
+COLOR_STAIN_FILL_VALID = (0, 0, 255)  # Blue
 
 # SprayCard Spread Factors
 
