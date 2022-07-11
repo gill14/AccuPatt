@@ -25,7 +25,6 @@ class PassDataCard(PassDataBase):
                 and card.include_in_composite
                 and card.location is not None
                 and card.location_units is not None
-                and any(s["is_include"] for s in card.stains)
             ],
             key=lambda x: x.location,
         )
@@ -134,15 +133,21 @@ class PassDataCard(PassDataBase):
             # Interpolate so that fill-between looks good
             locs_i = np.linspace(d["loc"].iloc[0], d["loc"].iloc[-1], num=1000)
             cov_i = np.interp(locs_i, d["loc"], d["cov"])
+            # Handle shading for blank active cards
+            d = d.set_index("loc")
+            d.sort_values(by="loc", axis=0, inplace=True)
+            d["dv01"].interpolate(method="slinear", fill_value="extrapolate", inplace=True)
+            d["dv05"].interpolate(method="slinear", fill_value="extrapolate", inplace=True)
+            d.reset_index(inplace=True)
             # Colorize
             if colorize:
                 # Get a np array of dsc's calculated for each interpolated loc
                 kind = (
                     "linear" if cfg.get_card_plot_colorize_interpolate() else "nearest"
                 )
-                interpolator = interpolate.interp1d(d["loc"], d["dv01"], kind=kind)
+                interpolator = interpolate.interp1d(d["loc"], d["dv01"], kind=kind, fill_value="extrapolate")
                 dv01_i = interpolator(locs_i)
-                interpolator = interpolate.interp1d(d["loc"], d["dv05"], kind=kind)
+                interpolator = interpolate.interp1d(d["loc"], d["dv05"], kind=kind, fill_value="extrapolate")
                 dv05_i = interpolator(locs_i)
                 dsc_i = np.array(
                     [

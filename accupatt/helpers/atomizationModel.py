@@ -8,6 +8,8 @@ using hard-coded data herein. Adapted by Matt Gill from previous work by Bradley
 
 import math
 
+import numpy as np
+
 
 class AtomizationModel:
     """
@@ -3476,6 +3478,8 @@ class AtomizationModel:
         if dv05 == None:
             dv05 = self.dv05()
         if dv01 <= 0 or dv05 <= 0:
+            return ""
+        if np.isnan(dv01) or np.isnan(dv05):
             return ""
         for category in r.keys():
             if r[category]["DV01"][0] <= dv01 <= r[category]["DV01"][1]:

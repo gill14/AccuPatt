@@ -804,7 +804,7 @@ def set_threshold_hsb_brightness_pass(value: bool):
 # SprayCard Image Processing - Options
 
 _WATERSHED = "watershed"
-WATERSHED__DEFAULT = False
+WATERSHED__DEFAULT = True
 
 
 def get_watershed() -> bool:
@@ -852,7 +852,7 @@ def set_stain_approximation_method(value: str):
     QSettings().setValue(_STAIN_APPROXIMATION_METHOD, value)
 
 _MAX_STAIN_COUNT = "max_stain_count"
-MAX_STAIN_COUNT = 2000
+MAX_STAIN_COUNT = 5000
 
 def get_max_stain_count() -> int:
     return QSettings().value(

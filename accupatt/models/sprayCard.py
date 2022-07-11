@@ -218,9 +218,9 @@ class SprayCardStats:
     def set_volumetric_stats(self, drop_dia_um=None, drop_vol_um3=None):
         # Protect agains empty array
         if not any([s["is_include"] for s in self.sprayCard.stains]):
-            self.dv01 = 0
-            self.dv05 = 0
-            self.dv09 = 0
+            self.dv01 = np.nan
+            self.dv05 = np.nan
+            self.dv09 = np.nan
             return
         # dd and dv lists normally none, but will have values already for composite card calcs
         if drop_dia_um is None or drop_vol_um3 is None:

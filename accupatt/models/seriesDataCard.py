@@ -33,8 +33,13 @@ class SeriesDataCard(SeriesDataBase):
             if dd.empty:
                 dd = d
             else:
+                _d = d.set_index("loc")
+                _d.sort_values(by="loc", axis=0, inplace=True)
+                _d["dv01"].interpolate(method="slinear", fill_value="extrapolate", inplace=True)
+                _d["dv05"].interpolate(method="slinear", fill_value="extrapolate", inplace=True)
+                
                 dd = dd.merge(
-                    d.set_index("loc"),
+                    _d,
                     on="loc",
                     how="outer",
                     suffixes=[f"_{lastPassName}", f"_{p.name}"],
@@ -45,7 +50,9 @@ class SeriesDataCard(SeriesDataBase):
         dd.set_index("loc", inplace=True)
         dd.sort_values(by="loc", axis=0, inplace=True)
         dd.interpolate(method="slinear", limit_area="inside", inplace=True)
-        dd.fillna(0, inplace=True)
+        for col in dd.columns:
+            if "cov" in col:
+                dd[col].fillna(0, inplace=True)
         dd["cov_avg"] = dd.loc[:, dd.columns.str.contains("cov")].mean(axis="columns")
         dd["dv01_avg"] = dd.loc[:, dd.columns.str.contains("dv01")].mean(axis="columns")
         dd["dv05_avg"] = dd.loc[:, dd.columns.str.contains("dv05")].mean(axis="columns")
