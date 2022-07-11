@@ -25,7 +25,7 @@ class PassDataCard(PassDataBase):
                 and card.include_in_composite
                 and card.location is not None
                 and card.location_units is not None
-                and len(card.stain_areas_valid_px2) > 0
+                and any(s["is_include"] for s in card.stains)
             ],
             key=lambda x: x.location,
         )

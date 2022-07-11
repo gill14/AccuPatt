@@ -75,7 +75,7 @@ class TabWidgetCards(TabWidgetBase):
             prog.setLabelText(
                 f"Processing {card_identifier_list[i]} and caching droplet statistics"
             )
-            card.images_processed()
+            card.process_image()
             card.stats.set_volumetric_stats()
             if prog.wasCanceled():
                 return

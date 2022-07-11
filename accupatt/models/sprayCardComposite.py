@@ -47,9 +47,9 @@ class SprayCardComposite(SprayCard):
             dd, dv = card.stats.get_droplet_diameters_and_volumes()
             self.drop_dia_um.extend(dd)
             self.drop_vol_um3.extend(dv)
-            self.stain_areas_all_px2.extend(card.stain_areas_all_px2)
-            self.stain_areas_valid_px2.extend(card.stain_areas_valid_px2)
+            self.stains.extend(card.stains)
         # Sort the dia and vol lists before computing dv's
+        self.stains.sort(key=lambda s: s["area"])
         self.drop_dia_um.sort()
         self.drop_vol_um3.sort()
         # Set the dv vals in composite stats object for future use
@@ -70,9 +70,9 @@ class SprayCardComposite(SprayCard):
         binned_cov = [0 for b in bins]
         binned_quant = [0 for b in bins]
         # Abort if no stains
-        if len(self.stain_areas_valid_px2) > 0:
+        if any([s["is_include"] for s in self.stains]):
             # Convenience accessors
-            area_list = self.drop_vol_um3
+            area_list = [s["area"] for s in self.stains if s["is_include"]]
             sum_area = sum(area_list)
             dia_list = self.drop_dia_um
             # Get an array of bins each drop dia belongs in (1-based)
@@ -121,7 +121,7 @@ class SprayCardComposite(SprayCard):
         for row in range(tableWidget.rowCount()):
             tableWidget.item(row, 1).setText("-")
         # If no drops, return
-        if len(self.stain_areas_valid_px2) < 1:
+        if not any(s["is_include"] for s in self.stains):
             return
         tableWidget.item(0, 1).setText(self.stats.get_dsc())
         tableWidget.item(1, 1).setText(self.stats.get_dv01(text=True))

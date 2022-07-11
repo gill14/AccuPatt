@@ -200,7 +200,7 @@ class EditThreshold(baseclass):
         if not self.sprayCard.has_image:
             return
         # Left Image (1) Right Image (2)
-        cvImg1, cvImg2 = self.sprayCard.images_processed()
+        cvImg1, cvImg2 = self.sprayCard.process_image(overlay=True, mask=True)
         self.ui.splitCardWidget.updateSprayCardView(cvImg1, cvImg2, self.fit)
         self.ui.labelGrayscaleThresholdCalculated.clear()
         if self.sprayCard.threshold_type == cfg.THRESHOLD_TYPE_GRAYSCALE:

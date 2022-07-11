@@ -205,7 +205,7 @@ class CardManager(baseclass):
                 self.ui.buttonProcessOptions.setEnabled(True)
                 self.ui.buttonSpreadFactors.setEnabled(True)
                 imageWidget0.updateSprayCardView(selected_card.image_original())
-                cvImg1, cvImg2 = selected_card.images_processed()
+                cvImg1, cvImg2 = selected_card.process_image(overlay=True, mask=True)
                 imageWidget1.updateSprayCardView(cvImg1)
                 imageWidget2.updateSprayCardView(cvImg2)
                 return

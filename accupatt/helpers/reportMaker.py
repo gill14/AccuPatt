@@ -424,9 +424,9 @@ class ReportMaker:
 
     def _get_image(self, card: SprayCard, image_type: str):
         if image_type == cfg.REPORT_CARD_IMAGE_TYPE_OUTLINE:
-            im_cv = card.images_processed()[0]
+            im_cv = card.process_image(overlay=True)
         elif image_type == cfg.REPORT_CARD_IMAGE_TYPE_MASK:
-            im_cv = card.images_processed()[1]
+            im_cv = card.process_image(mask=True)
         else:
             im_cv = card.image_original()
         # Change Color Space to RGB

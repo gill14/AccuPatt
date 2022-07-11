@@ -1,16 +1,13 @@
 from dataclasses import dataclass
 import math
-import time
 import uuid
 
 import accupatt.config as cfg
 import cv2
-import imutils
-from skimage.color import label2rgb
+from skimage.draw import ellipse_perimeter
 from skimage.feature import peak_local_max
-from skimage.filters import sobel
 from skimage.measure import find_contours, label as sklabel, regionprops
-from skimage.segmentation import watershed, clear_border
+from skimage.segmentation import watershed
 from scipy import ndimage
 import numpy as np
 from accupatt.helpers.atomizationModel import AtomizationModel
@@ -53,8 +50,6 @@ class SprayCard:
         # Initialize stain stats
         self.flag_max_stain_limit_reached = False
         self.area_px2 = 0.0
-        self.stain_areas_all_px2 = []
-        self.stain_areas_valid_px2 = []
         self.stains = []
         self.stats = SprayCardStats(sprayCard=self)
         # Flag for currency
@@ -65,13 +60,17 @@ class SprayCard:
     def image_original(self):
         return sprayCardImageFileHandler.read_image_from_file(self)
 
-    def images_processed(self):
-        # Returns processed images as tuple (overlay on og, binary mask)
-        # And Populates Stain Area Lists, card area
+    def process_image(self, overlay=False, mask=False):
         self.current = True
         scip = SprayCardImageProcessor(sprayCard=self)
         self.threshold_grayscale_calculated = scip.threshold_grayscale_calculated
-        return scip.draw_and_log_stains()
+        scip.process_stains()
+        if overlay and mask:
+            return scip.get_overlay_image(), scip.get_mask_image()
+        elif overlay:
+            return scip.get_overlay_image()
+        elif mask:
+            return scip.get_mask_image()
 
     def save_image_to_file(self, image):
         return sprayCardImageFileHandler.save_image_to_file(self, image)
@@ -173,12 +172,13 @@ class SprayCardStats:
             return rs
 
     def get_percent_coverage(self, text=False):
+        stains = [s for s in self.sprayCard.stains if s["is_include"] or s["is_edge"]]
         # Protect from div/0 error or empty stain array
-        if self.sprayCard.area_px2 == 0 or len(self.sprayCard.stain_areas_all_px2) == 0:
+        if self.sprayCard.area_px2 == 0 or len(stains) == 0:
             return 0
         # Calculate coverage as percent of pixel area
         cov = (
-            sum(self.sprayCard.stain_areas_all_px2) / self.sprayCard.area_px2
+            sum([stain["area"] for stain in stains]) / self.sprayCard.area_px2
         ) * 100.0
         if text:
             return f"{cov:.2f}%"
@@ -186,10 +186,11 @@ class SprayCardStats:
             return cov
 
     def get_number_of_stains(self, text=False):
+        l = len([s for s in self.sprayCard.stains if s["is_include"]])
         if text:
-            return str(len(self.sprayCard.stain_areas_valid_px2))
+            return str(l)
         else:
-            return len(self.sprayCard.stain_areas_valid_px2)
+            return l
 
     def get_card_area_in2(self, text=False):
         area_in2 = self._px2_to_in2(self.sprayCard.area_px2)
@@ -199,7 +200,7 @@ class SprayCardStats:
             return area_in2
 
     def get_stains_per_in2(self, text=False):
-        if self.sprayCard.area_px2 == 0 or self.sprayCard.area_px2 == 0:
+        if self.sprayCard.area_px2 == 0:
             return 0
         spsi = round(self.get_number_of_stains() / self.get_card_area_in2())
         if text:
@@ -216,7 +217,7 @@ class SprayCardStats:
 
     def set_volumetric_stats(self, drop_dia_um=None, drop_vol_um3=None):
         # Protect agains empty array
-        if len(self.sprayCard.stain_areas_valid_px2) == 0:
+        if not any([s["is_include"] for s in self.sprayCard.stains]):
             self.dv01 = 0
             self.dv05 = 0
             self.dv09 = 0
@@ -245,16 +246,17 @@ class SprayCardStats:
     # Publicly accessible getter for dd and dv lists, only public so can be used in Composite Card calculations
 
     def get_droplet_diameters_and_volumes(self) -> tuple[list[float], list[float]]:
+        stains = [s for s in self.sprayCard.stains if s["is_include"]]
         # Protect agains empty array
-        if len(self.sprayCard.stain_areas_valid_px2) == 0:
+        if not stains:
             return [], []
         drop_dia_um = []
         drop_vol_um3 = []
         # Sort areas into ascending order of size
-        self.sprayCard.stain_areas_valid_px2.sort()
-        for area in self.sprayCard.stain_areas_valid_px2:
+        stains.sort(key=lambda s: s["area"])
+        for stain in stains:
             # Convert px2 to um2
-            area_um2 = self._px2_to_um2(area)
+            area_um2 = self._px2_to_um2(stain["area"])
             # Calculate stain diameter assuming circular stain
             dia_um = math.sqrt((4.0 * area_um2) / math.pi)
             # Apply Spread Factors to get originating drop diameter
@@ -341,6 +343,7 @@ class sprayCardImageFileHandler:
 
 
 class SprayCardImageProcessor:
+    
     def __init__(self, sprayCard):
         self.sprayCard: SprayCard = sprayCard
         self.threshold_grayscale = self.sprayCard.threshold_grayscale
@@ -350,39 +353,7 @@ class SprayCardImageProcessor:
         )
         self.sprayCard.area_px2 = self.img_src.shape[0] * self.img_src.shape[1]
         # Clear stain lists
-        self.sprayCard.stain_areas_all_px2 = []
-        self.sprayCard.stain_areas_valid_px2 = []
-
-    def draw_and_log_stains(self):
-        # img_src = self.sprayCard.image_original()
-        # self.img_thresh = self._image_threshold(img=img_src)
-        # Find all contours (stains)
-        contours, _ = cv2.findContours(
-            self.img_thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
-        )
-        self.sprayCard.flag_max_stain_limit_reached = False
-        if len(contours) > cfg.get_max_stain_count():
-            self.sprayCard.flag_max_stain_limit_reached = True
-            img = np.zeros((self.img_src.shape[0], self.img_src.shape[1], 3), np.uint8)
-            img[:] = (0, 0, 255)
-            return self.img_src, img
-            
-        # Watershed Segmentation
-        if self.sprayCard.watershed:
-            # Find all contours via watershed
-            contours = self._image_watershed(
-                self.img_src.copy(), self.img_thresh.copy(), contours
-            )
-        # Get src overlay image
-        img_overlay = self._image_stains(
-            img=self.img_src, contours=contours, fillShapes=False
-        )
-        # Get Binary image
-        img = np.zeros((self.img_src.shape[0], self.img_src.shape[1], 3), np.uint8)
-        img[:] = (255, 255, 255)
-        img_binary = self._image_stains(img=img, contours=contours, fillShapes=True)
-
-        return img_overlay, img_binary
+        self.sprayCard.stains = []
 
     def process_stains(self):
         sc = self.sprayCard
@@ -402,18 +373,10 @@ class SprayCardImageProcessor:
             # Skip background
             if r.label==0:
                 continue
-            # Take local region (bbox) binary image and get the contour of current label
-            img_binary_padded = np.pad(r.image, 1, mode="constant", constant_values=False)
-            c = find_contours(img_binary_padded, fully_connected="high", positive_orientation="high")[0]
-            # Get bbox vals for offsetting local region
-            x1, y1, x2, y2 = r.bbox
-            # Convert to cv2 image array, applying offsets (-1 for padding above)
-            c_ = []
-            for pt in c:
-                c_.append([int(pt[1]+y1-1), int(pt[0]+x1-1)])
-            c = np.array(c_).astype(int)
             # Check for mimimum area
             is_too_small = r.area<sc.min_stain_area_px
+            # Get bbox vals for offsetting local region
+            x1, y1, x2, y2 = r.bbox
             # Check if touching edge
             is_edge = (
                 True
@@ -425,10 +388,17 @@ class SprayCardImageProcessor:
             )
             # Valid unless otherwise declared
             is_include = not is_too_small and not is_edge
+            c, area = self._approximate_stain(r, image_t.shape)
+            # Convert to cv2 image array, applying offsets (-1 for padding above)
+            c_ = []
+            for pt in c:
+                c_.append([int(pt[1]), int(pt[0])])
+            c = np.array(c_).astype(int)
+            
             # Add it to the stains list for later use
             sc.stains.append({"index":r.label, 
                               "contour":c, 
-                              "area":r.area, 
+                              "area":area, 
                               "is_too_small":is_too_small,
                               "is_edge":is_edge,
                               "is_include":is_include})
@@ -563,200 +533,42 @@ class SprayCardImageProcessor:
             mask_bri = cv2.bitwise_or(mask_bri_low, mask_bri_high)
         # Merge layers and return
         return 0, cv2.bitwise_and(cv2.bitwise_and(mask_hue, mask_sat), mask_bri)
+
+    def _approximate_stain(self, regionprop, image_shape):
+        x, y = regionprop.centroid
+        x = int(x)
+        y = int(y)
+        method = self.sprayCard.stain_approximation_method
+        if method in [cfg.STAIN_APPROXIMATION_ELLIPSE, cfg.STAIN_APPROXIMATION_MIN_CIRCLE]:
+            r_radius = int(regionprop.minor_axis_length/2)
+            c_radius = int(regionprop.major_axis_length/2)
+            if method == cfg.STAIN_APPROXIMATION_MIN_CIRCLE:
+                radius_max = max(r_radius, c_radius)
+                r_radius = radius_max
+                c_radius = radius_max
+            angle = (2*np.pi)-regionprop.orientation # To account for regionprops(ccw) to ellipse_perimeter(cw)
+            if x<1 or y <1 or r_radius<1 or c_radius<1:
+                return self._get_raw_stain(regionprop)
+            rr, cc = ellipse_perimeter(x, y, c_radius, r_radius, shape=image_shape, orientation=angle)
+            sorted_by_angle_to_centroid = np.argsort(np.arctan2(rr - np.mean(rr), cc - np.mean(cc)))
+            rr = rr[sorted_by_angle_to_centroid]
+            cc = cc[sorted_by_angle_to_centroid]
+            return np.array((rr,cc)).T, np.pi * r_radius * c_radius
+        else:
+            # No approximation or convex hull
+            return self._get_raw_stain(regionprop)
     
-    def _image_watershed(self, img_src, img_thresh, contours_original):
-        thresh = img_thresh
-        # noise removal
-        kernel = np.ones((3, 3), np.uint8)
-        opening = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel, iterations=2)
-        # sure background area
-        sure_bg = cv2.dilate(opening, kernel, iterations=3)
-        # Finding sure foreground area
-        dist_transform = cv2.distanceTransform(opening, cv2.DIST_L2, 5)
-        _, sure_fg = cv2.threshold(dist_transform, 0.2 * dist_transform.max(), 255, 0)
-        # Finding unknown region
-        sure_fg = np.uint8(sure_fg)
-        unknown = cv2.subtract(sure_bg, sure_fg)
-        # Marker labelling
-        _, markers = cv2.connectedComponents(sure_fg)
-        # Add one to all labels so that sure background is not 0, but 1
-        markers = markers + 1
-        # Now, mark the region of unknown with zero
-        markers[unknown == 255] = 0
-        # Do watershed segmentation, then find the resultant contours
-        img_thresh_ws = cv2.watershed(img_src, markers).astype(np.uint8)
-        _, img_thresh_ws = cv2.threshold(
-            img_thresh_ws, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU
-        )
-        contours, hierarchy = cv2.findContours(
-            img_thresh_ws, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
-        )
-        # Loop over ws contours to exclude parent contours and apply fill
-        contours_include = []
-        for i, c in enumerate(contours):
-            # If contour has no children (inner contours) draw and log it
-            if hierarchy[0][i][2] == -1:
-                cv2.drawContours(img_thresh_ws, contours, i, 255, cv2.FILLED)
-                contours_include.append(c)
-        # Loop over original contours to see which need added to
-        # those found in contours_ws (typically the smaller ones)
-        for c in contours_original:
-            x, y, w, h = cv2.boundingRect(c)
-            breakout = False
-            # Loop over each pt in the bounding rect, if pt is in the contour, check if that pt
-            # is already painted on the img_thresh_ws...
-            # If so, skip it, breakout and continue outermost loop
-            for _x in range(x, x + w):
-                for _y in range(y, y + h):
-                    if (
-                        cv2.pointPolygonTest(c, [_x, _y], False) >= 0
-                        and img_thresh_ws[_y, _x] == 255
-                    ):
-                        breakout = True
-                        break
-                if breakout:
-                    break
-            if breakout:
-                continue
-            # Since c not already in contours_ws, add it
-            contours_include.append(c)
-
-        return contours_include
-
-    def _image_stains(self, img, contours, fillShapes=False):
-        # Card Size
-        self.sprayCard.area_px2 = img.shape[0] * img.shape[1]
-        # Clear stain lists
-        self.sprayCard.stain_areas_all_px2 = []
-        self.sprayCard.stain_areas_valid_px2 = []
-        # When !fillShapes (default), set thickness will outline contours on img_src using these colors
-        # When fillshapes, netagive thickness will fill contours on white image using these new colors
-        thickness = -1 if fillShapes else 1
-        color_stain_counted = (
-            cfg.COLOR_STAIN_FILL_VALID if fillShapes else cfg.COLOR_STAIN_OUTLINE
-        )
-        color_stain_edge = (
-            cfg.COLOR_STAIN_FILL_EDGE if fillShapes else cfg.COLOR_STAIN_OUTLINE
-        )
-        color_stain_not_counted = (
-            cfg.COLOR_STAIN_FILL_ALL if fillShapes else cfg.COLOR_STAIN_OUTLINE
-        )
-
-        # Image dims calc'd once to compare against:
-        max_stain_size = 0.90 * img.shape[0] * img.shape[1]
-        # Iterate thorugh each contour to find includables
-        contours_edge = []
-        contours_include = []
-        for c in contours:
-            # Determine if touching edge before morphing
-            x, y, w, h = cv2.boundingRect(c)
-            is_edge = (
-                True
-                if x <= 0
-                or y <= 0
-                or (x + w) >= img.shape[1] - 1
-                or (y + h) >= img.shape[0] - 1
-                else False
-            )
-
-            area = cv2.contourArea(c)
-            # If contour is below the min pixel size, don't count it anywhere
-            if area < self.sprayCard.min_stain_area_px:
-                continue
-            # If contour is whole card, don't count it anywhere
-            if area >= max_stain_size:
-                continue
-
-            # Ammend area based on chosen approximation option
-            if (
-                self.sprayCard.stain_approximation_method
-                == cfg.STAIN_APPROXIMATION_METHODS[0]
-            ):
-                area = cv2.contourArea(c)
-            elif (
-                self.sprayCard.stain_approximation_method
-                == cfg.STAIN_APPROXIMATION_METHODS[1]
-            ):
-                c = cv2.minEnclosingCircle(c)
-                (x, y), radius = c
-                center = (int(x), int(y))
-                area = np.pi * (radius**2)
-            elif (
-                self.sprayCard.stain_approximation_method
-                == cfg.STAIN_APPROXIMATION_METHODS[2]
-            ):
-                if len(c) >= 5:
-                    c = cv2.fitEllipse(c)
-                    (x, y), (MA, ma), angle = c
-                    area = np.pi * MA * ma / 4
-                else:
-                    area = cv2.contourArea(c)
-            elif (
-                self.sprayCard.stain_approximation_method
-                == cfg.STAIN_APPROXIMATION_METHODS[3]
-            ):
-                c = cv2.convexHull(c)
-                area = cv2.contourArea(c)
-            # add stain to layer 1, count for coverage
-            contours_edge.append(c)
-            self.sprayCard.stain_areas_all_px2.append(area)
-
-            # If contour touches edge, count it for coverage only
-            if is_edge:
-                continue
-
-            # add stain to layer 2, count for coverage and dd stats
-            contours_include.append(c)
-            self.sprayCard.stain_areas_valid_px2.append(area)
-
-        if len(contours_include) > 0:
-            # Draw edge (layer 1) and include (layer 2) based on type
-            if (
-                self.sprayCard.stain_approximation_method
-                == cfg.STAIN_APPROXIMATION_METHODS[1]
-            ):
-                for c in contours_edge:
-                    (x, y), radius = c
-                    center = (int(x), int(y))
-                    cv2.circle(img, center, int(radius), color_stain_edge, thickness)
-                for c in contours_include:
-                    (x, y), radius = c
-                    center = (int(x), int(y))
-                    cv2.circle(img, center, int(radius), color_stain_counted, thickness)
-            elif (
-                self.sprayCard.stain_approximation_method
-                == cfg.STAIN_APPROXIMATION_METHODS[2]
-            ):
-                for i, c in enumerate(contours_edge):
-                    if type(c) is tuple:
-                        cv2.ellipse(img, c, color_stain_edge, thickness)
-                    else:
-                        cv2.drawContours(
-                            img, contours_edge, i, color_stain_edge, thickness
-                        )
-                for i, c in enumerate(contours_include):
-                    if type(c) is tuple:
-                        cv2.ellipse(img, c, color_stain_counted, thickness)
-                    else:
-                        cv2.drawContours(
-                            img, contours_include, i, color_stain_counted, thickness
-                        )
-            else:
-                # Draw all contours
-                cv2.drawContours(
-                    img, contours, -1, color_stain_not_counted, thickness=thickness
-                )
-                # Draw edge contours overlay (for cov only)
-                cv2.drawContours(
-                    img, contours_edge, -1, color_stain_edge, thickness=thickness
-                )
-                # Draw record-worthy contour overlay (for cov and ds calcs)
-                cv2.drawContours(
-                    img, contours_include, -1, color_stain_counted, thickness=thickness
-                )
-                if fillShapes:
-                    cv2.drawContours(
-                        img, contours_include, -1, (255, 255, 255), thickness=1
-                    )
-
-        return img
+    def _get_raw_stain(self, regionprop):
+        x1, y1, x2, y2 = regionprop.bbox
+        if self.sprayCard.stain_approximation_method == cfg.STAIN_APPROXIMATION_CONVEX_HULL:
+            image = regionprop.image_convex
+            area = regionprop.area_convex
+        else:
+            image = regionprop.image
+            area = regionprop.area
+        # Take local region (bbox) binary image and get the contour of current label
+        img_binary_padded = np.pad(image, 1, mode="constant", constant_values=False)
+        c = find_contours(img_binary_padded, fully_connected="high", positive_orientation="high")[0]
+        c[:,0] += x1 -1
+        c[:,1] += y1 -1
+        return c, area
