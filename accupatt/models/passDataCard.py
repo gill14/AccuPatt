@@ -111,7 +111,6 @@ class PassDataCard(PassDataBase):
         self,
         mplWidget: MplWidget,
         loc_units,
-        colorize=False,
         mod=True,
         d=pd.DataFrame(),
     ):
@@ -140,36 +139,42 @@ class PassDataCard(PassDataBase):
             d["dv05"].interpolate(method="slinear", fill_value="extrapolate", inplace=True)
             d.reset_index(inplace=True)
             # Colorize
-            if colorize:
-                # Get a np array of dsc's calculated for each interpolated loc
-                kind = (
-                    "linear" if cfg.get_card_plot_colorize_interpolate() else "nearest"
-                )
-                interpolator = interpolate.interp1d(d["loc"], d["dv01"], kind=kind, fill_value="extrapolate")
-                dv01_i = interpolator(locs_i)
-                interpolator = interpolate.interp1d(d["loc"], d["dv05"], kind=kind, fill_value="extrapolate")
-                dv05_i = interpolator(locs_i)
-                dsc_i = np.array(
-                    [
-                        AtomizationModel().dsc(dv01=dv01, dv05=dv05)
-                        for (dv01, dv05) in zip(dv01_i, dv05_i)
-                    ]
-                )
-                # Plot the fill data using dsc-specified colors
-                categories = list(AtomizationModel.ref_nozzles)
-                colors = [
-                    AtomizationModel.ref_nozzles[category]["Color"]
-                    for category in categories
-                ]
-                for (category, color) in zip(categories, colors):
-                    ax.fill_between(
-                        locs_i,
-                        np.ma.masked_where(dsc_i != category, cov_i),
-                        color=color,
-                        alpha=0.7,
-                        label=category,
+            if cfg.get_card_plot_shading():
+                method = cfg.get_card_plot_shading_method()
+                if method==cfg.CARD_PLOT_SHADING_METHOD_DSC:
+                    # Get a np array of dsc's calculated for each interpolated loc
+                    kind = (
+                        "linear" if cfg.get_card_plot_shading_interpolate() else "nearest"
                     )
-                ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+                    interpolator = interpolate.interp1d(d["loc"], d["dv01"], kind=kind, fill_value="extrapolate")
+                    dv01_i = interpolator(locs_i)
+                    interpolator = interpolate.interp1d(d["loc"], d["dv05"], kind=kind, fill_value="extrapolate")
+                    dv05_i = interpolator(locs_i)
+                    dsc_i = np.array(
+                        [
+                            AtomizationModel().dsc(dv01=dv01, dv05=dv05)
+                            for (dv01, dv05) in zip(dv01_i, dv05_i)
+                        ]
+                    )
+                    # Plot the fill data using dsc-specified colors
+                    categories = list(AtomizationModel.ref_nozzles)
+                    colors = [
+                        AtomizationModel.ref_nozzles[category]["Color"]
+                        for category in categories
+                    ]
+                    for (category, color) in zip(categories, colors):
+                        ax.fill_between(
+                            locs_i,
+                            np.ma.masked_where(dsc_i != category, cov_i),
+                            color=color,
+                            alpha=0.7,
+                            label=category,
+                        )
+                    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+                elif method==cfg.CARD_PLOT_SHADING_METHOD_DEPOSITION_AVERAGE:
+                    pass
+                elif method==cfg.CARD_PLOT_SHADING_METHOD_DEPOSITION_TARGET:
+                    pass
             else:
                 ax.fill_between(locs_i, 0, cov_i, alpha=0.7)
             # Plot base coverage without dsc fill

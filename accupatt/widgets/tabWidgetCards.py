@@ -186,7 +186,6 @@ class TabWidgetCards(TabWidgetBase):
         passData.cards.plotCoverage(
             mplWidget=self.plotWidgetPass,
             loc_units=self.seriesData.info.swath_units,
-            colorize=cfg.get_card_plot_colorize_pass(),
             mod=False,
         )
         model = CardStatTableModel()
@@ -206,7 +205,6 @@ class TabWidgetCards(TabWidgetBase):
         self.seriesData.cards.plotOverlay(mplWidget=self.plotWidgetOverlay)
         self.seriesData.cards.plotAverage(
             mplWidget=self.plotWidgetAverage,
-            colorize=cfg.get_card_plot_colorize_average(),
         )
 
     def simulations_triggered(self):

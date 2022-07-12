@@ -88,7 +88,7 @@ class SeriesDataCard(SeriesDataBase):
         # Draw the plot regardless if passes were plotted to it
         mplWidget.canvas.draw()
 
-    def plotAverage(self, mplWidget: MplWidget, colorize: bool):
+    def plotAverage(self, mplWidget: MplWidget):
         # Setup and clear the plotter
         self._config_mpl_plotter(mplWidget)
 
@@ -105,29 +105,33 @@ class SeriesDataCard(SeriesDataBase):
             [self.swath_units for i in range(len(avg.index))], dtype=str
         )
         avgPass.plotCoverage(
-            mplWidget=mplWidget, loc_units=self.swath_units, colorize=colorize, d=avg
+            mplWidget=mplWidget, loc_units=self.swath_units, d=avg
         )
-        if cfg.get_card_plot_average_swath_box():
-            # Find average deposition inside swath width
-            swath_width = self.swath_adjusted
-            a_c = avg[
-                (avg["loc"] >= -swath_width / 2) & (avg["loc"] <= swath_width / 2)
-            ]
-            a_c_mean = a_c["cov"].mean(axis="rows")
-            mplWidget.canvas.ax.plot(
-                [-swath_width / 2, -swath_width / 2, swath_width / 2, swath_width / 2],
-                [0, a_c_mean / 2, a_c_mean / 2, 0],
-                color="black",
-                linewidth=1,
-                dashes=(3, 2),
-                label="Effective Swath",
-            )
-            if not colorize:
-                mplWidget.canvas.ax.legend()
-            # Must set ylim after plotting
-            mplWidget.canvas.ax.set_ylim(bottom=0, auto=None)
-            # Plot it
-            mplWidget.canvas.draw()
+        if cfg.get_card_plot_average_dash_overlay():
+            method = cfg.get_card_plot_average_dash_overlay_method()
+            if method==cfg.DASH_OVERLAY_METHOD_ISHA:
+                # Find average deposition inside swath width
+                swath_width = self.swath_adjusted
+                a_c = avg[
+                    (avg["loc"] >= -swath_width / 2) & (avg["loc"] <= swath_width / 2)
+                ]
+                a_c_mean = a_c["cov"].mean(axis="rows")
+                mplWidget.canvas.ax.plot(
+                    [-swath_width / 2, -swath_width / 2, swath_width / 2, swath_width / 2],
+                    [0, a_c_mean / 2, a_c_mean / 2, 0],
+                    color="black",
+                    linewidth=1,
+                    dashes=(3, 2),
+                    label="Effective Swath",
+                )
+                if not cfg.get_card_plot_shading():
+                    mplWidget.canvas.ax.legend()
+                # Must set ylim after plotting
+                mplWidget.canvas.ax.set_ylim(bottom=0, auto=None)
+                # Plot it
+                mplWidget.canvas.draw()
+            elif method==cfg.DASH_OVERLAY_METHOD_AVERAGE:
+                pass
 
     # Overrides for superclass
 

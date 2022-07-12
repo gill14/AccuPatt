@@ -933,84 +933,93 @@ def set_spread_factor_equation(value: str):
 
 # SprayCard Plot Options
 
-_CARD_PLOT_AVERAGE_SWATH_BOX = "card_plot_average_swath_box"
-CARD_PLOT_AVERAGE_SWATH_BOX__DEFAULT = True
+_CARD_PLOT_Y_AXIS = "card_plot_y_axis"
+CARD_PLOT_Y_AXIS_COVERAGE = "coverage"
+CARD_PLOT_Y_AXIS_DEPOSITION = "deposition"
+CARD_PLOT_Y_AXIS__DEFAULT = CARD_PLOT_Y_AXIS_COVERAGE
 
-
-def get_card_plot_average_swath_box() -> bool:
+def get_card_plot_y_axis() -> str:
     return QSettings().value(
-        _CARD_PLOT_AVERAGE_SWATH_BOX,
-        defaultValue=CARD_PLOT_AVERAGE_SWATH_BOX__DEFAULT,
+        _CARD_PLOT_Y_AXIS,
+        defaultValue=CARD_PLOT_Y_AXIS__DEFAULT,
+        type=str
+    )
+    
+def set_card_plot_y_axis(value: str):
+    QSettings().setValue(_CARD_PLOT_Y_AXIS, value)
+    
+_CARD_PLOT_SHADING = "card_plot_shading"
+CARD_PLOT_SHADING__DEFAULT = True
+
+def get_card_plot_shading() -> bool:
+    return QSettings().value(
+        _CARD_PLOT_SHADING,
+        defaultValue=CARD_PLOT_SHADING__DEFAULT,
+        type=bool
+    )
+    
+def set_card_plot_shading(value: bool):
+    QSettings().setValue(_CARD_PLOT_SHADING, value)
+
+_CARD_PLOT_SHADING_METHOD = "card_plot_shading_method"
+CARD_PLOT_SHADING_METHOD_DSC = "DSC"
+CARD_PLOT_SHADING_METHOD_DEPOSITION_AVERAGE = "Average Deposition"
+CARD_PLOT_SHADING_METHOD_DEPOSITION_TARGET = "Target Deposition"
+CARD_PLOT_SHADING_METHOD__DEFAULT = CARD_PLOT_SHADING_METHOD_DSC
+
+def get_card_plot_shading_method() -> str:
+    return QSettings().value(
+        _CARD_PLOT_SHADING_METHOD,
+        defaultValue=CARD_PLOT_SHADING_METHOD__DEFAULT,
+        type=str
+    )
+    
+def set_card_plot_shading_method(value: str):
+    QSettings().setValue(_CARD_PLOT_SHADING_METHOD, value)
+
+_CARD_PLOT_SHADING_INTERPOLATE = "card_plot_shading_interpolate"
+CARD_PLOT_SHADING_INTERPOLATE__DEFAULT = True
+
+
+def get_card_plot_shading_interpolate() -> bool:
+    return QSettings().value(
+        _CARD_PLOT_SHADING_INTERPOLATE,
+        defaultValue=CARD_PLOT_SHADING_INTERPOLATE__DEFAULT,
         type=bool,
     )
 
 
-def set_card_plot_average_swath_box(value: bool):
-    QSettings().setValue(_CARD_PLOT_AVERAGE_SWATH_BOX, value)
+def set_card_plot_shading_interpolate(value: bool):
+    QSettings().setValue(_CARD_PLOT_SHADING_INTERPOLATE, value)
 
 
-_CARD_PLOT_COLORIZE_PASS = "card_plot_colorize_pass"
-CARD_PLOT_COLORIZE_PASS__DEFAULT = True
+_CARD_PLOT_AVERAGE_DASH_OVERLAY = "card_plot_average_dash_overlay"
+CARD_PLOT_AVERAGE_DASH_OVERLAY__DEFUALT = True
 
-
-def get_card_plot_colorize_pass() -> bool:
+def get_card_plot_average_dash_overlay() -> bool:
     return QSettings().value(
-        _CARD_PLOT_COLORIZE_PASS,
-        defaultValue=CARD_PLOT_COLORIZE_PASS__DEFAULT,
-        type=bool,
+        _CARD_PLOT_AVERAGE_DASH_OVERLAY,
+        defaultValue=CARD_PLOT_AVERAGE_DASH_OVERLAY__DEFUALT,
+        type=bool
     )
+    
+def set_card_plot_average_dash_overlay(value: bool):
+    QSettings().setValue(_CARD_PLOT_AVERAGE_DASH_OVERLAY, value)
+    
+_CARD_PLOT_AVERAGE_DASH_OVERLAY_METHOD = "card_plot_average_dash_overlay_method"
+DASH_OVERLAY_METHOD_ISHA = "ISHA"
+DASH_OVERLAY_METHOD_AVERAGE = "Average"
+CARD_PLOT_AVERAGE_DASH_OVERLAY_METHOD__DEFAULT = DASH_OVERLAY_METHOD_ISHA
 
-
-def set_card_plot_colorize_pass(value: bool):
-    QSettings().setValue(_CARD_PLOT_COLORIZE_PASS, value)
-
-
-_CARD_PLOT_COLORIZE_AVERAGE = "card_plot_colorize_average"
-CARD_PLOT_COLORIZE_AVERAGE__DEFAULT = True
-
-
-def get_card_plot_colorize_average() -> bool:
+def get_card_plot_average_dash_overlay_method() -> str:
     return QSettings().value(
-        _CARD_PLOT_COLORIZE_AVERAGE,
-        defaultValue=CARD_PLOT_COLORIZE_AVERAGE__DEFAULT,
-        type=bool,
+        _CARD_PLOT_AVERAGE_DASH_OVERLAY_METHOD,
+        defaultValue=CARD_PLOT_AVERAGE_DASH_OVERLAY_METHOD__DEFAULT,
+        type=str
     )
-
-
-def set_card_plot_colorize_average(value: bool):
-    QSettings().setValue(_CARD_PLOT_COLORIZE_AVERAGE, value)
-
-
-_CARD_PLOT_COLORIZE_SIMULATIONS = "card_plot_colorize_simulations"
-CARD_PLOT_COLORIZE_SIMULATIONS__DEFAULT = True
-
-
-def get_card_plot_colorize_simulations() -> bool:
-    return QSettings().value(
-        _CARD_PLOT_COLORIZE_SIMULATIONS,
-        defaultValue=CARD_PLOT_COLORIZE_SIMULATIONS__DEFAULT,
-        type=bool,
-    )
-
-
-def set_card_plot_colorize_simulations(value: bool):
-    QSettings().setValue(_CARD_PLOT_COLORIZE_SIMULATIONS, value)
-
-
-_CARD_PLOT_COLORIZE_INTERPOLATE = "card_plot_colorize_interpolate"
-CARD_PLOT_COLORIZE_INTERPOLATE__DEFAULT = True
-
-
-def get_card_plot_colorize_interpolate() -> bool:
-    return QSettings().value(
-        _CARD_PLOT_COLORIZE_INTERPOLATE,
-        defaultValue=CARD_PLOT_COLORIZE_INTERPOLATE__DEFAULT,
-        type=bool,
-    )
-
-
-def set_card_plot_colorize_interpolate(value: bool):
-    QSettings().setValue(_CARD_PLOT_COLORIZE_INTERPOLATE, value)
+    
+def set_card_plot_average_dash_overlay_method(value: str):
+    QSettings().setValue(_CARD_PLOT_AVERAGE_DASH_OVERLAY_METHOD, value)
 
 
 _CARD_SIMULATION_VIEW_WINDOW = "card_simulation_view_window"
