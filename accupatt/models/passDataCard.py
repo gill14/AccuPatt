@@ -34,6 +34,7 @@ class PassDataCard(PassDataBase):
                 "loc": [card.location for card in scs],
                 "loc_units": [card.location_units for card in scs],
                 "cov": [card.stats.get_percent_coverage() for card in scs],
+                "dep": [card.stats.get_deposition() for card in scs],
                 "dv01": [card.stats.get_dv01() for card in scs],
                 "dv05": [card.stats.get_dv05() for card in scs],
                 "dv09": [card.stats.get_dv09() for card in scs],
@@ -71,14 +72,16 @@ class PassDataCard(PassDataBase):
         d["loc"] = d["loc"].sub(c)
 
     def _calcCentroid(self, d: pd.DataFrame):
-        return (d["cov"] * d["loc"]).sum() / d["cov"].sum()
+        y_index = "dep" if cfg.get_card_plot_y_axis()==cfg.CARD_PLOT_Y_AXIS_DEPOSITION else "cov"
+        return (d[y_index] * d["loc"]).sum() / d[y_index].sum()
 
     def _calcCenterOfDistribution(self, d: pd.DataFrame):
+        y_index = "dep" if cfg.get_card_plot_y_axis()==cfg.CARD_PLOT_Y_AXIS_DEPOSITION else "cov"
         sumNumerator = 0.0
         sumDenominator = 0.0
         for i in range(0, len(d.index) - 1, 1):
-            D = d.at[i, "cov"]
-            Dn = d.at[i + 1, "cov"]
+            D = d.at[i, y_index]
+            Dn = d.at[i + 1, y_index]
             X = d.at[i, "loc"]
             Xn = d.at[i + 1, "loc"]
             # Calc Numerator and add to summation
@@ -107,7 +110,7 @@ class PassDataCard(PassDataBase):
         # Draw the plots
         mplWidget.canvas.draw()
 
-    def plotCoverage(
+    def plot(
         self,
         mplWidget: MplWidget,
         loc_units,
@@ -123,15 +126,18 @@ class PassDataCard(PassDataBase):
         ax = mplWidget.canvas.ax
         ax.clear()
         ax.set_xlabel(f"Location ({loc_units})")
-        ax.set_ylabel("Coverage")
-        ax.yaxis.set_major_formatter(
-            matplotlib.ticker.PercentFormatter(xmax=100, decimals=0)
-        )
+        y_index = "dep" if cfg.get_card_plot_y_axis()==cfg.CARD_PLOT_Y_AXIS_DEPOSITION else "cov"
+        ylab = cfg.get_card_plot_y_axis().capitalize()
+        if y_index=="dep":
+            ylab = ylab + f" ({cfg.get_unit_rate()})"
+        elif y_index=="cov":
+            ylab = ylab + f" (%)"
+        ax.set_ylabel(ylab)
         # Populate data if available
         if not d["loc"].empty:
             # Interpolate so that fill-between looks good
             locs_i = np.linspace(d["loc"].iloc[0], d["loc"].iloc[-1], num=1000)
-            cov_i = np.interp(locs_i, d["loc"], d["cov"])
+            y_i = np.interp(locs_i, d["loc"], d[y_index])
             # Handle shading for blank active cards
             d = d.set_index("loc")
             d.sort_values(by="loc", axis=0, inplace=True)
@@ -165,7 +171,7 @@ class PassDataCard(PassDataBase):
                     for (category, color) in zip(categories, colors):
                         ax.fill_between(
                             locs_i,
-                            np.ma.masked_where(dsc_i != category, cov_i),
+                            np.ma.masked_where(dsc_i != category, y_i),
                             color=color,
                             alpha=0.7,
                             label=category,
@@ -176,9 +182,9 @@ class PassDataCard(PassDataBase):
                 elif method==cfg.CARD_PLOT_SHADING_METHOD_DEPOSITION_TARGET:
                     pass
             else:
-                ax.fill_between(locs_i, 0, cov_i, alpha=0.7)
+                ax.fill_between(locs_i, 0, y_i, alpha=0.7)
             # Plot base coverage without dsc fill
-            ax.plot(locs_i, cov_i, color="black")
+            ax.plot(locs_i, y_i, color="black")
         # Draw the plots
         # Must set ylim after plotting
         mplWidget.canvas.ax.set_ylim(bottom=0, auto=None)

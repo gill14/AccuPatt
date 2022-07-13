@@ -194,4 +194,3 @@ class SeriesDataBase(OptBase):
     def _config_mpl_plotter(self, mplWidget: MplWidget):
         mplWidget.canvas.ax.clear()
         mplWidget.canvas.ax.set_xlabel(f"Location ({self.swath_units})")
-        mplWidget.canvas.ax.set_yticks([])

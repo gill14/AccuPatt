@@ -1,12 +1,9 @@
 import os
 
 import accupatt.config as cfg
-from accupatt.models.seriesData import SeriesData
-from accupatt.models.passData import Pass
-from accupatt.models.sprayCard import SprayCard
 from PyQt6 import uic
-from PyQt6.QtCore import pyqtSignal, pyqtSlot, QSignalBlocker, Qt
-from PyQt6.QtWidgets import QDialogButtonBox, QGroupBox, QMessageBox, QRadioButton
+from PyQt6.QtCore import pyqtSignal, pyqtSlot
+from PyQt6.QtWidgets import QGroupBox, QRadioButton
 
 Ui_Form, baseclass = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "cardPlotOptions.ui")

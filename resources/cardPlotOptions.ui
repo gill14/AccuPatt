@@ -39,7 +39,7 @@
       <item>
        <widget class="QRadioButton" name="rb_deposition">
         <property name="enabled">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="text">
          <string>Deposition</string>
@@ -177,7 +177,7 @@
       <item>
        <widget class="QRadioButton" name="rb_average_value">
         <property name="enabled">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="text">
          <string>Average</string>

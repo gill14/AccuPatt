@@ -122,6 +122,8 @@ class SprayCardStats:
     dv01: int = 0
     dv05: int = 0
     dv09: int = 0
+    gpa: float = 0.0
+    lpha: float = 0.0
 
     # Flag for currency
     current = False
@@ -170,6 +172,24 @@ class SprayCardStats:
             return f"{rs:.2f}"
         else:
             return rs
+
+    def get_deposition(self, text=False):
+        if cfg.get_unit_rate()==cfg.UNIT_LPHA:
+            return self._get_lpha(text)
+        else:
+            return self._get_gpa(text)
+    
+    def _get_gpa(self, text=False):
+        if text:
+            return f"{self.gpa:.2f}"
+        else:
+            return self.gpa
+        
+    def _get_lpha(self, text=False):
+        if text:
+            return f"{self.lpha:.2f}"
+        else:
+            return self.lpha
 
     def get_percent_coverage(self, text=False):
         stains = [s for s in self.sprayCard.stains if s["is_include"] or s["is_edge"]]
@@ -240,6 +260,10 @@ class SprayCardStats:
         self.dv01 = round(np.interp(dv01_vol, drop_vol_um3_cum, drop_dia_um))
         self.dv05 = round(np.interp(dv05_vol, drop_vol_um3_cum, drop_dia_um))
         self.dv09 = round(np.interp(dv09_vol, drop_vol_um3_cum, drop_dia_um))
+        # Use the vol sum here to set GPA and L/HA
+        um3_per_um2 = drop_vol_um3_sum / self._px2_to_um2(self.sprayCard.area_px2)
+        self.gpa = um3_per_um2 / cfg.UM3_UM2_PER_GAL_ACRE
+        self.lpha = um3_per_um2 / cfg.UM3_UM2_per_L_HA
         # Reset currency flag
         self.current = True
 
@@ -262,7 +286,7 @@ class SprayCardStats:
             # Apply Spread Factors to get originating drop diameter
             drop_dia_um.append(self._stain_dia_to_drop_dia(dia_um))
             # Use drop diameter to calculate drop volume
-            vol_um3 = (math.pi * dia_um**3) / 6.0
+            vol_um3 = (math.pi * drop_dia_um[-1]**3) / 6.0
             # Build volume list
             drop_vol_um3.append(vol_um3)
         return drop_dia_um, drop_vol_um3

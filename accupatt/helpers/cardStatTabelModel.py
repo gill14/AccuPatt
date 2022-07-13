@@ -34,6 +34,7 @@ class CardStatTableModel(QAbstractTableModel):
             "Dv0.5",
             "Dv0.9",
             "RS",
+            f"{cfg.get_unit_rate()}",
             "Coverage",
             "Stains",
             "Stains/in\u00B2",
@@ -128,11 +129,14 @@ class CardStatTableModel(QAbstractTableModel):
                 return card.stats.get_relative_span(text=True)
         elif col == 9:
             if role == Qt.ItemDataRole.DisplayRole:
-                return card.stats.get_percent_coverage(text=True)
+                return card.stats.get_deposition(text=True)
         elif col == 10:
             if role == Qt.ItemDataRole.DisplayRole:
-                return card.stats.get_number_of_stains(text=True)
+                return card.stats.get_percent_coverage(text=True)
         elif col == 11:
+            if role == Qt.ItemDataRole.DisplayRole:
+                return card.stats.get_number_of_stains(text=True)
+        elif col == 12:
             if role == Qt.ItemDataRole.DisplayRole:
                 return card.stats.get_stains_per_in2(text=True)
         else:

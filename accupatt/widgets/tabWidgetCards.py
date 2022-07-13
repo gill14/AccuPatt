@@ -183,7 +183,7 @@ class TabWidgetCards(TabWidgetBase):
         self.processCards()
 
     def individuals_triggered(self, passData: Pass):
-        passData.cards.plotCoverage(
+        passData.cards.plot(
             mplWidget=self.plotWidgetPass,
             loc_units=self.seriesData.info.swath_units,
             mod=False,

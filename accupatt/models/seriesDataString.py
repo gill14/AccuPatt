@@ -136,3 +136,7 @@ class SeriesDataString(SeriesDataBase):
 
     def get_average_y_label(self):
         return "Average"
+    
+    def _config_mpl_plotter(self, mplWidget: MplWidget):
+        super()._config_mpl_plotter(mplWidget)
+        mplWidget.canvas.ax.set_yticks([])
