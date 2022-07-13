@@ -125,7 +125,7 @@
     The \textbf{Clear} button may be used to clear the pass collected string data whenever data collecation is not in progress. If string data exists for the current pass, it will ask for confirmation first.
     \begin{figure}[h]
         \centering
-        \makebox[\textwidth]{\includegraphics[width=\textwidth]{capture_edit_pass.png}}
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{string_edit_pass.png}}
         \caption{Capture/Edit Pass Window}
         \label{fig:capture_edit_pass}
     \end{figure}
@@ -380,7 +380,7 @@
             \item \textbf{HSB:} Binarizes image by pixel filtering the color image by ranges of Hue (0-179), Saturation (0-255) and Brightness (0-255). Each range is independently applied as either a band-pass (checking the \textbf{Pass} checkbox) or band-reject filter. The resultant 3 binary masks are then combined with bitwise AND logic. (Figure~\ref{fig:card_image_process_hsb})
             \item \textbf{Grayscale:} Converts the image to an 8-bit (0-255) grayscale image, then uses a threshold value to binarize the image, where values below the threshold are treated as background and values above the threshold are treated as part of a stain. This threshold may be set manually, or automatically. The automatic method uses Otsu's Threshold Method, and is sufficient for most bimodal images. The threshold chosen will be used as a set value for the manual method and an upper limit for the automatic method (the threshold will be automatically calculated and shown, not to exceed the set value; for fully automatic thresholding, set the value to 255). (Figure~\ref{fig:card_image_process_grayscale})
         \end{itemize}
-        \item \textbf{Watershed Segmentation:} Attempt to seperate adjoining stains. \color{red} This is still a work in progress and should generally be kept disabled \color{black}
+        \item \textbf{Watershed Segmentation:} Attempt to seperate adjoining stains. This applies a Euclidian Distance Transform to the image, locates local maxima and then runs a segmentation algorithm to split stains containing multiple local maxima.
         \item \textbf{Stain Approximation:} After thresholding and segmentation, optionally attempt to transform each stain using the chosen method.
         \begin{itemize}
             \item \textbf{Minimum Enclosing Circle:} Draw the smallest circle possible which contains the stain.
@@ -631,6 +631,25 @@
 
     \section{Changelog}
     \begin{itemize}
+        \item \textbf{2.0.14 - 14 July 2022}
+        \begin{itemize}
+            \item (fix) droplet volume calculation error using pre-spread-factored stain diameter
+            \item (fix) blank (but included) cards being fully interpolated over instead of treated as zero coverage/deposition with only shading interpolated
+            \item (fix) card average plot incorrectly interpolating edges where not all passes contained coverage/depostion data
+            \item (fix) composite card coverage histogram incorrectly using drop volume instead of stain area
+            \item (fix) reduced height of Card Process Options window so it appears correctly on small screens
+            \item (enhancement) improved segmentation (watershed) algorithm for separating adjoining stains; now enabled by default
+            \item (enhancement) multiple pop-ups added to Card Manager for process transparency
+            \item (enhancement) user-defined limiters for maximum stain counts to prevent crashes from improper thresholding
+            \item (enhancement) facelift for Capture/Edit String Pass window
+            \item (feature) Defined Dye Manager allowing for selecting pre-defined dyes or configuring fully custom ones, all with local persistence
+            \item (feature) Test Spectrometer window providing a live readout of the entire spectrum from the device, including colorized markers for the target excitation and emission wavelengths for the selected dye.
+            \item (feature) Card Plot Options window, including new options:
+            \begin{itemize}
+                \item Y-Axis: Coverage (\%) or Deposition (GPA, l/ha)
+                \item Average Plot Dash-Overlay: Inner-Swath-Half-Average (swath box) or Average (all points)
+            \end{itemize}
+        \end{itemize}
         \item \textbf{2.0.13 - 16 June 2022}
         \begin{itemize}
             \item (fix) series info units not saving to datafile if not explicity selected
