@@ -155,7 +155,7 @@ class PassTable(QAbstractTableModel):
 
     def data(self, index, role):
         if role == Qt.ItemDataRole.TextAlignmentRole:
-            return Qt.AlignmentFlag.AlignCenter
+            return Qt.AlignmentFlag.AlignCenter.value
         row = index.row()
         col = index.column()
         p: Pass = self.pass_list[col]

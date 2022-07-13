@@ -288,7 +288,7 @@ class CardTable(QAbstractTableModel):
 
     def data(self, index, role):
         if role == Qt.ItemDataRole.TextAlignmentRole:
-            return Qt.AlignmentFlag.AlignCenter
+            return Qt.AlignmentFlag.AlignCenter.value
         card: SprayCard = self.card_list[index.row()]
         col = index.column()
         if col == 0:
