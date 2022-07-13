@@ -22,12 +22,6 @@
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
     <widget class="QLabel" name="label_3">
-     <property name="font">
-      <font>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
      <property name="text">
       <string>Advanced String Processing Options for:</string>
      </property>
@@ -38,13 +32,6 @@
    </item>
    <item>
     <widget class="QLabel" name="labelName">
-     <property name="font">
-      <font>
-       <weight>75</weight>
-       <italic>true</italic>
-       <bold>true</bold>
-      </font>
-     </property>
      <property name="text">
       <string>Series</string>
      </property>
@@ -64,12 +51,6 @@
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
       <widget class="QGroupBox" name="groupBox">
-       <property name="font">
-        <font>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
        <property name="title">
         <string>Smoothing</string>
        </property>
@@ -120,12 +101,6 @@
      </item>
      <item>
       <widget class="QGroupBox" name="groupBox_2">
-       <property name="font">
-        <font>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
        <property name="title">
         <string>Centering</string>
        </property>
@@ -154,12 +129,6 @@
    </item>
    <item>
     <widget class="QGroupBox" name="groupBox_3">
-     <property name="font">
-      <font>
-       <weight>50</weight>
-       <bold>false</bold>
-      </font>
-     </property>
      <property name="title">
       <string>On Save</string>
      </property>

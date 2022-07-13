@@ -18,12 +18,6 @@
     <layout class="QVBoxLayout" name="verticalLayout_3">
      <item>
       <widget class="QLabel" name="label_26">
-       <property name="font">
-        <font>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
        <property name="text">
         <string>String Data</string>
        </property>
@@ -76,12 +70,6 @@
      </item>
      <item>
       <widget class="QLabel" name="label_31">
-       <property name="font">
-        <font>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
        <property name="text">
         <string>Pass Options</string>
        </property>
@@ -154,12 +142,6 @@
      </item>
      <item>
       <widget class="QLabel" name="label_6">
-       <property name="font">
-        <font>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
        <property name="text">
         <string>Series Options</string>
        </property>
@@ -242,12 +224,6 @@
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
-         </property>
-         <property name="font">
-          <font>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
          </property>
          <property name="text">
           <string>Swath Width:</string>
@@ -437,12 +413,6 @@
              <height>16777215</height>
             </size>
            </property>
-           <property name="font">
-            <font>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
            <property name="frameShape">
             <enum>QFrame::NoFrame</enum>
            </property>
@@ -515,12 +485,6 @@
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
-           </property>
-           <property name="font">
-            <font>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
            </property>
            <property name="text">
             <string>Coefficient of Variation</string>
@@ -808,13 +772,6 @@
             <property name="text">
              <string>0</string>
             </property>
-            <property name="font">
-             <font>
-              <pointsize>13</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
             <property name="textAlignment">
              <set>AlignCenter</set>
             </property>
@@ -832,13 +789,6 @@
             <property name="text">
              <string>0</string>
             </property>
-            <property name="font">
-             <font>
-              <pointsize>13</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
             <property name="textAlignment">
              <set>AlignCenter</set>
             </property>
@@ -855,13 +805,6 @@
            <item row="5" column="2">
             <property name="text">
              <string>0</string>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>13</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
             </property>
             <property name="textAlignment">
              <set>AlignCenter</set>

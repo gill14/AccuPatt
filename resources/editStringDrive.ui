@@ -75,13 +75,6 @@
    </item>
    <item>
     <widget class="QLabel" name="labelSerialPort1">
-     <property name="font">
-      <font>
-       <weight>75</weight>
-       <italic>true</italic>
-       <bold>true</bold>
-      </font>
-     </property>
      <property name="text">
       <string>TextLabel</string>
      </property>
@@ -89,13 +82,6 @@
    </item>
    <item>
     <widget class="QLabel" name="labelSerialPort2">
-     <property name="font">
-      <font>
-       <weight>75</weight>
-       <italic>true</italic>
-       <bold>true</bold>
-      </font>
-     </property>
      <property name="text">
       <string>TextLabel</string>
      </property>
@@ -103,13 +89,6 @@
    </item>
    <item>
     <widget class="QLabel" name="labelSerialPort3">
-     <property name="font">
-      <font>
-       <weight>75</weight>
-       <italic>true</italic>
-       <bold>true</bold>
-      </font>
-     </property>
      <property name="text">
       <string>TextLabel</string>
      </property>
