@@ -28,12 +28,12 @@ class StringPass(baseclass):
         # Make ref to seriesData/passData for later updating in on_applied
         self.passData = passData
         # Populate Pass Info Widget fields
-        #self.ui.labelPass.setText(passData.name)
+        # self.ui.labelPass.setText(passData.name)
         self.setWindowTitle(f"Capture/Edit {passData.name}")
         self.passInfoWidget: PassInfoWidget = self.ui.passInfoWidget
         self.passInfoWidget.fill_from_pass(passData)
-        
-        # UI 
+
+        # UI
         self.button_reverse: QPushButton = self.ui.buttonManualReverse
         self.button_reverse.clicked.connect(self.string_drive_manual_reverse)
         self.button_forward: QPushButton = self.ui.buttonManualAdvance
@@ -51,7 +51,9 @@ class StringPass(baseclass):
         self.button_spec.clicked.connect(self.editSpectrometer)
         self.label_string_drive: QLabel = self.ui.labelStringDrive
         self.cb_string_drive: QCheckBox = self.ui.checkBoxStringDrive
-        self.cb_string_drive.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.cb_string_drive.setAttribute(
+            Qt.WidgetAttribute.WA_TransparentForMouseEvents
+        )
         self.button_string_drive: QPushButton = self.ui.buttonEditStringDrive
         self.button_string_drive.clicked.connect(self.editStringDrive)
 
@@ -79,7 +81,7 @@ class StringPass(baseclass):
             # Disable Edit if data already present to prevent overwrite of origination info
             self.button_spec.setEnabled(False)
             self.button_string_drive.setEnabled(False)
-            
+
         # Enable/Disable Start and Abort buttons as applicable
         self.enableButtons()
 
@@ -116,7 +118,9 @@ class StringPass(baseclass):
         )
         self.plotWidget.plotItem.setLabel(axis="left", text="Relative Dye Intensity")
         self.plotWidget.plotItem.showGrid(x=True, y=True)
-        self.plotWidget.setXRange(-cfg.get_string_length() / 2, cfg.get_string_length() / 2)
+        self.plotWidget.setXRange(
+            -cfg.get_string_length() / 2, cfg.get_string_length() / 2
+        )
         # Ensure Edit is enabled (disabled after has_data)
         self.button_spec.setEnabled(True)
         self.button_string_drive.setEnabled(True)
@@ -125,15 +129,21 @@ class StringPass(baseclass):
     def plotFrame(self):
         # Calculate and log location based off elapsed/remaining time
         self.x = np.append(
-            self.x, 
-            self.location_start + ((self.timer.interval() - self.timer.remainingTime()) * self.speed_per_milli)
-            )
+            self.x,
+            self.location_start
+            + (
+                (self.timer.interval() - self.timer.remainingTime())
+                * self.speed_per_milli
+            ),
+        )
         # Take a full spectrum reading
         intensities = self.spec.intensities(
             correct_dark_counts=True, correct_nonlinearity=True
         )
         # record y_val (emission amplitute) and request plot update
-        self.y = np.append(self.y, np.average(intensities[self.pix_em[0]:self.pix_em[1]+1]))
+        self.y = np.append(
+            self.y, np.average(intensities[self.pix_em[0] : self.pix_em[1] + 1])
+        )
         self.plot_emission.setData(self.x, self.y)
         # record y_ex_val (excitation amplitude)
         self.y_ex = np.append(self.y_ex, intensities[self.pix_ex])
@@ -160,21 +170,33 @@ class StringPass(baseclass):
             self.timer = QTimer(self)
             self.timer_trigger = QTimer(self)
             # Set local vars from config
-            self.location_start = -cfg.get_string_length()/2
+            self.location_start = -cfg.get_string_length() / 2
             self.speed_per_milli = cfg.get_string_speed() / 1000.0
             # Get a handle on pixels for chosen wavelengths
             wavelengths = self.spec.wavelengths()
-            self.pix_ex = np.abs(wavelengths - self.passData.string.dye.wavelength_excitation).argmin()
+            self.pix_ex = np.abs(
+                wavelengths - self.passData.string.dye.wavelength_excitation
+            ).argmin()
             bw = self.passData.string.dye.boxcar_width
             self.pix_em = [
-                    np.abs(wavelengths - (self.passData.string.dye.wavelength_emission-(bw/2))).argmin(),
-                    np.abs(wavelengths - (self.passData.string.dye.wavelength_emission+(bw/2))).argmin()
-                ]
+                np.abs(
+                    wavelengths
+                    - (self.passData.string.dye.wavelength_emission - (bw / 2))
+                ).argmin(),
+                np.abs(
+                    wavelengths
+                    - (self.passData.string.dye.wavelength_emission + (bw / 2))
+                ).argmin(),
+            ]
             # Set the intervals and timeouts
             self.timer.setSingleShot(True)
-            self.timer.setInterval(int((cfg.get_string_length() / cfg.get_string_speed()) * 1000))
+            self.timer.setInterval(
+                int((cfg.get_string_length() / cfg.get_string_speed()) * 1000)
+            )
             self.timer.timeout.connect(self.endPlot)
-            self.timer_trigger.setInterval(int(self.passData.string.dye.integration_time_milliseconds))
+            self.timer_trigger.setInterval(
+                int(self.passData.string.dye.integration_time_milliseconds)
+            )
             self.timer_trigger.timeout.connect(self.plotFrame)
             # Start timers
             self.timer.start()
@@ -266,7 +288,9 @@ class StringPass(baseclass):
     @pyqtSlot()
     def editStringDrive(self):
         e = EditStringDrive(
-            ser=self.ser, string_length_units=self.passData.string.data_loc_units, parent=self
+            ser=self.ser,
+            string_length_units=self.passData.string.data_loc_units,
+            parent=self,
         )
         e.string_length_units_changed.connect(self.string_length_units_changed)
         e.accepted.connect(self.setupStringDrive)
@@ -276,7 +300,9 @@ class StringPass(baseclass):
         # Get a handle to the serial object, else return "Disconnected" status label
         if self.ser == None:
             try:
-                self.ser = serial.Serial(cfg.get_string_drive_port(), baudrate=9600, timeout=1)
+                self.ser = serial.Serial(
+                    cfg.get_string_drive_port(), baudrate=9600, timeout=1
+                )
             except:
                 self.cb_string_drive.setText("Offline")
                 self.cb_string_drive.setEnabled(False)
@@ -287,7 +313,9 @@ class StringPass(baseclass):
         self.cb_string_drive.setEnabled(True)
         self.cb_string_drive.setChecked(True)
         self.ser_connected = True
-        self.label_string_drive.setToolTip(f"Flightline Length: {cfg.get_string_length()} {self.passData.string.data_loc_units}\nSpeed: {cfg.get_string_speed()} {self.passData.string.data_loc_units}/s")
+        self.label_string_drive.setToolTip(
+            f"Flightline Length: {cfg.get_string_length()} {self.passData.string.data_loc_units}\nSpeed: {cfg.get_string_speed()} {self.passData.string.data_loc_units}/s"
+        )
         # Enale/Disable manual drive buttons
         self.enableButtons()
 
@@ -330,7 +358,7 @@ class StringPass(baseclass):
 
     def setupSpectrometer(self):
         # Get a handle to the spec object, else return "Disconnected" status
-        
+
         if self.spec == None:
             try:
                 self.spec = Spectrometer.from_first_available()
@@ -342,7 +370,9 @@ class StringPass(baseclass):
                 return
         # Inform spectrometer of new int time
         try:
-            self.spec.integration_time_micros(self.passData.string.dye.integration_time_milliseconds * 1000)
+            self.spec.integration_time_micros(
+                self.passData.string.dye.integration_time_milliseconds * 1000
+            )
         except:
             print("Unable to set Spectrometer Integration Time")
             return
@@ -350,11 +380,13 @@ class StringPass(baseclass):
         self.cb_spec.setEnabled(True)
         self.cb_spec.setCheckState(Qt.CheckState.Checked)
         self.spec_connected = True
-        self.label_spec.setToolTip(f"Dye: {self.passData.string.dye.name}\nExcitation: {self.passData.string.dye.wavelength_excitation} nm\nEmission: {self.passData.string.dye.wavelength_emission} nm")
+        self.label_spec.setToolTip(
+            f"Dye: {self.passData.string.dye.name}\nExcitation: {self.passData.string.dye.wavelength_excitation} nm\nEmission: {self.passData.string.dye.wavelength_emission} nm"
+        )
         self.enableButtons()
-        
+
     @pyqtSlot(str)
     def dye_changed(self, dye_name: str):
         self.passData.string.dye = Dye.fromConfig(dye_name)
         self.setupSpectrometer()
-        #self.label_spec.setToolTip(f"Dye: {self.passData.string.dye.name}\nExcitation: {self.passData.string.dye.wavelength_excitation} nm\nEmission: {self.passData.string.dye.wavelength_emission} nm")
+        # self.label_spec.setToolTip(f"Dye: {self.passData.string.dye.name}\nExcitation: {self.passData.string.dye.wavelength_excitation} nm\nEmission: {self.passData.string.dye.wavelength_emission} nm")

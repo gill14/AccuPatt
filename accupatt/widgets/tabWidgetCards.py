@@ -82,7 +82,11 @@ class TabWidgetCards(TabWidgetBase):
         prog.setValue(len(card_list))
         # Notify of cards which exceeded max stain limit
         if any([c.flag_max_stain_limit_reached for c in card_list]):
-            QMessageBox.warning(self, "Max Stain Limit Exceeded", f"The following cards were unable to be processed due to the number of detected stains exceeding the user-defined limit: [{', '.join(compress(card_identifier_list,[c.name for c in card_list if c.flag_max_stain_limit_reached]))}]")
+            QMessageBox.warning(
+                self,
+                "Max Stain Limit Exceeded",
+                f"The following cards were unable to be processed due to the number of detected stains exceeding the user-defined limit: [{', '.join(compress(card_identifier_list,[c.name for c in card_list if c.flag_max_stain_limit_reached]))}]",
+            )
 
     @pyqtSlot(str)
     def onCurrentFileChanged(self, file: str):

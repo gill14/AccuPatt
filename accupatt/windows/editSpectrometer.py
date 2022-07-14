@@ -16,6 +16,7 @@ Ui_Form, baseclass = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "editSpectrometer.ui")
 )
 
+
 class EditSpectrometer(baseclass):
 
     dye_changed = pyqtSignal(str)
@@ -27,23 +28,23 @@ class EditSpectrometer(baseclass):
 
         self.spec = spectrometer
         self.dye = dye
-        
+
         self.le_spectrometer: QLineEdit = self.ui.lineEditSpectrometer
-        
+
         self.b_refresh: QPushButton = self.ui.buttonRefresh
         self.b_refresh.clicked.connect(self.refresh_spec)
-        
+
         self.cb_dye: QComboBox = self.ui.comboBoxDye
-        
+
         self.b_dye_manager: QPushButton = self.ui.buttonDyeManager
         self.b_dye_manager.clicked.connect(self.open_dye_manager)
-        
+
         self.b_test_spectrometer: QPushButton = self.ui.buttonTestSpectrometer
         self.b_test_spectrometer.clicked.connect(self.test_spectrometer)
-        
+
         self.refresh_spec()
         self.refresh_dyes()
-        
+
     def refresh_spec(self):
         if self.spec == None:
             try:
@@ -54,7 +55,7 @@ class EditSpectrometer(baseclass):
                 return
         self.le_spectrometer.setText(self.spec.model)
         self.b_test_spectrometer.setEnabled(True)
-        
+
     def refresh_dyes(self):
         dye_names = [Dye.fromDict(d).name for d in cfg.get_defined_dyes()]
         with QSignalBlocker(self.cb_dye):
@@ -66,23 +67,21 @@ class EditSpectrometer(baseclass):
             else:
                 self.dye_name = dye_names[0]
                 self.cb_dye.setCurrentText(self.dye_name)
-    
+
     def open_dye_manager(self):
         e = DyeManager(parent=self)
         e.finished.connect(lambda: self.refresh_dyes())
         e.exec()
-        
+
     def test_spectrometer(self):
         # Use whatever dye is currently selected
         dye = Dye.fromConfig(name=self.cb_dye.currentText())
-        TestSpectrometer(spectrometer=self.spec, dye = dye, parent=self).exec()
-            
+        TestSpectrometer(spectrometer=self.spec, dye=dye, parent=self).exec()
+
     def accept(self):
         # Notify parent of dye change
         self.dye_changed.emit(self.cb_dye.currentText())
         # Update chosen dye in config
         cfg.set_defined_dye(self.cb_dye.currentText())
-        
+
         super().accept()
-                
-        

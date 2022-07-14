@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import QWidget, QHBoxLayout, QGraphicsPixmapItem, QGraphics
 
 import cv2
 
+
 class SplitCardWidget(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -59,11 +60,19 @@ class SplitCardWidget(QWidget):
         if not (cvImg1 is None or cvImg2 is None):
             # Left Image (1)
             self.pixmap_item_original.setPixmap(
-                QPixmap.fromImage(SplitCardWidget.qImg_from_cvImg(cv2.cvtColor(cvImg1, cv2.COLOR_RGB2BGR)))
+                QPixmap.fromImage(
+                    SplitCardWidget.qImg_from_cvImg(
+                        cv2.cvtColor(cvImg1, cv2.COLOR_RGB2BGR)
+                    )
+                )
             )
             # Right Image(2)
             self.pixmap_item_thresh.setPixmap(
-                QPixmap.fromImage(SplitCardWidget.qImg_from_cvImg(cv2.cvtColor(cvImg2, cv2.COLOR_RGB2BGR)))
+                QPixmap.fromImage(
+                    SplitCardWidget.qImg_from_cvImg(
+                        cv2.cvtColor(cvImg2, cv2.COLOR_RGB2BGR)
+                    )
+                )
             )
         # Auto-resize to fit width or height of card to width or height of graphicsView
         if fit == "horizontal":

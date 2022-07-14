@@ -451,9 +451,10 @@ def set_string_speed(value: float):
 
 
 # Spectrometer
-    
+
 _DEFINED_DYES = "defined_dyes"
-    
+
+
 def gen_dye_dict(name, w_ex, w_em, it, bx) -> dict:
     dye = dict()
     dye["name"] = name
@@ -463,15 +464,17 @@ def gen_dye_dict(name, w_ex, w_em, it, bx) -> dict:
     dye["boxcar_width"] = bx
     return dye
 
+
 DEFINED_DYES__DEFAULT = [
     gen_dye_dict("Rhodamine WT", 525, 575, 100, 0),
     gen_dye_dict("Pyranine", 425, 495, 100, 0),
     gen_dye_dict("Topline", 425, 502, 100, 0),
-    gen_dye_dict("PTSA", 365, 410, 100, 0)
+    gen_dye_dict("PTSA", 365, 410, 100, 0),
 ]
 
+
 def get_defined_dyes() -> list[dict]:
-    #set_defined_dyes(json.dumps(DEFINED_DYES__DEFAULT))
+    # set_defined_dyes(json.dumps(DEFINED_DYES__DEFAULT))
     dyes = QSettings().value(
         _DEFINED_DYES,
         defaultValue=json.dumps(DEFINED_DYES__DEFAULT),
@@ -479,6 +482,7 @@ def get_defined_dyes() -> list[dict]:
     )
     dyes_list: list[dict] = json.loads(dyes)
     return dyes_list
+
 
 def set_defined_dyes(value: str):
     QSettings().setValue(_DEFINED_DYES, value)
@@ -489,14 +493,12 @@ DEFINED_DYE__DEFAULT = DEFINED_DYES__DEFAULT[0]["name"]
 
 
 def get_defined_dye() -> str:
-    return QSettings().value(
-        _DEFINED_DYE, defaultValue=DEFINED_DYE__DEFAULT, type=str
-    )
+    return QSettings().value(_DEFINED_DYE, defaultValue=DEFINED_DYE__DEFAULT, type=str)
 
 
 def set_defined_dye(value: str):
     QSettings().setValue(_DEFINED_DYE, value)
-    
+
 
 # SprayCard Image Loading Operations / Attributes
 
@@ -713,7 +715,7 @@ def set_threshold_hsb_hue_pass(value: bool):
 
 
 _THRESHOLD_HSB_SATURATION_MIN = "threshold_hsb_saturation_min"
-THRESHOLD_HSB_SATURATION_MIN__DEFAULT = 15
+THRESHOLD_HSB_SATURATION_MIN__DEFAULT = 30
 
 
 def get_threshold_hsb_saturation_min() -> int:
@@ -842,7 +844,10 @@ STAIN_APPROXIMATION_MIN_CIRCLE = "Minimum Enclosing Circle"
 STAIN_APPROXIMATION_ELLIPSE = "Fit Ellipse"
 STAIN_APPROXIMATION_CONVEX_HULL = "Convex Hull"
 STAIN_APPROXIMATION_METHODS = [
-    STAIN_APPROXIMATION_NONE, STAIN_APPROXIMATION_MIN_CIRCLE, STAIN_APPROXIMATION_ELLIPSE, STAIN_APPROXIMATION_CONVEX_HULL
+    STAIN_APPROXIMATION_NONE,
+    STAIN_APPROXIMATION_MIN_CIRCLE,
+    STAIN_APPROXIMATION_ELLIPSE,
+    STAIN_APPROXIMATION_CONVEX_HULL,
 ]
 STAIN_APPROXIMATION_METHOD__DEFAULT = STAIN_APPROXIMATION_NONE
 
@@ -858,16 +863,18 @@ def get_stain_approximation_method() -> str:
 def set_stain_approximation_method(value: str):
     QSettings().setValue(_STAIN_APPROXIMATION_METHOD, value)
 
+
 _MAX_STAIN_COUNT = "max_stain_count"
-MAX_STAIN_COUNT = 5000
+MAX_STAIN_COUNT = 3000
+
 
 def get_max_stain_count() -> int:
-    return QSettings().value(
-        _MAX_STAIN_COUNT, defaultValue=MAX_STAIN_COUNT, type=int
-    )
-    
+    return QSettings().value(_MAX_STAIN_COUNT, defaultValue=MAX_STAIN_COUNT, type=int)
+
+
 def set_max_stain_count(value: int):
     QSettings().setValue(_MAX_STAIN_COUNT, value)
+
 
 # SprayCard Processed Image Colors
 
@@ -945,28 +952,30 @@ CARD_PLOT_Y_AXIS_COVERAGE = "coverage"
 CARD_PLOT_Y_AXIS_DEPOSITION = "deposition"
 CARD_PLOT_Y_AXIS__DEFAULT = CARD_PLOT_Y_AXIS_COVERAGE
 
+
 def get_card_plot_y_axis() -> str:
     return QSettings().value(
-        _CARD_PLOT_Y_AXIS,
-        defaultValue=CARD_PLOT_Y_AXIS__DEFAULT,
-        type=str
+        _CARD_PLOT_Y_AXIS, defaultValue=CARD_PLOT_Y_AXIS__DEFAULT, type=str
     )
-    
+
+
 def set_card_plot_y_axis(value: str):
     QSettings().setValue(_CARD_PLOT_Y_AXIS, value)
-    
+
+
 _CARD_PLOT_SHADING = "card_plot_shading"
 CARD_PLOT_SHADING__DEFAULT = True
 
+
 def get_card_plot_shading() -> bool:
     return QSettings().value(
-        _CARD_PLOT_SHADING,
-        defaultValue=CARD_PLOT_SHADING__DEFAULT,
-        type=bool
+        _CARD_PLOT_SHADING, defaultValue=CARD_PLOT_SHADING__DEFAULT, type=bool
     )
-    
+
+
 def set_card_plot_shading(value: bool):
     QSettings().setValue(_CARD_PLOT_SHADING, value)
+
 
 _CARD_PLOT_SHADING_METHOD = "card_plot_shading_method"
 CARD_PLOT_SHADING_METHOD_DSC = "DSC"
@@ -974,15 +983,18 @@ CARD_PLOT_SHADING_METHOD_DEPOSITION_AVERAGE = "Average Deposition"
 CARD_PLOT_SHADING_METHOD_DEPOSITION_TARGET = "Target Deposition"
 CARD_PLOT_SHADING_METHOD__DEFAULT = CARD_PLOT_SHADING_METHOD_DSC
 
+
 def get_card_plot_shading_method() -> str:
     return QSettings().value(
         _CARD_PLOT_SHADING_METHOD,
         defaultValue=CARD_PLOT_SHADING_METHOD__DEFAULT,
-        type=str
+        type=str,
     )
-    
+
+
 def set_card_plot_shading_method(value: str):
     QSettings().setValue(_CARD_PLOT_SHADING_METHOD, value)
+
 
 _CARD_PLOT_SHADING_INTERPOLATE = "card_plot_shading_interpolate"
 CARD_PLOT_SHADING_INTERPOLATE__DEFAULT = True
@@ -1003,28 +1015,33 @@ def set_card_plot_shading_interpolate(value: bool):
 _CARD_PLOT_AVERAGE_DASH_OVERLAY = "card_plot_average_dash_overlay"
 CARD_PLOT_AVERAGE_DASH_OVERLAY__DEFUALT = True
 
+
 def get_card_plot_average_dash_overlay() -> bool:
     return QSettings().value(
         _CARD_PLOT_AVERAGE_DASH_OVERLAY,
         defaultValue=CARD_PLOT_AVERAGE_DASH_OVERLAY__DEFUALT,
-        type=bool
+        type=bool,
     )
-    
+
+
 def set_card_plot_average_dash_overlay(value: bool):
     QSettings().setValue(_CARD_PLOT_AVERAGE_DASH_OVERLAY, value)
-    
+
+
 _CARD_PLOT_AVERAGE_DASH_OVERLAY_METHOD = "card_plot_average_dash_overlay_method"
 DASH_OVERLAY_METHOD_ISHA = "ISHA"
 DASH_OVERLAY_METHOD_AVERAGE = "Average"
 CARD_PLOT_AVERAGE_DASH_OVERLAY_METHOD__DEFAULT = DASH_OVERLAY_METHOD_ISHA
 
+
 def get_card_plot_average_dash_overlay_method() -> str:
     return QSettings().value(
         _CARD_PLOT_AVERAGE_DASH_OVERLAY_METHOD,
         defaultValue=CARD_PLOT_AVERAGE_DASH_OVERLAY_METHOD__DEFAULT,
-        type=str
+        type=str,
     )
-    
+
+
 def set_card_plot_average_dash_overlay_method(value: str):
     QSettings().setValue(_CARD_PLOT_AVERAGE_DASH_OVERLAY_METHOD, value)
 

@@ -440,11 +440,10 @@ class MainWindow(baseclass):
     @pyqtSlot()
     def openCardPlotOptions(self):
         cpo = CardPlotOptions(parent=self)
-        cpo.request_update_plots[bool,bool,bool].connect(
+        cpo.request_update_plots[bool, bool, bool].connect(
             lambda a, b, c: self.cardWidget.updatePlots(
-                individuals=a,
-                composites=b,
-                simulations=c)
+                individuals=a, composites=b, simulations=c
+            )
         )
         cpo.show()
 

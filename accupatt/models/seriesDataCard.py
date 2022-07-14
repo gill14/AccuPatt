@@ -23,7 +23,11 @@ class SeriesDataCard(SeriesDataBase):
         return activePasses
 
     def _get_average(self) -> pd.DataFrame:
-        y_index = "dep" if cfg.get_card_plot_y_axis()==cfg.CARD_PLOT_Y_AXIS_DEPOSITION else "cov"
+        y_index = (
+            "dep"
+            if cfg.get_card_plot_y_axis() == cfg.CARD_PLOT_Y_AXIS_DEPOSITION
+            else "cov"
+        )
         dd = pd.DataFrame()
         lastPassName = ""
         for p in self._get_active_passes():
@@ -35,9 +39,13 @@ class SeriesDataCard(SeriesDataBase):
             else:
                 _d = d.set_index("loc")
                 _d.sort_values(by="loc", axis=0, inplace=True)
-                _d["dv01"].interpolate(method="slinear", fill_value="extrapolate", inplace=True)
-                _d["dv05"].interpolate(method="slinear", fill_value="extrapolate", inplace=True)
-                
+                _d["dv01"].interpolate(
+                    method="slinear", fill_value="extrapolate", inplace=True
+                )
+                _d["dv05"].interpolate(
+                    method="slinear", fill_value="extrapolate", inplace=True
+                )
+
                 dd = dd.merge(
                     _d,
                     on="loc",
@@ -53,11 +61,15 @@ class SeriesDataCard(SeriesDataBase):
         for col in dd.columns:
             if y_index in col:
                 dd[col].fillna(0, inplace=True)
-        dd[f"{y_index}_avg"] = dd.loc[:, dd.columns.str.contains(y_index)].mean(axis="columns")
+        dd[f"{y_index}_avg"] = dd.loc[:, dd.columns.str.contains(y_index)].mean(
+            axis="columns"
+        )
         dd["dv01_avg"] = dd.loc[:, dd.columns.str.contains("dv01")].mean(axis="columns")
         dd["dv05_avg"] = dd.loc[:, dd.columns.str.contains("dv05")].mean(axis="columns")
         dd["loc_units"] = [self.swath_units for i in range(len(dd.index))]
-        avg = dd.loc[:, [f"{y_index}_avg", "dv01_avg", "dv05_avg", "loc_units"]].reset_index()
+        avg = dd.loc[
+            :, [f"{y_index}_avg", "dv01_avg", "dv05_avg", "loc_units"]
+        ].reset_index()
         avg.rename(
             columns={f"{y_index}_avg": y_index, "dv01_avg": "dv01", "dv05_avg": "dv05"},
             inplace=True,
@@ -65,13 +77,17 @@ class SeriesDataCard(SeriesDataBase):
         return avg
 
     def plotOverlay(self, mplWidget: MplWidget):
-        y_index = "dep" if cfg.get_card_plot_y_axis()==cfg.CARD_PLOT_Y_AXIS_DEPOSITION else "cov"
+        y_index = (
+            "dep"
+            if cfg.get_card_plot_y_axis() == cfg.CARD_PLOT_Y_AXIS_DEPOSITION
+            else "cov"
+        )
         # Setup and clear the plotter
         self._config_mpl_plotter(mplWidget)
         ylab = cfg.get_card_plot_y_axis().capitalize()
-        if y_index=="dep":
+        if y_index == "dep":
             ylab = ylab + f" ({cfg.get_unit_rate()})"
-        elif y_index=="cov":
+        elif y_index == "cov":
             ylab = ylab + f" (%)"
         mplWidget.canvas.ax.set_ylabel(ylab)
         active_passes = self._get_active_passes()
@@ -92,7 +108,11 @@ class SeriesDataCard(SeriesDataBase):
         mplWidget.canvas.draw()
 
     def plotAverage(self, mplWidget: MplWidget):
-        y_index = "dep" if cfg.get_card_plot_y_axis()==cfg.CARD_PLOT_Y_AXIS_DEPOSITION else "cov"
+        y_index = (
+            "dep"
+            if cfg.get_card_plot_y_axis() == cfg.CARD_PLOT_Y_AXIS_DEPOSITION
+            else "cov"
+        )
         # Setup and clear the plotter
         self._config_mpl_plotter(mplWidget)
 
@@ -108,15 +128,18 @@ class SeriesDataCard(SeriesDataBase):
         avg["loc_units"] = pd.Series(
             [self.swath_units for i in range(len(avg.index))], dtype=str
         )
-        avgPass.plot(
-            mplWidget=mplWidget, loc_units=self.swath_units, d=avg
-        )
+        avgPass.plot(mplWidget=mplWidget, loc_units=self.swath_units, d=avg)
         if cfg.get_card_plot_average_dash_overlay():
             method = cfg.get_card_plot_average_dash_overlay_method()
             if method == cfg.DASH_OVERLAY_METHOD_ISHA:
                 # Find average deposition inside swath width
                 swath_width = self.swath_adjusted
-                dash_x = [-swath_width / 2, -swath_width / 2, swath_width / 2, swath_width / 2]
+                dash_x = [
+                    -swath_width / 2,
+                    -swath_width / 2,
+                    swath_width / 2,
+                    swath_width / 2,
+                ]
                 a_c = avg[
                     (avg["loc"] >= -swath_width / 2) & (avg["loc"] <= swath_width / 2)
                 ]
@@ -129,13 +152,13 @@ class SeriesDataCard(SeriesDataBase):
                 dash_y = [a_mean, a_mean]
                 dash_label = f"Avg. {cfg.get_card_plot_y_axis().capitalize()}"
             mplWidget.canvas.ax.plot(
-                    dash_x,
-                    dash_y,
-                    color="black",
-                    linewidth=1,
-                    dashes=(3, 2),
-                    label=dash_label,
-                )
+                dash_x,
+                dash_y,
+                color="black",
+                linewidth=1,
+                dashes=(3, 2),
+                label=dash_label,
+            )
             if not cfg.get_card_plot_shading():
                 mplWidget.canvas.ax.legend()
             # Must set ylim after plotting
@@ -153,4 +176,8 @@ class SeriesDataCard(SeriesDataBase):
         return avgPass.get_data_mod(loc_units=self.swath_units, data=avg)
 
     def get_average_y_label(self):
-        return "dep" if cfg.get_card_plot_y_axis()==cfg.CARD_PLOT_Y_AXIS_DEPOSITION else "cov"
+        return (
+            "dep"
+            if cfg.get_card_plot_y_axis() == cfg.CARD_PLOT_Y_AXIS_DEPOSITION
+            else "cov"
+        )

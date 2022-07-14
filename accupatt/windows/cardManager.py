@@ -179,7 +179,11 @@ class CardManager(baseclass):
         else:
             # Single Image, Multiple Cards
             if len(selected_cards) == 1:
-                msg = QMessageBox.question(self, "Are You sure?", f"You have chosen to load multiple cards from a single image, however, you only have one card selected in the list.\nWould you like to continue anyway?")
+                msg = QMessageBox.question(
+                    self,
+                    "Are You sure?",
+                    f"You have chosen to load multiple cards from a single image, however, you only have one card selected in the list.\nWould you like to continue anyway?",
+                )
                 if msg == QMessageBox.StandardButton.No:
                     return
                 if msg == QMessageBox.StandardButton.Yes:
@@ -252,8 +256,14 @@ class CardManager(baseclass):
             return
         # Warn if cards have over max stain limits
         if any([c.flag_max_stain_limit_reached for c in p.cards.card_list]):
-            cards = [c.name for c in p.cards.card_list if c.flag_max_stain_limit_reached]
-            msg = QMessageBox.question(self, "Stain Limit Exceeded", f"The following cards were unable to be processed due to the number of detected stains exceeding the user-defined limit: [{', '.join(cards)}]\nContinue Anyway?")
+            cards = [
+                c.name for c in p.cards.card_list if c.flag_max_stain_limit_reached
+            ]
+            msg = QMessageBox.question(
+                self,
+                "Stain Limit Exceeded",
+                f"The following cards were unable to be processed due to the number of detected stains exceeding the user-defined limit: [{', '.join(cards)}]\nContinue Anyway?",
+            )
             if msg == QMessageBox.StandardButton.No:
                 return
             if msg == QMessageBox.StandardButton.Yes:

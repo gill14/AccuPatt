@@ -174,17 +174,17 @@ class SprayCardStats:
             return rs
 
     def get_deposition(self, text=False):
-        if cfg.get_unit_rate()==cfg.UNIT_LPHA:
+        if cfg.get_unit_rate() == cfg.UNIT_LPHA:
             return self._get_lpha(text)
         else:
             return self._get_gpa(text)
-    
+
     def _get_gpa(self, text=False):
         if text:
             return f"{self.gpa:.2f}"
         else:
             return self.gpa
-        
+
     def _get_lpha(self, text=False):
         if text:
             return f"{self.lpha:.2f}"
@@ -241,6 +241,8 @@ class SprayCardStats:
             self.dv01 = np.nan
             self.dv05 = np.nan
             self.dv09 = np.nan
+            self.gpa = np.nan
+            self.lpha = np.nan
             return
         # dd and dv lists normally none, but will have values already for composite card calcs
         if drop_dia_um is None or drop_vol_um3 is None:
@@ -286,7 +288,7 @@ class SprayCardStats:
             # Apply Spread Factors to get originating drop diameter
             drop_dia_um.append(self._stain_dia_to_drop_dia(dia_um))
             # Use drop diameter to calculate drop volume
-            vol_um3 = (math.pi * drop_dia_um[-1]**3) / 6.0
+            vol_um3 = (math.pi * drop_dia_um[-1] ** 3) / 6.0
             # Build volume list
             drop_vol_um3.append(vol_um3)
         return drop_dia_um, drop_vol_um3
@@ -367,7 +369,6 @@ class sprayCardImageFileHandler:
 
 
 class SprayCardImageProcessor:
-    
     def __init__(self, sprayCard):
         self.sprayCard: SprayCard = sprayCard
         self.threshold_grayscale = self.sprayCard.threshold_grayscale
@@ -384,8 +385,16 @@ class SprayCardImageProcessor:
         image_t = self.img_thresh
         if self.sprayCard.watershed:
             # Generate markers as local maxima of distance to background
-            distance = cv2.distanceTransform(image_t, cv2.DIST_L2, cv2.DIST_MASK_PRECISE)
-            coords = peak_local_max(distance, min_distance=4, threshold_abs=0, threshold_rel=0, labels=image_t)
+            distance = cv2.distanceTransform(
+                image_t, cv2.DIST_L2, cv2.DIST_MASK_PRECISE
+            )
+            coords = peak_local_max(
+                distance,
+                min_distance=4,
+                threshold_abs=0,
+                threshold_rel=0,
+                labels=image_t,
+            )
             mask = np.zeros(distance.shape, dtype=bool)
             mask[tuple(coords.T)] = True
             markers, _ = ndimage.label(mask)
@@ -395,10 +404,10 @@ class SprayCardImageProcessor:
         # Iterate over each generated label
         for r in regionprops(labels):
             # Skip background
-            if r.label==0:
+            if r.label == 0:
                 continue
             # Check for mimimum area
-            is_too_small = r.area<sc.min_stain_area_px
+            is_too_small = r.area < sc.min_stain_area_px
             # Get bbox vals for offsetting local region
             x1, y1, x2, y2 = r.bbox
             # Check if touching edge
@@ -418,51 +427,65 @@ class SprayCardImageProcessor:
             for pt in c:
                 c_.append([int(pt[1]), int(pt[0])])
             c = np.array(c_).astype(int)
-            
+
             # Add it to the stains list for later use
-            sc.stains.append({"index":r.label, 
-                              "contour":c, 
-                              "area":area, 
-                              "is_too_small":is_too_small,
-                              "is_edge":is_edge,
-                              "is_include":is_include})
+            sc.stains.append(
+                {
+                    "index": r.label,
+                    "contour": c,
+                    "area": area,
+                    "is_too_small": is_too_small,
+                    "is_edge": is_edge,
+                    "is_include": is_include,
+                }
+            )
 
     def get_overlay_image(self):
         sc = self.sprayCard
         img = self.img_src
-        cv2.drawContours(img, 
-                         [stain["contour"] for stain in sc.stains if stain["is_include"]],
-                         -1,
-                         cfg.COLOR_STAIN_OUTLINE,
-                         1)
+        cv2.drawContours(
+            img,
+            [stain["contour"] for stain in sc.stains if stain["is_include"]],
+            -1,
+            cfg.COLOR_STAIN_OUTLINE,
+            1,
+        )
         return img
-    
+
     def get_mask_image(self):
         sc = self.sprayCard
         img = np.zeros((self.img_src.shape[0], self.img_src.shape[1], 3), np.uint8)
         img[:] = (255, 255, 255)
-        cv2.drawContours(img, 
-                         [stain["contour"] for stain in sc.stains if stain["is_too_small"]],
-                         -1,
-                         cfg.COLOR_STAIN_FILL_ALL,
-                         -1)
-        cv2.drawContours(img, 
-                         [stain["contour"] for stain in sc.stains if stain["is_edge"]],
-                         -1,
-                         cfg.COLOR_STAIN_FILL_EDGE,
-                         -1)
-        cv2.drawContours(img, 
-                         [stain["contour"] for stain in sc.stains if stain["is_include"]],
-                         -1,
-                         cfg.COLOR_STAIN_FILL_VALID,
-                         -1)
-        cv2.drawContours(img, 
-                         [stain["contour"] for stain in sc.stains if stain["is_include"]],
-                         -1,
-                         (255,255,255),
-                         1)
+        cv2.drawContours(
+            img,
+            [stain["contour"] for stain in sc.stains if stain["is_too_small"]],
+            -1,
+            cfg.COLOR_STAIN_FILL_ALL,
+            -1,
+        )
+        cv2.drawContours(
+            img,
+            [stain["contour"] for stain in sc.stains if stain["is_edge"]],
+            -1,
+            cfg.COLOR_STAIN_FILL_EDGE,
+            -1,
+        )
+        cv2.drawContours(
+            img,
+            [stain["contour"] for stain in sc.stains if stain["is_include"]],
+            -1,
+            cfg.COLOR_STAIN_FILL_VALID,
+            -1,
+        )
+        cv2.drawContours(
+            img,
+            [stain["contour"] for stain in sc.stains if stain["is_include"]],
+            -1,
+            (255, 255, 255),
+            1,
+        )
         return img
-    
+
     def _image_threshold(self, img):
         if self.sprayCard.threshold_type == cfg.THRESHOLD_TYPE_GRAYSCALE:
             return self._image_threshold_grayscale(img)
@@ -563,28 +586,40 @@ class SprayCardImageProcessor:
         x = int(x)
         y = int(y)
         method = self.sprayCard.stain_approximation_method
-        if method in [cfg.STAIN_APPROXIMATION_ELLIPSE, cfg.STAIN_APPROXIMATION_MIN_CIRCLE]:
-            r_radius = int(regionprop.minor_axis_length/2)
-            c_radius = int(regionprop.major_axis_length/2)
+        if method in [
+            cfg.STAIN_APPROXIMATION_ELLIPSE,
+            cfg.STAIN_APPROXIMATION_MIN_CIRCLE,
+        ]:
+            r_radius = int(regionprop.minor_axis_length / 2)
+            c_radius = int(regionprop.major_axis_length / 2)
             if method == cfg.STAIN_APPROXIMATION_MIN_CIRCLE:
                 radius_max = max(r_radius, c_radius)
                 r_radius = radius_max
                 c_radius = radius_max
-            angle = (2*np.pi)-regionprop.orientation # To account for regionprops(ccw) to ellipse_perimeter(cw)
-            if x<1 or y <1 or r_radius<1 or c_radius<1:
+            angle = (
+                2 * np.pi
+            ) - regionprop.orientation  # To account for regionprops(ccw) to ellipse_perimeter(cw)
+            if x < 1 or y < 1 or r_radius < 1 or c_radius < 1:
                 return self._get_raw_stain(regionprop)
-            rr, cc = ellipse_perimeter(x, y, c_radius, r_radius, shape=image_shape, orientation=angle)
-            sorted_by_angle_to_centroid = np.argsort(np.arctan2(rr - np.mean(rr), cc - np.mean(cc)))
+            rr, cc = ellipse_perimeter(
+                x, y, c_radius, r_radius, shape=image_shape, orientation=angle
+            )
+            sorted_by_angle_to_centroid = np.argsort(
+                np.arctan2(rr - np.mean(rr), cc - np.mean(cc))
+            )
             rr = rr[sorted_by_angle_to_centroid]
             cc = cc[sorted_by_angle_to_centroid]
-            return np.array((rr,cc)).T, np.pi * r_radius * c_radius
+            return np.array((rr, cc)).T, np.pi * r_radius * c_radius
         else:
             # No approximation or convex hull
             return self._get_raw_stain(regionprop)
-    
+
     def _get_raw_stain(self, regionprop):
         x1, y1, x2, y2 = regionprop.bbox
-        if self.sprayCard.stain_approximation_method == cfg.STAIN_APPROXIMATION_CONVEX_HULL:
+        if (
+            self.sprayCard.stain_approximation_method
+            == cfg.STAIN_APPROXIMATION_CONVEX_HULL
+        ):
             image = regionprop.image_convex
             area = regionprop.area_convex
         else:
@@ -592,7 +627,9 @@ class SprayCardImageProcessor:
             area = regionprop.area
         # Take local region (bbox) binary image and get the contour of current label
         img_binary_padded = np.pad(image, 1, mode="constant", constant_values=False)
-        c = find_contours(img_binary_padded, fully_connected="high", positive_orientation="high")[0]
-        c[:,0] += x1 -1
-        c[:,1] += y1 -1
+        c = find_contours(
+            img_binary_padded, fully_connected="high", positive_orientation="high"
+        )[0]
+        c[:, 0] += x1 - 1
+        c[:, 1] += y1 - 1
         return c, area

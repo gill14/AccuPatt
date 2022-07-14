@@ -6,7 +6,16 @@ from superqt import QLabeledRangeSlider, QLabeledSlider
 import accupatt.config as cfg
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSlot, QSignalBlocker
-from PyQt6.QtWidgets import QCheckBox, QComboBox, QDialogButtonBox, QLineEdit, QMessageBox, QPushButton, QRadioButton, QSpinBox
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QDialogButtonBox,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QRadioButton,
+    QSpinBox,
+)
 
 from accupatt.models.sprayCard import SprayCard
 
@@ -26,7 +35,7 @@ class EditThreshold(baseclass):
         # Get a handle to seriesData and passData to enable "Apply to all cards on save"
         self.seriesData = seriesData
         self.passData = passData
-        
+
         self.fit = "horizontal"
 
         # Threshold Type Combobox - Sets contents of Threshold GroupBox
@@ -97,7 +106,7 @@ class EditThreshold(baseclass):
         self.rb_horizontal: QRadioButton = self.ui.radioButtonHorizontal
         self.rb_horizontal.toggled[bool].connect(self._clicked_rb_horizontal)
         self.rb_horizontal.setChecked(True)
-        
+
         self.rb_vertical: QRadioButton = self.ui.radioButtonVertical
         self.rb_vertical.toggled[bool].connect(self._clicked_rb_vertical)
 
@@ -182,7 +191,7 @@ class EditThreshold(baseclass):
         if isChecked:
             self.fit = "horizontal"
         self.updateSprayCardView()
-        
+
     @pyqtSlot(bool)
     def _clicked_rb_vertical(self, isChecked: bool):
         if isChecked:
@@ -212,6 +221,7 @@ class EditThreshold(baseclass):
                     "Calculated = "
                     + str(int(self.sprayCard.threshold_grayscale_calculated))
                 )
+
     def _restore_defaults(self):
         sc = self.sprayCard
         if sc.threshold_type == cfg.THRESHOLD_TYPE_GRAYSCALE:
@@ -327,7 +337,9 @@ class EditThreshold(baseclass):
                             bandpass=sc.threshold_color_brightness_pass,
                         )
                         # Set Additional Options
-                        card.flag_max_stain_limit_reached = sc.flag_max_stain_limit_reached
+                        card.flag_max_stain_limit_reached = (
+                            sc.flag_max_stain_limit_reached
+                        )
                         card.watershed = sc.watershed
                         card.min_stain_area_px = sc.min_stain_area_px
                         card.stain_approximation_method = sc.stain_approximation_method
@@ -366,18 +378,19 @@ Ui_Form_2, baseclass_2 = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "processOptionsAdvanced.ui")
 )
 
+
 class ProcessOptionsAdvanced(baseclass_2):
     def __init__(self, sprayCard: SprayCard, parent=None):
         super().__init__(parent=parent)
         self.ui = Ui_Form_2()
         self.ui.setupUi(self)
-        
+
         self.sprayCard = sprayCard
-        
+
         # Max stain count
         self.le_max: QLineEdit = self.ui.lineEditMaxStains
         self.le_max.setText(str(cfg.get_max_stain_count()))
-        
+
         # Populate Watershed
         self.cb_watershed: QCheckBox = self.ui.checkBoxWatershed
         self.cb_watershed.setCheckState(
@@ -389,21 +402,21 @@ class ProcessOptionsAdvanced(baseclass_2):
         # Populate Stain Approx Method
         self.cb_approx: QComboBox = self.ui.comboBoxApproximationMethod
         self.cb_approx.addItems(cfg.STAIN_APPROXIMATION_METHODS)
-        self.cb_approx.setCurrentText(
-            self.sprayCard.stain_approximation_method
-        )
+        self.cb_approx.setCurrentText(self.sprayCard.stain_approximation_method)
 
         # Populate Min Stain Size
         self.sb_min: QSpinBox = self.ui.spinBoxMinSize
         self.sb_min.setValue(self.sprayCard.min_stain_area_px)
-        
+
         self.show()
-        
+
     def accept(self):
         try:
             int(self.le_max.text())
         except:
-            msg = QMessageBox.information(self, "Value Error", "Max Stain Count must be an integer")
+            msg = QMessageBox.information(
+                self, "Value Error", "Max Stain Count must be an integer"
+            )
             msg.exec()
             if msg == QMessageBox.StandardButton.Ok:
                 return

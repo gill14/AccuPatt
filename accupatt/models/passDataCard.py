@@ -72,11 +72,19 @@ class PassDataCard(PassDataBase):
         d["loc"] = d["loc"].sub(c)
 
     def _calcCentroid(self, d: pd.DataFrame):
-        y_index = "dep" if cfg.get_card_plot_y_axis()==cfg.CARD_PLOT_Y_AXIS_DEPOSITION else "cov"
+        y_index = (
+            "dep"
+            if cfg.get_card_plot_y_axis() == cfg.CARD_PLOT_Y_AXIS_DEPOSITION
+            else "cov"
+        )
         return (d[y_index] * d["loc"]).sum() / d[y_index].sum()
 
     def _calcCenterOfDistribution(self, d: pd.DataFrame):
-        y_index = "dep" if cfg.get_card_plot_y_axis()==cfg.CARD_PLOT_Y_AXIS_DEPOSITION else "cov"
+        y_index = (
+            "dep"
+            if cfg.get_card_plot_y_axis() == cfg.CARD_PLOT_Y_AXIS_DEPOSITION
+            else "cov"
+        )
         sumNumerator = 0.0
         sumDenominator = 0.0
         for i in range(0, len(d.index) - 1, 1):
@@ -126,35 +134,53 @@ class PassDataCard(PassDataBase):
         ax = mplWidget.canvas.ax
         ax.clear()
         ax.set_xlabel(f"Location ({loc_units})")
-        y_index = "dep" if cfg.get_card_plot_y_axis()==cfg.CARD_PLOT_Y_AXIS_DEPOSITION else "cov"
+        y_index = (
+            "dep"
+            if cfg.get_card_plot_y_axis() == cfg.CARD_PLOT_Y_AXIS_DEPOSITION
+            else "cov"
+        )
         ylab = cfg.get_card_plot_y_axis().capitalize()
-        if y_index=="dep":
+        if y_index == "dep":
             ylab = ylab + f" ({cfg.get_unit_rate()})"
-        elif y_index=="cov":
+        elif y_index == "cov":
             ylab = ylab + f" (%)"
         ax.set_ylabel(ylab)
         # Populate data if available
         if not d["loc"].empty:
+
             # Interpolate so that fill-between looks good
-            locs_i = np.linspace(d["loc"].iloc[0], d["loc"].iloc[-1], num=1000)
-            y_i = np.interp(locs_i, d["loc"], d[y_index])
-            # Handle shading for blank active cards
-            d = d.set_index("loc")
-            d.sort_values(by="loc", axis=0, inplace=True)
-            d["dv01"].interpolate(method="slinear", fill_value="extrapolate", inplace=True)
-            d["dv05"].interpolate(method="slinear", fill_value="extrapolate", inplace=True)
-            d.reset_index(inplace=True)
+            locs_i = np.linspace(
+                d["loc"].iloc[0], d["loc"].iloc[-1], num=d.shape[0] * 10
+            )
+            y_i = interpolate.interp1d(d["loc"], d[y_index], kind="slinear")(locs_i)
+
             # Colorize
             if cfg.get_card_plot_shading():
                 method = cfg.get_card_plot_shading_method()
-                if method==cfg.CARD_PLOT_SHADING_METHOD_DSC:
+                if method == cfg.CARD_PLOT_SHADING_METHOD_DSC:
+                    # Blank active cards need values for dv01/dv05 for shading, so interpolate
+                    d = d.set_index("loc")
+                    d.sort_values(by="loc", axis=0, inplace=True)
+                    d["dv01"].interpolate(
+                        method="slinear", fill_value="extrapolate", inplace=True
+                    )
+                    d["dv05"].interpolate(
+                        method="slinear", fill_value="extrapolate", inplace=True
+                    )
+                    d.reset_index(inplace=True)
                     # Get a np array of dsc's calculated for each interpolated loc
                     kind = (
-                        "linear" if cfg.get_card_plot_shading_interpolate() else "nearest"
+                        "slinear"
+                        if cfg.get_card_plot_shading_interpolate()
+                        else "nearest"
                     )
-                    interpolator = interpolate.interp1d(d["loc"], d["dv01"], kind=kind, fill_value="extrapolate")
+                    interpolator = interpolate.interp1d(
+                        d["loc"], d["dv01"], kind=kind, fill_value="extrapolate"
+                    )
                     dv01_i = interpolator(locs_i)
-                    interpolator = interpolate.interp1d(d["loc"], d["dv05"], kind=kind, fill_value="extrapolate")
+                    interpolator = interpolate.interp1d(
+                        d["loc"], d["dv05"], kind=kind, fill_value="extrapolate"
+                    )
                     dv05_i = interpolator(locs_i)
                     dsc_i = np.array(
                         [
@@ -169,17 +195,23 @@ class PassDataCard(PassDataBase):
                         for category in categories
                     ]
                     for (category, color) in zip(categories, colors):
+                        # Need to fill in gaps between color changes
+                        fill_mask = np.ma.masked_where(dsc_i != category, y_i)
+                        d = np.diff(np.asarray(np.ma.getmask(fill_mask), dtype=int))
+                        d = np.append(d, 0)  # To sync shape
+                        # -1 vals are at ends of unmasked regions
+                        fill_mask[d < 0] = y_i[d < 0]
                         ax.fill_between(
                             locs_i,
-                            np.ma.masked_where(dsc_i != category, y_i),
+                            fill_mask,
                             color=color,
                             alpha=0.7,
                             label=category,
                         )
                     ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-                elif method==cfg.CARD_PLOT_SHADING_METHOD_DEPOSITION_AVERAGE:
+                elif method == cfg.CARD_PLOT_SHADING_METHOD_DEPOSITION_AVERAGE:
                     pass
-                elif method==cfg.CARD_PLOT_SHADING_METHOD_DEPOSITION_TARGET:
+                elif method == cfg.CARD_PLOT_SHADING_METHOD_DEPOSITION_TARGET:
                     pass
             else:
                 ax.fill_between(locs_i, 0, y_i, alpha=0.7)
