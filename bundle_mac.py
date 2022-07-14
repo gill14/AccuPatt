@@ -19,7 +19,8 @@ OPTIONS = {
     'bdist_base':'./dist/osx/build',
     'dist_dir':'./dist/osx/dist',
     'plist': {'CFBundleShortVersionString':VERSION,
-              'CFBundleIdentifier':'edu.illinois.accupatt',}
+              'CFBundleIdentifier':'edu.illinois.accupatt',},
+    'excludes': ["PyInstaller"],
 }
 
 if sys.platform == 'darwin':
