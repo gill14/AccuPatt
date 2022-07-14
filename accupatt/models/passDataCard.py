@@ -199,7 +199,7 @@ class PassDataCard(PassDataBase):
                         fill_mask = np.ma.masked_where(dsc_i != category, y_i)
                         d = np.diff(np.asarray(np.ma.getmask(fill_mask), dtype=int))
                         d = np.append(d, 0)  # To sync shape
-                        # -1 vals are at ends of unmasked regions
+                        # -1 vals are at trailing ends of unmasked regions
                         fill_mask[d < 0] = y_i[d < 0]
                         ax.fill_between(
                             locs_i,
