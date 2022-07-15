@@ -447,7 +447,7 @@ class SprayCardImageProcessor:
             img,
             [stain["contour"] for stain in sc.stains if stain["is_include"]],
             -1,
-            cfg.COLOR_STAIN_OUTLINE,
+            cfg.COLOR_STAIN_OUTLINE[::-1],
             1,
         )
         return img
@@ -460,21 +460,21 @@ class SprayCardImageProcessor:
             img,
             [stain["contour"] for stain in sc.stains if stain["is_too_small"]],
             -1,
-            cfg.COLOR_STAIN_FILL_ALL,
+            cfg.COLOR_STAIN_FILL_ALL[::-1],
             -1,
         )
         cv2.drawContours(
             img,
             [stain["contour"] for stain in sc.stains if stain["is_edge"]],
             -1,
-            cfg.COLOR_STAIN_FILL_EDGE,
+            cfg.COLOR_STAIN_FILL_EDGE[::-1],
             -1,
         )
         cv2.drawContours(
             img,
             [stain["contour"] for stain in sc.stains if stain["is_include"]],
             -1,
-            cfg.COLOR_STAIN_FILL_VALID,
+            cfg.COLOR_STAIN_FILL_VALID[::-1],
             -1,
         )
         cv2.drawContours(

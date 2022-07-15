@@ -62,7 +62,7 @@ class SplitCardWidget(QWidget):
             self.pixmap_item_original.setPixmap(
                 QPixmap.fromImage(
                     SplitCardWidget.qImg_from_cvImg(
-                        cv2.cvtColor(cvImg1, cv2.COLOR_RGB2BGR)
+                        cvImg1
                     )
                 )
             )
@@ -70,7 +70,7 @@ class SplitCardWidget(QWidget):
             self.pixmap_item_thresh.setPixmap(
                 QPixmap.fromImage(
                     SplitCardWidget.qImg_from_cvImg(
-                        cv2.cvtColor(cvImg2, cv2.COLOR_RGB2BGR)
+                        cvImg2
                     )
                 )
             )

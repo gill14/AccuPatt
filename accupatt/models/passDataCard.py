@@ -197,6 +197,8 @@ class PassDataCard(PassDataBase):
                     for (category, color) in zip(categories, colors):
                         # Need to fill in gaps between color changes
                         fill_mask = np.ma.masked_where(dsc_i != category, y_i)
+                        if not np.any(np.ma.getmask(fill_mask)):
+                            continue
                         d = np.diff(np.asarray(np.ma.getmask(fill_mask), dtype=int))
                         d = np.append(d, 0)  # To sync shape
                         # -1 vals are at trailing ends of unmasked regions
