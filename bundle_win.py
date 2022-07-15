@@ -26,6 +26,7 @@ if sys.platform == 'win32':
         '--name=AccuPatt',
         '--windowed',
         '--exclude-module=tkinter',
+        f'--additional-hooks-dir=./hooks',
         f'--add-data=../../resources{os.pathsep}resources',
         '--icon=../../resources/illini.ico',
         '--distpath=./dist/win/dist',

@@ -21,6 +21,7 @@ OPTIONS = {
     'plist': {'CFBundleShortVersionString':VERSION,
               'CFBundleIdentifier':'edu.illinois.accupatt',},
     'excludes': ["PyInstaller"],
+    'includes': ["PyWavelets", "pywt", "imageio", "networkx"],
 }
 
 if sys.platform == 'darwin':
