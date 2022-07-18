@@ -1,7 +1,11 @@
-# The following missing module prevents import of skimage.feature
-# with skimage 0.18.x.
+from PyInstaller.utils.hooks import collect_data_files
+
+# include all .ui and image files
+datas = collect_data_files("pyqtgraph",
+                           includes=["**/*.ui", "**/*.png", "**/*.svg"])
+
 hiddenimports = [
-    'pyqtgraph.GraphicsScene.exportDialogTemplate_pyqt6.'
+    'pyqtgraph.GraphicsScene.exportDialogTemplate_pyqt6',
     'pyqtgraph.graphicsItems.ViewBox.axisCtrlTemplate_pyqt6',
     'pyqtgraph.canvas.CanvasTemplate_pyqt6',
     'pyqtgraph.canvas.TransformGuiTemplate_pyqt6',
