@@ -96,6 +96,7 @@ class AtomizationModel:
     excluded_dict = {
         "CP01": {"Orifice": [0.062, 0.078, 0.125, 0.172], "Angle": [30, 55, 90]},
         "CP07": {"Orifice": [0.062, 0.078, 0.125, 0.172], "Angle": [0, 5, 30]},
+        "CP09A": {"Orifice": [0.062, 0.078, 0.125, 0.172], "Angle": [30, 55, 90]}, # Australian
         "AccuFlo": {"Orifice": [0.016, 0.078, 0.125], "Angle": [0]},
         "Micronair": {
             "Orifice": ["AU4000", "AU5000", "AU6539", "AU7000"],
