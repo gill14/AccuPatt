@@ -13,14 +13,13 @@ from accupatt.models.sprayCard import SprayCard
 from openpyxl_image_loader import SheetImageLoader
 
 
-def convert_xlsx_to_db(file, s: SeriesData = None, prog=None) -> str:
+def convert_xlsx_to_db(file, prog=None) -> str:
     if prog != None:
         prog.setRange(0, 3)
         prog.setValue(0)
         prog.setLabelText("Loading in Series Data")
-    # Only load in series data from xlsx if no series passed in
-    if s == None:
-        s = load_from_accupatt_1_file(file)
+    s = SeriesData()
+    load_from_accupatt_1_file(file, s)
     if prog != None:
         prog.setLabelText("Creating Local Database")
         prog.setValue(1)
