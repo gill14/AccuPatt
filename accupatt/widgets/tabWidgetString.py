@@ -150,24 +150,16 @@ class TabWidgetString(TabWidgetBase):
     def composites_triggered(self):
         self.seriesData.string.plotOverlay(self.plotWidgetOverlay)
         self.seriesData.string.plotAverage(
-            self.plotWidgetAverage, self.seriesData.string.swath_adjusted
+            self.plotWidgetAverage
         )
 
     def simulations_triggered(self):
-        showEntireWindow = (
-            cfg.get_string_simulation_view_window()
-            == cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL
-        )
         self.seriesData.string.plotRacetrack(
             mplWidget=self.plotWidgetRacetrack,
-            swath_width=self.seriesData.string.swath_adjusted,
-            showEntireWindow=showEntireWindow,
         )
         self.seriesData.string.plotBackAndForth(
             mplWidget=self.plotWidgetBackAndForth,
-            swath_width=self.seriesData.string.swath_adjusted,
-            showEntireWindow=showEntireWindow,
         )
         self.seriesData.string.plotCVTable(
-            self.tableWidgetCV, self.seriesData.string.swath_adjusted
+            self.tableWidgetCV
         )

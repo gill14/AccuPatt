@@ -2,11 +2,12 @@
 Planned features and fixes in no particular order
 ## Overall
 - [ ] export processed string/card data
-- [ ] setting target swath always overrides adjusted, need to only do so when changing target swath field from blank to ensure adjusted swaths don't get overriden
+- [X] setting target swath always overrides adjusted, need to only do so when changing target swath field from blank to ensure adjusted swaths don't get overriden
 - [ ] add support for legacy WRK files
 - [X] Flyin Date resetting upon loading previous data file
 - [ ] config setting of dirs for new/open/image_load
 - [X] data file overwrite check. prompt is file already exists.
+- [ ] simulated adjascent passes to persistent config
 ## String Analysis
 - [ ] Warning for low res patterns - turn ind plot red and slap a warning label on it? - need to constrain to passString window only for compatibility
 - [ ] String Plot Options to dialog

@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Conversion of xlsx to db hangup ([#2](https://github.com/gill14/AccuPatt/issues/2))
 - On open file, flyin date being replaced with current date in Application Info widget
+- Setting target swath should only set adjusted swath initially to prevent overwriting priors
 ## [2.0.14] - 15 July 2022
 ### Added
 - Defined Dye Manager allowing for selecting pre-defined dyes or configuring fully custom ones, all with local persistance.
@@ -214,4 +215,5 @@ All notable changes to this project will be documented in this file.
 [2.0.4]: https://github.com/gill14/accupatt/compare/v2.0.3...v2.0.4
 [2.0.3]: https://github.com/gill14/accupatt/compare/v2.0.2...v2.0.3
 [2.0.2]: https://github.com/gill14/accupatt/compare/v2.0.1...v2.0.2
+[2.0.1]: https://github.com/gill14/accupatt/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/gill14/accupatt/compare/initial_commit...v2.0.0

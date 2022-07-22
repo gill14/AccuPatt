@@ -210,10 +210,13 @@
           <string/>
          </property>
          <property name="minimum">
-          <number>2</number>
+          <number>0</number>
          </property>
          <property name="maximum">
           <number>500</number>
+         </property>
+         <property name="value">
+          <number>0</number>
          </property>
         </widget>
        </item>

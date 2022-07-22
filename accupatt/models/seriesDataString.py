@@ -10,8 +10,8 @@ from scipy.stats import variation
 
 
 class SeriesDataString(SeriesDataBase):
-    def __init__(self, passes: list[Pass], target_swath: int, swath_units: str):
-        super().__init__(passes, target_swath, swath_units)
+    def __init__(self, passes: list[Pass]):
+        super().__init__(passes)
         # Options
         self.equalize_integrals = True
         # Convenience Runtime Placeholder
@@ -90,7 +90,7 @@ class SeriesDataString(SeriesDataBase):
         # Draw the plot regardless if passes were plotted to it
         mplWidget.canvas.draw()
 
-    def plotAverage(self, mplWidget: MplWidget, swath_width):
+    def plotAverage(self, mplWidget: MplWidget):
         # Setup and clear the plotter
         self._config_mpl_plotter(mplWidget)
         # Convenience accessor to average string modified data
@@ -104,17 +104,18 @@ class SeriesDataString(SeriesDataBase):
                 x[y != 0], y[y != 0], color="black", linewidth=2, label="Average"
             )
             mplWidget.canvas.ax.fill_between(x[y != 0], 0, y[y != 0], alpha=0.7)
-            if cfg.get_string_plot_average_swath_box():
+            _sw = self.swath_adjusted
+            if cfg.get_string_plot_average_swath_box() and _sw >=1:
                 # Find average deposition inside swath width
-                a_c = a[(a["loc"] >= -swath_width / 2) & (a["loc"] <= swath_width / 2)]
+                a_c = a[(a["loc"] >= -_sw / 2) & (a["loc"] <= _sw / 2)]
                 a_c_mean = a_c["Average"].mean(axis="rows")
                 # Plot rectangle, w = swath width, h = (1/2)* average dep inside swath width
                 mplWidget.canvas.ax.plot(
                     [
-                        -swath_width / 2,
-                        -swath_width / 2,
-                        swath_width / 2,
-                        swath_width / 2,
+                        -_sw / 2,
+                        -_sw / 2,
+                        _sw / 2,
+                        _sw / 2,
                     ],
                     [0, a_c_mean / 2, a_c_mean / 2, 0],
                     color="black",
@@ -128,6 +129,25 @@ class SeriesDataString(SeriesDataBase):
         mplWidget.canvas.ax.set_ylim(bottom=0, auto=None)
         # Plot it
         mplWidget.canvas.draw()
+
+    def plotRacetrack(self, mplWidget: MplWidget):
+        self._plotSimulation(mplWidget)
+
+    def plotBackAndForth(self, mplWidget: MplWidget):
+        self._plotSimulation(
+            mplWidget,
+            mirrorAdjascent=True,
+        )
+        
+    def _plot_simulation(self, mplWidget: MplWidget, mirrorAdjascent=False):
+        showEntireWindow = (cfg.get_string_simulation_view_window()==cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL)
+        label = "Back & Forth" if mirrorAdjascent else "Racetract"
+        super()._plotSimulation(
+            mplWidget,
+            showEntireWindow,
+            mirrorAdjascent,
+            label
+        )
 
     # Overrides for superclass
 

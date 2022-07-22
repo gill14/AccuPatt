@@ -92,30 +92,30 @@ class TabWidgetBase(QWidget):
         self.passSelectionChanged()
         # Silently update adjusted swath control limits
         self.setAdjustedSwathFromTargetSwath(
-            replace_adjusted_swath=False, update_plots=False
+            update_plots=False
         )
         # Update Adjusted Swath, then plot composites and simulations
         self.swathAdjustedChanged(swath=self.getSeriesOpt().swath_adjusted)
 
     @pyqtSlot()
     def setAdjustedSwathFromTargetSwath(
-        self, replace_adjusted_swath=True, update_plots=True
+        self, update_plots=True
     ):
         swath = self.seriesData.info.swath
         swath_units = self.seriesData.info.swath_units
         opt = self.getSeriesOpt()
-        # Update Card Adjusted Swath
-        if replace_adjusted_swath:
+        # Update Card Adjusted Swath only if not already set
+        if opt.swath_adjusted < 1:
             opt.swath_adjusted = swath
-            opt.swath_units = swath_units
+        opt.swath_units = swath_units
         # Update UI
         with QSignalBlocker(self.sliderSimulatedSwath):
-            self.sliderSimulatedSwath.setValue(swath)
-            self.sliderSimulatedSwath.setMinimum(round(0.5 * float(swath)))
-            self.sliderSimulatedSwath.setMaximum(round(1.5 * float(swath)))
+            self.sliderSimulatedSwath.setMinimum(round(0.5 * float(opt.swath_adjusted)))
+            self.sliderSimulatedSwath.setMaximum(round(1.5 * float(opt.swath_adjusted)))
+            self.sliderSimulatedSwath.setValue(opt.swath_adjusted)
         with QSignalBlocker(self.spinBoxSwathAdjusted):
-            self.spinBoxSwathAdjusted.setValue(swath)
-            self.spinBoxSwathAdjusted.setSuffix(" " + swath_units)
+            self.spinBoxSwathAdjusted.setValue(opt.swath_adjusted)
+            self.spinBoxSwathAdjusted.setSuffix(" " + opt.swath_units)
         if update_plots:
             self.updatePlots(modify=True, composites=True, simulations=True)
 

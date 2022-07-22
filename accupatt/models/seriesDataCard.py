@@ -1,19 +1,15 @@
-import matplotlib
 import numpy as np
 import pandas as pd
-from scipy import interpolate
 import accupatt.config as cfg
 from accupatt.models.passDataCard import PassDataCard
 from accupatt.models.passData import Pass
 from accupatt.models.seriesDataBase import SeriesDataBase
 from accupatt.widgets.mplwidget import MplWidget
-from PyQt6.QtWidgets import QTableWidget
-from scipy.stats import variation
 
 
 class SeriesDataCard(SeriesDataBase):
-    def __init__(self, passes: list[Pass], target_swath, swath_units: str):
-        super().__init__(passes, target_swath, swath_units)
+    def __init__(self, passes: list[Pass]):
+        super().__init__(passes)
 
     def _get_active_passes(self) -> list[Pass]:
         activePasses: list[Pass] = []
@@ -166,6 +162,25 @@ class SeriesDataCard(SeriesDataBase):
             # Plot it
             mplWidget.canvas.draw()
 
+    def plotRacetrack(self, mplWidget: MplWidget):
+        self._plotSimulation(mplWidget)
+
+    def plotBackAndForth(self, mplWidget: MplWidget):
+        self._plotSimulation(
+            mplWidget,
+            mirrorAdjascent=True,
+        )
+        
+    def _plot_simulation(self, mplWidget: MplWidget, mirrorAdjascent=False):
+        showEntireWindow = (cfg.get_card_simulation_view_window()==cfg.CARD_SIMULATINO_VIEW_WINDOW_ALL)
+        label = "Back & Forth" if mirrorAdjascent else "Racetract"
+        super()._plotSimulation(
+            mplWidget,
+            showEntireWindow,
+            mirrorAdjascent,
+            label
+        )
+    
     # Overrides for superclass
 
     def get_average_mod(self):

@@ -10,13 +10,13 @@ from PyQt6.QtWidgets import QTableWidget
 
 
 class SeriesDataBase(OptBase):
-    def __init__(self, passes: list[Pass], target_swath: int, swath_units: str):
+    def __init__(self, passes: list[Pass]):
         super().__init__(name="series")
         self.passes = passes
-        self.swath_units = swath_units
-        self.swath_adjusted = target_swath if target_swath > 0 else 50
+        
         # Options
-        self.swath_adjusted = target_swath if target_swath > 0 else 50
+        self.swath_adjusted = 0
+        self.swath_units = cfg.get_unit_swath()
         self.simulated_adjascent_passes = 2
 
     def get_average_mod(self):
@@ -38,28 +38,9 @@ class SeriesDataBase(OptBase):
         self.swath_adjusted = int(float(string))
         return True
 
-    def plotRacetrack(
-        self, mplWidget: MplWidget, swath_width: float, showEntireWindow=False
-    ):
-        self._plotSimulation(
-            mplWidget, swath_width, showEntireWindow, label="Racetrack"
-        )
-
-    def plotBackAndForth(
-        self, mplWidget: MplWidget, swath_width: float, showEntireWindow=False
-    ):
-        self._plotSimulation(
-            mplWidget,
-            swath_width,
-            showEntireWindow,
-            mirrorAdjascent=True,
-            label="Back & Forth",
-        )
-
     def _plotSimulation(
         self,
         mplWidget: MplWidget,
-        swath_width: float,
         showEntireWindow=False,
         mirrorAdjascent=False,
         label="",
@@ -67,9 +48,10 @@ class SeriesDataBase(OptBase):
         self._config_mpl_plotter(mplWidget)
         average_df = self.get_average_mod()
         average_y_label = self.get_average_y_label()
-        if not average_df.empty:
+        _sw = self.swath_adjusted
+        if not average_df.empty and _sw >= 1:
             xfill, y_fills, labels = self._get_fill_arrays(
-                swath_width=swath_width,
+                swath_width=_sw,
                 average_df=average_df,
                 average_y_label=average_y_label,
                 mirrorAdjascent=mirrorAdjascent,
@@ -90,11 +72,11 @@ class SeriesDataBase(OptBase):
             # Find average deposition inside swath width
             avg = np.mean(
                 y_fill_cum[
-                    np.where(((xfill >= -swath_width / 2) & (xfill <= swath_width / 2)))
+                    np.where(((xfill >= -_sw / 2) & (xfill <= _sw / 2)))
                 ]
             )
             mplWidget.canvas.ax.plot(
-                [-swath_width / 2, swath_width / 2],
+                [-_sw / 2, _sw / 2],
                 [avg, avg],
                 color="black",
                 dashes=[5, 5],
@@ -106,13 +88,13 @@ class SeriesDataBase(OptBase):
             mplWidget.canvas.ax.set_ylabel(label)
             # Whether to show the whole window or one swath width
             if not showEntireWindow:
-                mplWidget.canvas.ax.set_xlim(-swath_width / 2, swath_width / 2)
+                mplWidget.canvas.ax.set_xlim(-_sw / 2, _sw / 2)
         # Must set ylim after plotting
         mplWidget.canvas.ax.set_ylim(bottom=0, auto=None)
         # Plot it
         mplWidget.canvas.draw()
 
-    def plotCVTable(self, tableWidget: QTableWidget, swath_width: float):
+    def plotCVTable(self, tableWidget: QTableWidget):
         average_df = self.get_average_mod()
         average_y_label = self.get_average_y_label()
         # Simulate various Swath Widths, incrimenting by 2 units (-/+) from the center
@@ -120,13 +102,13 @@ class SeriesDataBase(OptBase):
             item_sw = tableWidget.item(row, 0)
             item_rt = tableWidget.item(row, 1)
             item_bf = tableWidget.item(row, 2)
-            if average_df.empty:
+            _sw = self.swath_adjusted - (tableWidget.rowCount() - 1) + (2 * row)
+            if average_df.empty or _sw < 1:
                 item_sw.setText("-")
                 item_rt.setText("-")
                 item_bf.setText("-")
                 continue
             # Print swath width
-            _sw = swath_width - (tableWidget.rowCount() - 1) + (2 * row)
             item_sw.setText(f"{_sw} {self.swath_units}")
             # Calc and Print RT CV
             rt_cv = self._calcCV(average_df, average_y_label, _sw, False)

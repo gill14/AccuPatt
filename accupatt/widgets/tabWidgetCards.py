@@ -212,21 +212,14 @@ class TabWidgetCards(TabWidgetBase):
         )
 
     def simulations_triggered(self):
-        showEntireWindow = (
-            cfg.get_card_simulation_view_window() == cfg.CARD_SIMULATINO_VIEW_WINDOW_ALL
-        )
         self.seriesData.cards.plotRacetrack(
             mplWidget=self.plotWidgetRacetrack,
-            swath_width=self.seriesData.cards.swath_adjusted,
-            showEntireWindow=showEntireWindow,
         )
         self.seriesData.cards.plotBackAndForth(
             mplWidget=self.plotWidgetBackAndForth,
-            swath_width=self.seriesData.cards.swath_adjusted,
-            showEntireWindow=showEntireWindow,
         )
         self.seriesData.cards.plotCVTable(
-            self.tableWidgetCV, self.seriesData.cards.swath_adjusted
+            self.tableWidgetCV
         )
 
     def distributions_triggered(self):
