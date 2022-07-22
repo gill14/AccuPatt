@@ -58,6 +58,7 @@ class SeriesInfoWidget(baseclass):
     def init_flyin(self):
         self.ui.lineEditName.editingFinished.connect(self._commit_name)
         self.ui.lineEditLocation.editingFinished.connect(self._commit_location)
+        self.ui.dateEdit.setDateTime(QDateTime.currentDateTime())
         self.ui.dateEdit.dateChanged[QDate].connect(self._dateEdit_changed)
         self.ui.lineEditAnalyst.editingFinished.connect(self._commit_analyst)
 
@@ -65,7 +66,6 @@ class SeriesInfoWidget(baseclass):
         self.ui.lineEditName.setText(info.flyin_name)
         self.ui.lineEditLocation.setText(info.flyin_location)
         self.ui.lineEditDate.setText(info.flyin_date)
-        self.ui.dateEdit.setDateTime(QDateTime.currentDateTime())
         self.ui.lineEditAnalyst.setText(info.flyin_analyst)
 
     @pyqtSlot()

@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Overwrites and Deletes now simply move file to Trash (MacOS) or Recycle Bin (Windows)
 ### Fixed
 - Conversion of xlsx to db hangup ([#2](https://github.com/gill14/AccuPatt/issues/2))
+- On open file, flyin date being replaced with current date in Application Info widget
 ## [2.0.14] - 15 July 2022
 ### Added
 - Defined Dye Manager allowing for selecting pre-defined dyes or configuring fully custom ones, all with local persistance.
