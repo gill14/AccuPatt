@@ -1,7 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 ## [Unreleased]
-...
+### Added
+- Thrush 510P2, 510P2+ to available aircraft ([#1](https://github.com/gill14/AccuPatt/issues/1))
+- CP09A (Australian) nozzle to non-modeled nozzles ([#1](https://github.com/gill14/AccuPatt/issues/1))
+### Changed
+- Overwrites and Deletes now simply move file to Trash (MacOS) or Recycle Bin (Windows)
+### Fixed
+- Conversion of xlsx to db hangup ([#2](https://github.com/gill14/AccuPatt/issues/2))
 ## [2.0.14] - 15 July 2022
 ### Added
 - Defined Dye Manager allowing for selecting pre-defined dyes or configuring fully custom ones, all with local persistance.

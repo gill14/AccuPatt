@@ -40,6 +40,8 @@ from PyQt6.QtWidgets import (
     QTabWidget,
 )
 
+from send2trash import send2trash
+
 from accupatt.windows.reportManager import ReportManager
 
 Ui_Form, baseclass = uic.loadUiType(
@@ -291,6 +293,8 @@ class MainWindow(baseclass):
             )
             if file is None or file == "":
                 return False
+            if os.path.exists(file):
+                send2trash(os.path.abspath(file))
             self.change_current_file(file)
         # If db file exists, or a new one has been created, update persistent vals for Flyin
         cfg.set_flyin_name(self.seriesData.info.flyin_name)

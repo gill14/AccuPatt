@@ -1,6 +1,8 @@
 import operator
 import os
 
+from send2trash import send2trash
+
 import accupatt.config as cfg
 import cv2
 import numpy as np
@@ -344,23 +346,19 @@ class LoadCards(baseclass):
         msg = QMessageBox()
         msg.setParent(self)
         msg.setIcon(QMessageBox.Icon.Question)
-        msg.setText("Delete Original File?")
+        msg.setText("Trash Original File?")
         msg.setInformativeText(
             "All chosen regions have been cropped from the original image and sucessfully saved to the database."
         )
         msg.setWindowModality(Qt.WindowModality.WindowModal)
-        button_delete = msg.addButton("Delete", QMessageBox.ButtonRole.ActionRole)
+        button_delete = msg.addButton("Trash", QMessageBox.ButtonRole.ActionRole)
         button_do_not_delete = msg.addButton(
-            "Do Not Delete", QMessageBox.ButtonRole.ActionRole
+            "Keep", QMessageBox.ButtonRole.ActionRole
         )
         msg.setDefaultButton(button_do_not_delete)
         msg.exec()
         if msg.clickedButton() == button_delete:
-            msg2 = QMessageBox.question(msg, "", "Are you sure? THIS CANNOT BE UNDONE.")
-            if msg2 == QMessageBox.StandardButton.No:
-                return
-            if msg2 == QMessageBox.StandardButton.Yes:
-                os.remove(self.image_file)
+            send2trash(os.path.abspath(self.image_file))
 
     def _sort_rois(self, orientation, order):
         rois_original = self.roi_rectangles.copy()
