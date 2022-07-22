@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 - CP09A (Australian) nozzle to non-modeled nozzles ([#1](https://github.com/gill14/AccuPatt/issues/1))
 ### Changed
 - Overwrites and Deletes now simply move file to Trash (MacOS) or Recycle Bin (Windows)
+- Moved defualt number of simulated adjascent passes to persistent user config
 ### Fixed
 - Conversion of xlsx to db hangup ([#2](https://github.com/gill14/AccuPatt/issues/2))
 - On open file, flyin date being replaced with current date in Application Info widget

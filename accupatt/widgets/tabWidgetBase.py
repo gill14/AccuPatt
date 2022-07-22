@@ -17,7 +17,7 @@ from accupatt.models.seriesData import SeriesData
 from accupatt.models.seriesDataBase import SeriesDataBase
 from accupatt.widgets.mplwidget import MplWidget
 from accupatt.windows.editOptBase import EditOptBase
-
+import accupatt.config as cfg
 
 class TabWidgetBase(QWidget):
 
@@ -288,6 +288,7 @@ class TabWidgetBase(QWidget):
     def simulatedPassesChanged(self, numAdjascentPasses):
         self.getSeriesOpt().simulated_adjascent_passes = numAdjascentPasses
         self.updatePlots(simulations=True)
+        cfg.set_simulated_adjascent_passes(numAdjascentPasses)
 
     """
     plot triggers

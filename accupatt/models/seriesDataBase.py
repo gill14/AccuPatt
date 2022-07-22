@@ -17,7 +17,7 @@ class SeriesDataBase(OptBase):
         # Options
         self.swath_adjusted = 0
         self.swath_units = cfg.get_unit_swath()
-        self.simulated_adjascent_passes = 2
+        self.simulated_adjascent_passes = cfg.get_simulated_adjascent_passes()
 
     def get_average_mod(self):
         """
