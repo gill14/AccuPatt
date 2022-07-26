@@ -24,8 +24,9 @@ if sys.platform == 'win32':
     PyInstaller.__main__.run([
         './accupatt/__main__.py',
         '--name=AccuPatt',
-        '--windowed',
+        '--windowed', # change to --nowindowed for console troubleshooting
         '--exclude-module=tkinter',
+        '--hidden-import=matplotlib.backends.backend_svg',
         f'--additional-hooks-dir=./hooks',
         f'--add-data=../../resources{os.pathsep}resources',
         '--icon=../../resources/illini.ico',

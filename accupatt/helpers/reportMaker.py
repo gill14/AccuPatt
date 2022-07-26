@@ -10,7 +10,7 @@ from accupatt.models.sprayCard import SprayCard
 from accupatt.widgets.mplwidget import MplWidget
 from PIL import Image
 from reportlab.graphics import renderPDF
-from reportlab.lib import colors, utils
+from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4, letter
 from reportlab.lib.styles import ParagraphStyle
