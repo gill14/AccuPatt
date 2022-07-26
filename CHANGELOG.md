@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 ## [Unreleased]
+...
+## [2.0.15] - 26 July 2022
 ### Added
 - Thrush 510P2, 510P2+ to available aircraft ([#1](https://github.com/gill14/AccuPatt/issues/1))
 - CP09A (Australian) nozzle to non-modeled nozzles ([#1](https://github.com/gill14/AccuPatt/issues/1))
@@ -11,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Conversion of xlsx to db hangup ([#2](https://github.com/gill14/AccuPatt/issues/2))
 - On open file, flyin date being replaced with current date in Application Info widget
 - Setting target swath should only set adjusted swath initially to prevent overwriting priors
+- (Windows) unable to generate PDF due to missing matplotlib SVG backend dependency
 ## [2.0.14] - 15 July 2022
 ### Added
 - Defined Dye Manager allowing for selecting pre-defined dyes or configuring fully custom ones, all with local persistance.
@@ -202,7 +205,8 @@ All notable changes to this project will be documented in this file.
 - Initial rewrite of AccuPatt using Python/Qt. Based on prior (1.xx) version using Java/JavaFX. Final release of the legacy version is 1.06+.
 
 
-[Unreleased]: https://github.com/gill14/accupatt/compare/v2.0.14...HEAD
+[Unreleased]: https://github.com/gill14/accupatt/compare/v2.0.15...HEAD
+[2.0.15]: https://github.com/gill14/accupatt/compare/v2.0.14...v2.0.15
 [2.0.14]: https://github.com/gill14/accupatt/compare/v2.0.13...v2.0.14
 [2.0.13]: https://github.com/gill14/accupatt/compare/v2.0.12...v2.0.13
 [2.0.12]: https://github.com/gill14/accupatt/compare/v2.0.11...v2.0.12
