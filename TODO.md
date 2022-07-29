@@ -1,5 +1,6 @@
 # -- TODO --
-Planned features and fixes in no particular order
+Planned features and fixes in no particular order\
+Submitted [issues] are not included here, but will also be addressed in order of priority
 ## Overall
 - [ ] export processed string/card data
 - [ ] add support for legacy WRK files
@@ -14,3 +15,5 @@ Planned features and fixes in no particular order
 - [ ] Shading option - Deviation from average measured rate
 ## Report
 - [ ] Make nozzle sets have col for each set, row for each of the params
+
+[issues]: https://github.com/gill14/AccuPatt/issues
