@@ -21,7 +21,8 @@ class TestSpectrometer(baseclass):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
-        self.spec = spectrometer
+        self.spec: Spectrometer = spectrometer
+        self.spec.integration_time_micros(dye.integration_time_milliseconds*1000)
         self.dye = dye
 
         self.tw: QTableWidget = self.ui.tableWidget
@@ -149,7 +150,7 @@ class TestSpectrometer(baseclass):
 
     def _plot_frame(self):
         self.y = self.spec.intensities(
-            correct_dark_counts=True, correct_nonlinearity=True
+            correct_dark_counts=False, correct_nonlinearity=False
         )
         self.plot_item.setData(self.x, self.y)
         self.tw.item(2, 0).setText(str(int(self.y[self.pix_ex])))
