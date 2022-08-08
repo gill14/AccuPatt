@@ -43,6 +43,7 @@ from PyQt6.QtWidgets import (
 from send2trash import send2trash
 
 from accupatt.windows.reportManager import ReportManager
+from accupatt.windows.stringPlotOptions import StringPlotOptions
 
 Ui_Form, baseclass = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "mainWindow.ui")
@@ -86,34 +87,8 @@ class MainWindow(baseclass):
         self.action_save.triggered.connect(self.saveFile)
         self.ui.action_open.triggered.connect(self.openFile)
         # --> Setup Options Menu
-        self.ui.action_pass_manager.triggered.connect(self.openPassManager)
-        # --> | --> String Plot Options
-        menuStringPlotOptions: QMenu = self.ui.menuString_Plot_Options
-        actionStringCrosshair = QAction("Average Plot Swath Box", menuStringPlotOptions)
-        actionStringCrosshair.setCheckable(True)
-        actionStringCrosshair.setChecked(cfg.get_string_plot_average_swath_box())
-        actionStringCrosshair.toggled[bool].connect(self.toggleStringCrosshair)
-        menuStringPlotOptions.addAction(actionStringCrosshair)
-        # --> | --> | --> Simulation View
-        menuStringSimView = QMenu("Simulation View", menuStringPlotOptions)
-        actionStringSimSwath = QAction("One Swath", menuStringSimView)
-        actionStringSimSwath.setCheckable(True)
-        actionStringSimSwath.setChecked(
-            cfg.get_string_simulation_view_window()
-            == cfg.STRING_SIMULATION_VIEW_WINDOW_ONE
-        )
-        actionStringSimAll = QAction("All Passes", menuStringSimView)
-        actionStringSimAll.setCheckable(True)
-        actionStringSimAll.setChecked(
-            cfg.get_string_simulation_view_window()
-            == cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL
-        )
-        menuStringSimView.addActions([actionStringSimSwath, actionStringSimAll])
-        actionGroupStringSimView = QActionGroup(menuStringSimView)
-        actionGroupStringSimView.addAction(actionStringSimSwath)
-        actionGroupStringSimView.addAction(actionStringSimAll)
-        actionGroupStringSimView.triggered[QAction].connect(self.toggleStringSimView)
-        menuStringPlotOptions.addMenu(menuStringSimView)
+        actionStringPlotOptions: QActionGroup = self.ui.actionStringPlotOptions
+        actionStringPlotOptions.triggered.connect(self.openStringPlotOptions)
         # --> | --> Card Plot Options
         actionCardPlotOptions: QActionGroup = self.ui.actionCardPlotOptions
         actionCardPlotOptions.triggered.connect(self.openCardPlotOptions)
@@ -424,22 +399,18 @@ class MainWindow(baseclass):
         self.openPassManager(filler_mode=True)
 
     """
-    String Plot Options
+    Options Menu
     """
 
-    @pyqtSlot(bool)
-    def toggleStringCrosshair(self, checked: bool):
-        cfg.set_string_plot_average_swath_box(checked)
-        self.stringWidget.updatePlots(composites=True)
-
-    @pyqtSlot(QAction)
-    def toggleStringSimView(self, action: QAction):
-        if action.text() == "One Swath":
-            view = cfg.STRING_SIMULATION_VIEW_WINDOW_ONE
-        else:
-            view = cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL
-        cfg.set_string_simulation_view_window(view)
-        self.stringWidget.updatePlots(simulations=True)
+    @pyqtSlot()
+    def openStringPlotOptions(self):
+        spo = StringPlotOptions(parent=self)
+        spo.request_update_plots[bool, bool, bool].connect(
+            lambda a, b, c: self.stringWidget.updatePlots(
+                individuals=a, composites=b, simulations=c
+            )
+        )
+        spo.show()
 
     @pyqtSlot()
     def openCardPlotOptions(self):
@@ -463,6 +434,10 @@ class MainWindow(baseclass):
             QMessageBox.information(
                 self, "Success", "All user-defined defaults erased successfully."
             )
+
+    """
+    Export Menu
+    """
 
     @pyqtSlot()
     def exportSAFELogFromFiles(self):
@@ -522,6 +497,10 @@ class MainWindow(baseclass):
         )
         if savefile:
             export_all_to_excel(series=self.seriesData, saveFile=savefile)
+
+    """
+    Report Menu
+    """
 
     @pyqtSlot()
     def makeReport(self):
@@ -619,6 +598,10 @@ class MainWindow(baseclass):
     @pyqtSlot()
     def reportManager(self):
         ReportManager(self).exec()
+
+    """
+    Help Menu
+    """
 
     @pyqtSlot()
     def about(self):

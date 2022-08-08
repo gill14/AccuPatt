@@ -105,24 +105,35 @@ class SeriesDataString(SeriesDataBase):
             )
             mplWidget.canvas.ax.fill_between(x[y != 0], 0, y[y != 0], alpha=0.7)
             _sw = self.swath_adjusted
-            if cfg.get_string_plot_average_swath_box() and _sw >=1:
-                # Find average deposition inside swath width
-                a_c = a[(a["loc"] >= -_sw / 2) & (a["loc"] <= _sw / 2)]
-                a_c_mean = a_c["Average"].mean(axis="rows")
-                # Plot rectangle, w = swath width, h = (1/2)* average dep inside swath width
+            if cfg.get_string_plot_average_dash_overlay():
+                method = cfg.get_string_plot_average_dash_overlay_method()
+                if method == cfg.DASH_OVERLAY_METHOD_ISHA and _sw >=1:
+                    # Plot rectangle, w = swath width, h = (1/2)* average dep inside swath width
+                    dash_x = [
+                            -_sw / 2,
+                            -_sw / 2,
+                            _sw / 2,
+                            _sw / 2,
+                        ]
+                    # Find average deposition inside swath width
+                    a_c = a[(a["loc"] >= -_sw / 2) & (a["loc"] <= _sw / 2)]
+                    a_c_mean = a_c["Average"].mean(axis="rows")
+                    dash_y = [0, a_c_mean / 2, a_c_mean / 2, 0]
+                    dash_label = "Effective Swath"
+                    
+                else:
+                    dash_x = [a["loc"].iloc[0], a["loc"].iloc[-1]]
+                    a_mean = a["Average"].mean(axis="rows")
+                    dash_y = [a_mean, a_mean]
+                    dash_label = "Average Value"
                 mplWidget.canvas.ax.plot(
-                    [
-                        -_sw / 2,
-                        -_sw / 2,
-                        _sw / 2,
-                        _sw / 2,
-                    ],
-                    [0, a_c_mean / 2, a_c_mean / 2, 0],
-                    color="black",
-                    linewidth=1,
-                    dashes=(3, 2),
-                    label="Effective Swath",
-                )
+                        dash_x,
+                        dash_y,
+                        color="black",
+                        linewidth=1,
+                        dashes=(3, 2),
+                        label=dash_label,
+                    )
             # Add a legend
             mplWidget.canvas.ax.legend()
         # Must set ylim after plotting
@@ -139,14 +150,12 @@ class SeriesDataString(SeriesDataBase):
             mirrorAdjascent=True,
         )
         
-    def _plot_simulation(self, mplWidget: MplWidget, mirrorAdjascent=False):
-        showEntireWindow = (cfg.get_string_simulation_view_window()==cfg.STRING_SIMULATINO_VIEW_WINDOW_ALL)
-        label = "Back & Forth" if mirrorAdjascent else "Racetract"
+    def _plotSimulation(self, mplWidget: MplWidget, mirrorAdjascent=False):
+        showEntireWindow = (cfg.get_string_simulation_view_window()==cfg.STRING_SIMULATION_VIEW_WINDOW_ALL)
         super()._plotSimulation(
             mplWidget,
             showEntireWindow,
-            mirrorAdjascent,
-            label
+            mirrorAdjascent
         )
 
     # Overrides for superclass

@@ -71,7 +71,7 @@ class CardPlotOptions(baseclass):
         self.rb_all: QRadioButton = self.ui.rb_all
         sim = cfg.get_card_simulation_view_window()
         self.rb_one.setChecked(sim == cfg.CARD_SIMULATION_VIEW_WINDOW_ONE)
-        self.rb_all.setChecked(sim == cfg.CARD_SIMULATINO_VIEW_WINDOW_ALL)
+        self.rb_all.setChecked(sim == cfg.CARD_SIMULATION_VIEW_WINDOW_ALL)
         self.rb_one.toggled[bool].connect(self._rb_one)
         self.rb_all.toggled[bool].connect(self._rb_all)
 
@@ -172,7 +172,7 @@ class CardPlotOptions(baseclass):
     @pyqtSlot(bool)
     def _rb_all(self, checked):
         if checked:
-            self._set_simulation_range(cfg.CARD_SIMULATINO_VIEW_WINDOW_ALL)
+            self._set_simulation_range(cfg.CARD_SIMULATION_VIEW_WINDOW_ALL)
 
     def _set_simulation_range(self, option: str):
         cfg.set_card_simulation_view_window(option)

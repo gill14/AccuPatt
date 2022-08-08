@@ -265,7 +265,7 @@ class SprayCardStats:
         # Use the vol sum here to set GPA and L/HA
         um3_per_um2 = drop_vol_um3_sum / self._px2_to_um2(self.sprayCard.area_px2)
         self.gpa = um3_per_um2 / cfg.UM3_UM2_PER_GAL_ACRE
-        self.lpha = um3_per_um2 / cfg.UM3_UM2_per_L_HA
+        self.lpha = um3_per_um2 / cfg.UM3_UM2_PER_L_HA
         # Reset currency flag
         self.current = True
 

@@ -141,14 +141,9 @@
     <property name="title">
      <string>Options</string>
     </property>
-    <widget class="QMenu" name="menuString_Plot_Options">
-     <property name="title">
-      <string>String Plot Options</string>
-     </property>
-    </widget>
     <addaction name="action_pass_manager"/>
     <addaction name="separator"/>
-    <addaction name="menuString_Plot_Options"/>
+    <addaction name="actionStringPlotOptions"/>
     <addaction name="actionCardPlotOptions"/>
     <addaction name="separator"/>
     <addaction name="action_reset_defaults"/>
@@ -445,6 +440,11 @@
   <action name="actionCardPlotOptions">
    <property name="text">
     <string>Card Plot Options</string>
+   </property>
+  </action>
+  <action name="actionStringPlotOptions">
+   <property name="text">
+    <string>String Plot Options</string>
    </property>
   </action>
  </widget>

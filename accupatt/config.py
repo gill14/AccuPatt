@@ -48,7 +48,7 @@ ACRE_PER_HA = 2.47105
 IN_PER_FT = 12.00000
 FT2_PER_ACRE = 43560.0
 UM3_UM2_PER_GAL_ACRE = 1.06907
-UM3_UM2_per_L_HA = 10.0
+UM3_UM2_PER_L_HA = 10.0
 
 # Data File
 
@@ -379,9 +379,44 @@ def set_smooth_order(value: int):
     QSettings().setValue(_SMOOTH_ORDER, value)
 
 
+# String Plot Options
+
+_STRING_PLOT_AVERAGE_DASH_OVERLAY = "string_plot_average_dash_overlay"
+STRING_PLOT_AVERAGE_DASH_OVERLAY__DEFUALT = True
+
+
+def get_string_plot_average_dash_overlay() -> bool:
+    return QSettings().value(
+        _STRING_PLOT_AVERAGE_DASH_OVERLAY,
+        defaultValue=STRING_PLOT_AVERAGE_DASH_OVERLAY__DEFUALT,
+        type=bool,
+    )
+
+
+def set_string_plot_average_dash_overlay(value: bool):
+    QSettings().setValue(_STRING_PLOT_AVERAGE_DASH_OVERLAY, value)
+
+
+_STRING_PLOT_AVERAGE_DASH_OVERLAY_METHOD = "string_plot_average_dash_overlay_method"
+DASH_OVERLAY_METHOD_ISHA = "ISHA"
+DASH_OVERLAY_METHOD_AVERAGE = "Average"
+STRING_PLOT_AVERAGE_DASH_OVERLAY_METHOD__DEFAULT = DASH_OVERLAY_METHOD_ISHA
+
+
+def get_string_plot_average_dash_overlay_method() -> str:
+    return QSettings().value(
+        _STRING_PLOT_AVERAGE_DASH_OVERLAY_METHOD,
+        defaultValue=STRING_PLOT_AVERAGE_DASH_OVERLAY_METHOD__DEFAULT,
+        type=str,
+    )
+
+
+def set_string_plot_average_dash_overlay_method(value: str):
+    QSettings().setValue(_STRING_PLOT_AVERAGE_DASH_OVERLAY_METHOD, value)
+
 _STRING_SIMULATION_VIEW_WINDOW = "string_simulation_view_window"
 STRING_SIMULATION_VIEW_WINDOW_ONE = "one"
-STRING_SIMULATINO_VIEW_WINDOW_ALL = "all"
+STRING_SIMULATION_VIEW_WINDOW_ALL = "all"
 
 
 def get_string_simulation_view_window() -> str:
@@ -394,24 +429,6 @@ def get_string_simulation_view_window() -> str:
 
 def set_string_simulation_view_window(value=str):
     QSettings().setValue(_STRING_SIMULATION_VIEW_WINDOW, value)
-
-
-# String Plot Options
-
-_STRING_PLOT_AVERAGE_SWATH_BOX = "string_plot_average_swath_box"
-STRING_PLOT_AVERAGE_SWATH_BOX__DEFAULT = True
-
-
-def get_string_plot_average_swath_box() -> bool:
-    return QSettings().value(
-        _STRING_PLOT_AVERAGE_SWATH_BOX,
-        defaultValue=STRING_PLOT_AVERAGE_SWATH_BOX__DEFAULT,
-        type=bool,
-    )
-
-
-def set_string_plot_average_swath_box(value: bool):
-    QSettings().setValue(_STRING_PLOT_AVERAGE_SWATH_BOX, value)
 
 
 # String Drive
@@ -1061,7 +1078,7 @@ def set_card_plot_average_dash_overlay_method(value: str):
 
 _CARD_SIMULATION_VIEW_WINDOW = "card_simulation_view_window"
 CARD_SIMULATION_VIEW_WINDOW_ONE = "one"
-CARD_SIMULATINO_VIEW_WINDOW_ALL = "all"
+CARD_SIMULATION_VIEW_WINDOW_ALL = "all"
 
 
 def get_card_simulation_view_window() -> str:

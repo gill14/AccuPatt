@@ -43,7 +43,6 @@ class SeriesDataBase(OptBase):
         mplWidget: MplWidget,
         showEntireWindow=False,
         mirrorAdjascent=False,
-        label="",
     ):
         self._config_mpl_plotter(mplWidget)
         average_df = self.get_average_mod()
@@ -85,7 +84,7 @@ class SeriesDataBase(OptBase):
             # Legend
             mplWidget.canvas.ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
             # Y Label
-            mplWidget.canvas.ax.set_ylabel(label)
+            mplWidget.canvas.ax.set_ylabel("Back & Forth" if mirrorAdjascent else "Racetrack")
             # Whether to show the whole window or one swath width
             if not showEntireWindow:
                 mplWidget.canvas.ax.set_xlim(-_sw / 2, _sw / 2)

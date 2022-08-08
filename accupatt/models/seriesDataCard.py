@@ -171,14 +171,12 @@ class SeriesDataCard(SeriesDataBase):
             mirrorAdjascent=True,
         )
         
-    def _plot_simulation(self, mplWidget: MplWidget, mirrorAdjascent=False):
-        showEntireWindow = (cfg.get_card_simulation_view_window()==cfg.CARD_SIMULATINO_VIEW_WINDOW_ALL)
-        label = "Back & Forth" if mirrorAdjascent else "Racetract"
+    def _plotSimulation(self, mplWidget: MplWidget, mirrorAdjascent=False):
+        showEntireWindow = (cfg.get_card_simulation_view_window()==cfg.CARD_SIMULATION_VIEW_WINDOW_ALL)
         super()._plotSimulation(
             mplWidget,
             showEntireWindow,
-            mirrorAdjascent,
-            label
+            mirrorAdjascent
         )
     
     # Overrides for superclass

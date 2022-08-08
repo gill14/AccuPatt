@@ -1,7 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 ## [Unreleased]
-...
+### Changed
+Turn off dark pixel and nonlinearity corrections for spectrometer readings
+Move String Plot Options to a Dialog
 ## [2.0.15] - 26 July 2022
 ### Added
 - Thrush 510P2, 510P2+ to available aircraft ([#1](https://github.com/gill14/AccuPatt/issues/1))
