@@ -301,6 +301,7 @@ class StringPass(baseclass):
             string_length_units=self.passData.string.data_loc_units,
             parent=self,
         )
+        e.string_drive_connected.connect(self.string_drive_connected_external)
         e.string_length_units_changed.connect(self.string_length_units_changed)
         e.accepted.connect(self.setupStringDrive)
         e.exec()
@@ -328,6 +329,10 @@ class StringPass(baseclass):
         # Enale/Disable manual drive buttons
         self.enableButtons()
 
+    @pyqtSlot(serial.Serial)
+    def string_drive_connected_external(self, ser: serial.Serial):
+        self.ser = ser
+    
     @pyqtSlot(str)
     def string_length_units_changed(self, units: str):
         self.passData.string.data_loc_units = units
@@ -337,9 +342,11 @@ class StringPass(baseclass):
     def string_drive_manual_reverse(self):
         if not self.button_reverse.isChecked():
             self.ser.write(cfg.STRING_DRIVE_REV_STOP.encode())
+            self.button_reverse.setText("<- Reverse")
             self.enableButtons()
         else:
             self.ser.write(cfg.STRING_DRIVE_REV_START.encode())
+            self.button_reverse.setText("-- STOP --")
             self.enableButtons(
                 start=False, abort=False, clear=False, advance=False, window=False
             )
@@ -348,9 +355,11 @@ class StringPass(baseclass):
     def string_drive_manual_advance(self):
         if not self.button_forward.isChecked():
             self.ser.write(cfg.STRING_DRIVE_FWD_STOP.encode())
+            self.button_forward.setText("Forward ->")
             self.enableButtons()
         else:
             self.ser.write(cfg.STRING_DRIVE_FWD_START.encode())
+            self.button_forward.setText("-- STOP --")
             self.enableButtons(
                 start=False, abort=False, clear=False, reverse=False, window=False
             )

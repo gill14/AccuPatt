@@ -10,6 +10,7 @@ from PyQt6.QtCore import pyqtSlot, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QMessageBox
 from serial.tools import list_ports
+from serial import Serial
 
 Ui_Form, baseclass = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "editStringDrive.ui")
@@ -20,6 +21,7 @@ icon_file = os.path.join(os.getcwd(), "resources", "refresh.png")
 
 class EditStringDrive(baseclass):
 
+    string_drive_connected = pyqtSignal(Serial)
     string_length_units_changed = pyqtSignal(str)
 
     def __init__(self, ser: serial.Serial, string_length_units, parent=None):
@@ -87,9 +89,10 @@ class EditStringDrive(baseclass):
                     self.ser.setPort(port.device)
                     self.ser.open()
                 else:
-                    self.ser = serial.Serial(port=port.device, timeout=1)
+                    self.ser = Serial(port=port.device, timeout=1)
                 if self.ser.is_open:
                     self.ui.buttonCalculateStringSpeed.setEnabled(True)
+                    self.string_drive_connected.emit(self.ser)
 
     def on_fl_units_selected(self):
         self.ui.labelSpeedUnits.setText(
@@ -143,8 +146,8 @@ class EditStringDrive(baseclass):
     def accept(self):
         excepts = []
         # Disconnect serial
-        if self.ser:
-            self.ser.close()
+        '''if self.ser:
+            self.ser.close()'''
         # Save Serial Port
         cfg.set_string_drive_port(self.ui.comboBoxSerialPort.currentText())
         # Save String Length
