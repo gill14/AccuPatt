@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 from PyQt6 import uic
-from PyQt6.QtCore import pyqtSignal, QSignalBlocker
+from PyQt6.QtCore import pyqtSignal, pyqtSlot, QSignalBlocker
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QPushButton, QComboBox, QLineEdit, QMessageBox
 from seabreeze.spectrometers import Spectrometer
@@ -20,6 +20,8 @@ Ui_Form, baseclass = uic.loadUiType(
 class EditSpectrometer(baseclass):
 
     dye_changed = pyqtSignal(str)
+    spectrometer_connected = pyqtSignal(Spectrometer)
+    spectrometer_display_unit_changed = pyqtSignal()
 
     def __init__(self, spectrometer: Spectrometer, dye: Dye, parent=None):
         super().__init__(parent=parent)
@@ -38,6 +40,11 @@ class EditSpectrometer(baseclass):
 
         self.b_dye_manager: QPushButton = self.ui.buttonDyeManager
         self.b_dye_manager.clicked.connect(self.open_dye_manager)
+        
+        self.cb_units: QComboBox = self.ui.displayUnitsComboBox
+        self.cb_units.addItems(cfg.SPECTROMETER_DISPLAY_UNITS)
+        self.cb_units.setCurrentText(cfg.get_spectrometer_display_unit())
+        self.cb_units.currentTextChanged[str].connect(self.display_units_changed)
 
         self.b_test_spectrometer: QPushButton = self.ui.buttonTestSpectrometer
         self.b_test_spectrometer.clicked.connect(self.test_spectrometer)
@@ -55,6 +62,7 @@ class EditSpectrometer(baseclass):
                 return
         self.le_spectrometer.setText(self.spec.model)
         self.b_test_spectrometer.setEnabled(True)
+        self.spectrometer_connected.emit(self.spec)
 
     def refresh_dyes(self):
         dye_names = [Dye.fromDict(d).name for d in cfg.get_defined_dyes()]
@@ -73,6 +81,11 @@ class EditSpectrometer(baseclass):
         e.finished.connect(lambda: self.refresh_dyes())
         e.exec()
 
+    @pyqtSlot(str)
+    def display_units_changed(self, value: str):
+        cfg.set_spectrometer_display_unit(value)
+        self.spectrometer_display_unit_changed.emit()
+
     def test_spectrometer(self):
         # Use whatever dye is currently selected
         dye = Dye.fromConfig(name=self.cb_dye.currentText())
@@ -83,5 +96,5 @@ class EditSpectrometer(baseclass):
         self.dye_changed.emit(self.cb_dye.currentText())
         # Update chosen dye in config
         cfg.set_defined_dye(self.cb_dye.currentText())
-
+        
         super().accept()

@@ -180,6 +180,7 @@ class PassDataString(PassDataBase):
         # Numpy-ize dataframe columns for plotting
         x = np.array(self.data["loc"].values, dtype=float)
         y = np.array(self.data[self.name].values, dtype=float)
+        floor = min + self.trim_v
         # Plot raw data
         pyqtplotwidget.plotItem.plot(name="Raw", pen="w").setData(x, y)
         # Create L, R and V trim handles
@@ -200,7 +201,7 @@ class PassDataString(PassDataBase):
             labelOpts={"color": "y", "position": 0.9},
         )
         trim_vertical = InfiniteLine(
-            pos=(min + self.trim_v),
+            pos=floor,
             angle=0,
             movable=True,
             pen="y",
@@ -242,7 +243,9 @@ class PassDataString(PassDataBase):
             self.smoothIt(data_mod, self.smooth, self.smooth_window, self.smooth_order)
             # Numpy-ize dataframe column for plotting
             y_smooth = np.array(data_mod[self.name].values, dtype=float)
-            y_smooth[y_smooth == 0] = np.nan
+            trim_mask = np.nonzero(y_smooth)[0]
+            y_smooth[0:trim_mask[0]] = np.nan
+            y_smooth[trim_mask[-1]:-1] = np.nan
             # Plot trimmed/rebased/smoothed data
             pyqtplotwidget.plotItem.plot(
                 name=f"Trimmed{rebase_str}, Smoothed", pen=mkPen("y", width=3)
@@ -254,7 +257,7 @@ class PassDataString(PassDataBase):
         pyqtplotwidget.plotItem.setLabel(
             axis="bottom", text="Location", units=self.data_loc_units
         )
-        pyqtplotwidget.plotItem.setLabel(axis="left", text="Relative Dye Intensity")
+        pyqtplotwidget.plotItem.setLabel(axis="left", text="Dye Intensity")
         pyqtplotwidget.plotItem.showGrid(x=True, y=True)
         pyqtplotwidget.plotItem.addLegend(offset=(5, 5))
 

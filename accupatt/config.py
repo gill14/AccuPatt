@@ -49,6 +49,7 @@ IN_PER_FT = 12.00000
 FT2_PER_ACRE = 43560.0
 UM3_UM2_PER_GAL_ACRE = 1.06907
 UM3_UM2_PER_L_HA = 10.0
+AU_PER_PERCENT_16_BIT = 655.35
 
 # Data File
 
@@ -528,6 +529,23 @@ def get_defined_dye() -> str:
 
 def set_defined_dye(value: str):
     QSettings().setValue(_DEFINED_DYE, value)
+
+_SPECTROMETER_DISPLAY_UNIT = "spectrometer_display_units"
+SPECTROMETER_DISPLAY_UNIT_RELATIVE = "Relative (%)"
+SPECTROMETER_DISPLAY_UNIT_ABSOLUTE = "Absolute"
+SPECTROMETER_DISPLAY_UNITS = [
+    SPECTROMETER_DISPLAY_UNIT_RELATIVE,
+    SPECTROMETER_DISPLAY_UNIT_ABSOLUTE
+]
+SPECTROMETER_DISPLAY_UNIT__DEFAULT = SPECTROMETER_DISPLAY_UNITS[0]
+
+def get_spectrometer_display_unit() -> str:
+    return QSettings().value(
+        _SPECTROMETER_DISPLAY_UNIT, defaultValue=SPECTROMETER_DISPLAY_UNIT__DEFAULT, type=str
+    )
+    
+def set_spectrometer_display_unit(value: str):
+    QSettings().setValue(_SPECTROMETER_DISPLAY_UNIT, value)
 
 
 # SprayCard Image Loading Operations / Attributes

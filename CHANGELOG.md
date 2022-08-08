@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 ### Added
 - Auto-populate expected subsequent series-wide observables ([#3](https://github.com/gill14/AccuPatt/issues/3))
+- Edit Spectrometer window option to display absorbance as percent of saturation level ([#6](https://github.com/gill14/AccuPatt/issues/6))
 ### Changed
 - Turn off dark pixel and nonlinearity corrections for spectrometer readings
 - Move String Plot Options to a Dialog

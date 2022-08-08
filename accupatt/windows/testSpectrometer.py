@@ -9,6 +9,7 @@ from seabreeze.spectrometers import Spectrometer
 import pyqtgraph
 
 from accupatt.models.dye import Dye
+import accupatt.config as cfg
 
 Ui_Form, baseclass = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "testSpectrometer.ui")
@@ -48,17 +49,21 @@ class TestSpectrometer(baseclass):
             name="Measured", pen=pyqtgraph.mkPen("w", width=1.5)
         )
         self.pw.plotItem.setLabel(axis="bottom", text="Wavelength (nm)")
-        self.pw.plotItem.setLabel(axis="left", text="Intensity")
+        self.pw.plotItem.setLabel(axis="left", text=f"Intensity, {cfg.get_spectrometer_display_unit()}")
         self.pw.plotItem.showGrid(x=True, y=True)
         self.pw.setXRange(self.x[0], self.x[-1], padding=0.0)
-        self.pw.setYRange(0, 30000, padding=0.0)
+        if cfg.get_spectrometer_display_unit()==cfg.SPECTROMETER_DISPLAY_UNIT_RELATIVE:
+            y_max = 100
+        else:
+            y_max = 65535
+        self.pw.setYRange(0, y_max, padding=0.0)
         # self.pw.plotItem.getViewBox().autoRange()
         # self.pw.plotItem.getViewBox().disableAutoRange()
         self.pw.plotItem.getViewBox().setLimits(
             minXRange=self.x[0],
             maxXRange=self.x[-1],
             minYRange=0,
-            maxYRange=65535,
+            maxYRange=y_max,
             xMin=self.x[0],
             xMax=self.x[-1],
             yMin=0,
@@ -152,7 +157,9 @@ class TestSpectrometer(baseclass):
         self.y = self.spec.intensities(
             correct_dark_counts=False, correct_nonlinearity=False
         )
-        self.plot_item.setData(self.x, self.y)
+        use_rel = cfg.get_spectrometer_display_unit()==cfg.SPECTROMETER_DISPLAY_UNIT_RELATIVE
+        _y = self.y/cfg.AU_PER_PERCENT_16_BIT if use_rel else self.y
+        self.plot_item.setData(self.x, _y)
         self.tw.item(2, 0).setText(str(int(self.y[self.pix_ex])))
         avg = np.average(self.y[self.boxcar_pix_ex[0] : self.boxcar_pix_ex[-1] + 1])
         self.tw.item(5, 0).setText(str(int(avg)))

@@ -68,8 +68,16 @@ class StringPass(baseclass):
         self.setupSpectrometer()
         self.setupStringDrive()
 
+        self.populate_plot()
+
+        # Enable/Disable Start and Abort buttons as applicable
+        self.enableButtons()
+
+        self.show()
+
+    def populate_plot(self):
         # Load in pattern data from pass object if available
-        if passData.string.has_data():
+        if self.passData.string.has_data():
             self.x = np.array(self.passData.string.data["loc"].values, dtype=float)
             self.y = np.array(
                 self.passData.string.data[self.passData.name].values, dtype=float
@@ -77,15 +85,14 @@ class StringPass(baseclass):
             self.y_ex = np.array(
                 self.passData.string.data_ex[self.passData.name].values, dtype=float
             )
-            self.plot_emission.setData(self.x, self.y)
+            use_rel = cfg.get_spectrometer_display_unit()==cfg.SPECTROMETER_DISPLAY_UNIT_RELATIVE
+            _y = self.y/cfg.AU_PER_PERCENT_16_BIT if use_rel else self.y
+            self.plot_emission.setData(self.x, _y)
             # Disable Edit if data already present to prevent overwrite of origination info
             self.button_spec.setEnabled(False)
             self.button_string_drive.setEnabled(False)
-
-        # Enable/Disable Start and Abort buttons as applicable
-        self.enableButtons()
-
-        self.show()
+        y_label = f"Intensity, {cfg.get_spectrometer_display_unit()}"
+        self.plotWidget.plotItem.setLabel(axis="left", text=y_label)
 
     def setup_and_clear_plot(self, showPopup=True):
         # Optionally prompt to proceed
@@ -116,7 +123,7 @@ class StringPass(baseclass):
         self.plotWidget.plotItem.setLabel(
             axis="bottom", text="Location", units=self.passData.string.data_loc_units
         )
-        self.plotWidget.plotItem.setLabel(axis="left", text="Relative Dye Intensity")
+        #self.plotWidget.plotItem.setLabel(axis="left", text="Relative Dye Intensity")
         self.plotWidget.plotItem.showGrid(x=True, y=True)
         self.plotWidget.setXRange(
             -cfg.get_string_length() / 2, cfg.get_string_length() / 2
@@ -144,7 +151,9 @@ class StringPass(baseclass):
         self.y = np.append(
             self.y, np.average(intensities[self.pix_em[0] : self.pix_em[1] + 1])
         )
-        self.plot_emission.setData(self.x, self.y)
+        use_rel = cfg.get_spectrometer_display_unit()==cfg.SPECTROMETER_DISPLAY_UNIT_RELATIVE
+        _y = self.y/cfg.AU_PER_PERCENT_16_BIT if use_rel else self.y
+        self.plot_emission.setData(self.x, _y)
         # record y_ex_val (excitation amplitude)
         self.y_ex = np.append(self.y_ex, intensities[self.pix_ex])
 
@@ -354,6 +363,9 @@ class StringPass(baseclass):
     def editSpectrometer(self):
         e = EditSpectrometer(self.spec, self.passData.string.dye, parent=self)
         e.dye_changed[str].connect(self.dye_changed)
+        e.spectrometer_connected[Spectrometer].connect(self.spectrometer_connected_externally)
+        e.spectrometer_display_unit_changed.connect(self.spectrometer_display_unit_changed)
+        e.accepted.connect(self.setupSpectrometer)
         e.exec()
 
     def setupSpectrometer(self):
@@ -385,8 +397,15 @@ class StringPass(baseclass):
         )
         self.enableButtons()
 
+    @pyqtSlot(Spectrometer)
+    def spectrometer_connected_externally(self, spec: Spectrometer):
+        self.spec = spec
+
     @pyqtSlot(str)
     def dye_changed(self, dye_name: str):
         self.passData.string.dye = Dye.fromConfig(dye_name)
-        self.setupSpectrometer()
-        # self.label_spec.setToolTip(f"Dye: {self.passData.string.dye.name}\nExcitation: {self.passData.string.dye.wavelength_excitation} nm\nEmission: {self.passData.string.dye.wavelength_emission} nm")
+        #self.setupSpectrometer()
+        
+    @pyqtSlot()
+    def spectrometer_display_unit_changed(self):
+        self.populate_plot()
