@@ -4,7 +4,6 @@ Submitted [issues] are not included here, but will also be addressed in order of
 ## Overall
 - [ ] export processed string/card data
 - [ ] add support for legacy WRK files
-- [ ] config setting of dirs for new/open/image_load
 ## String Analysis
 - [ ] Warning for low res patterns - turn ind plot red and slap a warning label on it? - need to constrain to passString window only for compatibility
 ## Card Analysis

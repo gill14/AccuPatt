@@ -72,8 +72,6 @@ class MainWindow(baseclass):
             f"AccuPatt {cfg.VERSION_MAJOR}.{cfg.VERSION_MINOR}.{cfg.VERSION_RELEASE}"
         )
 
-        self.currentDirectory = cfg.get_datafile_dir()
-
         # Setup MenuBar
         # --> Setup File Menu
         self.ui.action_new_series_new_aircraft.triggered.connect(
@@ -207,7 +205,7 @@ class MainWindow(baseclass):
         m.addAction("Select File Aircraft")
         m.addSeparator()
         for file in sorted(
-            [f for f in os.listdir(self.currentDirectory) if f.endswith(".db")]
+            [f for f in os.listdir(cfg.get_datafile_dir()) if f.endswith(".db")]
         ):
             m.addAction(str(file))
 
@@ -216,7 +214,7 @@ class MainWindow(baseclass):
         if action.text() == "Select File Aircraft":
             self.newSeries(useFileAircraft=True)
         else:
-            file = os.path.join(self.currentDirectory, action.text())
+            file = os.path.join(cfg.get_datafile_dir(), action.text())
             self.newSeries(useFileAircraft=True, fileAircraft=file)
 
     def newSeries(self, useFileAircraft=False, fileAircraft=""):
@@ -237,7 +235,7 @@ class MainWindow(baseclass):
                 fileAircraft, _ = QFileDialog.getOpenFileName(
                     parent=self,
                     caption="Open File",
-                    directory=self.currentDirectory,
+                    directory=cfg.get_datafile_dir(),
                     filter="AccuPatt (*.db)",
                 )
             # Load in series info from file
@@ -259,7 +257,7 @@ class MainWindow(baseclass):
         if self.currentFile == "":
             # Have user create a new file
             initialFileName = self.seriesData.info.string_reg_series()
-            initialDirectory = os.path.join(self.currentDirectory, initialFileName)
+            initialDirectory = os.path.join(cfg.get_datafile_dir(), initialFileName)
             file, _ = QFileDialog.getSaveFileName(
                 parent=self,
                 caption="Create Data File for Series",
@@ -296,7 +294,7 @@ class MainWindow(baseclass):
             file, _ = QFileDialog.getOpenFileName(
                 parent=self,
                 caption="Open File",
-                directory=self.currentDirectory,
+                directory=cfg.get_datafile_dir(),
                 filter="AccuPatt (*.db *.xlsx)",
             )
             if file == "":
@@ -340,9 +338,8 @@ class MainWindow(baseclass):
     def change_current_file(self, file: str):
         self.currentFile = file
         # Set directory if file exists
-        if file != "" and os.path.exists(file):
-            self.currentDirectory = os.path.dirname(self.currentFile)
-            cfg.set_datafile_dir(self.currentDirectory)
+        if file != "":
+            cfg.set_datafile_dir(os.path.dirname(self.currentFile))
             text = f"Current File: {self.currentFile}"
         else:
             text = ""
@@ -444,7 +441,7 @@ class MainWindow(baseclass):
         files, _ = QFileDialog.getOpenFileNames(
             parent=self,
             caption="Select Files to Include",
-            directory=self.currentDirectory,
+            directory=cfg.get_datafile_dir(),
             filter="AccuPatt (*.db)",
         )
         if files:
@@ -463,7 +460,7 @@ class MainWindow(baseclass):
         directory = QFileDialog.getExistingDirectory(
             parent=self,
             caption="Select Files to Include",
-            directory=self.currentDirectory,
+            directory=cfg.get_datafile_dir(),
             options=(QFileDialog.Option.ShowDirsOnly),
         )
         if not directory:
@@ -490,7 +487,7 @@ class MainWindow(baseclass):
         savefile, _ = QFileDialog.getSaveFileName(
             parent=self,
             caption="Save As",
-            directory=self.currentDirectory
+            directory=cfg.get_datafile_dir()
             + os.path.sep
             + f"{self.seriesData.info.string_reg_series()} Raw Data.xlsx",
             filter="Excel Files (*.xlsx)",
@@ -507,7 +504,7 @@ class MainWindow(baseclass):
         savefile, _ = QFileDialog.getSaveFileName(
             parent=self,
             caption="Save As",
-            directory=self.currentDirectory
+            directory=cfg.get_datafile_dir()
             + os.path.sep
             + f"{self.seriesData.info.string_reg_series()}.pdf",
             filter="PDF Files (*.pdf)",
@@ -582,7 +579,7 @@ class MainWindow(baseclass):
     @pyqtSlot()
     def select_logo_triggered(self):
         prev = cfg.get_logo_path()
-        initial = os.path.dirname(prev) if prev != "" else self.currentDirectory
+        initial = os.path.dirname(prev) if prev != "" else cfg.get_datafile_dir()
         file, _ = QFileDialog.getOpenFileName(
             parent=self,
             caption="Choose Logo Image",

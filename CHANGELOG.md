@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Move String Plot Options to a Dialog
 ### Fixed
 - Edit String Drive causes serial port disconnection upon re-entry to Capture/Edit Pass String window
+- Persistence for last utilized data file directory
 
 ## [2.0.15] - 26 July 2022
 ### Added
