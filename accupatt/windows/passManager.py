@@ -139,10 +139,10 @@ class PassTable(QAbstractTableModel):
             self.pass_list: list[Pass] = pass_list
             self.endResetModel()
 
-    def rowCount(self, parent: QModelIndex()) -> int:
+    def rowCount(self, parent = QModelIndex()) -> int:
         return len(self.headers)
 
-    def columnCount(self, parent: QModelIndex()) -> int:
+    def columnCount(self, parent = QModelIndex()) -> int:
         return len(self.pass_list)
 
     def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
@@ -268,6 +268,8 @@ class PassTable(QAbstractTableModel):
             p.spray_height_units = value
         elif row == 9:
             p.set_pass_heading(value)
+            for c in range(col+1,self.columnCount()):
+                self.pass_list[c].set_pass_heading(value)
         elif row == 10:
             p.set_wind_direction(value)
         elif row == 11:
@@ -276,10 +278,14 @@ class PassTable(QAbstractTableModel):
             p.wind_speed_units = value
         elif row == 13:
             p.set_temperature(value)
+            for c in range(col+1,self.columnCount()):
+                self.pass_list[c].set_temperature(value)
         elif row == 14:
             p.temperature_units = value
         elif row == 15:
             p.set_humidity(value)
+            for c in range(col+1,self.columnCount()):
+                self.pass_list[c].set_humidity(value)
         else:
             return False
         self.dataChanged.emit(index, index)
