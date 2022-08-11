@@ -85,11 +85,6 @@ class MainWindow(baseclass):
         self.action_save.triggered.connect(self.saveFile)
         self.ui.action_open.triggered.connect(self.openFile)
         # --> Setup Options Menu
-        actionStringPlotOptions: QActionGroup = self.ui.actionStringPlotOptions
-        actionStringPlotOptions.triggered.connect(self.openStringPlotOptions)
-        # --> | --> Card Plot Options
-        actionCardPlotOptions: QActionGroup = self.ui.actionCardPlotOptions
-        actionCardPlotOptions.triggered.connect(self.openCardPlotOptions)
         self.ui.action_reset_defaults.triggered.connect(self.resetDefaults)
         # --> Setup Export to Excel Menu
         self.ui.action_SAFE_log_from_files.triggered.connect(
@@ -398,26 +393,6 @@ class MainWindow(baseclass):
     """
     Options Menu
     """
-
-    @pyqtSlot()
-    def openStringPlotOptions(self):
-        spo = StringPlotOptions(parent=self)
-        spo.request_update_plots[bool, bool, bool].connect(
-            lambda a, b, c: self.stringWidget.updatePlots(
-                individuals=a, composites=b, simulations=c
-            )
-        )
-        spo.show()
-
-    @pyqtSlot()
-    def openCardPlotOptions(self):
-        cpo = CardPlotOptions(parent=self)
-        cpo.request_update_plots[bool, bool, bool].connect(
-            lambda a, b, c: self.cardWidget.updatePlots(
-                individuals=a, composites=b, simulations=c
-            )
-        )
-        cpo.show()
 
     @pyqtSlot()
     def resetDefaults(self):

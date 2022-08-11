@@ -143,9 +143,6 @@
     </property>
     <addaction name="action_pass_manager"/>
     <addaction name="separator"/>
-    <addaction name="actionStringPlotOptions"/>
-    <addaction name="actionCardPlotOptions"/>
-    <addaction name="separator"/>
     <addaction name="action_reset_defaults"/>
    </widget>
    <widget class="QMenu" name="menuReport">

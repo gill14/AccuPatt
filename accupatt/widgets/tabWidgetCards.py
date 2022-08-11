@@ -21,6 +21,7 @@ from accupatt.models.sprayCardComposite import SprayCardComposite
 from accupatt.widgets.mplwidget import MplWidget
 from accupatt.widgets.tabWidgetBase import TabWidgetBase
 from accupatt.windows.cardManager import CardManager
+from accupatt.windows.cardPlotOptions import CardPlotOptions
 
 
 class TabWidgetCards(TabWidgetBase):
@@ -144,6 +145,16 @@ class TabWidgetCards(TabWidgetBase):
     """
     Series Data Mod Options
     """
+
+    @pyqtSlot()
+    def clickedPlotOptions(self):
+        cpo = CardPlotOptions(parent=self)
+        cpo.request_update_plots[bool, bool, bool].connect(
+            lambda a, b, c: self.updatePlots(
+                individuals=a, composites=b, simulations=c
+            )
+        )
+        cpo.show()
 
     """
     Individual Passes Tab

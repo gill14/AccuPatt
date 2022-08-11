@@ -9,6 +9,7 @@ from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
 from accupatt.widgets.tabWidgetBase import TabWidgetBase
 from accupatt.windows.stringPass import StringPass
+from accupatt.windows.stringPlotOptions import StringPlotOptions
 
 
 class TabWidgetString(TabWidgetBase):
@@ -93,6 +94,16 @@ class TabWidgetString(TabWidgetBase):
             Qt.CheckState(checkstate) == Qt.CheckState.Checked
         )
         self.updatePlots(modify=True, composites=True, simulations=True)
+
+    @pyqtSlot()
+    def clickedPlotOptions(self):
+        spo = StringPlotOptions(parent=self)
+        spo.request_update_plots[bool, bool, bool].connect(
+            lambda a, b, c: self.updatePlots(
+                individuals=a, composites=b, simulations=c
+            )
+        )
+        spo.show()
 
     """
     Individual Passes Tab

@@ -58,6 +58,8 @@ class TabWidgetBase(QWidget):
         self.spinBoxSwathAdjusted.valueChanged[int].connect(self.swathAdjustedChanged)
         self.sliderSimulatedSwath: QSlider = self.ui.sliderSimulatedSwath
         self.sliderSimulatedSwath.valueChanged[int].connect(self.swathAdjustedChanged)
+        self.buttonPlotOptions: QPushButton = self.ui.buttonPlotOptions
+        self.buttonPlotOptions.clicked.connect(self.clickedPlotOptions)
         self.tabWidget: QTabWidget = self.ui.tabWidget
         self.plotWidgetOverlay: MplWidget = self.ui.plotWidgetOverlay
         self.plotWidgetAverage: MplWidget = self.ui.plotWidgetAverage
@@ -279,6 +281,11 @@ class TabWidgetBase(QWidget):
         with QSignalBlocker(self.sliderSimulatedSwath):
             self.sliderSimulatedSwath.setValue(swath)
         self.updatePlots(composites=True, simulations=True)
+
+    @pyqtSlot()
+    def clickedPlotOptions(self):
+        # Should override in inherited_class
+        pass
 
     """
     Simulations Tab
