@@ -12,4 +12,5 @@ dist/*
 testing/
 user_manual/*
 !user_manual/accupatt_2_user_manual.tex
+!user_manual/accupatt_2_user_manual.pdf
 !user_manual/images
