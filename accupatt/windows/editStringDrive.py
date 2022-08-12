@@ -8,7 +8,7 @@ from accupatt.windows.calculateStringSpeed import CalculateStringSpeed
 from PyQt6 import uic
 from PyQt6.QtCore import pyqtSlot, pyqtSignal
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QMessageBox, QPushButton
 from serial.tools import list_ports
 from serial import Serial
 
@@ -28,6 +28,11 @@ class EditStringDrive(baseclass):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
+
+        self.button_reverse: QPushButton = self.ui.buttonReverse
+        self.button_reverse.clicked.connect(self.string_drive_manual_reverse)
+        self.button_forward: QPushButton = self.ui.buttonAdvance
+        self.button_forward.clicked.connect(self.string_drive_manual_advance)
 
         self.disconnect_on_close = disconnect_on_close
 
@@ -59,6 +64,7 @@ class EditStringDrive(baseclass):
         self.ui.buttonCalculateStringSpeed.pressed.connect(self.click_calc_speed)
 
         # Direct commands
+        
         self.ui.pushButtonSendCommand.pressed.connect(self.send_command)
         self.ui.pushButtonHelp.pressed.connect(self.openStepperManual)
 
@@ -93,8 +99,8 @@ class EditStringDrive(baseclass):
                 else:
                     self.ser = Serial(port=port.device, timeout=1)
                 if self.ser.is_open:
-                    self.ui.buttonCalculateStringSpeed.setEnabled(True)
                     self.string_drive_connected.emit(self.ser)
+        self.enableButtons()
 
     def on_fl_units_selected(self):
         self.ui.labelSpeedUnits.setText(
@@ -117,6 +123,46 @@ class EditStringDrive(baseclass):
         e.speed_accepted[str, str].connect(self.update_speed)
         e.exec()
 
+    def enableButtons(
+        self,
+        reverse=True,
+        advance=True,
+    ):
+        if not self.ser.is_open:
+            reverse = False
+            advance = False
+        self.button_reverse.setEnabled(reverse)
+        self.button_forward.setEnabled(advance)
+        self.ui.buttonCalculateStringSpeed.setEnabled(self.ser.is_open)
+        self.ui.pushButtonSendCommand.setEnabled(self.ser.is_open)
+        
+    
+    @pyqtSlot()
+    def string_drive_manual_reverse(self):
+        if not self.button_reverse.isChecked():
+            self.ser.write(cfg.STRING_DRIVE_REV_STOP.encode())
+            self.button_reverse.setText("<- Reverse")
+            self.enableButtons()
+        else:
+            self.ser.write(cfg.STRING_DRIVE_REV_START.encode())
+            self.button_reverse.setText("-- STOP --")
+            self.enableButtons(
+                advance=False
+            )
+
+    @pyqtSlot()
+    def string_drive_manual_advance(self):
+        if not self.button_forward.isChecked():
+            self.ser.write(cfg.STRING_DRIVE_FWD_STOP.encode())
+            self.button_forward.setText("Forward ->")
+            self.enableButtons()
+        else:
+            self.ser.write(cfg.STRING_DRIVE_FWD_START.encode())
+            self.button_forward.setText("-- STOP --")
+            self.enableButtons(
+                reverse=False
+            )
+    
     @pyqtSlot()
     def send_command(self):
         if self.ser and self.ser.is_open:
