@@ -78,7 +78,7 @@
         \item Install the \textit{FTDI (VCP)} Stepper Motor hardware driver provided by the manufarcturer. \url{https://ftdichip.com/drivers/vcp-drivers/}
     \end{itemize}
     \subsection{MacOS}
-    After downloading the .dmg file, double click it to open it as a volume. Drag the \textit{AccuPatt} icon to the \textbf{Applications} shortcut icon.\\ 
+    After downloading the .dmg file, double click it to open it as a volume. Drag the \textit{AccuPatt} icon to the \textbf{Applications} shortcut icon. Depending on how you acquired the file, you may be required to right click on the app and choose \textit{Open} to bypass MacOS Gatekeeper settings.\\ 
     \\\textbf{\color{red}Note: MacOS 11 or newer required.\color{black}}\\\\
     The \textit{WRK System} requires no additional drivers.
     \newpage
@@ -100,6 +100,17 @@
     
     \subsection{Application Info}
     It is generally desirable, but not required, to enter in some amount of information about the aircraft, spray system configuration, and/or applicator information to accompany pattern testing data. The \textbf{Application Info} tab provides fields to facilitate this (Figure~\ref{fig:application_info}). See the \hyperref[sec:data]{Data Structure} section for more details on specific fields.
+    \\\\
+    The text entered in \textbf{Fly-In Info} fields is stored persistently.
+    \\\\
+    There is button to the right of the \textbf{Pilot} field which, if hovered over, reads \textbf{Load Business Info from File}. Clicking this will prompt to select a previous datafile, from which all fields within \textbf{Applicator Info} section (excluding Pilot) will be filled.
+    \\\\
+    When an aircraft make and model are selected, the wingspan field is automatically populated if available.
+    \\\\
+    For fields which contain a unit dropdown selector, the chosen units are stored persistently.
+    \\\\
+    The \textbf{Nozzle Info} section allows adding any number of unique nozzle sets. 
+
     \begin{figure}[hb]
         \centering
         \makebox[\textwidth]{\includegraphics[width=\textwidth]{application_info.png}}
@@ -110,7 +121,7 @@
 
     \subsubsection{Pass Observables}
     In addition to \textbf{Application Info}, which is collected on a per-series basis, there is some observable data which is typically collected on a per-pass basis. These are frequently referred to here and in the program as \textbf{Pass Observables} since they consist solely of measured values obtained at the time of the application.\par
-    These values can be entered in several locations for the convenience of the analyst. They are entered by use of the \textbf{Pass Observables} button on the \textbf{Application Info} tab or alternately from either the \textbf{Capture/Edit String} winodw or the \textbf{Card Manager} window for any individual pass. Choosing \textbf{Options $\rightarrow$ Pass Manager} from the menu will open the \textbf{Pass Manager} window (Figure~\ref{fig:pass_manager}) which contains a table with rows for each pass and columns for each pass observable parameter. In addition to the editable fields for pass observables, the pass name itself may be changed here. There are also checkboxes to facilitate the inclusion/exclusion of string and/or card data from series-wise calculations and plots.\par
+    These values can be entered in several locations for the convenience of the analyst. They are entered by use of the \textbf{Pass Observables} button on the \textbf{Application Info} tab or alternately from either the \textbf{Capture/Edit String} winodw or the \textbf{Card Manager} window for any individual pass. Choosing \textbf{File $\rightarrow$ Pass Manager} from the menu will open the \textbf{Pass Manager} window (Figure~\ref{fig:pass_manager}) which contains a table with rows for each pass and columns for each pass observable parameter. In addition to the editable fields for pass observables, the pass name itself may be changed here. There are also checkboxes to facilitate the inclusion/exclusion of string and/or card data from series-wise calculations and plots.\par
     The \textbf{Pass Manager} window also provides buttons to add or remove passes from the series. There is no functional limit to the number of passes per series. A checkbox is provided which, if checked, will update the default number of passes to add to all future series.
     \begin{figure}[hb]
         \centering
@@ -125,7 +136,7 @@
     
     \subsubsection{Capture Pass}
     Choose the pass to be collected from the list of passes, then click the \textbf{Capture Pass} button. This will open the \textbf{Capture/Edit Pass} window (Figure~\ref{fig:capture_edit_pass}).\par
-    This window provides indicators for the connection status of the string drive and spectrometer, with access to modify their settings (see the \hyperref[sec:string_hardware_settings]{String Hardware System Settings} section for more details).\par
+    This window provides indicators for the connection status of the string drive and spectrometer, with access to modify their settings (see the \hyperref[sec:string_hardware_settings]{String Hardware System Settings} section for more details). You can also hover over the \textbf{String Drive} and \textbf{Spectrometer} labels to view a configuration summary.\par
     This window also provides optional data entry fields for observables specific to the applicable pass.\par
     If both the string drive and spectrometer are connected, clicking the \textbf{Start} button will engage the string drive, advancing the string, and simultaneously will change its text to \textbf{Mark}. Clicking the \textbf{Mark} button will begin the collection of spectrometer data at intervals specified by the set \textbf{integration time}. Data will continue to be collected until the set \textbf{string length} is reached. At any time after data collection is begun, clicking the \textbf{Abort} button will stop the string drive and clear all data collected up to that point.\par
     The \textbf{Clear} button may be used to clear the pass collected string data whenever data collecation is not in progress. If string data exists for the current pass, it will ask for confirmation first.
@@ -155,13 +166,30 @@
     The \textbf{Composite} sub-tab contains two plots (Figure~\ref{fig:string_composite}):
     \begin{itemize}
         \item \textbf{Overlay:} [Upper Plot] Each individual (non-excluded) pass is plotted together. 
-        \item \textbf{Average:} [Lower Plot] Each individual (non-excluded) psss is used to generate an average pattern. A gray swath-box is plotted with x-bounds on the adjusted swath width. The height of the swath-box is equal to half the average integrated area under the bounded section of the average pattern.
+        \item \textbf{Average:} [Lower Plot] Each individual (non-excluded) psss is used to generate an average pattern. A dashed overlay can be optionally plotted based on the respective option in the String \textbf{Plot Options} window.
     \end{itemize}
     \begin{figure}[hb]
         \centering
         \makebox[\textwidth]{\includegraphics[width=\textwidth]{string_composite.png}}
         \caption{String Analysis - Composite}
         \label{fig:string_composite}
+    \end{figure}
+    \newpage
+
+    \subsubsection{Simulations}
+    The \textbf{Simulations} sub-tab contains two plots (Figure~\ref{fig:string_simulations}). Both plots simulate additively overlapping the measured pattern at intervals of the adjusted swath width. The bold black line represents the resultant summed pattern, and is interpreted here as projected in-field uniformity. The dashed horizontal line represents the mean value, about which standard deviations are computed for coefficient of variation (CV) calculations. In other words, the further a data point on the bold black line is (vertically) from the dashed line, the more it contributes to the CV.
+    \begin{itemize}
+        \item \textbf{Racetrack:} [Uppper Plot] Each simulated pass is plotted going the same direction (into the screen/paper)
+        \item \textbf{Back \& Forth:} [Lower Plot] Every odd simulated pass is mirrored about the center. \color{red} The back \& forth simulation will not accurately represent in-field uniformity if the base pattern is obtained in a crosswind. \color{black}
+    \end{itemize}
+    The number of \textbf{simulated adjascent passes} (each side) can be set to any non-negative integer. The plots may be generated either with only the mathematically relevant portion or with all simulated passes shown based on the respective setting in the String \textbf{Plot Options} window.
+    \\\\
+    A table is included which calculates the CV for select swath widths near the set adjusted swath width.
+    \begin{figure}[hb]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{string_simulations.png}}
+        \caption{String Analysis - Simulations}
+        \label{fig:string_simulations}
     \end{figure}
     \newpage
 
@@ -192,21 +220,21 @@
             \item \textbf{Center Method:} Choose whether to center the pattern with the centroid or Center of Distribution.
         \end{itemize}
     \end{itemize}
-    The \textbf{String Analysis} tab also contains controls for setting the \textbf{Adjusted Swath Width} which defaults to the target swath width, but is saved independently.
-    \newpage
+    The \textbf{String Analysis} tab also contains controls for setting the \textbf{Adjusted Swath Width} which defaults to the target swath width, but is saved independently.\\\\
+    The \textbf{String Analysis} tab also contains a \textbf{Plot Options} button which opens a popup with the following options. These options have no mathematical effect on the analysis, and are merely ways to adjust the generated graphics.
+    \begin{itemize}
+        \item \textbf{Average Plot Dashed Overlay:} Enable/Disable
+        \begin{itemize}
+            \item \textbf{Inner-Swath-Half-Average:} Computes one-half the average y-value within the \textbf{Adjusted Swath Width} range and draws a horizontal line at that value bounded by vertical lines at the bounds of the \textbf{Adjusted Swath Width}. This is sometimes referred to as the "old-school" way of determining effective swath width, where the intersection points of the horizontal and vertical lines should approximately touch the plotted pattern.
+            \item \textbf{Average:} Computes the average y-value of the entire pattern and draws a horizontal line at that value.
+        \end{itemize}
+        \item \textbf{Simulation X Range:} Set the x-bounds of the overlap simulation plots as one of:
+        \begin{itemize}
+            \item \textbf{One Swath Width:} Only the mathematically relevant portion of the simulated overlap will be shown, specifically datapoints between -swathwidth/2 and swathwidth/2.
+            \item \textbf{Sum of All Swath Widths:} All selected simulated adjascent passes will be shown. Can be useful for illustrating the big picture of in-field overlap
+        \end{itemize}
+    \end{itemize}
 
-    \subsubsection{Simulations}
-    The \textbf{Simulations} sub-tab contains two plots (Figure~\ref{fig:string_simulations}). Both plots simulate overlapping the measured pattern at intervals of the desired swath width. The upper plot simulates use of a racetrack pattern and the lower plot simulations use of a back \& forth pattern. To simulate the back \& forth pattern, adjascent passes are mirrored about the center for odd passes. \color{red} The back \& forth simulation will not accurately represent in-field uniformity if the base pattern is obtained in a crosswind. \color{black}\par
-    The number of \textbf{simulated adjascent passes} (each side) can be set to any non-negative integer.\par
-    The plots can be drawn in \textbf{One Pass} mode, which will show only the mathematically relevant portion of the simulated overlap, specifically datapoints between -swathwidth/2 and swathwidth/2. Alternatively, the plots can be drawn in \textbf{All Passes} mode, which can be useful for illustrating the big picture of in-field overlap.\par
-    The plotted area shows the additive contribution of all selected overlapping passes to the central swath width of the central pattern. The summation of all overlapped passes represents theoretical uniformity in the field and is used to compute the Coefficient of Variation (CV).\par
-    The dashed horizontal line represents the average relative deposition about which standard deviations are computed for the CV calculations. In other words, the further each additive overlap point is from the average, the more it contributes to the overall CV.
-    \begin{figure}[hb]
-        \centering
-        \makebox[\textwidth]{\includegraphics[width=\textwidth]{string_simulations.png}}
-        \caption{String Analysis - Simulations}
-        \label{fig:string_simulations}
-    \end{figure}
     \newpage
 
     \subsection{Spray-Card Analysis}
@@ -256,7 +284,8 @@
     \newpage
 
     \subsubsection{Individual Passes}
-    When a pass is selected from the pass list on the \textbf{Card Analysis} tab, the \textbf{Individual Passes} sub-tab contains a plot of percent coverage versus card location and a table of spray-card statistics (Figure~\ref{fig:card_individual_pass}). The table's first several columns are editable, so that card name, location, location units and inclusion in composite flag may be set here. The plot will automatically update according to modifications made in the table.
+    When a pass is selected from the pass list on the \textbf{Card Analysis} tab, the \textbf{Individual Passes} sub-tab contains a location-domained plot and a table of spray-card statistics (Figure~\ref{fig:card_individual_pass}). The table's first several columns are editable, so that card name, location, location units and inclusion in composite flag may be set here. The plot will automatically update according to modifications made in the table. The y-scale of the plot as well as the inclusion of shading are based on the respective options in the Card \textbf{Plot Options} window.
+
     \begin{figure}[hb]
         \centering
         \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_individual_pass.png}}
@@ -270,7 +299,7 @@
     The \textbf{Composite} tab contains two plots (Figure~\ref{fig:card_composite}):
     \begin{itemize}
         \item \textbf{Overlay:} [Uppper Plot] Each individual (non-excluded) pass is plotted together.
-        \item \textbf{Average:} [Lower Plot] Each individual (non-excluded) pass is used to generate an average pattern.
+        \item \textbf{Average:} [Lower Plot] Each individual (non-excluded) pass is used to generate an average pattern.  A dashed overlay can be optionally plotted based on the respective option in the Card \textbf{Plot Options} window. The plot can optionally include shading based on the respective options in the Card \textbf{Plot Options} window.
     \end{itemize}
     \begin{figure}[hb]
         \centering
@@ -282,7 +311,21 @@
     \newpage
 
     \subsubsection{Simulations}
-    \color{red} ToDo \color{black}
+    The \textbf{Simulations} sub-tab contains two plots (Figure~\ref{fig:card_simulations}). Both plots simulate additively overlapping the measured pattern at intervals of the adjusted swath width. The bold black line represents the resultant summed pattern, and is interpreted here as projected in-field uniformity. The dashed horizontal line represents the mean value, about which standard deviations are computed for coefficient of variation (CV) calculations. In other words, the further a data point on the bold black line is (vertically) from the dashed line, the more it contributes to the CV.
+    \begin{itemize}
+        \item \textbf{Racetrack:} [Uppper Plot] Each simulated pass is plotted going the same direction (into the screen/paper)
+        \item \textbf{Back \& Forth:} [Lower Plot] Every odd simulated pass is mirrored about the center. \color{red} The back \& forth simulation will not accurately represent in-field uniformity if the base pattern is obtained in a crosswind. \color{black}
+    \end{itemize}
+    The number of \textbf{simulated adjascent passes} (each side) can be set to any non-negative integer. The plots may be generated either with only the mathematically relevant portion or with all simulated passes shown based on the respective setting in the Card \textbf{Plot Options} window.
+    \\\\
+    A table is included which calculates the CV for select swath widths near the set adjusted swath width.
+
+    \begin{figure}[hb]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_simulations.png}}
+        \caption{Spray-Card Analysis - Simulations}
+        \label{fig:card_simulations}
+    \end{figure}
     \newpage
 
     \subsubsection{Droplet Distribution}
@@ -307,14 +350,31 @@
     The \textbf{Card Analysis} tab contains \textbf{Pass Options} which affect only the selected pass:
     \begin{itemize}
         \item \textbf{Align Center:} Shift pattern left/right using chosen center method.
-        \item \textbf{Colorize by DSC:} Enables shading of the coverage plot with semi-standard droplet spectrum category colors. \color{red}This DSC shading utilizes linear interpolation of $D_{V0.1}$ and $D_{V0.5}$ between measured data points and recalculates the DSC for each interpolated location. This may result in DSC's shown between measured datapoints which do not actually exist in the measured data.\color{black}
     \end{itemize}
     The \textbf{Card Analysis} tab also contains \textbf{Series Options} which apply only to the average pattern.
     \begin{itemize}
         \item \textbf{Align Center Average:} Shift pattern left/right using chosen center method.
-        \item \textbf{Colorize by DSC:} Enables shading of the coverage plot with semi-standard droplet spectrum category colors. \color{red}This DSC shading utilizes linear interpolation of $D_{V0.1}$ and $D_{V0.5}$ between measured data points and recalculates the DSC for each interpolated location. This may result in DSC's shown between measured datapoints which do not actually exist in the measured data.\color{black}
     \end{itemize}
-    The \textbf{Card Analysis} tab also contains controls for setting the \textbf{Adjusted Swath Width} which defaults to the target swath width, but is saved independently.
+    The \textbf{Card Analysis} tab also contains controls for setting the \textbf{Adjusted Swath Width} which defaults to the target swath width, but is saved independently.\\\\
+    The \textbf{Card Analysis} tab also contains a \textbf{Plot Options} button which opens a popup with the following options. These options have no mathematical effect on the analysis, and are merely ways to adjust the generated graphics.
+    \begin{itemize}
+        \item \textbf{Y-Axis:} Choice of plotting calculated \textbf{Coverage} or \textbf{Deposition}. If \textbf{Deposition} is chosen, units will be either \textit{gal/a} or \textit{l/ha} depending on the \textbf{Target Rate} units selected in the \textbf{Application Info} tab.
+        \item \textbf{Shading:} Enable/Disable shading (filling) the plots using the following options:
+        \begin{itemize}
+            \item \textbf{Color Method:} Currently only \textbf{DSC} method is supported which computes the Droplet Spectrum Category for all points and shows the pseudo-standard color.
+            \item \textbf{Interpolation:} For coloration between measured data points, \textbf{Linear} interpolation may be used or simply the \textbf{Nearest} neighbor values. \color{red}Note: \textbf{Linear} interpolation (i.e. interpolating the $D_{V0.1}$ and $D_{V0.5}$ values between measured datapoints) may result in values (i.e. DSC colors) shown between measured datapoints which do not actually exist in the measured data.\color{black}
+        \end{itemize}
+        \item \textbf{Average Plot Dashed Overlay:} Enable/Disable
+        \begin{itemize}
+            \item \textbf{Inner-Swath-Half-Average:} Computes one-half the average y-value within the \textbf{Adjusted Swath Width} range and draws a horizontal line at that value bounded by vertical lines at the bounds of the \textbf{Adjusted Swath Width}. This is sometimes referred to as the "old-school" way of determining effective swath width, where the intersection points of the horizontal and vertical lines should approximately touch the plotted pattern.
+            \item \textbf{Average:} Computes the average y-value of the entire pattern and draws a horizontal line at that value.
+        \end{itemize}
+        \item \textbf{Simulation X Range:} Set the x-bounds of the overlap simulation plots as one of:
+        \begin{itemize}
+            \item \textbf{One Swath Width:} Only the mathematically relevant portion of the simulated overlap will be shown, specifically datapoints between -swathwidth/2 and swathwidth/2.
+            \item \textbf{Sum of All Swath Widths:} All selected simulated adjascent passes will be shown. Can be useful for illustrating the big picture of in-field overlap
+        \end{itemize}
+    \end{itemize}
 
     \newpage
 
@@ -434,32 +494,87 @@
 
     \subsection{String Drive}
     From the \textbf{Capture/Edit Pass} window, string drive settings can be adjusted by clicking the \textbf{Edit String Drive} button, which opens the applicable window (Figure~\ref{fig:string_drive_settings}). This window contains a dropdown for choosing a serial communication port, and accompanying refresh button to re-populate this list (for example, if a device is plugged-in after opening this window). With a port chosen in the list, that port's manufacturer and product information will be displayed.\par
-    There are two fields which allow setting of the \textbf{String Length} and \textbf{String Forward Speed}. The units of string length [ft or m] can also be set here, and this will trigger the units of string forward speed [ft/sec or m/sec] to follow. While the string forward speed can be set manually here, this can also be calculated interactively; Clicking the \textbf{Calculate String Speed} button will open the applicable window (Figure~\ref{fig:string_drive_speed}). Here, a known length of string will be advanced through the string drive. This length does not need to be equal to what is used for the flightline length. Clicking the \textbf{Start} button will begin advancing string and start a timer. Once the known length of string has passed through the string drive, clicking \textbf{Stop} will stop the string drive and timer and calculate the speed [known-length / elapsed-time]. Clicking \textbf{Ok} will save this speed and return to the \textbf{Edit String Drive} window.\par
-    A \textbf{Direct Command} interface is included to facilitate querying and setting string drive stepper motor paramaters to onboard nonvolatile memory. The Take-Up Reel corresponds to address \textbf{A} and the Supply Reel corresponds to address \textbf{B}. With a command typed into the textfield, clicking the \textbf{Send} button will append a carriage return, encode the message and send it to the stepper motor driver. A string of return text is normally recieved, and is displayed when available. This return text may simply be an echo of your command, or it may contain paramater information. See the stepper motor driver documentation by clicking the \textbf{?} button for specific commands.
+    There are two fields which allow setting of the \textbf{String Length} and \textbf{String Forward Speed}. The units of string length [ft or m] can also be set here, and this will trigger the units of string forward speed [ft/sec or m/sec] to follow. While the string forward speed can be set manually here, this can also be calculated interactively by clicking the \textbf{Calculate String Speed} button (see below) 
+    A \textbf{Direct Command} interface is included to facilitate querying and setting string drive stepper motor paramaters to onboard nonvolatile memory. The Take-Up Reel corresponds to address \textbf{A} and the Supply Reel corresponds to address \textbf{B}. With a command typed into the textfield, clicking the \textbf{Send} button will append a carriage return, encode the message and send it to the stepper motor driver. A string of return text is normally recieved, and is displayed when available. This return text may simply be an echo of your command, or it may contain paramater information. See the stepper motor driver documentation by clicking the \textbf{?} button for specific commands.\par
+    For convenience, this window may also be reached from the main menu by choosing \textbf{Extras $\rightarrow$ Shortcut - String Drive}.
     \begin{figure}[hb]
         \centering
-        \makebox[\textwidth]{\includegraphics[width=0.75\textwidth]{string_drive_settings.png}}
+        \makebox[\textwidth]{\includegraphics[width=0.90\textwidth]{string_drive_settings.png}}
         \caption{String Drive Settings}
         \label{fig:string_drive_settings}
     \end{figure}
+    \newpage
+    
+    \subsubsection{Calculate String Speed}
+    This function will use a known length of string to calculate the forward string speed.
+    \begin{enumerate}
+        \item Enter the known length of string to test with. This defaults to currently set \textbf{String Length} from the \textbf{Edit String Drive} window, but any value may be used.
+        \item Align the string so that the start point (mark) is just to the right of (before) the mirror block.
+        \item Click the \textbf{Start} button. This will begin advancing string and start a timer.
+        \item Once the end point (mark) passes the mirror block, click the \textbf{Stop} button to stop the string drive.
+        \item A calculated speed will be shown using \textit{[known-length / elapsed-time]}.
+        \item Click \textbf{OK} to save this speed (or \textbf{Cancel} to not do so) and return to the \textbf{Edit String Drive} window.
+    \end{enumerate}
+    
     \begin{figure}[hb]
         \centering
-        \makebox[\textwidth]{\includegraphics[width=0.75\textwidth]{string_drive_speed.png}}
+        \makebox[\textwidth]{\includegraphics[width=1\textwidth]{string_drive_speed.png}}
         \caption{Interactively Calculate String Drive Speed}
         \label{fig:string_drive_speed}
     \end{figure}
     \FloatBarrier
+    \newpage
 
     \subsection{Spectrometer}
-    From the \textbf{Capture/Edit Pass} window, spectrometer settings can be adjusted by clicking the \textbf{Edit Spectrometer} button, which opens the applicable window (Figure~\ref{fig:spectrometer_settings}). This window displays the currently connected spectrometer's model and serial numbers. An accompanying refresh button is included to re-scan for a spectrometer (for example, if one is plugged-in after opening this window).\par
-    There are three fields which allow setting of the \textbf{Excitation Wavelength (nm)}, \textbf{Emission Wavelength (nm)} and \textbf{Integration Time (milliseconds)}. The chosen wavelengths do not change the operation of the spectrometer; a full spectrum reading is always provided. They merely change the points on the spectrum from which this software collects and displays data. Note that each spectrometer is calibrated differently, and this software will attempt to find the pixel on the spectrometer which corresponds to the wavelength closest to that specified. This pixel and actual wavelength is displayed here. The integration time set here is sent to the spectrometer and does change its operation. Briefly, consider the integration time as the exposure on a camera; longer times correspond with more detail incorporated in each data frame, but a lower quantity of data frames per unit length of string. Clicking \textbf{Ok} will save these settings and return to the \textbf{Capture/Edit Pass} window.
+    From the \textbf{Capture/Edit Pass} window, spectrometer settings can be adjusted by clicking the \textbf{Edit Spectrometer} button, which opens the applicable window (Figure~\ref{fig:spectrometer_settings}). This window displays the currently connected spectrometer. An accompanying refresh button is included to re-scan for a spectrometer (for example, if one is plugged-in after opening this window).\\\\
+    The \textbf{Dye} can be selected from a dropdown menu, and an accompnaying edit button will open the \textbf{Dye Manager}.\\\\
+    The \textbf{Display Units} can be chosen here and dictate the y-axis view in the \textbf{Test Spectrometer} and \textbf{Capture/Edit Pass} window only. 
+    \begin{itemize}
+        \item \textbf{Absolute} will output 16-bit values directly from the spectrometer (0-65,535)
+        \item \textbf{Relative (\%):} will output scaled values from 0-100\% by dividing absolute values by 655.35
+    \end{itemize}
+    There is also a \textbf{Test Spectrometer} button which will open a popup to do just that (defined further below)
+    \\\\
+    For convenience, this window may also be reached from the main menu by choosing \textbf{Extras $\rightarrow$ Shortcut - Spectrometer}.
+
     \begin{figure}[hb]
         \centering
-        \makebox[\textwidth]{\includegraphics[width=0.75\textwidth]{spectrometer_settings.png}}
+        \makebox[\textwidth]{\includegraphics[width=0.80\textwidth]{spectrometer_settings.png}}
         \caption{Spectrometer Settings}
         \label{fig:spectrometer_settings}
     \end{figure}
     \FloatBarrier
+    \newpage
+
+    \subsubsection{Dye Manager}
+    An editable list of user-configurable Dyes (Figure~\ref{fig:spectrometer_dye}) corresponding to set values for the following:
+    \begin{itemize}
+        \item \textbf{Excitation Wavelength (nm):} Target wavelength of excitation source. Currently only used in \textbf{Test Spectrometer}.
+        \item \textbf{Emission Wavelength (nm):} Target wavelength for dye emission.
+        \item \textbf{Integration Time (milliseconds):} Time to collect light for a spectrometer reading. Think of this as the exposure on a camera; longer times correspond with more detail incorporated in each data frame, but a lower quantity of data frames per unit length of string.
+        \item \textbf{Boxcar Width (nm):} Sets the wavelength width to average for each spectrometer reading. A value of 0 means to take a reading only from the spectrometer pixel nearest the target emission wavlength. A value of 5, for example, would have each spectrometer reading be an average of every pixel within 5 nm (+/-2.5 nm) of the target emission wavelength. 
+    \end{itemize}
+
+    \begin{figure}[hb]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=0.80\textwidth]{spectrometer_dye.png}}
+        \caption{Dye Manager}
+        \label{fig:spectrometer_dye}
+    \end{figure}
+    \FloatBarrier
+    \newpage
+
+    \subsubsection{Test Spectrometer}
+    With a spectrometer connected, this window will show a live readout of the entire measured spectrum. The dye selected in the \textbf{Edit Spectrometer} window is used to set target excitation/emission wavelengths as well as integration time and boxcar width. In addition to the plot, live values are shown for relevant measurements. The scale of the y-axis uses the \textbf{Display Units} option set in the \textbf{Spectrometer Settings} window.
+
+    \begin{figure}[hb]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=0.95\textwidth]{spectrometer_test.png}}
+        \caption{Test Spectrometer}
+        \label{fig:spectrometer_test}
+    \end{figure}
+    \FloatBarrier
+    
     \newpage
 
     \section{Creating PDF Reports}
@@ -468,6 +583,7 @@
         \item \textbf{Include Card Images:} [True/False] Whether to add page(s) to the report with individual card images/statistics.
         \item \textbf{Card Image Type:} [Original, Outline, Mask] What type of image to use in report.
         \item \textbf{Card Images Per Page:} [5, 7, 9] Card images are scaled to fit, so this effectively allows balancing desired image size and resultant number of pages required.
+        \item \textbf{Include Logo:} If enabled, a chosen image will be added within the report headers.
     \end{itemize}
 
     \subsection{Operation S.A.F.E. Report}
@@ -482,7 +598,7 @@
     \section{Exporting Data to Excel}
     While typically unnecessary, it is sometimes desirable to export data obtained in \textit{AccuPatt} into a format more widely accesible. To facilitate this, data can be copied to a \textit{Microsoft Excel (*.xlsx)} file by choosing one of the following options from the \textbf{Export} menu:
     \begin{itemize}
-        \item \textbf{Operation S.A.F.E. Attendee Log:} Prompts selection of any number of data files, and generates the file required by NAAREF to document attendance at a S.A.F.E. Fly-In.
+        \item \textbf{Operation S.A.F.E. Attendee Log:} Generates the file required by NAAREF to document attendance at a S.A.F.E. Fly-In. Can choose whether to select desired files or to select a directory (folder) from which all \textit{*.db} files will be included.
         \item \textbf{All Raw Data:} Exactly like it sounds, no processing or calculations, just the data and parameter settings.
         \item \textbf{Processed Data:} \color{red} To-Do \color{black}
         \item \textbf{All Images:} \color{red} To-Do \color{black}
