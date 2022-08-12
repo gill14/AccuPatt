@@ -11,12 +11,15 @@ from accupatt.helpers.dataFileImporter import (
 from accupatt.helpers.dBBridge import load_from_db, save_to_db
 from accupatt.helpers.exportExcel import export_all_to_excel, safe_report
 from accupatt.helpers.reportMaker import ReportMaker
+from accupatt.models.dye import Dye
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
 from accupatt.widgets.tabWidgetCards import TabWidgetCards
 from accupatt.widgets.seriesinfowidget import SeriesInfoWidget
 from accupatt.widgets.tabWidgetString import TabWidgetString
 from accupatt.windows.cardPlotOptions import CardPlotOptions
+from .editSpectrometer import EditSpectrometer
+from .editStringDrive import EditStringDrive
 from accupatt.windows.passManager import PassManager
 
 from accupatt.widgets import (
@@ -84,8 +87,8 @@ class MainWindow(baseclass):
         self.action_save: QAction = self.ui.action_save
         self.action_save.triggered.connect(self.saveFile)
         self.ui.action_open.triggered.connect(self.openFile)
-        # --> Setup Options Menu
-        self.ui.action_reset_defaults.triggered.connect(self.resetDefaults)
+        self.action_pass_manager: QAction = self.ui.action_pass_manager
+        self.action_pass_manager.triggered.connect(self.openPassManager)
         # --> Setup Export to Excel Menu
         self.ui.action_SAFE_log_from_files.triggered.connect(
             self.exportSAFELogFromFiles
@@ -136,16 +139,22 @@ class MainWindow(baseclass):
         actionLogoSelect: QAction = self.ui.actionSelect_Logo_File
         actionLogoSelect.triggered.connect(self.select_logo_triggered)
 
+        # --> Setup Extras Menu
+        self.ui.actionWorksheetWRK.triggered.connect(self.openResourceWSWRK)
+        self.ui.actionWorksheetGillColor.triggered.connect(self.openResourceWSGillColor)
+        self.ui.actionWorksheetGillBW.triggered.connect(self.openResourceWSGillBW)
+        self.ui.actionCPCatalog.triggered.connect(self.openResourceCPCatalog)
+        self.ui.actionShortcutStringDrive.triggered.connect(self.openShortcutStringDrive)
+        self.ui.actionShortcutSpectrometer.triggered.connect(self.openShortcutSpectrometer)
+        self.ui.action_reset_defaults.triggered.connect(self.resetDefaults)
+
         # --> Setup Help Menu
         self.ui.actionAbout.triggered.connect(self.about)
         self.ui.actionUserManual.triggered.connect(self.openResourceUserManual)
         self.ui.actionWRKSpectrometerManual.triggered.connect(
             self.openResourceWRKSpectrometerManual
         )
-        self.ui.actionWorksheetWRK.triggered.connect(self.openResourceWSWRK)
-        self.ui.actionWorksheetGillColor.triggered.connect(self.openResourceWSGillColor)
-        self.ui.actionWorksheetGillBW.triggered.connect(self.openResourceWSGillBW)
-        self.ui.actionCPCatalog.triggered.connect(self.openResourceCPCatalog)
+        
 
         # Setup Tab Widget
         self.tabWidget: QTabWidget = self.ui.tabWidget
@@ -175,6 +184,9 @@ class MainWindow(baseclass):
         self.pass_list_changed.connect(lambda: self.cardWidget.updatePassListWidget(-1))
         self.request_repaint.connect(self.stringWidget.repaint)
 
+        # Set current file init
+        self.currentFile = ""
+        
         # Setup Statusbar
         self.status_label_file = QLabel("No Current Datafile")
         self.status_label_modified = QLabel()
@@ -340,9 +352,9 @@ class MainWindow(baseclass):
             text = ""
         self.status_label_file.setText(text)
         self.change_statusbar_save()
-        self.action_save.setEnabled(
-            file == "" or (len(file) > 3 and file[-2:] != "xlsx")
-        )
+        rtu = (file == "" or (len(file) > 3 and file[-2:] != "xlsx"))
+        self.action_save.setEnabled(rtu)
+        self.action_pass_manager.setEnabled(rtu)
         self.current_file_changed.emit(file)
 
     def change_statusbar_save(self):
@@ -367,7 +379,8 @@ class MainWindow(baseclass):
     @pyqtSlot()
     def openPassManager(self, filler_mode=False):
         # Save before opening to have a reversion point
-        self.saveFile()
+        if not self.saveFile():
+            return
         # Create popup and send current appInfo vals to popup
         e = PassManager(self.seriesData, filler_mode=filler_mode, parent=self)
         # Connect Slot to retrieve Vals back from popup
@@ -389,23 +402,6 @@ class MainWindow(baseclass):
     @pyqtSlot()
     def openPassFiller(self):
         self.openPassManager(filler_mode=True)
-
-    """
-    Options Menu
-    """
-
-    @pyqtSlot()
-    def resetDefaults(self):
-        msg = QMessageBox.question(
-            self,
-            "Clear All User-Defined Defaults?",
-            "This will permanently erase all user-defined defaults for AccuPatt on this computer and revert all to their originally provided values. This includes all user-defined spray card sets. This cannot be undone. Are you sure you want to do this?",
-        )
-        if msg == QMessageBox.StandardButton.Yes:
-            cfg.clear_all_settings()
-            QMessageBox.information(
-                self, "Success", "All user-defined defaults erased successfully."
-            )
 
     """
     Export Menu
@@ -572,21 +568,9 @@ class MainWindow(baseclass):
         ReportManager(self).exec()
 
     """
-    Help Menu
+    Extras Menu
     """
-
-    @pyqtSlot()
-    def about(self):
-        About(parent=self).exec()
-
-    @pyqtSlot()
-    def openResourceUserManual(self):
-        self.openResourceDocument("accupatt_2_user_manual.pdf")
-
-    @pyqtSlot()
-    def openResourceWRKSpectrometerManual(self):
-        self.openResourceDocument("WRK_spectrometer_manual.pdf")
-
+    
     @pyqtSlot()
     def openResourceWSWRK(self):
         self.openResourceDocument("WRK_SpraySheet_V3.pdf")
@@ -602,6 +586,45 @@ class MainWindow(baseclass):
     @pyqtSlot()
     def openResourceCPCatalog(self):
         self.openResourceDocument("CP_Catalog.pdf")
+    
+    @pyqtSlot()
+    def openShortcutStringDrive(self):
+        e = EditStringDrive(ser=None, string_length_units=cfg.get_unit_swath(), disconnect_on_close=True, parent=self)
+        e.exec()
+    
+    @pyqtSlot()
+    def openShortcutSpectrometer(self):
+        e = EditSpectrometer(spectrometer=None, dye=Dye.fromConfig(), parent=None)
+        e.exec()
+    
+    @pyqtSlot()
+    def resetDefaults(self):
+        msg = QMessageBox.question(
+            self,
+            "Clear All User-Defined Defaults?",
+            "This will permanently erase all user-defined defaults for AccuPatt on this computer and revert all to their originally provided values. This includes all user-defined spray card sets. This cannot be undone. Are you sure you want to do this?",
+        )
+        if msg == QMessageBox.StandardButton.Yes:
+            cfg.clear_all_settings()
+            QMessageBox.information(
+                self, "Success", "All user-defined defaults erased successfully."
+            )
+
+    """
+    Help Menu
+    """
+
+    @pyqtSlot()
+    def about(self):
+        About(parent=self).exec()
+
+    @pyqtSlot()
+    def openResourceUserManual(self):
+        self.openResourceDocument("accupatt_2_user_manual.pdf")
+
+    @pyqtSlot()
+    def openResourceWRKSpectrometerManual(self):
+        self.openResourceDocument("WRK_spectrometer_manual.pdf")
 
     def openResourceDocument(self, file):
         file = os.path.join(os.getcwd(), "resources", "documents", file)

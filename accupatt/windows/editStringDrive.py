@@ -24,10 +24,12 @@ class EditStringDrive(baseclass):
     string_drive_connected = pyqtSignal(Serial)
     string_length_units_changed = pyqtSignal(str)
 
-    def __init__(self, ser: serial.Serial, string_length_units, parent=None):
+    def __init__(self, ser: serial.Serial, string_length_units, disconnect_on_close=False, parent=None):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
+
+        self.disconnect_on_close = disconnect_on_close
 
         self.ser = ser
 
@@ -143,11 +145,15 @@ class EditStringDrive(baseclass):
         else:
             return f"{round(float(x), 2):.2f}"
 
+    def disconnect_if_requested(self):
+        if self.disconnect_on_close:
+            if self.ser:
+                self.ser.close()
+    
     def accept(self):
         excepts = []
         # Disconnect serial
-        '''if self.ser:
-            self.ser.close()'''
+        self.disconnect_if_requested()
         # Save Serial Port
         cfg.set_string_drive_port(self.ui.comboBoxSerialPort.currentText())
         # Save String Length
@@ -170,3 +176,7 @@ class EditStringDrive(baseclass):
             return
         # If all checks out, notify requestor and close
         super().accept()
+        
+    def reject(self):
+        self.disconnect_if_requested()
+        super().reject()

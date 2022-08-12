@@ -136,14 +136,8 @@
     <addaction name="separator"/>
     <addaction name="action_save"/>
     <addaction name="action_open"/>
-   </widget>
-   <widget class="QMenu" name="menu_options">
-    <property name="title">
-     <string>Options</string>
-    </property>
-    <addaction name="action_pass_manager"/>
     <addaction name="separator"/>
-    <addaction name="action_reset_defaults"/>
+    <addaction name="action_pass_manager"/>
    </widget>
    <widget class="QMenu" name="menuReport">
     <property name="title">
@@ -191,7 +185,7 @@
    </widget>
    <widget class="QMenu" name="menuExport_to_Excel">
     <property name="title">
-     <string>Export to Excel</string>
+     <string>Export</string>
     </property>
     <widget class="QMenu" name="menuOperation_S_A_F_E_Attendee_Log">
      <property name="title">
@@ -208,7 +202,16 @@
     <property name="title">
      <string>Help</string>
     </property>
-    <widget class="QMenu" name="menuWorksheets">
+    <addaction name="actionAbout"/>
+    <addaction name="separator"/>
+    <addaction name="actionUserManual"/>
+    <addaction name="actionWRKSpectrometerManual"/>
+   </widget>
+   <widget class="QMenu" name="menuExtras">
+    <property name="title">
+     <string>Extras</string>
+    </property>
+    <widget class="QMenu" name="menuWorksheets_2">
      <property name="title">
       <string>Worksheets</string>
      </property>
@@ -216,18 +219,19 @@
      <addaction name="actionWorksheetGillColor"/>
      <addaction name="actionWorksheetGillBW"/>
     </widget>
-    <addaction name="actionAbout"/>
-    <addaction name="actionUserManual"/>
-    <addaction name="actionWRKSpectrometerManual"/>
-    <addaction name="separator"/>
-    <addaction name="menuWorksheets"/>
+    <addaction name="menuWorksheets_2"/>
     <addaction name="separator"/>
     <addaction name="actionCPCatalog"/>
+    <addaction name="separator"/>
+    <addaction name="actionShortcutStringDrive"/>
+    <addaction name="actionShortcutSpectrometer"/>
+    <addaction name="separator"/>
+    <addaction name="action_reset_defaults"/>
    </widget>
    <addaction name="menu_file"/>
-   <addaction name="menu_options"/>
    <addaction name="menuExport_to_Excel"/>
    <addaction name="menuReport"/>
+   <addaction name="menuExtras"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -237,6 +241,9 @@
    </property>
   </action>
   <action name="action_save">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Save</string>
    </property>
@@ -255,6 +262,9 @@
    </property>
   </action>
   <action name="action_pass_manager">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Pass Manager</string>
    </property>
@@ -277,21 +287,6 @@
   <action name="actionUserManual">
    <property name="text">
     <string>AccuPatt User Manual</string>
-   </property>
-  </action>
-  <action name="actionWorksheetWRK">
-   <property name="text">
-    <string>WRK</string>
-   </property>
-  </action>
-  <action name="actionWorksheetGillColor">
-   <property name="text">
-    <string>Gill - Color</string>
-   </property>
-  </action>
-  <action name="actionWorksheetGillBW">
-   <property name="text">
-    <string>Gill - B/W</string>
    </property>
   </action>
   <action name="actionCPCatalog">
@@ -396,16 +391,6 @@
     <string>WRK Spectrometer Manual</string>
    </property>
   </action>
-  <action name="actionSwath_Crosshair_on_Average">
-   <property name="text">
-    <string>Swath Crosshair on Average</string>
-   </property>
-  </action>
-  <action name="actionhjh">
-   <property name="text">
-    <string>hjh</string>
-   </property>
-  </action>
   <action name="actionInclude_Logo">
    <property name="text">
     <string>Include Logo</string>
@@ -434,14 +419,29 @@
     <string>From Directory</string>
    </property>
   </action>
-  <action name="actionCardPlotOptions">
+  <action name="actionWorksheetWRK">
    <property name="text">
-    <string>Card Plot Options</string>
+    <string>WRK</string>
    </property>
   </action>
-  <action name="actionStringPlotOptions">
+  <action name="actionWorksheetGillColor">
    <property name="text">
-    <string>String Plot Options</string>
+    <string>Gill - Color</string>
+   </property>
+  </action>
+  <action name="actionWorksheetGillBW">
+   <property name="text">
+    <string>Gill - B&amp;W</string>
+   </property>
+  </action>
+  <action name="actionShortcutStringDrive">
+   <property name="text">
+    <string>Shortcut - String Drive</string>
+   </property>
+  </action>
+  <action name="actionShortcutSpectrometer">
+   <property name="text">
+    <string>Shortcut - Spectrometer</string>
    </property>
   </action>
  </widget>
