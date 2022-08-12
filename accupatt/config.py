@@ -330,15 +330,18 @@ def set_unit_data_location(value: str):
 _SIMULATED_ADJASCENT_PASSES = "simulated_adjascent_passes"
 SIMULATED_ADJASCENT_PASSES__DEFAULT = 2
 
+
 def get_simulated_adjascent_passes() -> int:
     return QSettings().value(
         _SIMULATED_ADJASCENT_PASSES,
         defaultValue=SIMULATED_ADJASCENT_PASSES__DEFAULT,
-        type=int
+        type=int,
     )
-    
+
+
 def set_simulated_adjascent_passes(value: int):
     QSettings().setValue(_SIMULATED_ADJASCENT_PASSES, value)
+
 
 # String Pattern Manipulation
 
@@ -414,6 +417,7 @@ def get_string_plot_average_dash_overlay_method() -> str:
 
 def set_string_plot_average_dash_overlay_method(value: str):
     QSettings().setValue(_STRING_PLOT_AVERAGE_DASH_OVERLAY_METHOD, value)
+
 
 _STRING_SIMULATION_VIEW_WINDOW = "string_simulation_view_window"
 STRING_SIMULATION_VIEW_WINDOW_ONE = "one"
@@ -530,20 +534,25 @@ def get_defined_dye() -> str:
 def set_defined_dye(value: str):
     QSettings().setValue(_DEFINED_DYE, value)
 
+
 _SPECTROMETER_DISPLAY_UNIT = "spectrometer_display_units"
 SPECTROMETER_DISPLAY_UNIT_RELATIVE = "Relative (%)"
 SPECTROMETER_DISPLAY_UNIT_ABSOLUTE = "Absolute"
 SPECTROMETER_DISPLAY_UNITS = [
     SPECTROMETER_DISPLAY_UNIT_RELATIVE,
-    SPECTROMETER_DISPLAY_UNIT_ABSOLUTE
+    SPECTROMETER_DISPLAY_UNIT_ABSOLUTE,
 ]
 SPECTROMETER_DISPLAY_UNIT__DEFAULT = SPECTROMETER_DISPLAY_UNITS[0]
 
+
 def get_spectrometer_display_unit() -> str:
     return QSettings().value(
-        _SPECTROMETER_DISPLAY_UNIT, defaultValue=SPECTROMETER_DISPLAY_UNIT__DEFAULT, type=str
+        _SPECTROMETER_DISPLAY_UNIT,
+        defaultValue=SPECTROMETER_DISPLAY_UNIT__DEFAULT,
+        type=str,
     )
-    
+
+
 def set_spectrometer_display_unit(value: str):
     QSettings().setValue(_SPECTROMETER_DISPLAY_UNIT, value)
 

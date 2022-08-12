@@ -99,9 +99,7 @@ class TabWidgetString(TabWidgetBase):
     def clickedPlotOptions(self):
         spo = StringPlotOptions(parent=self)
         spo.request_update_plots[bool, bool, bool].connect(
-            lambda a, b, c: self.updatePlots(
-                individuals=a, composites=b, simulations=c
-            )
+            lambda a, b, c: self.updatePlots(individuals=a, composites=b, simulations=c)
         )
         spo.show()
 
@@ -160,9 +158,7 @@ class TabWidgetString(TabWidgetBase):
 
     def composites_triggered(self):
         self.seriesData.string.plotOverlay(self.plotWidgetOverlay)
-        self.seriesData.string.plotAverage(
-            self.plotWidgetAverage
-        )
+        self.seriesData.string.plotAverage(self.plotWidgetAverage)
 
     def simulations_triggered(self):
         self.seriesData.string.plotRacetrack(
@@ -171,6 +167,4 @@ class TabWidgetString(TabWidgetBase):
         self.seriesData.string.plotBackAndForth(
             mplWidget=self.plotWidgetBackAndForth,
         )
-        self.seriesData.string.plotCVTable(
-            self.tableWidgetCV
-        )
+        self.seriesData.string.plotCVTable(self.tableWidgetCV)

@@ -107,33 +107,33 @@ class SeriesDataString(SeriesDataBase):
             _sw = self.swath_adjusted
             if cfg.get_string_plot_average_dash_overlay():
                 method = cfg.get_string_plot_average_dash_overlay_method()
-                if method == cfg.DASH_OVERLAY_METHOD_ISHA and _sw >=1:
+                if method == cfg.DASH_OVERLAY_METHOD_ISHA and _sw >= 1:
                     # Plot rectangle, w = swath width, h = (1/2)* average dep inside swath width
                     dash_x = [
-                            -_sw / 2,
-                            -_sw / 2,
-                            _sw / 2,
-                            _sw / 2,
-                        ]
+                        -_sw / 2,
+                        -_sw / 2,
+                        _sw / 2,
+                        _sw / 2,
+                    ]
                     # Find average deposition inside swath width
                     a_c = a[(a["loc"] >= -_sw / 2) & (a["loc"] <= _sw / 2)]
                     a_c_mean = a_c["Average"].mean(axis="rows")
                     dash_y = [0, a_c_mean / 2, a_c_mean / 2, 0]
                     dash_label = "Effective Swath"
-                    
+
                 else:
                     dash_x = [a["loc"].iloc[0], a["loc"].iloc[-1]]
                     a_mean = a["Average"].mean(axis="rows")
                     dash_y = [a_mean, a_mean]
                     dash_label = "Average Value"
                 mplWidget.canvas.ax.plot(
-                        dash_x,
-                        dash_y,
-                        color="black",
-                        linewidth=1,
-                        dashes=(3, 2),
-                        label=dash_label,
-                    )
+                    dash_x,
+                    dash_y,
+                    color="black",
+                    linewidth=1,
+                    dashes=(3, 2),
+                    label=dash_label,
+                )
             # Add a legend
             mplWidget.canvas.ax.legend()
         # Must set ylim after plotting
@@ -149,14 +149,13 @@ class SeriesDataString(SeriesDataBase):
             mplWidget,
             mirrorAdjascent=True,
         )
-        
+
     def _plotSimulation(self, mplWidget: MplWidget, mirrorAdjascent=False):
-        showEntireWindow = (cfg.get_string_simulation_view_window()==cfg.STRING_SIMULATION_VIEW_WINDOW_ALL)
-        super()._plotSimulation(
-            mplWidget,
-            showEntireWindow,
-            mirrorAdjascent
+        showEntireWindow = (
+            cfg.get_string_simulation_view_window()
+            == cfg.STRING_SIMULATION_VIEW_WINDOW_ALL
         )
+        super()._plotSimulation(mplWidget, showEntireWindow, mirrorAdjascent)
 
     # Overrides for superclass
 

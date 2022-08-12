@@ -40,7 +40,7 @@ class EditSpectrometer(baseclass):
 
         self.b_dye_manager: QPushButton = self.ui.buttonDyeManager
         self.b_dye_manager.clicked.connect(self.open_dye_manager)
-        
+
         self.cb_units: QComboBox = self.ui.displayUnitsComboBox
         self.cb_units.addItems(cfg.SPECTROMETER_DISPLAY_UNITS)
         self.cb_units.setCurrentText(cfg.get_spectrometer_display_unit())
@@ -96,5 +96,5 @@ class EditSpectrometer(baseclass):
         self.dye_changed.emit(self.cb_dye.currentText())
         # Update chosen dye in config
         cfg.set_defined_dye(self.cb_dye.currentText())
-        
+
         super().accept()

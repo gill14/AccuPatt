@@ -150,9 +150,7 @@ class TabWidgetCards(TabWidgetBase):
     def clickedPlotOptions(self):
         cpo = CardPlotOptions(parent=self)
         cpo.request_update_plots[bool, bool, bool].connect(
-            lambda a, b, c: self.updatePlots(
-                individuals=a, composites=b, simulations=c
-            )
+            lambda a, b, c: self.updatePlots(individuals=a, composites=b, simulations=c)
         )
         cpo.show()
 
@@ -229,9 +227,7 @@ class TabWidgetCards(TabWidgetBase):
         self.seriesData.cards.plotBackAndForth(
             mplWidget=self.plotWidgetBackAndForth,
         )
-        self.seriesData.cards.plotCVTable(
-            self.tableWidgetCV
-        )
+        self.seriesData.cards.plotCVTable(self.tableWidgetCV)
 
     def distributions_triggered(self):
         composite = SprayCardComposite()

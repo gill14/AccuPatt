@@ -13,7 +13,7 @@ class SeriesDataBase(OptBase):
     def __init__(self, passes: list[Pass]):
         super().__init__(name="series")
         self.passes = passes
-        
+
         # Options
         self.swath_adjusted = 0
         self.swath_units = cfg.get_unit_swath()
@@ -70,9 +70,7 @@ class SeriesDataBase(OptBase):
             mplWidget.canvas.ax.plot(xfill, y_fill_cum, color="black")
             # Find average deposition inside swath width
             avg = np.mean(
-                y_fill_cum[
-                    np.where(((xfill >= -_sw / 2) & (xfill <= _sw / 2)))
-                ]
+                y_fill_cum[np.where(((xfill >= -_sw / 2) & (xfill <= _sw / 2)))]
             )
             mplWidget.canvas.ax.plot(
                 [-_sw / 2, _sw / 2],
@@ -84,7 +82,9 @@ class SeriesDataBase(OptBase):
             # Legend
             mplWidget.canvas.ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
             # Y Label
-            mplWidget.canvas.ax.set_ylabel("Back & Forth" if mirrorAdjascent else "Racetrack")
+            mplWidget.canvas.ax.set_ylabel(
+                "Back & Forth" if mirrorAdjascent else "Racetrack"
+            )
             # Whether to show the whole window or one swath width
             if not showEntireWindow:
                 mplWidget.canvas.ax.set_xlim(-_sw / 2, _sw / 2)

@@ -60,19 +60,11 @@ class SplitCardWidget(QWidget):
         if not (cvImg1 is None or cvImg2 is None):
             # Left Image (1)
             self.pixmap_item_original.setPixmap(
-                QPixmap.fromImage(
-                    SplitCardWidget.qImg_from_cvImg(
-                        cvImg1
-                    )
-                )
+                QPixmap.fromImage(SplitCardWidget.qImg_from_cvImg(cvImg1))
             )
             # Right Image(2)
             self.pixmap_item_thresh.setPixmap(
-                QPixmap.fromImage(
-                    SplitCardWidget.qImg_from_cvImg(
-                        cvImg2
-                    )
-                )
+                QPixmap.fromImage(SplitCardWidget.qImg_from_cvImg(cvImg2))
             )
         # Auto-resize to fit width or height of card to width or height of graphicsView
         if fit == "horizontal":

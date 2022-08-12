@@ -352,9 +352,7 @@ class LoadCards(baseclass):
         )
         msg.setWindowModality(Qt.WindowModality.WindowModal)
         button_delete = msg.addButton("Trash", QMessageBox.ButtonRole.ActionRole)
-        button_do_not_delete = msg.addButton(
-            "Keep", QMessageBox.ButtonRole.ActionRole
-        )
+        button_do_not_delete = msg.addButton("Keep", QMessageBox.ButtonRole.ActionRole)
         msg.setDefaultButton(button_do_not_delete)
         msg.exec()
         if msg.clickedButton() == button_delete:

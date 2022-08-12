@@ -85,8 +85,11 @@ class StringPass(baseclass):
             self.y_ex = np.array(
                 self.passData.string.data_ex[self.passData.name].values, dtype=float
             )
-            use_rel = cfg.get_spectrometer_display_unit()==cfg.SPECTROMETER_DISPLAY_UNIT_RELATIVE
-            _y = self.y/cfg.AU_PER_PERCENT_16_BIT if use_rel else self.y
+            use_rel = (
+                cfg.get_spectrometer_display_unit()
+                == cfg.SPECTROMETER_DISPLAY_UNIT_RELATIVE
+            )
+            _y = self.y / cfg.AU_PER_PERCENT_16_BIT if use_rel else self.y
             self.plot_emission.setData(self.x, _y)
             # Disable Edit if data already present to prevent overwrite of origination info
             self.button_spec.setEnabled(False)
@@ -123,7 +126,7 @@ class StringPass(baseclass):
         self.plotWidget.plotItem.setLabel(
             axis="bottom", text="Location", units=self.passData.string.data_loc_units
         )
-        #self.plotWidget.plotItem.setLabel(axis="left", text="Relative Dye Intensity")
+        # self.plotWidget.plotItem.setLabel(axis="left", text="Relative Dye Intensity")
         self.plotWidget.plotItem.showGrid(x=True, y=True)
         self.plotWidget.setXRange(
             -cfg.get_string_length() / 2, cfg.get_string_length() / 2
@@ -151,8 +154,11 @@ class StringPass(baseclass):
         self.y = np.append(
             self.y, np.average(intensities[self.pix_em[0] : self.pix_em[1] + 1])
         )
-        use_rel = cfg.get_spectrometer_display_unit()==cfg.SPECTROMETER_DISPLAY_UNIT_RELATIVE
-        _y = self.y/cfg.AU_PER_PERCENT_16_BIT if use_rel else self.y
+        use_rel = (
+            cfg.get_spectrometer_display_unit()
+            == cfg.SPECTROMETER_DISPLAY_UNIT_RELATIVE
+        )
+        _y = self.y / cfg.AU_PER_PERCENT_16_BIT if use_rel else self.y
         self.plot_emission.setData(self.x, _y)
         # record y_ex_val (excitation amplitude)
         self.y_ex = np.append(self.y_ex, intensities[self.pix_ex])
@@ -332,7 +338,7 @@ class StringPass(baseclass):
     @pyqtSlot(serial.Serial)
     def string_drive_connected_external(self, ser: serial.Serial):
         self.ser = ser
-    
+
     @pyqtSlot(str)
     def string_length_units_changed(self, units: str):
         self.passData.string.data_loc_units = units
@@ -372,8 +378,12 @@ class StringPass(baseclass):
     def editSpectrometer(self):
         e = EditSpectrometer(self.spec, self.passData.string.dye, parent=self)
         e.dye_changed[str].connect(self.dye_changed)
-        e.spectrometer_connected[Spectrometer].connect(self.spectrometer_connected_externally)
-        e.spectrometer_display_unit_changed.connect(self.spectrometer_display_unit_changed)
+        e.spectrometer_connected[Spectrometer].connect(
+            self.spectrometer_connected_externally
+        )
+        e.spectrometer_display_unit_changed.connect(
+            self.spectrometer_display_unit_changed
+        )
         e.accepted.connect(self.setupSpectrometer)
         e.exec()
 
@@ -413,8 +423,8 @@ class StringPass(baseclass):
     @pyqtSlot(str)
     def dye_changed(self, dye_name: str):
         self.passData.string.dye = Dye.fromConfig(dye_name)
-        #self.setupSpectrometer()
-        
+        # self.setupSpectrometer()
+
     @pyqtSlot()
     def spectrometer_display_unit_changed(self):
         self.populate_plot()

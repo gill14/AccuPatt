@@ -170,15 +170,13 @@ class SeriesDataCard(SeriesDataBase):
             mplWidget,
             mirrorAdjascent=True,
         )
-        
+
     def _plotSimulation(self, mplWidget: MplWidget, mirrorAdjascent=False):
-        showEntireWindow = (cfg.get_card_simulation_view_window()==cfg.CARD_SIMULATION_VIEW_WINDOW_ALL)
-        super()._plotSimulation(
-            mplWidget,
-            showEntireWindow,
-            mirrorAdjascent
+        showEntireWindow = (
+            cfg.get_card_simulation_view_window() == cfg.CARD_SIMULATION_VIEW_WINDOW_ALL
         )
-    
+        super()._plotSimulation(mplWidget, showEntireWindow, mirrorAdjascent)
+
     # Overrides for superclass
 
     def get_average_mod(self):

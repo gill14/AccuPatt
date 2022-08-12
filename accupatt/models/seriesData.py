@@ -17,9 +17,7 @@ class SeriesData:
             self.id = str(uuid.uuid4())
         self.info = AppInfo()
         self.passes: list[Pass] = []
-        self.string = SeriesDataString(
-            self.passes
-        )
+        self.string = SeriesDataString(self.passes)
         self.cards = SeriesDataCard(self.passes)
 
     """

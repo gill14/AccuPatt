@@ -144,8 +144,12 @@ class MainWindow(baseclass):
         self.ui.actionWorksheetGillColor.triggered.connect(self.openResourceWSGillColor)
         self.ui.actionWorksheetGillBW.triggered.connect(self.openResourceWSGillBW)
         self.ui.actionCPCatalog.triggered.connect(self.openResourceCPCatalog)
-        self.ui.actionShortcutStringDrive.triggered.connect(self.openShortcutStringDrive)
-        self.ui.actionShortcutSpectrometer.triggered.connect(self.openShortcutSpectrometer)
+        self.ui.actionShortcutStringDrive.triggered.connect(
+            self.openShortcutStringDrive
+        )
+        self.ui.actionShortcutSpectrometer.triggered.connect(
+            self.openShortcutSpectrometer
+        )
         self.ui.action_reset_defaults.triggered.connect(self.resetDefaults)
 
         # --> Setup Help Menu
@@ -154,7 +158,6 @@ class MainWindow(baseclass):
         self.ui.actionWRKSpectrometerManual.triggered.connect(
             self.openResourceWRKSpectrometerManual
         )
-        
 
         # Setup Tab Widget
         self.tabWidget: QTabWidget = self.ui.tabWidget
@@ -186,7 +189,7 @@ class MainWindow(baseclass):
 
         # Set current file init
         self.currentFile = ""
-        
+
         # Setup Statusbar
         self.status_label_file = QLabel("No Current Datafile")
         self.status_label_modified = QLabel()
@@ -352,7 +355,7 @@ class MainWindow(baseclass):
             text = ""
         self.status_label_file.setText(text)
         self.change_statusbar_save()
-        rtu = (file == "" or (len(file) > 3 and file[-2:] != "xlsx"))
+        rtu = file == "" or (len(file) > 3 and file[-2:] != "xlsx")
         self.action_save.setEnabled(rtu)
         self.action_pass_manager.setEnabled(rtu)
         self.current_file_changed.emit(file)
@@ -570,7 +573,7 @@ class MainWindow(baseclass):
     """
     Extras Menu
     """
-    
+
     @pyqtSlot()
     def openResourceWSWRK(self):
         self.openResourceDocument("WRK_SpraySheet_V3.pdf")
@@ -586,17 +589,22 @@ class MainWindow(baseclass):
     @pyqtSlot()
     def openResourceCPCatalog(self):
         self.openResourceDocument("CP_Catalog.pdf")
-    
+
     @pyqtSlot()
     def openShortcutStringDrive(self):
-        e = EditStringDrive(ser=None, string_length_units=cfg.get_unit_swath(), disconnect_on_close=True, parent=self)
+        e = EditStringDrive(
+            ser=None,
+            string_length_units=cfg.get_unit_swath(),
+            disconnect_on_close=True,
+            parent=self,
+        )
         e.exec()
-    
+
     @pyqtSlot()
     def openShortcutSpectrometer(self):
         e = EditSpectrometer(spectrometer=None, dye=Dye.fromConfig(), parent=None)
         e.exec()
-    
+
     @pyqtSlot()
     def resetDefaults(self):
         msg = QMessageBox.question(

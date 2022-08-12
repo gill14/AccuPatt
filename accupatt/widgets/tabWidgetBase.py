@@ -19,6 +19,7 @@ from accupatt.widgets.mplwidget import MplWidget
 from accupatt.windows.editOptBase import EditOptBase
 import accupatt.config as cfg
 
+
 class TabWidgetBase(QWidget):
 
     request_file_save = pyqtSignal()
@@ -93,16 +94,12 @@ class TabWidgetBase(QWidget):
         # Silently update Pass Data Mod Opts, then plot individuals
         self.passSelectionChanged()
         # Silently update adjusted swath control limits
-        self.setAdjustedSwathFromTargetSwath(
-            update_plots=False
-        )
+        self.setAdjustedSwathFromTargetSwath(update_plots=False)
         # Update Adjusted Swath, then plot composites and simulations
         self.swathAdjustedChanged(swath=self.getSeriesOpt().swath_adjusted)
 
     @pyqtSlot()
-    def setAdjustedSwathFromTargetSwath(
-        self, update_plots=True
-    ):
+    def setAdjustedSwathFromTargetSwath(self, update_plots=True):
         swath = self.seriesData.info.swath
         swath_units = self.seriesData.info.swath_units
         opt = self.getSeriesOpt()

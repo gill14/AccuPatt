@@ -244,8 +244,8 @@ class PassDataString(PassDataBase):
             # Numpy-ize dataframe column for plotting
             y_smooth = np.array(data_mod[self.name].values, dtype=float)
             trim_mask = np.nonzero(y_smooth)[0]
-            y_smooth[0:trim_mask[0]] = np.nan
-            y_smooth[trim_mask[-1]:-1] = np.nan
+            y_smooth[0 : trim_mask[0]] = np.nan
+            y_smooth[trim_mask[-1] : -1] = np.nan
             # Plot trimmed/rebased/smoothed data
             pyqtplotwidget.plotItem.plot(
                 name=f"Trimmed{rebase_str}, Smoothed", pen=mkPen("y", width=3)

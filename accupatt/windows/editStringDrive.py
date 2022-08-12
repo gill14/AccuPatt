@@ -24,7 +24,13 @@ class EditStringDrive(baseclass):
     string_drive_connected = pyqtSignal(Serial)
     string_length_units_changed = pyqtSignal(str)
 
-    def __init__(self, ser: serial.Serial, string_length_units, disconnect_on_close=False, parent=None):
+    def __init__(
+        self,
+        ser: serial.Serial,
+        string_length_units,
+        disconnect_on_close=False,
+        parent=None,
+    ):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -64,7 +70,7 @@ class EditStringDrive(baseclass):
         self.ui.buttonCalculateStringSpeed.pressed.connect(self.click_calc_speed)
 
         # Direct commands
-        
+
         self.ui.pushButtonSendCommand.pressed.connect(self.send_command)
         self.ui.pushButtonHelp.pressed.connect(self.openStepperManual)
 
@@ -135,8 +141,7 @@ class EditStringDrive(baseclass):
         self.button_forward.setEnabled(advance)
         self.ui.buttonCalculateStringSpeed.setEnabled(self.ser.is_open)
         self.ui.pushButtonSendCommand.setEnabled(self.ser.is_open)
-        
-    
+
     @pyqtSlot()
     def string_drive_manual_reverse(self):
         if not self.button_reverse.isChecked():
@@ -146,9 +151,7 @@ class EditStringDrive(baseclass):
         else:
             self.ser.write(cfg.STRING_DRIVE_REV_START.encode())
             self.button_reverse.setText("-- STOP --")
-            self.enableButtons(
-                advance=False
-            )
+            self.enableButtons(advance=False)
 
     @pyqtSlot()
     def string_drive_manual_advance(self):
@@ -159,10 +162,8 @@ class EditStringDrive(baseclass):
         else:
             self.ser.write(cfg.STRING_DRIVE_FWD_START.encode())
             self.button_forward.setText("-- STOP --")
-            self.enableButtons(
-                reverse=False
-            )
-    
+            self.enableButtons(reverse=False)
+
     @pyqtSlot()
     def send_command(self):
         if self.ser and self.ser.is_open:
@@ -195,7 +196,7 @@ class EditStringDrive(baseclass):
         if self.disconnect_on_close:
             if self.ser:
                 self.ser.close()
-    
+
     def accept(self):
         excepts = []
         # Disconnect serial
@@ -222,7 +223,7 @@ class EditStringDrive(baseclass):
             return
         # If all checks out, notify requestor and close
         super().accept()
-        
+
     def reject(self):
         self.disconnect_if_requested()
         super().reject()
