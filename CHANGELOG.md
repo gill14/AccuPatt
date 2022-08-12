@@ -3,10 +3,12 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 ### Added
 - Auto-populate expected subsequent series-wide observables ([#3](https://github.com/gill14/AccuPatt/issues/3))
+- Main Menu shortcuts to Edit String Drive and Edit Spectrometer windows ([#4](https://github.com/gill14/AccuPatt/issues/4))
 - Edit Spectrometer window option to display absorbance as percent of saturation level ([#6](https://github.com/gill14/AccuPatt/issues/6))
 ### Changed
 - Turn off dark pixel and nonlinearity corrections for spectrometer readings
 - Move String Plot Options to a Dialog
+- Main Menu reorganization, string/card plot options moved to respective tabs
 ### Fixed
 - Edit String Drive causes serial port disconnection upon re-entry to Capture/Edit Pass String window
 - Persistence for last utilized data file directory
