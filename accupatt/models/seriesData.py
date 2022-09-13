@@ -11,8 +11,8 @@ from accupatt.models.seriesDataString import SeriesDataString
 class SeriesData:
     """A Container class for storing all Series info"""
 
-    def __init__(self, id=""):
-        self.id = id
+    def __init__(self, id_=""):
+        self.id = id_
         if self.id == "":
             self.id = str(uuid.uuid4())
         self.info = AppInfo()
@@ -112,7 +112,7 @@ class SeriesData:
         if values.size == 0:
             return 0, "-", "-"
         value = values.mean()
-        return value, units, f"{value:.2g} {units}"
+        return value, units, f"{round(value,2) + .0:.2f} {units}"
 
     def get_temperature_mean(
         self, units=None, string_included=False, cards_included=False

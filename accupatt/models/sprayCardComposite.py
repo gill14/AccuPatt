@@ -78,9 +78,9 @@ class SprayCardComposite(SprayCard):
             # Get an array of bins each drop dia belongs in (1-based)
             binned_dia = np.digitize(dia_list, bins)
             # Sort values into bins
-            for area, bin in zip(area_list, binned_dia):
-                binned_cov[bin - 1] += area / sum_area
-                binned_quant[bin - 1] += 1
+            for area, bin_ in zip(area_list, binned_dia):
+                binned_cov[bin_ - 1] += area / sum_area
+                binned_quant[bin_ - 1] += 1
         self._plotDistCov(mplWidget1, bins, binned_cov)
         self._plotDistQuant(mplWidget2, bins, binned_quant)
         self._plotDistStatTable(tableWidget)

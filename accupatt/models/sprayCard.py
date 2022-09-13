@@ -14,9 +14,9 @@ from accupatt.helpers.atomizationModel import AtomizationModel
 
 
 class SprayCard:
-    def __init__(self, id="", name="", filepath=None):
+    def __init__(self, id_="", name="", filepath=None):
         # Use id if passed, else create one
-        self.id = id
+        self.id = id_
         if self.id == "":
             self.id = str(uuid.uuid4())
         self.name = name
@@ -78,8 +78,8 @@ class SprayCard:
     def set_filepath(self, filepath):
         self.filepath = filepath
 
-    def set_threshold_type(self, type=cfg.THRESHOLD_TYPE__DEFAULT):
-        self.threshold_type = type
+    def set_threshold_type(self, type_=cfg.THRESHOLD_TYPE__DEFAULT):
+        self.threshold_type = type_
 
     def set_threshold_method_grayscale(
         self, method=cfg.THRESHOLD_GRAYSCALE_METHOD__DEFAULT
@@ -89,27 +89,27 @@ class SprayCard:
     def set_threshold_grayscale(self, threshold: int):
         self.threshold_grayscale = threshold
 
-    def set_threshold_color_hue(self, min=None, max=None, bandpass=None):
-        if min:
-            self.threshold_color_hue_min = min
-        if max:
-            self.threshold_color_hue_max = max
+    def set_threshold_color_hue(self, min_=None, max_=None, bandpass=None):
+        if min_:
+            self.threshold_color_hue_min = min_
+        if max_:
+            self.threshold_color_hue_max = max_
         if bandpass is not None:
             self.threshold_color_hue_pass = bandpass
 
-    def set_threshold_color_saturation(self, min=None, max=None, bandpass=None):
-        if min:
-            self.threshold_color_saturation_min = min
-        if max:
-            self.threshold_color_saturation_max = max
+    def set_threshold_color_saturation(self, min_=None, max_=None, bandpass=None):
+        if min_:
+            self.threshold_color_saturation_min = min_
+        if max_:
+            self.threshold_color_saturation_max = max_
         if bandpass is not None:
             self.threshold_color_saturation_pass = bandpass
 
-    def set_threshold_color_brightness(self, min=None, max=None, bandpass=None):
-        if min:
-            self.threshold_color_brightness_min = min
-        if max:
-            self.threshold_color_brightness_max = max
+    def set_threshold_color_brightness(self, min_=None, max_=None, bandpass=None):
+        if min_:
+            self.threshold_color_brightness_min = min_
+        if max_:
+            self.threshold_color_brightness_max = max_
         if bandpass is not None:
             self.threshold_color_brightness_pass = bandpass
 
@@ -323,7 +323,7 @@ class SprayCardStats:
 
 class sprayCardImageFileHandler:
     def read_image_from_file(sprayCard: SprayCard):
-        if sprayCard.filepath == None or not sprayCard.has_image:
+        if sprayCard.filepath is None or not sprayCard.has_image:
             return
         if sprayCard.filepath[-1] == "x":
             return sprayCardImageFileHandler._read_image_from_xlsx(sprayCard=sprayCard)
@@ -332,7 +332,7 @@ class sprayCardImageFileHandler:
         return
 
     def save_image_to_file(sprayCard: SprayCard, image):
-        if sprayCard.filepath == None or sprayCard.filepath == "":
+        if sprayCard.filepath is None or sprayCard.filepath == "":
             return
         if sprayCard.filepath[-1] == "b":
             return sprayCardImageFileHandler._write_image_to_db(

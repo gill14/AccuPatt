@@ -364,7 +364,7 @@ class TabWidgetBase(QWidget):
             return SeriesDataBase()
 
     def getPassOpt(self, passData: Pass = None) -> PassDataBase:
-        if passData == None:
+        if passData is None:
             passData = self.getCurrentPass()
         if self.subtype == "string":
             return passData.string

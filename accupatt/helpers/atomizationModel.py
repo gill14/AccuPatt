@@ -3305,47 +3305,47 @@ class AtomizationModel:
         param=None,
     ):
         # shorthand helpers
-        n = self.nozzle if nozzle == None else nozzle
-        o = self.orifice if orifice == None else orifice
-        a = self.airspeed if airspeed == None else airspeed
-        p = self.pressure if pressure == None else pressure
-        an = self.angle if angle == None else angle
+        n = self.nozzle if nozzle is None else nozzle
+        o = self.orifice if orifice is None else orifice
+        a = self.airspeed if airspeed is None else airspeed
+        p = self.pressure if pressure is None else pressure
+        an = self.angle if angle is None else angle
         # Run a pre-check, coerces strings, checks bounds and finds correct model
-        n, o, a, p, an, dict = self._calcPreCheck(n, o, a, p, an)
-        if any([n == None, o == None, a == None, p == None, an == None, not dict]):
+        n, o, a, p, an, dict_ = self._calcPreCheck(n, o, a, p, an)
+        if any([n is None, o is None, a is None, p is None, an is None, not dict_]):
             return -1
         # Catch if special GPM calculation and return that value
         if param == "GPM":
             # find gpm at 40 PSI
-            gpm_40 = dict[n]["Flow"][1]
+            gpm_40 = dict_[n]["Flow"][1]
             # Correct to initialized pressure
             gpm = gpm_40 * math.sqrt(p / 40)
             return gpm
         # Perform adjustment to the 4 input parameters to run the models
-        o_a = (o - dict[n]["Adjust"][0]) / dict[n]["Adjust"][1]
-        a_a = (a - dict[n]["Adjust"][2]) / dict[n]["Adjust"][3]
-        p_a = (p - dict[n]["Adjust"][4]) / dict[n]["Adjust"][5]
-        an_a = (an - dict[n]["Adjust"][6]) / dict[n]["Adjust"][7]
+        o_a = (o - dict_[n]["Adjust"][0]) / dict_[n]["Adjust"][1]
+        a_a = (a - dict_[n]["Adjust"][2]) / dict_[n]["Adjust"][3]
+        p_a = (p - dict_[n]["Adjust"][4]) / dict_[n]["Adjust"][5]
+        an_a = (an - dict_[n]["Adjust"][6]) / dict_[n]["Adjust"][7]
         # Make calculations for each droplet size parameter
         # Order of constants:
         # Intercept,Orifice,Airspeed,Pressure,Angle,Orf*AS,Orf*Press,AS*Press,Orf*Ang,
         # AS*Ang,Press*Ang,Orf^2,AS^2,Press^,Ang^2
         calc = (
-            dict[n][param][0]
-            + o_a * dict[n][param][1]
-            + a_a * dict[n][param][2]
-            + p_a * dict[n][param][3]
-            + an_a * dict[n][param][4]
-            + o_a * a_a * dict[n][param][5]
-            + o_a * p_a * dict[n][param][6]
-            + a_a * p_a * dict[n][param][7]
-            + o_a * an_a * dict[n][param][8]
-            + a_a * an_a * dict[n][param][9]
-            + p_a * an_a * dict[n][param][10]
-            + (o_a**2) * dict[n][param][11]
-            + (a_a**2) * dict[n][param][12]
-            + (p_a**2) * dict[n][param][13]
-            + (an_a**2) * dict[n][param][14]
+            dict_[n][param][0]
+            + o_a * dict_[n][param][1]
+            + a_a * dict_[n][param][2]
+            + p_a * dict_[n][param][3]
+            + an_a * dict_[n][param][4]
+            + o_a * a_a * dict_[n][param][5]
+            + o_a * p_a * dict_[n][param][6]
+            + a_a * p_a * dict_[n][param][7]
+            + o_a * an_a * dict_[n][param][8]
+            + a_a * an_a * dict_[n][param][9]
+            + p_a * an_a * dict_[n][param][10]
+            + (o_a**2) * dict_[n][param][11]
+            + (a_a**2) * dict_[n][param][12]
+            + (p_a**2) * dict_[n][param][13]
+            + (an_a**2) * dict_[n][param][14]
         )
         return round(calc)
 
@@ -3363,12 +3363,12 @@ class AtomizationModel:
         if not (model := self._getApplicableModel(nozzle, airspeed)):
             return None, orifice, None, pressure, angle, model
         # Coerce orifice if string
-        if type(orifice) is str:
+        if isinstance(orifice, str):
             orif_str_list = [str(o) for o in model[nozzle]["Orifice"]]
             if orifice in orif_str_list:
                 orifice = model[nozzle]["Orifice"][orif_str_list.index(orifice)]
         # Coerce angle if string
-        if type(angle) is str:
+        if isinstance(angle, str):
             angle_str_list = [str(o) for o in model[nozzle]["Angle"]]
             if angle in angle_str_list:
                 angle = model[nozzle]["Angle"][angle_str_list.index(angle)]
@@ -3380,10 +3380,10 @@ class AtomizationModel:
             return nozzle, orifice, airspeed, pressure, None, model
         # Is pressure within range of applicable model?
         if model == self.ls_dict:
-            if not (30 <= pressure <= 60):
+            if not 30 <= pressure <= 60:
                 return nozzle, orifice, airspeed, None, angle, model
         else:
-            if not (30 <= pressure <= 90):
+            if not 30 <= pressure <= 90:
                 return nozzle, orifice, airspeed, None, angle, model
         # All good, notify
         return nozzle, orifice, airspeed, pressure, angle, model
@@ -3477,9 +3477,9 @@ class AtomizationModel:
     def _dsc(self, dv01=None, dv05=None):
         r = self.ref_nozzles
         dsc_01, dsc_05 = "", ""
-        if dv01 == None:
+        if dv01 is None:
             dv01 = self.dv01()
-        if dv05 == None:
+        if dv05 is None:
             dv05 = self.dv05()
         if dv01 <= 0 or dv05 <= 0:
             return ""
@@ -3512,11 +3512,11 @@ class AtomizationModel:
         return color
 
     def _rs(self, dv01=None, dv05=None, dv09=None):
-        if dv01 == None:
+        if dv01 is None:
             dv01 = self.dv01()
-        if dv05 == None:
+        if dv05 is None:
             dv05 = self.dv05()
-        if dv09 == None:
+        if dv09 is None:
             dv09 = self.dv09()
         return (dv09 - dv01) / dv05
 
@@ -3553,17 +3553,17 @@ class AtomizationModel:
         return self._dsc_color(dsc=self._dsc(dv01=dv01, dv05=dv05))
 
     def dsc_color_dv01(self, dv01=None):
-        if dv01 == None:
+        if dv01 is None:
             dv01 = self.dv01()
         return self._dsc_color_dv(dv=dv01, dv_key="DV01")
 
     def dsc_color_dv05(self, dv05=None):
-        if dv05 == None:
+        if dv05 is None:
             dv05 = self.dv05()
         return self._dsc_color_dv(dv=dv05, dv_key="DV05")
 
     def dsc_color_dv09(self, dv09=None):
-        if dv09 == None:
+        if dv09 is None:
             dv09 = self.dv09()
         return self._dsc_color_dv(dv=dv09, dv_key="DV09")
 

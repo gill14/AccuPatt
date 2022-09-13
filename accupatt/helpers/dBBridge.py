@@ -121,13 +121,13 @@ def _load_table_flyin(c: sqlite3.Cursor, s: SeriesData):
 
 def _load_table_applicator(c: sqlite3.Cursor, s: SeriesData, alt_id: str = ""):
     if alt_id == "":
-        id = s.id
+        id_ = s.id
     else:
-        id = alt_id
+        id_ = alt_id
     i = s.info
     c.execute(
         """SELECT pilot, business, street, city, state, zip, phone, email FROM applicator WHERE series_id = ?""",
-        (id,),
+        (id_,),
     )
     (
         i.pilot,
@@ -143,13 +143,13 @@ def _load_table_applicator(c: sqlite3.Cursor, s: SeriesData, alt_id: str = ""):
 
 def _load_table_aircraft(c: sqlite3.Cursor, s: SeriesData, alt_id: str = ""):
     if alt_id == "":
-        id = s.id
+        id_ = s.id
     else:
-        id = alt_id
+        id_ = alt_id
     i = s.info
     c.execute(
         """SELECT regnum, make, model, wingspan, wingspan_units, winglets FROM aircraft WHERE series_id = ?""",
-        (id,),
+        (id_,),
     )
     i.regnum, i.make, i.model, i.wingspan, i.wingspan_units, i.winglets = c.fetchone()
 
@@ -206,7 +206,7 @@ def _load_table_passes(c: sqlite3.Cursor, s: SeriesData, file: str):
     )
     data = c.fetchall()
     for row in data:
-        p = Pass(id=row[0], number=row[2])
+        p = Pass(id_=row[0], number=row[2])
         (
             _,
             p.name,
@@ -282,7 +282,7 @@ def _load_table_spray_cards(c: sqlite3.Cursor, p: Pass, file: str):
     )
     cards = c.fetchall()
     for row in cards:
-        sc = SprayCard(id=row[0], name=row[1], filepath=str(file))
+        sc = SprayCard(id_=row[0], name=row[1], filepath=str(file))
         (
             _,
             _,
@@ -311,9 +311,9 @@ def _load_table_spray_cards(c: sqlite3.Cursor, p: Pass, file: str):
             sc.spread_factor_c,
             sc.has_image,
         ) = row
-        sc.set_threshold_color_hue(min=hmin, max=hmax, bandpass=hpass)
-        sc.set_threshold_color_saturation(min=smin, max=smax, bandpass=spass)
-        sc.set_threshold_color_brightness(min=bmin, max=bmax, bandpass=bpass)
+        sc.set_threshold_color_hue(min_=hmin, max_=hmax, bandpass=hpass)
+        sc.set_threshold_color_saturation(min_=smin, max_=smax, bandpass=spass)
+        sc.set_threshold_color_brightness(min_=bmin, max_=bmax, bandpass=bpass)
         p.cards.card_list.append(sc)
 
 
@@ -508,11 +508,11 @@ def _update_table_nozzles(c: sqlite3.Cursor, s: SeriesData):
         c.execute("""DELETE FROM nozzles WHERE id = ?""", (n.id,))
     else:
         in_query = "("
-        for i, id in enumerate(current_ids):
+        for i, id_ in enumerate(current_ids):
             if i == 0:
-                in_query += f"'{id}'"
+                in_query += f"'{id_}'"
             else:
-                in_query += f", '{id}'"
+                in_query += f", '{id_}'"
         in_query += ")"
         c.execute(f"DELETE FROM nozzles WHERE id NOT IN {in_query}")
 

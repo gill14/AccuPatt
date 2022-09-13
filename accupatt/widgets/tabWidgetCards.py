@@ -114,7 +114,7 @@ class TabWidgetCards(TabWidgetBase):
     def editPass(self):
         if passData := self.getCurrentPass():
             # Trigger file save if filapath needed
-            if self.currentFile == None or self.currentFile == "":
+            if self.currentFile is None or self.currentFile == "":
                 self.delayed_request_open_edit_pass = True
                 self.request_file_save.emit()
                 return

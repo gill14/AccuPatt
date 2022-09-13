@@ -57,15 +57,15 @@ class SeriesDataBase(OptBase):
             )
             # Plot the fills cumulatively in order of generation: C, L1, R1, L2, R2, etc.
             y_fill_cum = np.zeros(xfill.size)
-            for i in range(len(y_fills)):
+            for i, y_fill in enumerate(y_fills):
                 mplWidget.canvas.ax.fill_between(
                     xfill,
                     y_fill_cum,
-                    y_fill_cum + y_fills[i],
+                    y_fill_cum + y_fill,
                     label=labels[i],
                     alpha=0.8,
                 )
-                y_fill_cum = y_fill_cum + y_fills[i]
+                y_fill_cum = y_fill_cum + y_fill
             # Plot a solid line on the cumulative deposition
             mplWidget.canvas.ax.plot(xfill, y_fill_cum, color="black")
             # Find average deposition inside swath width
@@ -130,8 +130,8 @@ class SeriesDataBase(OptBase):
             mirrorAdjascent=mirrorAdjascent,
         )
         y_fill_cum = np.zeros(xfill.size)
-        for i in range(len(y_fills)):
-            y_fill_cum = y_fill_cum + y_fills[i]
+        for y_fill in y_fills:
+            y_fill_cum = y_fill_cum + y_fill
         # Find average deposition inside swath width
         y_fill_cum_center = y_fill_cum[
             np.where(((xfill >= -swath_width / 2) & (xfill <= swath_width / 2)))
@@ -168,8 +168,8 @@ class SeriesDataBase(OptBase):
         xfill = np.sort(np.concatenate(x_arrays))
         # Interpolate the original y-values to the new x-domain
         y_fills = []
-        for i in range(len(x_arrays)):
-            y_fills.append(np.interp(xfill, x_arrays[i], y_arrays[i], left=0, right=0))
+        for x, y in zip(x_arrays, y_arrays):
+            y_fills.append(np.interp(xfill, x, y, left=0, right=0))
         return (xfill, y_fills, labels)
 
     def _config_mpl_plotter(self, mplWidget: MplWidget):

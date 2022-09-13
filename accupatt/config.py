@@ -1221,13 +1221,13 @@ def temporary_converter():
     )
     old_sets_list: list[dict] = json.loads(old_sets)
     new_sets_list = []
-    for set in old_sets_list:
-        set_name = set["set_name"]
-        card_names = set["card_name"]
+    for set_ in old_sets_list:
+        set_name = set_["set_name"]
+        card_names = set_["card_name"]
         base = get_card_set_base(set_name, card_names)
-        base["location"] = set["location"]
-        base["location_unit"] = set["location_unit"]
-        base["threshold_type"] = set["threshold_type"]
+        base["location"] = set_["location"]
+        base["location_unit"] = set_["location_unit"]
+        base["threshold_type"] = set_["threshold_type"]
         new_sets_list.append(base)
     new_sets = json.dumps(new_sets_list)
     set_card_defined_sets(new_sets)

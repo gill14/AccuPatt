@@ -14,23 +14,23 @@ from openpyxl_image_loader import SheetImageLoader
 
 
 def convert_xlsx_to_db(file, prog=None) -> str:
-    if prog != None:
+    if prog is not None:
         prog.setRange(0, 3)
         prog.setValue(0)
         prog.setLabelText("Loading in Series Data")
     s = SeriesData()
     load_from_accupatt_1_file(file, s)
-    if prog != None:
+    if prog is not None:
         prog.setLabelText("Creating Local Database")
         prog.setValue(1)
     # Write to DB (same dir as original xlsx)
     file_db = os.path.splitext(file)[0] + ".db"
     save_to_db(file=file_db, s=s)
-    if prog != None:
+    if prog is not None:
         prog.setLabelText("Checking XLSX for Spray Cards")
         prog.setValue(2)
     wb = openpyxl.load_workbook(file)
-    if prog != None:
+    if prog is not None:
         prog.setValue(3)
     if not "Card Data" in wb.sheetnames:
         return s
@@ -40,7 +40,7 @@ def convert_xlsx_to_db(file, prog=None) -> str:
     p: Pass = s.passes[on_pass - 1]
     c: SprayCard
     for i, c in enumerate(p.cards.card_list):
-        if prog != None:
+        if prog is not None:
             if i == 0:
                 prog.setRange(0, len(p.cards.card_list))
             prog.setValue(i)
