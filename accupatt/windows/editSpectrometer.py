@@ -53,7 +53,7 @@ class EditSpectrometer(baseclass):
         self.refresh_dyes()
 
     def refresh_spec(self):
-        if self.spec == None:
+        if self.spec is None:
             try:
                 self.spec = Spectrometer.from_first_available()
             except:

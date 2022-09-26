@@ -419,11 +419,11 @@ class MainWindow(baseclass):
             filter="AccuPatt (*.db)",
         )
         if files:
-            dir = os.path.dirname(files[0])
+            dir_ = os.path.dirname(files[0])
             savefile, _ = QFileDialog.getSaveFileName(
                 parent=self,
                 caption="Save S.A.F.E. Attendee Log As",
-                directory=dir + os.path.sep + "Operation SAFE Attendee Log.xlsx",
+                directory=dir_ + os.path.sep + "Operation SAFE Attendee Log.xlsx",
                 filter="Excel Files (*.xlsx)",
             )
         if files and savefile:

@@ -125,7 +125,6 @@ def export_all_to_excel(series: SeriesData, saveFile: str):
     vals.extend(
         [
             i.swath,
-            i.swath_adjusted,
             i.swath_units,
             i.rate,
             i.rate_units,
@@ -221,8 +220,6 @@ def export_all_to_excel(series: SeriesData, saveFile: str):
             p.humidity,
             p.string.include_in_composite,
             p.cards.include_in_composite,
-            p.string.wav_ex,
-            p.string.wav_em,
             p.string.trim_l,
             p.string.trim_r,
             p.string.trim_v,

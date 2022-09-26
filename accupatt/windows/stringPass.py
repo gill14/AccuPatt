@@ -314,7 +314,7 @@ class StringPass(baseclass):
 
     def setupStringDrive(self):
         # Get a handle to the serial object, else return "Disconnected" status label
-        if self.ser == None:
+        if self.ser is None:
             try:
                 self.ser = serial.Serial(
                     cfg.get_string_drive_port(), baudrate=9600, timeout=1
@@ -390,7 +390,7 @@ class StringPass(baseclass):
     def setupSpectrometer(self):
         # Get a handle to the spec object, else return "Disconnected" status
 
-        if self.spec == None:
+        if self.spec is None:
             try:
                 self.spec = Spectrometer.from_first_available()
             except:

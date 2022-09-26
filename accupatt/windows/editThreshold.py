@@ -135,7 +135,7 @@ class EditThreshold(baseclass):
             self.ui.groupBoxColor.show()
             thresh_type = cfg.THRESHOLD_TYPE_HSB
         # Update Thresh Type, redraw
-        self.sprayCard.set_threshold_type(type=thresh_type)
+        self.sprayCard.set_threshold_type(type_=thresh_type)
         self.updateSprayCardView()
 
     def updateThresholdGrayscale(self, thresh):
@@ -157,7 +157,7 @@ class EditThreshold(baseclass):
 
     @pyqtSlot(tuple)
     def updateHue(self, vals):
-        self.sprayCard.set_threshold_color_hue(min=vals[0], max=vals[1])
+        self.sprayCard.set_threshold_color_hue(min_=vals[0], max_=vals[1])
         self.updateSprayCardView()
 
     @pyqtSlot(bool)
@@ -167,7 +167,7 @@ class EditThreshold(baseclass):
 
     @pyqtSlot(tuple)
     def updateSaturation(self, vals):
-        self.sprayCard.set_threshold_color_saturation(min=vals[0], max=vals[1])
+        self.sprayCard.set_threshold_color_saturation(min_=vals[0], max_=vals[1])
         self.updateSprayCardView()
 
     @pyqtSlot(bool)
@@ -177,7 +177,7 @@ class EditThreshold(baseclass):
 
     @pyqtSlot(tuple)
     def updateBrightness(self, vals):
-        self.sprayCard.set_threshold_color_brightness(min=vals[0], max=vals[1])
+        self.sprayCard.set_threshold_color_brightness(min_=vals[0], max_=vals[1])
         self.updateSprayCardView()
 
     @pyqtSlot()
@@ -240,8 +240,8 @@ class EditThreshold(baseclass):
                 self.ui.sliderGrayscale.setValue(sc.threshold_grayscale)
         elif sc.threshold_type == cfg.THRESHOLD_TYPE_HSB:
             sc.set_threshold_color_hue(
-                min=cfg.get_threshold_hsb_hue_min(),
-                max=cfg.get_threshold_hsb_hue_max(),
+                min_=cfg.get_threshold_hsb_hue_min(),
+                max_=cfg.get_threshold_hsb_hue_max(),
                 bandpass=cfg.get_threshold_hsb_hue_pass(),
             )
             with QSignalBlocker(cb := self.ui.checkBoxHue):
@@ -254,8 +254,8 @@ class EditThreshold(baseclass):
                     )
                 )
             sc.set_threshold_color_saturation(
-                min=cfg.get_threshold_hsb_hue_min(),
-                max=cfg.get_threshold_hsb_hue_max(),
+                min_=cfg.get_threshold_hsb_hue_min(),
+                max_=cfg.get_threshold_hsb_hue_max(),
                 bandpass=cfg.get_threshold_hsb_saturation_pass(),
             )
             with QSignalBlocker(cb := self.ui.checkBoxSat):
@@ -268,8 +268,8 @@ class EditThreshold(baseclass):
                     )
                 )
             sc.set_threshold_color_brightness(
-                min=cfg.get_threshold_hsb_hue_min(),
-                max=cfg.get_threshold_hsb_hue_max(),
+                min_=cfg.get_threshold_hsb_hue_min(),
+                max_=cfg.get_threshold_hsb_hue_max(),
                 bandpass=cfg.get_threshold_hsb_brightness_pass(),
             )
             with QSignalBlocker(cb := self.ui.checkBoxBri):
@@ -322,18 +322,18 @@ class EditThreshold(baseclass):
                         card.set_threshold_grayscale(sc.threshold_grayscale)
                         # Set color options
                         card.set_threshold_color_hue(
-                            min=sc.threshold_color_hue_min,
-                            max=sc.threshold_color_hue_max,
+                            min_=sc.threshold_color_hue_min,
+                            max_=sc.threshold_color_hue_max,
                             bandpass=sc.threshold_color_hue_pass,
                         )
                         card.set_threshold_color_saturation(
-                            min=sc.threshold_color_saturation_min,
-                            max=sc.threshold_color_saturation_max,
+                            min_=sc.threshold_color_saturation_min,
+                            max_=sc.threshold_color_saturation_max,
                             bandpass=sc.threshold_color_saturation_pass,
                         )
                         card.set_threshold_color_brightness(
-                            min=sc.threshold_color_brightness_min,
-                            max=sc.threshold_color_brightness_max,
+                            min_=sc.threshold_color_brightness_min,
+                            max_=sc.threshold_color_brightness_max,
                             bandpass=sc.threshold_color_brightness_pass,
                         )
                         # Set Additional Options

@@ -9,9 +9,9 @@ from accupatt.models.sprayCard import SprayCard
 
 
 class Pass:
-    def __init__(self, id="", number=0, name=""):
+    def __init__(self, id_="", number=0, name=""):
         # Info Stuff
-        self.id = id
+        self.id = id_
         if self.id == "":
             self.id = str(uuid.uuid4())
         self.number = number
@@ -73,7 +73,7 @@ class Pass:
         units = units if units else self.wind_speed_units
         # Convert units
         crosswind = self._convert_speed_mph_to_requested(crosswind, units)
-        return crosswind, units, f"{crosswind:.1f}", f"{crosswind:.1f} {units}"
+        return crosswind, units, f"{round(crosswind, 1) + 0.:.1f}", f"{round(crosswind, 1) + 0.:.1f} {units}"
 
     def get_ground_speed(self, units=None) -> tuple[int, str, str, str]:
         if self.ground_speed < 0:

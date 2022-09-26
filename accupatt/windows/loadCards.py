@@ -233,7 +233,7 @@ class LoadCards(baseclass):
             mouseEnabled = np.array(viewBox.state["mouseEnabled"], dtype=float)
             mask = mouseEnabled.copy()
             if ev.button() & Qt.MouseButton.LeftButton:
-                if viewBox.state["mouseMode"] == pg.ViewBox.RectMode and axis == None:
+                if viewBox.state["mouseMode"] == pg.ViewBox.RectMode and axis is None:
                     if ev.isFinish():
                         QTimer.singleShot(0, self.restoreCursor)
                         viewBox.rbScaleBox.hide()

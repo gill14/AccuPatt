@@ -43,7 +43,7 @@ class PassDataString(PassDataBase):
         self.smoothIt(self.data_mod, self.smooth, self.smooth_window, self.smooth_order)
 
     def reLoc(self, d: pd.DataFrame, loc_units: str = None):
-        if loc_units == None or loc_units == self.data_loc_units:
+        if loc_units is None or loc_units == self.data_loc_units:
             return
         if loc_units == cfg.UNIT_FT:
             # Convert loc from M to FT
@@ -58,9 +58,9 @@ class PassDataString(PassDataBase):
         # Right trimmed points set to -1
         d.loc[d.index[(-1 - trimR) :], self.name] = -1
         # Find new min inside untrimmed area
-        min = self.findMin(d, trimL, trimR)
+        min_ = self.findMin(d, trimL, trimR)
         # subtract min from all points
-        d[self.name] = d[self.name].sub(min)
+        d[self.name] = d[self.name].sub(min_)
         # clip all negative values (from trimmed areas) to 0
         d[self.name] = d[self.name].clip(lower=0)
 
@@ -176,11 +176,11 @@ class PassDataString(PassDataBase):
         if self.data.empty:
             return None, None, None
         # Calculate min y val for use with trim_vertical handle
-        min = self.findMin(self.data, self.trim_l, self.trim_r)
+        min_ = self.findMin(self.data, self.trim_l, self.trim_r)
         # Numpy-ize dataframe columns for plotting
         x = np.array(self.data["loc"].values, dtype=float)
         y = np.array(self.data[self.name].values, dtype=float)
-        floor = min + self.trim_v
+        floor = min_ + self.trim_v
         # Plot raw data
         pyqtplotwidget.plotItem.plot(name="Raw", pen="w").setData(x, y)
         # Create L, R and V trim handles

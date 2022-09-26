@@ -176,7 +176,7 @@ class AppInfo:
         return f"{self.strip_num(self.series)}"
 
     def strip_num(self, x, precision=2, zeroBlank=False) -> str:
-        if type(x) is str:
+        if isinstance(x, str):
             if x == "":
                 x = 0
         if zeroBlank and x == 0:
@@ -293,9 +293,9 @@ class AppInfo:
     def set_nozzle_spacing_units(self, string):
         self.nozzle_spacing_units = string
 
-    def set_num(self, field, string, type) -> bool:
+    def set_num(self, field, string, type_) -> bool:
         try:
-            if type == "int":
+            if type_ == "int":
                 field = int(string)
             else:
                 field = float(string)
