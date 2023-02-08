@@ -4,81 +4,95 @@ from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
 from accupatt.models.sprayCard import SprayCard
 from openpyxl import Workbook
+from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.utils.dataframe import dataframe_to_rows
 
 
 def safe_report(filesToInclude: list[str], saveFile: str):
     wb = Workbook()
     # Sheet created by default
-    ws = wb.active
-    # Static labels
-    ws.title = "S.A.F.E. Report"
-    ws["B1"] = "Event:"
-    ws["B2"] = "Location:"
-    ws["B3"] = "Date:"
-    ws["B4"] = "Analyst:"
-    ws["B5"] = "# Passes:"
+    ws: Worksheet = wb.active
     header = [
+        "Date",
+        "Event",
+        "Location",
+        "Analyst",
+        "Liquid",
+        "Remote Analyst",
         "Pilot Last",
         "Pilot First",
+        "Pilot ID",
+        "Pilot Member",
         "Business Name",
-        "Operator Name",
-        "Opr Fname",
+        "Operator Last",
+        "Operator First",
+        "Operator ID",
+        "Operator Member",
         "A/C Reg",
-        "Aircraft Model",
+        "A/C Make",
+        "A/C Model",
         "# Passes",
         "Business Address",
         "City",
-        "St",
+        "ST",
         "Zip Code",
-        "Phone*",
-        "E-mail*",
+        "Phone",
+        "Email",
     ]
     for i, head in enumerate(header):
-        ws.cell(6, i + 1, head)
-    sum_passes = 0
-    next_row_avail = 7
+        ws.cell(1, i + 1, head)
+
     for i, file in enumerate(filesToInclude):
         s = SeriesData()
         load_from_db(file=file, s=s)
-        # Flyin - Will overwrite each time
-        ws["C1"] = s.info.flyin_name
-        ws["C2"] = s.info.flyin_location
-        ws["C3"] = s.info.flyin_date
-        ws["C4"] = s.info.flyin_analyst
-        row = next_row_avail
-        # Check if row with Regnum already exists
-        for cell in ws["F"]:
-            if cell.value == s.info.regnum:
-                row = cell.row
-
-        # Line Entry for each file
+       
+        # Prefab pilot first/last
         pilot_split = s.info.pilot.rsplit(" ", 1)
         pilot_first = pilot_split[0] if len(pilot_split) >= 1 else ""
         pilot_last = pilot_split[1] if len(pilot_split) == 2 else ""
-        ws.cell(row, 1, pilot_last)
-        ws.cell(row, 2, pilot_first)
-        ws.cell(row, 3, s.info.business)
-        ws.cell(row, 6, s.info.regnum)
-        ws.cell(row, 7, s.info.make + " " + s.info.model)
-        ws.cell(row, 9, s.info.street)
-        ws.cell(row, 10, s.info.city)
-        ws.cell(row, 11, s.info.state)
-        ws.cell(row, 12, s.info.zip)
-        ws.cell(row, 13, s.info.phone)
-        ws.cell(row, 14, s.info.email)
-        # Increment next_row_avail if a new regnum
-        if row == next_row_avail:
-            next_row_avail += 1
-            ws.cell(row, 8, len(s.passes))
-        else:
-            ws.cell(row, 8, ws.cell(row, 8).value + len(s.passes))
-        # Contribute Passes to Sum of Passes
-        sum_passes += len(s.passes)
-    ws["C5"] = sum_passes
+        # Create an entry for the item
+        line_item = [
+            s.info.flyin_date,
+            s.info.flyin_name,
+            s.info.flyin_location,
+            s.info.flyin_analyst,
+            "Liquid",
+            "No",
+            pilot_last,
+            pilot_first,
+            "",
+            "",
+            s.info.business,
+            "",
+            "",
+            "",
+            "",
+            s.info.regnum,
+            s.info.make,
+            s.info.model,
+            len(s.passes),
+            s.info.street,
+            s.info.city,
+            s.info.state,
+            s.info.zip,
+            s.info.phone,
+            s.info.email
+        ]
+
+        # Set row to the next blank available. If regnum already exists in sheet, with identical date, then re-assign row to that previous entry's row and totalize passes
+        row = ws.max_row+1
+        for i, roww in enumerate(ws.iter_rows()):
+            if roww[0].value == line_item[0] and roww[15].value == line_item[15]:
+                row = i+1
+                line_item[18] += int(roww[18].value)
+        
+        # Write values for line item
+        for i, item in enumerate(line_item):
+            col = i+1
+            ws.cell(row, col, item)
+            
     # Save it
     wb.save(saveFile)
-
 
 def export_all_to_excel(series: SeriesData, saveFile: str):
     s = series
@@ -107,8 +121,7 @@ def export_all_to_excel(series: SeriesData, saveFile: str):
     # Table Spray System
     labels.extend(
         [
-            "swath",
-            "swath_adjusted",
+            "target_swath",
             "swath_units",
             "rate",
             "rate_units",

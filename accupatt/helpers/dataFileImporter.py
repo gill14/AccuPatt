@@ -268,6 +268,20 @@ def translateNozzle(id, type, size, defl, quant) -> Nozzle:
         pass
     return Nozzle(id, type, str(size), str(defl), quant)
 
+def load_from_accustain_file(file, s: SeriesData):
+    # Load entire WB into dict of sheets
+    df_map = pd.read_excel(file, sheet_name=None, header=None)
+
+    df_settings = df_map["Settings"]
+
+    df_appinfo = df_map["AppInfo"].fillna("")
+    s.info.set_swath(df_appinfo.iat[3,6])
+    s.cards.set_swath_adjusted(df_appinfo.iat[3,6])
+
+
+    df_index = df_map["Index"]
+    # TODO
+
 
 def load_image_from_accupatt_1(file, spray_card_name):
     wb = openpyxl.load_workbook(file)
