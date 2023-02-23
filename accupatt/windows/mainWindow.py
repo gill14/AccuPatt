@@ -7,6 +7,8 @@ import accupatt.config as cfg
 from accupatt.helpers.dataFileImporter import (
     convert_xlsx_to_db,
     load_from_accupatt_1_file,
+    load_from_wrk_file,
+    load_from_usda_file
 )
 from accupatt.helpers.dBBridge import load_from_db, save_to_db
 from accupatt.helpers.exportExcel import export_all_to_excel, safe_report
@@ -305,7 +307,7 @@ class MainWindow(baseclass):
                 parent=self,
                 caption="Open File",
                 directory=cfg.get_datafile_dir(),
-                filter="AccuPatt (*.db *.xlsx)",
+                filter="AccuPatt (*.db *.xlsx);;USDA-ARS AATRU (*1*.txt);;Legacy WRK (*.*A)",
             )
             if file == "":
                 return
@@ -339,6 +341,10 @@ class MainWindow(baseclass):
             load_from_db(file, s=self.seriesData)
         elif len(file) > 3 and file[-4:] == "xlsx":
             load_from_accupatt_1_file(file, s=self.seriesData)
+        elif len(file) > 3 and file[-1] == "A":
+            load_from_wrk_file(file, s=self.seriesData)
+        elif len(file) > 6 and file[-4:] == ".txt":
+            load_from_usda_file(file, s=self.seriesData)
         # Notify UI of file change
         self.change_current_file(file)
         self.update_all_ui()

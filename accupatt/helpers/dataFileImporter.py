@@ -2,6 +2,7 @@ import io
 import os
 
 import accupatt.config as cfg
+import math
 import numpy as np
 import openpyxl
 import pandas as pd
@@ -268,6 +269,11 @@ def translateNozzle(id, type, size, defl, quant) -> Nozzle:
         pass
     return Nozzle(id, type, str(size), str(defl), quant)
 
+def load_image_from_accupatt_1(file, spray_card_name):
+    wb = openpyxl.load_workbook(file)
+    # Get (PIL) Image from applicable sheet
+    return SheetImageLoader(wb[spray_card_name]).get("A1")
+
 def load_from_accustain_file(file, s: SeriesData):
     # Load entire WB into dict of sheets
     df_map = pd.read_excel(file, sheet_name=None, header=None)
@@ -282,8 +288,197 @@ def load_from_accustain_file(file, s: SeriesData):
     df_index = df_map["Index"]
     # TODO
 
+def load_from_usda_file(file: str, s: SeriesData):
+    # Split file name for parts
+    parts = file.split("/")[-1].split(" ")
+    regnum = parts[0]
+    series_letter = parts[1]
+    id = regnum+" "+series_letter
 
-def load_image_from_accupatt_1(file, spray_card_name):
-    wb = openpyxl.load_workbook(file)
-    # Get (PIL) Image from applicable sheet
-    return SheetImageLoader(wb[spray_card_name]).get("A1")
+    # Get a sorted list of pass files for this series
+    dir = os.path.dirname(file)
+    files = [os.path.join(dir, f) for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f))]
+    files = [fn for fn in files if id in fn]
+    files.sort()
+    print(id)
+    print(files)
+
+    i = s.info
+
+    i.regnum = regnum
+
+
+    # get pilot parameters file
+    if os.path.isfile(os.path.join(dir, "Pilot Paramters.prn")):
+        pdf = pd.read_csv(os.path.join(dir, "Pilot Paramters.prn"),sep="\t", index_col=0)
+        print(pdf)
+        i.pilot = pdf.loc[regnum, 'Pilot Name']
+        i.street = pdf.loc[regnum, 'Street Address']
+        i.city = pdf.loc[regnum, 'City']
+        i.state = pdf.loc[regnum, 'State']
+        i.zip = pdf.loc[regnum, 'Zip Code']
+        # put the rest in notes because it was unreliably used
+        note0 = "These fields listed for reference only from original data file."
+        note1 = f"Applicator License #: {pdf.loc[regnum,'Applicator Licence Number']}"
+        note2 = f"Office #: {pdf.loc[regnum, 'Office Number']}"
+        note3 = f"Cell #: {pdf.loc[regnum, 'Cell Number']}"
+        note4 = f"Email: {pdf.loc[regnum, 'Email']}"
+        note5 = "SWATH WIDTH SET TO 65 FT BY GLOBAL DEFAULT FOR USDA FILES"
+        i.notes_analyst = "\r".join([note0, note1, note2, note3, note4, note5])
+
+    for passnum, file in enumerate(files):
+        p = Pass(number=passnum+1)
+
+        lines = []
+        with open(file) as ffile:
+            lines = ffile.readlines()
+        d_ex = []
+        d_em = []
+        for i, line in enumerate(lines):
+            if i < 2:
+                continue
+            line_item = line.strip().split("\t")
+            d_ex.append(
+                {
+                    'loc': float(line_item[1]),
+                    p.name: float(line_item[3])
+                }
+            )
+            d_em.append(
+                {
+                    'loc': float(line_item[1]),
+                    p.name: float(line_item[2])
+                }
+            )
+        p.string.data_ex = pd.DataFrame(d_ex)
+        p.string.data = pd.DataFrame(d_em)
+
+        s.passes.append(p)
+
+
+def load_from_wrk_file(file, s: SeriesData):
+    isMetric = False #This is a bold assumption
+
+    # Read in file to a list of lines, stripping line return and quotes
+    lines = []
+    with open(file) as ffile:
+        lines = ffile.readlines()
+    for i, line in enumerate(lines):
+        lines[i] = lines[i].strip()
+        lines[i] = lines[i].strip('\"')
+        print("Line {}: {}".format(i, lines[i]))
+
+    i = s.info
+
+    i.flyin_name = lines[0]
+    i.flyin_location = lines[1]
+    i.flyin_date = lines[2]
+    i.flyin_analyst = lines[3]
+
+    _fl_length = lines[4]
+    _analysis_speed = lines[5]
+    _n1flow40 = lines[6]
+    _n2flow40 = lines[7]
+    _n2q = int(lines[8].strip() or 0)
+    _n1s = lines[9]
+    _n2s = lines[10]
+    _n1s_name = lines[11]
+    _n2s_name = lines[12]
+    _n1d = lines[13]
+    _n2d = lines[14]
+
+    i.business = lines[15]
+    i.street = lines[16]
+    i.city = lines[17]
+    i.state = lines[18]
+    i.zip = lines[19]
+    i.phone = lines[20]
+    i.pilot = lines[21]
+    i.regnum = lines[22]
+    i.model = lines[23]
+
+    _n1t = lines[24]
+    _n2t = _n1t # WRK only allowed selection of different orifice sizes, not nozzle types
+    _n_total_q = int(lines[25].strip() or 0)
+    _n1q = _n_total_q - _n2q
+    if _n1q > 0:
+        i.nozzles.append(
+            translateNozzle(
+                id=1,
+                type=_n1t,
+                size=_n1s,
+                defl=_n1d,
+                quant=_n1q
+            )
+        )
+    if _n2q > 0:
+        i.nozzles.append(
+            translateNozzle(
+                id=2,
+                type=_n2t,
+                size=_n2s,
+                defl=_n2d,
+                quant=_n2q
+            )
+        )
+
+    i.pressure = int(lines[26])
+    i.rate = float(lines[27])
+    i.swath = int(lines[28])
+    
+    # Get a sorted list of pass files for this series
+    dir = os.path.dirname(file)
+    files = [os.path.join(dir, f) for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f))]
+    files = [fn for fn in files if file[:-1] in fn]
+    files.sort()
+    
+    for passnum, file in enumerate(files):
+        lines = []
+        with open(file) as ffile:
+            lines = ffile.readlines()
+        for i, line in enumerate(lines):
+            lines[i] = lines[i].strip()
+            lines[i] = lines[i].strip('\"')
+        
+        p = Pass(number=passnum+1)
+        p.set_ground_speed(int(lines[29]), units=cfg.UNIT_KPH if isMetric else cfg.UNIT_MPH)
+        p.set_wind_speed(float(lines[30]), units=cfg.UNIT_KPH if isMetric else cfg.UNIT_MPH)
+        p.set_wind_direction(int(lines[31]))
+        # Complicated Pass Heading conversion:
+        _cw = float(lines[32])
+        '''if _cw > 0:
+            _ph = (180/math.pi) *(math.asin(_cw) / float(lines[30])) + float(lines[31])
+        else:
+            _ph = abs((180/math.pi)*(math.asin(abs(_cw)) / float(lines[30])) - float(lines[31]))'''
+        _ph = 0 # TODO
+        p.pass_heading = _ph
+        p.set_temperature(int(lines[33]), units=cfg.UNIT_DEG_C if isMetric else cfg.UNIT_DEG_F)
+        p.set_spray_height(float(lines[34]), units=cfg.UNIT_M if isMetric else cfg.UNIT_FT)
+        p.set_humidity(int(lines[35]))
+
+        # calculate data point spacing from fl length and num data points
+        _fl = int(lines[4])
+        _num_data_points = int(lines[37])
+        _spacing = _fl / _num_data_points
+
+        # loop over data points and get them into a dataframe
+        d = []
+        for i in range(38, 38+_num_data_points):
+            d.append(
+                {
+                    'loc': (i-38) * _spacing,
+                    p.name: float(lines[i])
+                }
+            )
+        p.string.data = pd.DataFrame(d)
+        print(p.string.data.to_string())
+
+        # Turn off smoothing
+        p.string.smooth = False
+
+        s.passes.append(p)
+
+    s.string.smooth = False
+
+
+        
