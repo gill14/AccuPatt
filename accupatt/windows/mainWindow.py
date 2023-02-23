@@ -8,7 +8,7 @@ from accupatt.helpers.dataFileImporter import (
     convert_xlsx_to_db,
     load_from_accupatt_1_file,
     load_from_wrk_file,
-    load_from_usda_file
+    load_from_usda_file,
 )
 from accupatt.helpers.dBBridge import load_from_db, save_to_db
 from accupatt.helpers.exportExcel import export_all_to_excel, safe_report
@@ -262,9 +262,11 @@ class MainWindow(baseclass):
 
     @pyqtSlot()
     def saveFile(self):
-        # If viewing from XLSX, Ignore save requests
-        if len(self.currentFile) > 3 and self.currentFile[-4:] == "xlsx":
-            return False
+        # If viewing only from legacy, Ignore save requests
+        if type(self.currentFile) is str and not self.currentFile.endswith(".db"):
+            return True
+        """if len(self.currentFile) > 3 and self.currentFile[-4:] == "xlsx":
+            return False"""
         # If db file doesn't exist, lets create one
         if self.currentFile == "":
             # Have user create a new file

@@ -73,7 +73,12 @@ class Pass:
         units = units if units else self.wind_speed_units
         # Convert units
         crosswind = self._convert_speed_mph_to_requested(crosswind, units)
-        return crosswind, units, f"{round(crosswind, 1) + 0.:.1f}", f"{round(crosswind, 1) + 0.:.1f} {units}"
+        return (
+            crosswind,
+            units,
+            f"{round(crosswind, 1) + 0.:.1f}",
+            f"{round(crosswind, 1) + 0.:.1f} {units}",
+        )
 
     def get_ground_speed(self, units=None) -> tuple[int, str, str, str]:
         if self.ground_speed < 0:

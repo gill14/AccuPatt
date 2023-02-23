@@ -45,7 +45,7 @@ def safe_report(filesToInclude: list[str], saveFile: str):
     for i, file in enumerate(filesToInclude):
         s = SeriesData()
         load_from_db(file=file, s=s)
-       
+
         # Prefab pilot first/last
         pilot_split = s.info.pilot.rsplit(" ", 1)
         pilot_first = pilot_split[0] if len(pilot_split) >= 1 else ""
@@ -76,23 +76,24 @@ def safe_report(filesToInclude: list[str], saveFile: str):
             s.info.state,
             s.info.zip,
             s.info.phone,
-            s.info.email
+            s.info.email,
         ]
 
         # Set row to the next blank available. If regnum already exists in sheet, with identical date, then re-assign row to that previous entry's row and totalize passes
-        row = ws.max_row+1
+        row = ws.max_row + 1
         for i, roww in enumerate(ws.iter_rows()):
             if roww[0].value == line_item[0] and roww[15].value == line_item[15]:
-                row = i+1
+                row = i + 1
                 line_item[18] += int(roww[18].value)
-        
+
         # Write values for line item
         for i, item in enumerate(line_item):
-            col = i+1
+            col = i + 1
             ws.cell(row, col, item)
-            
+
     # Save it
     wb.save(saveFile)
+
 
 def export_all_to_excel(series: SeriesData, saveFile: str):
     s = series
