@@ -14,7 +14,7 @@ import accupatt.config as cfg
 VERSION = f'{cfg.VERSION_MAJOR}.{cfg.VERSION_MINOR}.{cfg.VERSION_RELEASE}'
 
 OPTIONS = {
-    'iconfile':'./resources/illini.icns',
+    'iconfile':'./resources/accupatt_logo.icns',
     'resources':['./resources'],
     'bdist_base':'./dist/osx/build',
     'dist_dir':'./dist/osx/dist',

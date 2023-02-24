@@ -10,7 +10,7 @@ description = "Aircraft Spray Pattern Testing Application"
 authors = ["gill14 <59205277+gill14@users.noreply.github.com>"]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.11"
+python = ">=3.10,<3.12"
 seabreeze = "^2.0.3"
 pyserial = "^3.5"
 matplotlib = "^3.5.1"

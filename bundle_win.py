@@ -29,7 +29,7 @@ if sys.platform == 'win32':
         '--hidden-import=matplotlib.backends.backend_svg',
         f'--additional-hooks-dir=./hooks',
         f'--add-data=../../resources{os.pathsep}resources',
-        '--icon=../../resources/illini.ico',
+        '--icon=../../resources/accupatt_logo.ico',
         '--distpath=./dist/win/dist',
         '--specpath=./dist/win',
         '--workpath=./dist/win/build'

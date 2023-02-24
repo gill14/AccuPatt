@@ -416,13 +416,19 @@ def load_from_wrk_file(file, s: SeriesData):
 
     # Get a sorted list of pass files for this series
     dir = os.path.dirname(file)
+    print(file)
+    print(dir)
+    print(os.listdir(dir))
     files = [
-        os.path.join(dir, f)
+        f
         for f in os.listdir(dir)
         if os.path.isfile(os.path.join(dir, f))
     ]
-    files = [fn for fn in files if file[:-1] in fn]
+    print(files)
+    files = [os.path.join(dir, fn) for fn in files if fn[:-1] in file]
     files.sort()
+    print("Files:")
+    print(files)
 
     for passnum, file in enumerate(files):
         lines = []
@@ -464,7 +470,7 @@ def load_from_wrk_file(file, s: SeriesData):
         # loop over data points and get them into a dataframe
         d = []
         for i in range(38, 38 + _num_data_points):
-            d.append({"loc": (i - 38) * _spacing, p.name: float(lines[i])})
+            d.append({"loc": (i - 38) * _spacing, p.name: float(lines[i] or 0)})
         p.string.data = pd.DataFrame(d)
         print(p.string.data.to_string())
 
