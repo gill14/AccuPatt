@@ -1,10 +1,10 @@
+
 # -- TODO --
 Planned features and fixes in no particular order\
 Submitted [issues] are not included here, but will also be addressed in order of priority
 ## Overall
 - [ ] export processed string/card data
 - [ ] export raw/overlay/processed images
-- [ ] add support for legacy WRK files
 ## String Analysis
 - [ ] Warning for low res patterns - turn ind plot red and slap a warning label on it? - need to constrain to passString window only for compatibility
 ## Card Analysis

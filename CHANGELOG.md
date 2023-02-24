@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 ## [Unreleased]
+## [2.0.17] - 23 February 2023
+### Added
+- Open/View legacy WRK files
+- Open/View USDA-ARS AATRU files
+### Changed
+- Export Operation SAFE Log now fully itemized for easier bulk submittal to NAAREF ([#13](https://github.com/gill14/AccuPatt/issues/13))
+### Fixed
+- Excel Exporting - @coopermor
+- Crosswind reporting - @coopermor
 ## [2.0.16] - 12 August 2022
 ### Added
 - Auto-populate expected subsequent series-wide observables ([#3](https://github.com/gill14/AccuPatt/issues/3))
@@ -217,7 +226,8 @@ All notable changes to this project will be documented in this file.
 - Initial rewrite of AccuPatt using Python/Qt. Based on prior (1.xx) version using Java/JavaFX. Final release of the legacy version is 1.06+.
 
 
-[Unreleased]: https://github.com/gill14/accupatt/compare/v2.0.16...HEAD
+[Unreleased]: https://github.com/gill14/accupatt/compare/v2.0.17...HEAD
+[2.0.17]: https://github.com/gill14/accupatt/compare/v2.0.16...v2.0.17
 [2.0.16]: https://github.com/gill14/accupatt/compare/v2.0.15...v2.0.16
 [2.0.15]: https://github.com/gill14/accupatt/compare/v2.0.14...v2.0.15
 [2.0.14]: https://github.com/gill14/accupatt/compare/v2.0.13...v2.0.14
