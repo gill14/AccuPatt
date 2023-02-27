@@ -19,7 +19,7 @@ OPTIONS = {
     'bdist_base':'./dist/osx/build',
     'dist_dir':'./dist/osx/dist',
     'plist': {'CFBundleShortVersionString':VERSION,
-              'CFBundleIdentifier':'edu.illinois.accupatt',},
+              'CFBundleIdentifier':'org.agaviation.accupatt',},
     'excludes': ["PyInstaller"],
     'includes': ["PyWavelets", "pywt", "imageio", "networkx"],
 }
