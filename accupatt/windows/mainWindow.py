@@ -169,6 +169,8 @@ class MainWindow(baseclass):
             lambda: self.target_swath_changed.emit()
         )
         self.seriesInfoWidget.request_open_pass_filler.connect(self.openPassFiller)
+        self.seriesInfoWidget.request_open_string_tab.connect(self.activateStringTab)
+        self.seriesInfoWidget.request_open_card_tab.connect(self.activateCardTab)
         self.stringWidget: TabWidgetString = self.ui.stringMainWidget
         self.stringWidget.request_file_save.connect(self.saveFile)
         self.cardWidget: TabWidgetCards = self.ui.cardMainWidget
@@ -263,7 +265,11 @@ class MainWindow(baseclass):
     @pyqtSlot()
     def saveFile(self):
         # If viewing only from legacy, Ignore save requests
-        if type(self.currentFile) is str and not self.currentFile.endswith(".db"):
+        if (
+            type(self.currentFile) is str
+            and not self.currentFile == ""
+            and not self.currentFile.endswith(".db")
+        ):
             return True
         """if len(self.currentFile) > 3 and self.currentFile[-4:] == "xlsx":
             return False"""
@@ -414,6 +420,14 @@ class MainWindow(baseclass):
     def openPassFiller(self):
         self.openPassManager(filler_mode=True)
 
+    @pyqtSlot()
+    def activateStringTab(self):
+        self.tabWidget.setCurrentIndex(1)
+
+    @pyqtSlot()
+    def activateCardTab(self):
+        self.tabWidget.setCurrentIndex(2)
+
     """
     Export Menu
     """
@@ -492,9 +506,22 @@ class MainWindow(baseclass):
             filter="PDF Files (*.pdf)",
         )
         if savefile:
-            logo_path = cfg.get_logo_path() if cfg.get_logo_include_in_report() else ""
+            # Show Progress Dialog
+            prog = QProgressDialog(self)
+            prog.setMinimumDuration(0)
+            prog.setWindowModality(Qt.WindowModality.WindowModal)
+            # Figure out required work for Progress Dialog
+            include_string_page = any(
+                [p.string.has_data() for p in self.seriesData.passes]
+            )
+            include_card_page
+            # Initialize Reportmaker
             reportMaker = ReportMaker(
-                file=savefile, seriesData=self.seriesData, logo_path=logo_path
+                file=savefile,
+                seriesData=self.seriesData,
+                logo_path=cfg.get_logo_path()
+                if cfg.get_logo_include_in_report()
+                else "",
             )
             if any([p.string.has_data() for p in self.seriesData.passes]):
                 reportMaker.report_safe_string(

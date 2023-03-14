@@ -419,11 +419,7 @@ def load_from_wrk_file(file, s: SeriesData):
     print(file)
     print(dir)
     print(os.listdir(dir))
-    files = [
-        f
-        for f in os.listdir(dir)
-        if os.path.isfile(os.path.join(dir, f))
-    ]
+    files = [f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f))]
     print(files)
     files = [os.path.join(dir, fn) for fn in files if fn[:-1] in file]
     files.sort()

@@ -23,6 +23,8 @@ class SeriesInfoWidget(baseclass):
 
     target_swath_changed = pyqtSignal()
     request_open_pass_filler = pyqtSignal()
+    request_open_string_tab = pyqtSignal()
+    request_open_card_tab = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -37,6 +39,8 @@ class SeriesInfoWidget(baseclass):
         self.init_spray_system()
         self.init_nozzles()
         self.ui.buttonPassObservables.clicked.connect(self._openPassDataFiller)
+        self.ui.buttonString.clicked.connect(self._openStringTab)
+        self.ui.buttonCards.clicked.connect(self._openCardTab)
 
     def fill_from_info(self, info: AppInfo):
         self.info = info
@@ -50,6 +54,12 @@ class SeriesInfoWidget(baseclass):
 
     def _openPassDataFiller(self):
         self.request_open_pass_filler.emit()
+
+    def _openStringTab(self):
+        self.request_open_string_tab.emit()
+
+    def _openCardTab(self):
+        self.request_open_card_tab.emit()
 
     """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """''
     Fly-In
@@ -549,3 +559,7 @@ class SeriesInfoWidget(baseclass):
         if result == QMessageBox.StandardButton.Ok:
             self.raise_()
             self.activateWindow()
+
+    """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """''
+    Validation
+    """ """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
