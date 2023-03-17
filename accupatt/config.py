@@ -4,7 +4,7 @@ from PyQt6.QtCore import QSettings
 
 VERSION_MAJOR = 2
 VERSION_MINOR = 0
-VERSION_RELEASE = 17
+VERSION_RELEASE = 18
 
 # For clearning all QSettings
 def clear_all_settings():
@@ -615,9 +615,11 @@ def get_image_flip_y() -> bool:
 def set_image_flip_y(value: bool):
     QSettings().setValue(_IMAGE_FLIP_Y, value)
 
+
 _ROI_DETECTION_METHOD = "roi_detection_on_background"
-ROI_DETECTION_METHODS = ["White Cards","WSP"]
+ROI_DETECTION_METHODS = ["White Cards", "WSP"]
 ROI_DETECTION_METHOD__DEFAULT = ROI_DETECTION_METHODS[0]
+
 
 def get_image_roi_detection_method() -> str:
     return QSettings().value(
@@ -625,6 +627,7 @@ def get_image_roi_detection_method() -> str:
         defaultValue=ROI_DETECTION_METHOD__DEFAULT,
         type=str,
     )
+
 
 def set_image_roi_detection_method(value: str):
     QSettings().setValue(_ROI_DETECTION_METHOD, value)

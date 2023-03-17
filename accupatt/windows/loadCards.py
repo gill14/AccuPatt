@@ -55,7 +55,9 @@ class LoadCards(baseclass):
         self.ui.checkBoxFlipVertical.setChecked(cfg.get_image_flip_y())
         self.ui.comboBoxCardDetection.addItems(cfg.ROI_DETECTION_METHODS)
         self.ui.comboBoxCardDetection.setCurrentIndex(
-            cfg.ROI_DETECTION_METHODS.index(self.card_detection) if self.card_detection in cfg.ROI_DETECTION_METHODS else 0
+            cfg.ROI_DETECTION_METHODS.index(self.card_detection)
+            if self.card_detection in cfg.ROI_DETECTION_METHODS
+            else 0
         )
         self.ui.comboBoxOrientation.addItems(cfg.ROI_ACQUISITION_ORIENTATIONS)
         self.ui.comboBoxOrientation.setCurrentIndex(
@@ -78,7 +80,9 @@ class LoadCards(baseclass):
         self.ui.comboBoxDPI.currentTextChanged[str].connect(self.dpi_changed)
         self.ui.checkBoxFlipHorizontal.toggled[bool].connect(self.flip_x_changed)
         self.ui.checkBoxFlipVertical.toggled[bool].connect(self.flip_y_changed)
-        self.ui.comboBoxCardDetection.currentIndexChanged[int].connect(self.card_detection_changed)
+        self.ui.comboBoxCardDetection.currentIndexChanged[int].connect(
+            self.card_detection_changed
+        )
         self.ui.comboBoxOrientation.currentIndexChanged[int].connect(
             self.orientation_changed
         )
@@ -310,7 +314,9 @@ class LoadCards(baseclass):
         cfg.set_image_roi_acquisition_orientation(
             self.ui.comboBoxOrientation.currentText()
         )
-        cfg.set_image_roi_detection_method(cfg.ROI_DETECTION_METHODS[self.ui.comboBoxCardDetection.currentIndex()])
+        cfg.set_image_roi_detection_method(
+            cfg.ROI_DETECTION_METHODS[self.ui.comboBoxCardDetection.currentIndex()]
+        )
         cfg.set_image_roi_acquisition_order(self.ui.comboBoxOrder.currentText())
         cfg.set_image_roi_scale(cfg.ROI_SCALES[self.ui.comboBoxScale.currentIndex()])
 
@@ -421,9 +427,7 @@ class LoadCards(baseclass):
             img = cv2.flip(img, 0)
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         if self.card_detection == cfg.ROI_DETECTION_METHODS[1]:
-            _, img_thresh = cv2.threshold(
-                img_gray, 225, 255, cv2.THRESH_BINARY_INV
-            )
+            _, img_thresh = cv2.threshold(img_gray, 225, 255, cv2.THRESH_BINARY_INV)
         else:
             _, img_thresh = cv2.threshold(
                 img_gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU

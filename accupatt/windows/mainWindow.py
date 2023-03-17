@@ -506,7 +506,7 @@ class MainWindow(baseclass):
             filter="PDF Files (*.pdf)",
         )
         if savefile:
-            '''# Show Progress Dialog
+            """# Show Progress Dialog
             prog = QProgressDialog(self)
             prog.setMinimumDuration(0)
             prog.setWindowModality(Qt.WindowModality.WindowModal)
@@ -514,7 +514,7 @@ class MainWindow(baseclass):
             include_string_page = any(
                 [p.string.has_data() for p in self.seriesData.passes]
             )
-            include_card_page'''
+            include_card_page"""
             # Initialize Reportmaker
             reportMaker = ReportMaker(
                 file=savefile,
