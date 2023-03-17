@@ -43,6 +43,7 @@ class LoadCards(baseclass):
 
         # Import persistent config
         self.dpi = cfg.get_image_dpi()
+        self.card_detection = cfg.get_image_roi_detection_method()
         self.orientation = cfg.get_image_roi_acquisition_orientation()
         self.order = cfg.get_image_roi_acquisition_order()
         self.scale = cfg.get_image_roi_scale()
@@ -52,6 +53,10 @@ class LoadCards(baseclass):
         self.ui.comboBoxDPI.setCurrentText(str(self.dpi))
         self.ui.checkBoxFlipHorizontal.setChecked(cfg.get_image_flip_x())
         self.ui.checkBoxFlipVertical.setChecked(cfg.get_image_flip_y())
+        self.ui.comboBoxCardDetection.addItems(cfg.ROI_DETECTION_METHODS)
+        self.ui.comboBoxCardDetection.setCurrentIndex(
+            cfg.ROI_DETECTION_METHODS.index(self.card_detection) if self.card_detection in cfg.ROI_DETECTION_METHODS else 0
+        )
         self.ui.comboBoxOrientation.addItems(cfg.ROI_ACQUISITION_ORIENTATIONS)
         self.ui.comboBoxOrientation.setCurrentIndex(
             cfg.ROI_ACQUISITION_ORIENTATIONS.index(self.orientation)
@@ -73,6 +78,7 @@ class LoadCards(baseclass):
         self.ui.comboBoxDPI.currentTextChanged[str].connect(self.dpi_changed)
         self.ui.checkBoxFlipHorizontal.toggled[bool].connect(self.flip_x_changed)
         self.ui.checkBoxFlipVertical.toggled[bool].connect(self.flip_y_changed)
+        self.ui.comboBoxCardDetection.currentIndexChanged[int].connect(self.card_detection_changed)
         self.ui.comboBoxOrientation.currentIndexChanged[int].connect(
             self.orientation_changed
         )
@@ -196,6 +202,11 @@ class LoadCards(baseclass):
         self.plot_image()
 
     @pyqtSlot(int)
+    def card_detection_changed(self, newIndex):
+        self.card_detection = cfg.ROI_DETECTION_METHODS[newIndex]
+        self.plot_image()
+
+    @pyqtSlot(int)
     def orientation_changed(self, newIndex):
         self.orientation = cfg.ROI_ACQUISITION_ORIENTATIONS[newIndex]
         self.draw_rois()
@@ -299,6 +310,7 @@ class LoadCards(baseclass):
         cfg.set_image_roi_acquisition_orientation(
             self.ui.comboBoxOrientation.currentText()
         )
+        cfg.set_image_roi_detection_method(cfg.ROI_DETECTION_METHODS[self.ui.comboBoxCardDetection.currentIndex()])
         cfg.set_image_roi_acquisition_order(self.ui.comboBoxOrder.currentText())
         cfg.set_image_roi_scale(cfg.ROI_SCALES[self.ui.comboBoxScale.currentIndex()])
 
@@ -408,10 +420,14 @@ class LoadCards(baseclass):
         if cfg.get_image_flip_y():
             img = cv2.flip(img, 0)
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        _, img_thresh = cv2.threshold(
-            img_gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU
-        )
-        # cv2.imshow('thresh',img_thresh)
+        if self.card_detection == cfg.ROI_DETECTION_METHODS[1]:
+            _, img_thresh = cv2.threshold(
+                img_gray, 225, 255, cv2.THRESH_BINARY_INV
+            )
+        else:
+            _, img_thresh = cv2.threshold(
+                img_gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU
+            )
         # Use img_thresh to find contours
         contours, _ = cv2.findContours(
             img_thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
@@ -424,7 +440,7 @@ class LoadCards(baseclass):
             # If bounding box is less than 5% of w or h of image, reject it
             if w < 0.05 * img.shape[1] or h < 0.05 * img.shape[0]:
                 continue
-            # If contour touches edge, fail
+            # If contour touches edge, reject it
             if (
                 x <= 0
                 or y <= 0

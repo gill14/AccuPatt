@@ -615,6 +615,20 @@ def get_image_flip_y() -> bool:
 def set_image_flip_y(value: bool):
     QSettings().setValue(_IMAGE_FLIP_Y, value)
 
+_ROI_DETECTION_METHOD = "roi_detection_on_background"
+ROI_DETECTION_METHODS = ["White Cards","WSP"]
+ROI_DETECTION_METHOD__DEFAULT = ROI_DETECTION_METHODS[0]
+
+def get_image_roi_detection_method() -> str:
+    return QSettings().value(
+        _ROI_DETECTION_METHOD,
+        defaultValue=ROI_DETECTION_METHOD__DEFAULT,
+        type=str,
+    )
+
+def set_image_roi_detection_method(value: str):
+    QSettings().setValue(_ROI_DETECTION_METHOD, value)
+
 
 _ROI_ACQUISITION_ORIENTATION = "roi_acquisition_orientation"
 ROI_ACQUISITION_ORIENTATIONS = ["Horizontal", "Vertical"]
