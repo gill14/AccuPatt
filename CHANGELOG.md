@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 ## [Unreleased]
+## [2.0.18] - 17 March 2023
+### Added
+- White Cards or WSP chooser for automatic card recognition in load-multi
+### Fixed
+- Load-multi window exceeding vertical screen limits
+- um2/um3 to gal/acre conversion constant - @collinhundley
 ## [2.0.17] - 23 February 2023
 ### Added
 - Open/View legacy WRK files
@@ -226,7 +232,8 @@ All notable changes to this project will be documented in this file.
 - Initial rewrite of AccuPatt using Python/Qt. Based on prior (1.xx) version using Java/JavaFX. Final release of the legacy version is 1.06+.
 
 
-[Unreleased]: https://github.com/gill14/accupatt/compare/v2.0.17...HEAD
+[Unreleased]: https://github.com/gill14/accupatt/compare/v2.0.18...HEAD
+[2.0.18]: https://github.com/gill14/accupatt/compare/v2.0.17...v2.0.18
 [2.0.17]: https://github.com/gill14/accupatt/compare/v2.0.16...v2.0.17
 [2.0.16]: https://github.com/gill14/accupatt/compare/v2.0.15...v2.0.16
 [2.0.15]: https://github.com/gill14/accupatt/compare/v2.0.14...v2.0.15
