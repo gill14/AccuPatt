@@ -246,6 +246,7 @@ class CardManager(baseclass):
         cfg.set_image_load_dir(os.path.dirname(fname))
         e = LoadCards(image_file=fname, card_list=card_list, parent=self)
         e.accepted.connect(self.passDataChanged.emit)
+        e.resize(self.size())
         e.exec()
 
     def accept(self):
