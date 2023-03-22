@@ -31,9 +31,19 @@ opencv-python = "4.5.5.64"
 scikit-image = "^0.19.2"
 Send2Trash = "^1.8.0"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 black = ">=22"
+
+[tool.poetry.group.dev-win]
+optional = true
+
+[tool.poetry.group.dev-win.dependencies]
 pyinstaller = "^5.2"
+
+[tool.poetry.group.dev-osx]
+optional = true
+
+[tool.poetry.group.dev-osx.dependencies]
 py2app = "^0.28.2"
 
 [tool.setuptools]
