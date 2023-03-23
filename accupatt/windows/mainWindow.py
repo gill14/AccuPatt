@@ -130,6 +130,12 @@ class MainWindow(baseclass):
         for action in self.ui.menuCard_Images_per_Page.actions():
             ag_image_per_page.addAction(action)
         ag_image_per_page.triggered[QAction].connect(self.reportCardImagePerPageChanged)
+        self.ui.action_downsample_card_images.setChecked(
+            cfg.get_report_card_image_downsample()
+        )
+        self.ui.action_downsample_card_images.toggled[bool].connect(
+            self.reportCardImageDownsampleChanged
+        )
         # --> # --> # --> Logo
         actionLogoEnabled: QAction = self.ui.actionInclude_Logo
         actionLogoEnabled.setCheckable(True)
@@ -568,6 +574,10 @@ class MainWindow(baseclass):
             cfg.set_report_card_image_per_page(7)
         else:
             cfg.set_report_card_image_per_page(9)
+
+    @pyqtSlot(bool)
+    def reportCardImageDownsampleChanged(self, checked: bool):
+        cfg.set_report_card_image_downsample(checked)
 
     @pyqtSlot(bool)
     def logo_enabled_triggered(self, enabled: bool):

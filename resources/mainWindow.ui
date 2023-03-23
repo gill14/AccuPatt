@@ -173,9 +173,9 @@
       <addaction name="actionSelect_Logo_File"/>
      </widget>
      <addaction name="actionInclude_Card_Images"/>
+     <addaction name="action_downsample_card_images"/>
      <addaction name="menuCard_Image_Type"/>
      <addaction name="menuCard_Images_per_Page"/>
-     <addaction name="actionCompress_Card_Images"/>
      <addaction name="menuLogo"/>
     </widget>
     <addaction name="actionCreate_Report"/>
@@ -375,15 +375,15 @@
     <string>5</string>
    </property>
   </action>
-  <action name="actionCompress_Card_Images">
+  <action name="action_downsample_card_images">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="text">
-    <string>Compress Card Images</string>
+    <string>Downsample Card Images</string>
    </property>
   </action>
   <action name="actionWRKSpectrometerManual">

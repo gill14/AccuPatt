@@ -328,7 +328,7 @@ class ReportMaker:
         self.canvas.setPageSize((self.page_height, self.page_width))
         cards_per_page = cfg.get_report_card_image_per_page()
         image_type = cfg.get_report_card_image_type()
-        use_compression = False
+        downsample = cfg.get_report_card_image_downsample()
         h_gap = 10
         card_window_width = round((0.9 * self.page_height) / cards_per_page - h_gap)
         card_window_height = 275
@@ -352,7 +352,7 @@ class ReportMaker:
                 y = y_start
                 card: SprayCard = cards_to_page[cards_paged]
                 self.canvas.drawImage(
-                    self._get_image(card, image_type),
+                    self._get_image(card, image_type, downsample),
                     x,
                     y,
                     card_window_width,
@@ -422,13 +422,15 @@ class ReportMaker:
         data.append(["St./in\u00B2", card.stats.get_stains_per_in2(text=True)])
         return Table(data, style=tablestyle_alt)
 
-    def _get_image(self, card: SprayCard, image_type: str):
+    def _get_image(self, card: SprayCard, image_type: str, downsample: bool):
         if image_type == cfg.REPORT_CARD_IMAGE_TYPE_OUTLINE:
             im_cv = card.process_image(overlay=True)
         elif image_type == cfg.REPORT_CARD_IMAGE_TYPE_MASK:
             im_cv = card.process_image(mask=True)
         else:
             im_cv = card.image_original()
+        if downsample:
+            im_cv = cv2.pyrDown(im_cv)
         # Change Color Space to RGB
         im_cv = cv2.cvtColor(im_cv, cv2.COLOR_BGR2RGB)
         # Convert to PIL image

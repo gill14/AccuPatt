@@ -1328,3 +1328,17 @@ def get_report_card_image_per_page() -> int:
 
 def set_report_card_image_per_page(value: int):
     QSettings().setValue(_REPORT_CARD_IMAGE_PER_PAGE, value)
+
+
+_REPORT_CARD_IMAGE_DOWNSAMPLE = "report_card_image_downsample"
+REPORT_CARD_IMAGE_DOWNSAMPLE__DEFAULT = True
+
+def get_report_card_image_downsample() -> bool:
+    return QSettings().value(
+        _REPORT_CARD_IMAGE_DOWNSAMPLE,
+        defaultValue=REPORT_CARD_IMAGE_DOWNSAMPLE__DEFAULT,
+        type=bool,
+    )
+
+def set_report_card_image_downsample(value: bool):
+    QSettings().setValue(_REPORT_CARD_IMAGE_DOWNSAMPLE, value)
