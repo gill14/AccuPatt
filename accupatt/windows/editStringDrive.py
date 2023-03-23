@@ -20,7 +20,6 @@ icon_file = os.path.join(os.getcwd(), "resources", "refresh.png")
 
 
 class EditStringDrive(baseclass):
-
     string_drive_connected = pyqtSignal(Serial)
     string_length_units_changed = pyqtSignal(str)
 

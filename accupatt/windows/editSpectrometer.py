@@ -18,7 +18,6 @@ Ui_Form, baseclass = uic.loadUiType(
 
 
 class EditSpectrometer(baseclass):
-
     dye_changed = pyqtSignal(str)
     spectrometer_connected = pyqtSignal(Spectrometer)
     spectrometer_display_unit_changed = pyqtSignal()

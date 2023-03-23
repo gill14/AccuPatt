@@ -25,7 +25,6 @@ Ui_Form, baseclass = uic.loadUiType(
 
 
 class CardManager(baseclass):
-
     passDataChanged = pyqtSignal()
 
     def __init__(self, passData: Pass, seriesData: SeriesData, filepath, parent):

@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "AccuPatt"
-#define MyAppVersion "2.0.18"
+#define MyAppVersion "2.0.19"
 #define MyAppPublisher "Matt Gill"
 #define MyAppURL "https://www.agaviation.org"
 #define MyAppExeName "AccuPatt.exe"

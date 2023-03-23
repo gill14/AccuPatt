@@ -21,7 +21,6 @@ import accupatt.config as cfg
 
 
 class TabWidgetBase(QWidget):
-
     request_file_save = pyqtSignal()
 
     def __init__(self, ui_file, subtype, parent, *args, **kwargs):

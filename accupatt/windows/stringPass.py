@@ -299,6 +299,7 @@ class StringPass(baseclass):
     """
     String Drive Hook-Ups
     """
+
     # Open String Drive Editor
     @pyqtSlot()
     def editStringDrive(self):
@@ -373,6 +374,7 @@ class StringPass(baseclass):
     """
     Spectrometer Hook-Ups
     """
+
     # Open Spectrometer Editor
     @pyqtSlot()
     def editSpectrometer(self):

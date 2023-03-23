@@ -4,11 +4,13 @@ from PyQt6.QtCore import QSettings
 
 VERSION_MAJOR = 2
 VERSION_MINOR = 0
-VERSION_RELEASE = 18
+VERSION_RELEASE = 19
+
 
 # For clearning all QSettings
 def clear_all_settings():
     QSettings().clear()
+
 
 # Data File Types
 DATA_FILE_TYPE_NONE = -1
@@ -1333,12 +1335,14 @@ def set_report_card_image_per_page(value: int):
 _REPORT_CARD_IMAGE_DOWNSAMPLE = "report_card_image_downsample"
 REPORT_CARD_IMAGE_DOWNSAMPLE__DEFAULT = True
 
+
 def get_report_card_image_downsample() -> bool:
     return QSettings().value(
         _REPORT_CARD_IMAGE_DOWNSAMPLE,
         defaultValue=REPORT_CARD_IMAGE_DOWNSAMPLE__DEFAULT,
         type=bool,
     )
+
 
 def set_report_card_image_downsample(value: bool):
     QSettings().setValue(_REPORT_CARD_IMAGE_DOWNSAMPLE, value)

@@ -33,7 +33,6 @@ Ui_Form_Pre, baseclass_pre = uic.loadUiType(
 
 
 class LoadCards(baseclass):
-
     applied = pyqtSignal()
 
     def __init__(self, image_file: str, card_list: list[SprayCard], parent=None):

@@ -25,6 +25,7 @@ def get_file_type(file) -> int:
     else:
         return cfg.DATA_FILE_TYPE_NONE
 
+
 def save_file(file, series: SeriesData) -> bool:
     if get_file_type(file) != cfg.DATA_FILE_TYPE_ACCUPATT:
         return False
@@ -32,6 +33,7 @@ def save_file(file, series: SeriesData) -> bool:
         return True
     else:
         return False
+
 
 def load_file_to_series(file, series: SeriesData, info_only=False):
     match get_file_type(file):
@@ -47,6 +49,7 @@ def load_file_to_series(file, series: SeriesData, info_only=False):
             # Unknown file type or none
             pass
 
+
 def convert_import_to_db(file, prog=None) -> str:
     if prog is not None:
         prog.setRange(0, 3)
@@ -58,7 +61,7 @@ def convert_import_to_db(file, prog=None) -> str:
         prog.setLabelText("Creating Local Database")
         prog.setValue(1)
     # Write to DB (same dir as original xlsx)
-    file_db = os.path.join(os.path.dirname(file),s.info.string_reg_series()+".db")
+    file_db = os.path.join(os.path.dirname(file), s.info.string_reg_series() + ".db")
     save_to_db(file=file_db, s=s)
     if get_file_type(file) == cfg.DATA_FILE_TYPE_ACCUPATT_LEGACY:
         # Need to check for card images
@@ -91,10 +94,11 @@ def convert_import_to_db(file, prog=None) -> str:
                     # Reclaim resources
                     stream.close()
                 if i == len(p.cards.card_list) - 1:
-                    prog.setValue(i + 1) 
+                    prog.setValue(i + 1)
     if prog is not None:
         prog.setValue(3)
     return file_db
+
 
 def load_from_accupatt_1_file(file, s: SeriesData):
     # indicator for metric
@@ -321,6 +325,7 @@ def load_from_accustain_file(file, s: SeriesData):
     df_index = df_map["Index"]
     # TODO
 
+
 def load_from_usda_file(file: str, s: SeriesData):
     # Split file name for parts
     parts = file.split(os.sep)[-1].split(" ")
@@ -345,7 +350,7 @@ def load_from_usda_file(file: str, s: SeriesData):
     i = s.info
 
     i.regnum = regnum
-    i.series = ord(series_letter.lower())-96
+    i.series = ord(series_letter.lower()) - 96
     print(i.series)
     i.swath = 65  # Hard default added to analyst notes below
 
@@ -386,6 +391,7 @@ def load_from_usda_file(file: str, s: SeriesData):
         p.string.data = pd.DataFrame(d_em)
 
         s.passes.append(p)
+
 
 def load_from_wrk_file(file, s: SeriesData):
     isMetric = False  # This is a bold assumption
@@ -463,7 +469,7 @@ def load_from_wrk_file(file, s: SeriesData):
             lines[i] = lines[i].strip()
             lines[i] = lines[i].strip('"')
 
-        p = Pass(number=ord(file[-1].lower())-96)
+        p = Pass(number=ord(file[-1].lower()) - 96)
         p.set_ground_speed(
             int(lines[29]), units=cfg.UNIT_KPH if isMetric else cfg.UNIT_MPH
         )

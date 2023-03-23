@@ -28,7 +28,6 @@ Ui_Form, baseclass = uic.loadUiType(
 
 
 class CardTableWidget(baseclass):
-
     passDataChanged = pyqtSignal()
     selectionChanged = pyqtSignal(bool)
     editCard = pyqtSignal(SprayCard)
@@ -230,7 +229,6 @@ class EditableComboBoxDelegate(QStyledItemDelegate):
 
 
 class CardTable(QAbstractTableModel):
-
     triggerImageUpdate = pyqtSignal(SprayCard)
 
     band_pass_options = ["Band-Pass", "Band-Reject"]

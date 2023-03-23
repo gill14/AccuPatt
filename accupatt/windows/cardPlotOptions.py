@@ -11,7 +11,6 @@ Ui_Form, baseclass = uic.loadUiType(
 
 
 class CardPlotOptions(baseclass):
-
     # Signal to update plots (individuals, composites, simulations)
     request_update_plots = pyqtSignal(bool, bool, bool)
 

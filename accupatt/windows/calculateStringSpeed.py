@@ -11,7 +11,6 @@ Ui_Form, baseclass = uic.loadUiType(
 
 
 class CalculateStringSpeed(baseclass):
-
     speed_accepted = pyqtSignal(str, str)
 
     def __init__(self, ser: serial.Serial, length, length_units, parent=None):

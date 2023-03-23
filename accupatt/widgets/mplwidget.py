@@ -7,6 +7,7 @@ from PyQt6 import QtWidgets
 # Ensure using PyQt6 backend
 matplotlib.use("QTAgg")
 
+
 # Matplotlib canvas class to create figure
 class MplCanvas(Canvas):
     def __init__(self):

@@ -60,7 +60,6 @@ testfile = "/Users/gill14/Library/Mobile Documents/com~apple~CloudDocs/Projects/
 
 
 class MainWindow(baseclass):
-
     file_saved = pyqtSignal(str)
     current_file_changed = pyqtSignal(str)
     pass_list_changed = pyqtSignal()
@@ -258,7 +257,9 @@ class MainWindow(baseclass):
                     filter="AccuPatt (*.db)",
                 )
             # Load in series info from file
-            load_file_to_series(file=fileAircraft, s=self.seriesData, load_only_info=True)
+            load_file_to_series(
+                file=fileAircraft, s=self.seriesData, load_only_info=True
+            )
             # Increment series number
             info.series = info.series + 1
         # Clear/Update all ui elements
@@ -319,7 +320,7 @@ class MainWindow(baseclass):
         if get_file_type(file) == cfg.DATA_FILE_TYPE_NONE:
             return
         # If the File Type is not native, offer to convert or open view only
-        if get_file_type(file)!=cfg.DATA_FILE_TYPE_ACCUPATT:
+        if get_file_type(file) != cfg.DATA_FILE_TYPE_ACCUPATT:
             should_proceed, file = self.offer_to_convert_import_to_native(file)
             if not should_proceed:
                 return
@@ -338,9 +339,7 @@ class MainWindow(baseclass):
             "Convert to Compatible Version?",
             "Would you like to open this file in View-Only mode or create a compatible (*.db) copy?",
         )
-        button_read_only = msg.addButton(
-            "View-Only", QMessageBox.ButtonRole.ActionRole
-        )
+        button_read_only = msg.addButton("View-Only", QMessageBox.ButtonRole.ActionRole)
         button_convert = msg.addButton(
             "Create Compatible Copy", QMessageBox.ButtonRole.ActionRole
         )
@@ -373,7 +372,7 @@ class MainWindow(baseclass):
     def change_statusbar_save(self):
         if self.currentFile == "":
             text = "No Data File"
-        elif get_file_type(self.currentFile)==cfg.DATA_FILE_TYPE_ACCUPATT:
+        elif get_file_type(self.currentFile) == cfg.DATA_FILE_TYPE_ACCUPATT:
             text = f"Last Save: {datetime.fromtimestamp(self.seriesData.info.modified)}"
         else:
             text = "View-Only Mode"

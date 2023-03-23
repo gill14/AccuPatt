@@ -19,7 +19,6 @@ from PyQt6.QtWidgets import (
 
 
 class CardStatTableModel(QAbstractTableModel):
-
     valueChanged = pyqtSignal()
 
     def __init__(self, parent=None, *args):

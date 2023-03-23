@@ -116,7 +116,6 @@ class SprayCard:
 
 @dataclass
 class SprayCardStats:
-
     sprayCard: SprayCard
 
     dv01: int = 0

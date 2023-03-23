@@ -147,7 +147,6 @@ class PassDataCard(PassDataBase):
         ax.set_ylabel(ylab)
         # Populate data if available
         if not d["loc"].empty:
-
             # Interpolate so that fill-between looks good
             locs_i = np.linspace(
                 d["loc"].iloc[0], d["loc"].iloc[-1], num=d.shape[0] * 10
@@ -194,7 +193,7 @@ class PassDataCard(PassDataBase):
                         AtomizationModel.ref_nozzles[category]["Color"]
                         for category in categories
                     ]
-                    for (category, color) in zip(categories, colors):
+                    for category, color in zip(categories, colors):
                         # Need to fill in gaps between color changes
                         fill_mask = np.ma.masked_where(dsc_i != category, y_i)
                         if not np.any(np.ma.getmask(fill_mask)):

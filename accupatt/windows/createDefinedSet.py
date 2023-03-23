@@ -18,7 +18,6 @@ Ui_Form, baseclass = uic.loadUiType(
 
 
 class CreateDefinedSet(baseclass):
-
     setConfirmed = pyqtSignal(list)
 
     def __init__(self, parent=None):

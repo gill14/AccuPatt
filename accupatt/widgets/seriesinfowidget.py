@@ -18,7 +18,6 @@ Ui_Form, baseclass = uic.loadUiType(
 
 
 class SeriesInfoWidget(baseclass):
-
     aircraftFile = os.path.join(os.getcwd(), "resources", "AgAircraftData.xlsx")
 
     target_swath_changed = pyqtSignal()
