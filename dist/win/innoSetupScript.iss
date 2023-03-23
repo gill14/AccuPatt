@@ -4,11 +4,13 @@
 #define MyAppName "AccuPatt"
 #define MyAppVersion "2.0.18"
 #define MyAppPublisher "Matt Gill"
-#define MyAppURL "https://sites.google.com/illinois.edu/accupatt/"
+#define MyAppURL "https://www.agaviation.org"
 #define MyAppExeName "AccuPatt.exe"
 #define MyAppAssocName MyAppName + " Data File"
 #define MyAppAssocExt ".db"
 #define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
+#define OutputDir "C:\Users\MattGill\Desktop\AccuPatt\dist\win"
+#define ResourceDir "C:\Users\MattGill\Desktop\AccuPatt\resources"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -27,9 +29,9 @@ DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
-OutputDir=Y:\iCloud\Projects\AccuPatt\dist\win
-OutputBaseFilename=Install AccuPatt 2
-SetupIconFile=Y:\iCloud\Projects\AccuPatt\resources\accupatt_logo.ico
+OutputDir={#OutputDir}
+OutputBaseFilename=Install AccuPatt
+SetupIconFile={#ResourceDir}\accupatt_logo.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -41,8 +43,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "Y:\iCloud\Projects\AccuPatt\dist\win\dist\AccuPatt\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Y:\iCloud\Projects\AccuPatt\dist\win\dist\AccuPatt\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#OutputDir}\dist\AccuPatt\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#OutputDir}\dist\AccuPatt\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]

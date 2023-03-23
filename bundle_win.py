@@ -26,6 +26,7 @@ if sys.platform == 'win32':
         '--name=AccuPatt',
         '--windowed', # change to --nowindowed for console troubleshooting
         '--exclude-module=tkinter',
+        '--exclude-module=py2app'
         '--hidden-import=matplotlib.backends.backend_svg',
         f'--additional-hooks-dir=./hooks',
         f'--add-data=../../resources{os.pathsep}resources',
