@@ -2,11 +2,10 @@ import io
 import os
 
 import accupatt.config as cfg
-import math
 import numpy as np
 import openpyxl
 import pandas as pd
-from accupatt.helpers.dBBridge import save_to_db
+from accupatt.helpers.dBBridge import load_from_db, save_to_db
 from accupatt.models.appInfo import AppInfo, Nozzle
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
@@ -14,55 +13,88 @@ from accupatt.models.sprayCard import SprayCard
 from openpyxl_image_loader import SheetImageLoader
 
 
-def convert_xlsx_to_db(file, prog=None) -> str:
+def get_file_type(file) -> int:
+    if len(file) > 3 and file[-2:] == "db":
+        return cfg.DATA_FILE_TYPE_ACCUPATT
+    elif len(file) > 3 and file[-4:] == "xlsx":
+        return cfg.DATA_FILE_TYPE_ACCUPATT_LEGACY
+    elif len(file) > 3 and file[-1] == "A":
+        return cfg.DATA_FILE_TYPE_WRK
+    elif len(file) > 6 and file[-4:] == ".txt":
+        return cfg.DATA_FILE_TYPE_USDA
+    else:
+        return cfg.DATA_FILE_TYPE_NONE
+
+def save_file(file, series: SeriesData) -> bool:
+    if get_file_type(file) != cfg.DATA_FILE_TYPE_ACCUPATT:
+        return False
+    if save_to_db(file, series):
+        return True
+    else:
+        return False
+
+def load_file_to_series(file, series: SeriesData, info_only=False):
+    match get_file_type(file):
+        case cfg.DATA_FILE_TYPE_ACCUPATT:
+            load_from_db(file, series, info_only)
+        case cfg.DATA_FILE_TYPE_ACCUPATT_LEGACY:
+            load_from_accupatt_1_file(file, series)
+        case cfg.DATA_FILE_TYPE_USDA:
+            load_from_usda_file(file, series)
+        case cfg.DATA_FILE_TYPE_WRK:
+            load_from_wrk_file(file, series)
+        case _:
+            # Unknown file type or none
+            pass
+
+def convert_import_to_db(file, prog=None) -> str:
     if prog is not None:
         prog.setRange(0, 3)
         prog.setValue(0)
         prog.setLabelText("Loading in Series Data")
     s = SeriesData()
-    load_from_accupatt_1_file(file, s)
+    load_file_to_series(file, s)
     if prog is not None:
         prog.setLabelText("Creating Local Database")
         prog.setValue(1)
     # Write to DB (same dir as original xlsx)
-    file_db = os.path.splitext(file)[0] + ".db"
+    file_db = os.path.join(os.path.dirname(file),s.info.string_reg_series()+".db")
     save_to_db(file=file_db, s=s)
-    if prog is not None:
-        prog.setLabelText("Checking XLSX for Spray Cards")
-        prog.setValue(2)
-    wb = openpyxl.load_workbook(file)
+    if get_file_type(file) == cfg.DATA_FILE_TYPE_ACCUPATT_LEGACY:
+        # Need to check for card images
+        if prog is not None:
+            prog.setLabelText("Checking XLSX for Spray Cards")
+            prog.setValue(2)
+        wb = openpyxl.load_workbook(file)
+        if "Card Data" in wb.sheetnames:
+            sh = wb["Card Data"]
+            on_pass = int(sh["B2"].value)
+            # Loop over declard cards and save images to db if has_image
+            p: Pass = s.passes[on_pass - 1]
+            c: SprayCard
+            for i, c in enumerate(p.cards.card_list):
+                if prog is not None:
+                    if i == 0:
+                        prog.setRange(0, len(p.cards.card_list))
+                    prog.setValue(i)
+                    prog.setLabelText(f"Copying image for {c.name}")
+                c.filepath = file_db
+                if c.has_image:
+                    # Get the image from applicable sheet
+                    image_loader = SheetImageLoader(wb[c.name])
+                    image = image_loader.get("A1")
+                    # Conver to bytestream
+                    stream = io.BytesIO()
+                    image.save(stream, format="PNG")
+                    # Save it to the database
+                    c.save_image_to_file(stream.getvalue())
+                    # Reclaim resources
+                    stream.close()
+                if i == len(p.cards.card_list) - 1:
+                    prog.setValue(i + 1) 
     if prog is not None:
         prog.setValue(3)
-    if not "Card Data" in wb.sheetnames:
-        return s
-    sh = wb["Card Data"]
-    on_pass = int(sh["B2"].value)
-    # Loop over declard cards and save images to db if has_image
-    p: Pass = s.passes[on_pass - 1]
-    c: SprayCard
-    for i, c in enumerate(p.cards.card_list):
-        if prog is not None:
-            if i == 0:
-                prog.setRange(0, len(p.cards.card_list))
-            prog.setValue(i)
-            prog.setLabelText(f"Copying image for {c.name}")
-        c.filepath = file_db
-        if c.has_image:
-            # Get the image from applicable sheet
-            image_loader = SheetImageLoader(wb[c.name])
-            image = image_loader.get("A1")
-            # Conver to bytestream
-            stream = io.BytesIO()
-            image.save(stream, format="PNG")
-            # Save it to the database
-            c.save_image_to_file(stream.getvalue())
-            # Reclaim resources
-            stream.close()
-        if i == len(p.cards.card_list) - 1:
-            prog.setValue(i + 1)
-
     return file_db
-
 
 def load_from_accupatt_1_file(file, s: SeriesData):
     # indicator for metric
@@ -289,12 +321,15 @@ def load_from_accustain_file(file, s: SeriesData):
     df_index = df_map["Index"]
     # TODO
 
-
 def load_from_usda_file(file: str, s: SeriesData):
     # Split file name for parts
-    parts = file.split("/")[-1].split(" ")
+    parts = file.split(os.sep)[-1].split(" ")
+    print(file.split(os.sep))
+    print(parts)
     regnum = parts[0]
+    print(regnum)
     series_letter = parts[1]
+    print(series_letter)
     id = regnum + " " + series_letter
 
     # Get a sorted list of pass files for this series
@@ -306,12 +341,12 @@ def load_from_usda_file(file: str, s: SeriesData):
     ]
     files = [fn for fn in files if id in fn]
     files.sort()
-    print(id)
-    print(files)
 
     i = s.info
 
     i.regnum = regnum
+    i.series = ord(series_letter.lower())-96
+    print(i.series)
     i.swath = 65  # Hard default added to analyst notes below
 
     # get pilot parameters file
@@ -319,7 +354,6 @@ def load_from_usda_file(file: str, s: SeriesData):
         pdf = pd.read_csv(
             os.path.join(dir, "Pilot Paramters.prn"), sep="\t", index_col=0
         )
-        print(pdf)
         i.pilot = pdf.loc[regnum, "Pilot Name"]
         i.street = pdf.loc[regnum, "Street Address"]
         i.city = pdf.loc[regnum, "City"]
@@ -334,8 +368,8 @@ def load_from_usda_file(file: str, s: SeriesData):
         note5 = "SWATH WIDTH SET TO 65 FT BY GLOBAL DEFAULT FOR USDA FILES"
         i.notes_analyst = "\r".join([note0, note1, note2, note3, note4, note5])
 
-    for passnum, file in enumerate(files):
-        p = Pass(number=passnum + 1)
+    for file in files:
+        p = Pass(number=int(parts[2]))
 
         lines = []
         with open(file) as ffile:
@@ -353,7 +387,6 @@ def load_from_usda_file(file: str, s: SeriesData):
 
         s.passes.append(p)
 
-
 def load_from_wrk_file(file, s: SeriesData):
     isMetric = False  # This is a bold assumption
 
@@ -367,6 +400,8 @@ def load_from_wrk_file(file, s: SeriesData):
         print("Line {}: {}".format(i, lines[i]))
 
     i = s.info
+    i.regnum = file.split(os.sep)[-1][2:-3]
+    i.series = int(file[-2])
 
     i.flyin_name = lines[0]
     i.flyin_location = lines[1]
@@ -392,7 +427,7 @@ def load_from_wrk_file(file, s: SeriesData):
     i.zip = lines[19]
     i.phone = lines[20]
     i.pilot = lines[21]
-    i.regnum = lines[22]
+    # i.regnum = lines[22]
     i.model = lines[23]
 
     _n1t = lines[24]
@@ -416,17 +451,11 @@ def load_from_wrk_file(file, s: SeriesData):
 
     # Get a sorted list of pass files for this series
     dir = os.path.dirname(file)
-    print(file)
-    print(dir)
-    print(os.listdir(dir))
     files = [f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f))]
-    print(files)
     files = [os.path.join(dir, fn) for fn in files if fn[:-1] in file]
     files.sort()
-    print("Files:")
-    print(files)
 
-    for passnum, file in enumerate(files):
+    for file in files:
         lines = []
         with open(file) as ffile:
             lines = ffile.readlines()
@@ -434,7 +463,7 @@ def load_from_wrk_file(file, s: SeriesData):
             lines[i] = lines[i].strip()
             lines[i] = lines[i].strip('"')
 
-        p = Pass(number=passnum + 1)
+        p = Pass(number=ord(file[-1].lower())-96)
         p.set_ground_speed(
             int(lines[29]), units=cfg.UNIT_KPH if isMetric else cfg.UNIT_MPH
         )
@@ -468,7 +497,6 @@ def load_from_wrk_file(file, s: SeriesData):
         for i in range(38, 38 + _num_data_points):
             d.append({"loc": (i - 38) * _spacing, p.name: float(lines[i] or 0)})
         p.string.data = pd.DataFrame(d)
-        print(p.string.data.to_string())
 
         # Turn off smoothing
         p.string.smooth = False

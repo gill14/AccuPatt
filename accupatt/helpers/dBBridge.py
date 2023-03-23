@@ -334,7 +334,7 @@ Saving
 """ """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
 
 
-def save_to_db(file: str, s: SeriesData):
+def save_to_db(file: str, s: SeriesData) -> bool:
     # If db not yet created need create timestamp
     if not os.path.isfile(file):
         s.info.created = int(datetime.now().timestamp())
@@ -505,7 +505,7 @@ def _update_table_nozzles(c: sqlite3.Cursor, s: SeriesData):
     # Loop through nozzles on db, delete any not in series object
     current_ids = [n.id for n in i.nozzles]
     if len(current_ids) == 0:
-        c.execute("""DELETE FROM nozzles WHERE id = ?""", (n.id,))
+        c.execute("""DELETE FROM nozzles""")
     else:
         in_query = "("
         for i, id_ in enumerate(current_ids):

@@ -10,6 +10,12 @@ VERSION_RELEASE = 18
 def clear_all_settings():
     QSettings().clear()
 
+# Data File Types
+DATA_FILE_TYPE_NONE = -1
+DATA_FILE_TYPE_ACCUPATT = 0
+DATA_FILE_TYPE_ACCUPATT_LEGACY = 1
+DATA_FILE_TYPE_USDA = 2
+DATA_FILE_TYPE_WRK = 3
 
 # Unit Labels
 UNIT_MPH = "mph"

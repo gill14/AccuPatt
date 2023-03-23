@@ -5,12 +5,11 @@ import sys
 
 import accupatt.config as cfg
 from accupatt.helpers.dataFileImporter import (
-    convert_xlsx_to_db,
-    load_from_accupatt_1_file,
-    load_from_wrk_file,
-    load_from_usda_file,
+    get_file_type,
+    save_file,
+    load_file_to_series,
+    convert_import_to_db,
 )
-from accupatt.helpers.dBBridge import load_from_db, save_to_db
 from accupatt.helpers.exportExcel import export_all_to_excel, safe_report
 from accupatt.helpers.reportMaker import ReportMaker
 from accupatt.models.dye import Dye
@@ -253,7 +252,7 @@ class MainWindow(baseclass):
                     filter="AccuPatt (*.db)",
                 )
             # Load in series info from file
-            load_from_db(file=fileAircraft, s=self.seriesData, load_only_info=True)
+            load_file_to_series(file=fileAircraft, s=self.seriesData, load_only_info=True)
             # Increment series number
             info.series = info.series + 1
         # Clear/Update all ui elements
@@ -264,17 +263,8 @@ class MainWindow(baseclass):
 
     @pyqtSlot()
     def saveFile(self):
-        # If viewing only from legacy, Ignore save requests
-        if (
-            type(self.currentFile) is str
-            and not self.currentFile == ""
-            and not self.currentFile.endswith(".db")
-        ):
-            return True
-        """if len(self.currentFile) > 3 and self.currentFile[-4:] == "xlsx":
-            return False"""
-        # If db file doesn't exist, lets create one
-        if self.currentFile == "":
+        current_file_type = get_file_type(self.currentFile)
+        if current_file_type == cfg.DATA_FILE_TYPE_NONE:
             # Have user create a new file
             initialFileName = self.seriesData.info.string_reg_series()
             initialDirectory = os.path.join(cfg.get_datafile_dir(), initialFileName)
@@ -289,13 +279,16 @@ class MainWindow(baseclass):
             if os.path.exists(file):
                 send2trash(os.path.abspath(file))
             self.change_current_file(file)
-        # If db file exists, or a new one has been created, update persistent vals for Flyin
+        elif current_file_type != cfg.DATA_FILE_TYPE_ACCUPATT:
+            # If in view-only mode, Ignore save requests
+            return True
+        # If native file exists, or a new one has been created, update persistent vals for Flyin
+        # And update it with seriesData
         cfg.set_flyin_name(self.seriesData.info.flyin_name)
         cfg.set_flyin_location(self.seriesData.info.flyin_location)
         cfg.set_flyin_date(self.seriesData.info.flyin_date)
         cfg.set_flyin_analyst(self.seriesData.info.flyin_analyst)
-        # If db file exists, or a new one has been created, save all SeriesData to the db
-        if save_to_db(file=self.currentFile, s=self.seriesData):
+        if save_file(self.currentFile, self.seriesData):
             self.change_statusbar_save()
             self.file_saved.emit(self.currentFile)
             return True
@@ -309,7 +302,7 @@ class MainWindow(baseclass):
 
     @pyqtSlot()
     def openFile(self, file: str = ""):
-        # Open a FileChooser and obtain selected file (DB or XLSX)
+        # If no file passed in, open a FileChooser and obtain selected file
         if file == "":
             file, _ = QFileDialog.getOpenFileName(
                 parent=self,
@@ -317,47 +310,44 @@ class MainWindow(baseclass):
                 directory=cfg.get_datafile_dir(),
                 filter="AccuPatt (*.db *.xlsx);;USDA-ARS AATRU (*1*.txt);;Legacy WRK (*.*A)",
             )
-            if file == "":
+        if get_file_type(file) == cfg.DATA_FILE_TYPE_NONE:
+            return
+        # If the File Type is not native, offer to convert or open view only
+        if get_file_type(file)!=cfg.DATA_FILE_TYPE_ACCUPATT:
+            should_proceed, file = self.offer_to_convert_import_to_native(file)
+            if not should_proceed:
                 return
-        # If the File is an XLSX, prompt to VIEW-ONLY or CONVERT TO DB
-        if len(file) > 3 and file[-4:] == "xlsx":
-            msg = QMessageBox(
-                QMessageBox.Icon.Question,
-                "Convert to Compatible Version?",
-                "Would you like to open this file in View-Only mode or create a compatible (*.db) copy?",
-            )
-            button_read_only = msg.addButton(
-                "View-Only", QMessageBox.ButtonRole.ActionRole
-            )
-            button_convert = msg.addButton(
-                "Create Compatible Copy", QMessageBox.ButtonRole.ActionRole
-            )
-            msg.exec()
-            if msg.clickedButton() == button_read_only:
-                pass
-            elif msg.clickedButton() == button_convert:
-                prog = QProgressDialog(self)
-                prog.setMinimumDuration(0)
-                prog.setWindowModality(Qt.WindowModality.WindowModal)
-                file = convert_xlsx_to_db(file, prog=prog)
-            else:
-                return
-        # File may be DB or XLSX at this point
-        # Load in data to series object
+        # Use the native or import file to populate a series
         self.seriesData = SeriesData()
-        if file[-2:] == "db":
-            load_from_db(file, s=self.seriesData)
-        elif len(file) > 3 and file[-4:] == "xlsx":
-            load_from_accupatt_1_file(file, s=self.seriesData)
-        elif len(file) > 3 and file[-1] == "A":
-            load_from_wrk_file(file, s=self.seriesData)
-        elif len(file) > 6 and file[-4:] == ".txt":
-            load_from_usda_file(file, s=self.seriesData)
+        load_file_to_series(file, self.seriesData)
         # Notify UI of file change
         self.change_current_file(file)
         self.update_all_ui()
         self.tabWidget.setEnabled(True)
         self.tabWidget.setCurrentIndex(0)
+
+    def offer_to_convert_import_to_native(self, import_file) -> tuple[bool, str]:
+        msg = QMessageBox(
+            QMessageBox.Icon.Question,
+            "Convert to Compatible Version?",
+            "Would you like to open this file in View-Only mode or create a compatible (*.db) copy?",
+        )
+        button_read_only = msg.addButton(
+            "View-Only", QMessageBox.ButtonRole.ActionRole
+        )
+        button_convert = msg.addButton(
+            "Create Compatible Copy", QMessageBox.ButtonRole.ActionRole
+        )
+        msg.exec()
+        if msg.clickedButton() == button_read_only:
+            return True, import_file
+        elif msg.clickedButton() == button_convert:
+            prog = QProgressDialog(self)
+            prog.setMinimumDuration(0)
+            prog.setWindowModality(Qt.WindowModality.WindowModal)
+            return True, convert_import_to_db(import_file, prog=prog)
+        else:
+            return False, ""
 
     def change_current_file(self, file: str):
         self.currentFile = file
@@ -369,7 +359,7 @@ class MainWindow(baseclass):
             text = ""
         self.status_label_file.setText(text)
         self.change_statusbar_save()
-        rtu = file == "" or (len(file) > 3 and file[-2:] != "xlsx")
+        rtu = file == "" or get_file_type(file) == cfg.DATA_FILE_TYPE_ACCUPATT
         self.action_save.setEnabled(rtu)
         self.action_pass_manager.setEnabled(rtu)
         self.current_file_changed.emit(file)
@@ -377,12 +367,10 @@ class MainWindow(baseclass):
     def change_statusbar_save(self):
         if self.currentFile == "":
             text = "No Data File"
-        elif self.currentFile[-2:] == "db":
+        elif get_file_type(self.currentFile)==cfg.DATA_FILE_TYPE_ACCUPATT:
             text = f"Last Save: {datetime.fromtimestamp(self.seriesData.info.modified)}"
-        elif self.currentFile[-4:] == "xlsx":
-            text = "View-Only Mode"
         else:
-            text = ""
+            text = "View-Only Mode"
         self.status_label_modified.setText(text)
 
     def update_all_ui(self):
