@@ -1,5 +1,6 @@
 import pandas as pd
 from accupatt.helpers.dBBridge import load_from_db
+from accupatt.helpers.dataFileImporter import load_file_to_series
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
 from accupatt.models.sprayCard import SprayCard
@@ -44,7 +45,7 @@ def safe_report(filesToInclude: list[str], saveFile: str):
 
     for i, file in enumerate(filesToInclude):
         s = SeriesData()
-        load_from_db(file=file, s=s)
+        load_file_to_series(file, s)
 
         # Prefab pilot first/last
         pilot_split = s.info.pilot.rsplit(" ", 1)

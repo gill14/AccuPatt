@@ -426,7 +426,7 @@ class MainWindow(baseclass):
             parent=self,
             caption="Select Files to Include",
             directory=cfg.get_datafile_dir(),
-            filter="AccuPatt (*.db)",
+            filter="AccuPatt (*.db *.xlsx);;USDA-ARS AATRU (*1*.txt);;Legacy WRK (*.*A)",
         )
         if files:
             dir_ = os.path.dirname(files[0])
@@ -452,7 +452,7 @@ class MainWindow(baseclass):
         filenames = []
         for root, _, files in os.walk(directory):
             for file in files:
-                if file.endswith(".db"):
+                if get_file_type(file) != cfg.DATA_FILE_TYPE_NONE:
                     filenames.append(os.path.join(directory, root, file))
 
         if len(filenames) < 1:
