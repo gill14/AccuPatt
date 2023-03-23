@@ -28,7 +28,7 @@ SQLAlchemy = "^1.4.36"
 alembic = "^1.7.7"
 imutils = "^0.5.4"
 opencv-python = "4.5.5.64"
-scikit-image = "^0.19.2"
+scikit-image = "^0.20.0"
 Send2Trash = "^1.8.0"
 
 [tool.poetry.group.dev.dependencies]
