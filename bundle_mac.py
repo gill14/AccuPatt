@@ -25,6 +25,9 @@ OPTIONS = {
 }
 
 if sys.platform == 'darwin':
+    
+    subprocess.call(["cp","./user_manual/accupatt_2_user_manual.pdf","./resources/documents/accupatt_2_user_manual.pdf"])
+
     setup(
         setup_requires=['py2app'],
         app=['./accupatt/__main__.py'],

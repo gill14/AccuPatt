@@ -21,6 +21,8 @@ with open("./dist/win/innoSetupScript.iss", "w", encoding="utf-8") as file:
 
 if sys.platform == 'win32':
     
+    subprocess.call(["copy","./user_manual/accupatt_2_user_manual.pdf","./resources/documents/accupatt_2_user_manual.pdf"])
+
     PyInstaller.__main__.run([
         './accupatt/__main__.py',
         '--name=AccuPatt',
