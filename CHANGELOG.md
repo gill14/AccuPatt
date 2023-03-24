@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 ## [Unreleased]
+### Changed
+## [2.0.19] - 23 March 2023
+### Added
+- Menu option to downsample card images on PDF report (enabled by default)
+- Option to convert WRK and USDA files to native *.db files when opening them
+- All legacy file types can now be included in SAFE Log generation
+### Changed
+- Parameterized handling of legacy and non-legacy file types
 ## [2.0.18] - 17 March 2023
 ### Added
 - White Cards or WSP chooser for automatic card recognition in load-multi
@@ -232,7 +240,8 @@ All notable changes to this project will be documented in this file.
 - Initial rewrite of AccuPatt using Python/Qt. Based on prior (1.xx) version using Java/JavaFX. Final release of the legacy version is 1.06+.
 
 
-[Unreleased]: https://github.com/gill14/accupatt/compare/v2.0.18...HEAD
+[Unreleased]: https://github.com/gill14/accupatt/compare/v2.0.19...HEAD
+[2.0.19]: https://github.com/gill14/accupatt/compare/v2.0.18...v2.0.19
 [2.0.18]: https://github.com/gill14/accupatt/compare/v2.0.17...v2.0.18
 [2.0.17]: https://github.com/gill14/accupatt/compare/v2.0.16...v2.0.17
 [2.0.16]: https://github.com/gill14/accupatt/compare/v2.0.15...v2.0.16

@@ -3,8 +3,8 @@
 AccuPatt is a software tool for agricultural aircraft spray pattern testing. This includes measuring tracer dye deposition on string collectors and measuring droplet deposition from spray cards. It is built as a desktop GUI application with Python and Qt.
 # What Equipment is needed?
 Minimum system requirements:
-- Windows 10
-- macOS 11
+- Windows 10 (x86-64 only if using compiled installer)
+- macOS 11 (ARM only if using compiled installer)
 ## For String Analysis
 Currently, AccuPatt is configured to interoperate only with the WRK String Spectrometer System, available for purchase from WRK of Oklahoma. While the timeframe is unknown, interoperability is also planned for the USDA-ARS Aerial Application Technology Research Unit's Spectrometer System.
 ## For Spray Card Analysis
@@ -19,6 +19,6 @@ poetry run python -m accupatt
 ```
 # What if I just want to use it?
 You can access a compiled installer as well as the user manual using the links below:
-- [macOS and Windows Installers](https://sites.google.com/illinois.edu/accupatt/download)
+- [macOS and Windows Installers](https://github.com/gill14/AccuPatt/releases)
 - [User Manual](https://github.com/gill14/AccuPatt/blob/master/user_manual/accupatt_2_user_manual.pdf)
 
