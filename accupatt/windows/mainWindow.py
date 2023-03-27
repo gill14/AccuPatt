@@ -258,7 +258,7 @@ class MainWindow(baseclass):
                 )
             # Load in series info from file
             load_file_to_series(
-                file=fileAircraft, s=self.seriesData, load_only_info=True
+                file=fileAircraft, series=self.seriesData, info_only=True
             )
             # Increment series number
             info.series = info.series + 1
