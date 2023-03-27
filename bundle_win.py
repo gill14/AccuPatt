@@ -8,6 +8,7 @@ Usage:
 import subprocess
 import os
 import sys
+import shutil
 import PyInstaller.__main__
 import accupatt.config as cfg
 
@@ -21,7 +22,7 @@ with open("./dist/win/innoSetupScript.iss", "w", encoding="utf-8") as file:
 
 if sys.platform == 'win32':
     
-    subprocess.call(["copy","./user_manual/accupatt_2_user_manual.pdf","./resources/documents/accupatt_2_user_manual.pdf"])
+    shutil.copyfile("./user_manual/accupatt_2_user_manual.pdf","./resources/documents/accupatt_2_user_manual.pdf")
 
     PyInstaller.__main__.run([
         './accupatt/__main__.py',
