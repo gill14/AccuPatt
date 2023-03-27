@@ -4,7 +4,6 @@ __pycache__/
 .venv/
 .eggs*
 ~*
-*.pdf
 dist/*
 !dist/osx/dist/Applications
 !dist/osx/genAppDmg.sh
