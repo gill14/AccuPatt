@@ -1,20 +1,22 @@
 # Changelog
 All notable changes to this project will be documented in this file.
-## [Unreleased]
-### Changed
+## [2.0.20] - 27 March 2023
+### Fixed
+- New Series File Aircraft bug introduced in [2.0.19]
+- Missing Resource PDFs on Windows
 ## [2.0.19] - 23 March 2023
 ### Added
-- Menu option to downsample card images on PDF report (enabled by default)
+- Menu option to downsample card images on PDF report (enabled by default) ([#16](https://github.com/gill14/AccuPatt/issues/16))
 - Option to convert WRK and USDA files to native *.db files when opening them
-- All legacy file types can now be included in SAFE Log generation
+- All legacy file types can now be included in SAFE Log generation ([#17](https://github.com/gill14/AccuPatt/issues/17))
 ### Changed
 - Parameterized handling of legacy and non-legacy file types
 ## [2.0.18] - 17 March 2023
 ### Added
-- White Cards or WSP chooser for automatic card recognition in load-multi
+- White Cards or WSP chooser for automatic card recognition in load-multi ([#9](https://github.com/gill14/AccuPatt/issues/9))
 ### Fixed
-- Load-multi window exceeding vertical screen limits
-- um2/um3 to gal/acre conversion constant - @collinhundley
+- Load-multi window exceeding vertical screen limits ([#15](https://github.com/gill14/AccuPatt/issues/15))
+- um2/um3 to gal/acre conversion constant - @collinhundley ([#14](https://github.com/gill14/AccuPatt/issues/14))
 ## [2.0.17] - 23 February 2023
 ### Added
 - Open/View legacy WRK files
@@ -240,7 +242,8 @@ All notable changes to this project will be documented in this file.
 - Initial rewrite of AccuPatt using Python/Qt. Based on prior (1.xx) version using Java/JavaFX. Final release of the legacy version is 1.06+.
 
 
-[Unreleased]: https://github.com/gill14/accupatt/compare/v2.0.19...HEAD
+[Unreleased]: https://github.com/gill14/accupatt/compare/v2.0.20...HEAD
+[2.0.20]: https://github.com/gill14/accupatt/compare/v2.0.19...v2.0.20
 [2.0.19]: https://github.com/gill14/accupatt/compare/v2.0.18...v2.0.19
 [2.0.18]: https://github.com/gill14/accupatt/compare/v2.0.17...v2.0.18
 [2.0.17]: https://github.com/gill14/accupatt/compare/v2.0.16...v2.0.17

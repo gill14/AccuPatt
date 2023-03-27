@@ -4,7 +4,7 @@ from PyQt6.QtCore import QSettings
 
 VERSION_MAJOR = 2
 VERSION_MINOR = 0
-VERSION_RELEASE = 19
+VERSION_RELEASE = 20
 
 
 # For clearning all QSettings
