@@ -424,35 +424,28 @@ class LoadCards(baseclass):
             img = cv2.flip(img, 1)
         if cfg.get_image_flip_y():
             img = cv2.flip(img, 0)
+        # Convert to 8-bit, blur and invert LUT if using white cards
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        if self.card_detection == cfg.ROI_DETECTION_METHODS[1]:
-            _, img_thresh = cv2.threshold(img_gray, 225, 255, cv2.THRESH_BINARY_INV)
-        else:
-            _, img_thresh = cv2.threshold(
-                img_gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU
-            )
-        # Use img_thresh to find contours
+        img_gray = cv2.GaussianBlur(img_gray, (0,0), 3, borderType=cv2.BORDER_REFLECT)
+        img_gray = (255-img_gray) if self.card_detection == cfg.ROI_DETECTION_METHODS[1] else img_gray
+        # Threshold bimodally (Otsu) and find contours
         contours, _ = cv2.findContours(
-            img_thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+            cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1],
+            cv2.RETR_TREE,
+            cv2.CHAIN_APPROX_SIMPLE
         )
-
-        roi_rectangles = []
-        for c in contours:
-            # Check if in bounds
-            x, y, w, h = cv2.boundingRect(c)
-            # If bounding box is less than 5% of w or h of image, reject it
-            if w < 0.05 * img.shape[1] or h < 0.05 * img.shape[0]:
-                continue
-            # If contour touches edge, reject it
-            if (
-                x <= 0
-                or y <= 0
-                or (x + w) >= img.shape[1] - 1
-                or (y + h) >= img.shape[0] - 1
-            ):
-                continue
-            roi_rectangles.append((x, y, w, h))
-        return roi_rectangles
+        # Find bounding boxes of contours and retun those that seem to be cards
+        return [r for r in [cv2.boundingRect(c) for c in contours] if self._check_roi_params(r, img.shape)]
+    
+    def _check_roi_params(self, rectangle, img_shape) -> bool:
+        x, y, w, h = rectangle
+        # If bounding box is less than 5% of w or h of image, reject it
+        if w < 0.05 * img_shape[1] or h < 0.05 * img_shape[0]:
+            return False
+        # If bounding box appears to be the whole image, reject it
+        if w > 0.95 * img_shape[1] and h > 0.95 * img_shape[0]:
+            return False
+        return True
 
 
 class LoadCardsPreBatch(baseclass_pre):
