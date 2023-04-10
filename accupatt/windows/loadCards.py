@@ -426,17 +426,21 @@ class LoadCards(baseclass):
             img = cv2.flip(img, 0)
         # Convert to 8-bit, blur and invert LUT if using white cards
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        img_gray = cv2.GaussianBlur(img_gray, (0,0), 3, borderType=cv2.BORDER_REFLECT)
+        img_gray = cv2.GaussianBlur(img_gray, (0, 0), 3, borderType=cv2.BORDER_REFLECT)
         # img_gray = (255-img_gray) if self.card_detection == cfg.ROI_DETECTION_METHODS[1] else img_gray
         # Threshold bimodally (Otsu) and find contours
         contours, _ = cv2.findContours(
             cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1],
             cv2.RETR_LIST,
-            cv2.CHAIN_APPROX_SIMPLE
+            cv2.CHAIN_APPROX_SIMPLE,
         )
         # Find bounding boxes of contours and retun those that seem to be cards
-        return [r for r in [cv2.boundingRect(c) for c in contours] if self._check_roi_params(r, img.shape)]
-    
+        return [
+            r
+            for r in [cv2.boundingRect(c) for c in contours]
+            if self._check_roi_params(r, img.shape)
+        ]
+
     def _check_roi_params(self, rectangle, img_shape) -> bool:
         x, y, w, h = rectangle
         # If bounding box is less than 5% of w or h of image, reject it
