@@ -3,8 +3,8 @@ from pathlib import Path
 from PyQt6.QtCore import QSettings
 
 VERSION_MAJOR = 2
-VERSION_MINOR = 0
-VERSION_RELEASE = 20
+VERSION_MINOR = 1
+VERSION_RELEASE = 0
 
 
 # For clearning all QSettings
