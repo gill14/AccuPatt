@@ -198,13 +198,20 @@
            <layout class="QHBoxLayout" name="horizontalLayout_11">
             <item>
              <widget class="QLabel" name="label_12">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="text">
                <string>Card Detection:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QComboBox" name="comboBoxCardDetection"/>
+             <widget class="QComboBox" name="comboBoxCardDetection">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
