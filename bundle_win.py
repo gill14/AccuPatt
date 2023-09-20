@@ -2,6 +2,7 @@
 This script will generate the .exe file with dependents in same dir
 
 Usage:
+    AS NEEDED: poetry install --with dev-win
     poetry run python bundle_win.py
 """
 
@@ -31,8 +32,12 @@ if sys.platform == 'win32':
         '--exclude-module=tkinter',
         '--exclude-module=py2app',
         '--hidden-import=matplotlib.backends.backend_svg',
+        '--hidden-import=libusb',
+        '--hidden-import=pyusb',
+        '--hidden-import=seabreeze.pyseabreeze',
         f'--additional-hooks-dir=./hooks',
         f'--add-data=../../resources{os.pathsep}resources',
+        '--add-data=C:/Windows/System32/libusb-1.0.dll;.',
         '--icon=../../resources/accupatt_logo.ico',
         '--distpath=./dist/win/dist',
         '--specpath=./dist/win',

@@ -2,8 +2,8 @@
 This script will generate the a .app file
 
 Usage:
+    AS NEEDED: poetry install --with dev-osx
     poetry run python bundle_mac.py py2app
-    poetry run python bundle_mac.py py2app -A
 """
 
 import subprocess

@@ -1570,6 +1570,7 @@ files = [
 
 [package.dependencies]
 numpy = ">=1.21"
+pyusb = {version = ">=1.0", optional = true, markers = "extra == \"pyseabreeze\""}
 
 [package.extras]
 pyseabreeze = ["pyusb (>=1.0)"]
@@ -1842,4 +1843,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "874f9c0b01623d4caddfd5594d1c21be52f1883f3a7fc17da405105895312c4d"
+content-hash = "283d0436801d9b031a54772e82ab8a67d6f3528831abd181b640c31dca78e874"
