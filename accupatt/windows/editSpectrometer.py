@@ -52,16 +52,16 @@ class EditSpectrometer(baseclass):
         self.refresh_dyes()
 
     def refresh_spec(self):
-        if self.spec is None:
-            try:
+        try:
+            if self.spec is None:
                 self.spec = Spectrometer.from_first_available()
-            except:
-                self.le_spectrometer.setText("")
-                self.b_test_spectrometer.setEnabled(False)
-                return
-        self.le_spectrometer.setText(self.spec.model)
-        self.b_test_spectrometer.setEnabled(True)
-        self.spectrometer_connected.emit(self.spec)
+        except:
+            print('Could not connect to a Spectrometer')
+        finally:
+            self.le_spectrometer.setText(self.spec.model if type(self.spec) is Spectrometer else "")
+            self.b_test_spectrometer.setEnabled(type(self.spec) is Spectrometer)
+            if type(self.spec) is Spectrometer:
+                self.spectrometer_connected.emit(self.spec)
 
     def refresh_dyes(self):
         dye_names = [Dye.fromDict(d).name for d in cfg.get_defined_dyes()]
