@@ -148,7 +148,7 @@ class StringPass(baseclass):
         )
         # Take a full spectrum reading
         intensities = self.spec.intensities(
-            correct_dark_counts=False, correct_nonlinearity=False
+            correct_dark_counts=True, correct_nonlinearity=True
         )
         # record y_val (emission amplitute) and request plot update
         self.y = np.append(

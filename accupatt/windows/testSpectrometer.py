@@ -160,7 +160,7 @@ class TestSpectrometer(baseclass):
 
     def _plot_frame(self):
         self.y = self.spec.intensities(
-            correct_dark_counts=False, correct_nonlinearity=False
+            correct_dark_counts=True, correct_nonlinearity=True
         )
         use_rel = (
             cfg.get_spectrometer_display_unit()
