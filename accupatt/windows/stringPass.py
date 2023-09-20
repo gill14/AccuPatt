@@ -146,9 +146,9 @@ class StringPass(baseclass):
                 * self.speed_per_milli
             ),
         )
-        # Take a full spectrum reading
+        # Take a full spectrum reading, correct dark pixels and nonlinearity if supported by device & backend
         intensities = self.spec.intensities(
-            correct_dark_counts=True, correct_nonlinearity=True
+            correct_dark_counts=self.spec._dp, correct_nonlinearity=self.spec._nc
         )
         # record y_val (emission amplitute) and request plot update
         self.y = np.append(
