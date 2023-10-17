@@ -5,7 +5,7 @@ from PyQt6 import uic
 from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QDialog, QTableWidget, QLabel
-from seabreeze.spectrometers import Spectrometer
+from oceandirect.OceanDirectAPI import OceanDirectAPI, Spectrometer
 import pyqtgraph
 
 from accupatt.models.dye import Dye
@@ -23,7 +23,7 @@ class TestSpectrometer(baseclass):
         self.ui.setupUi(self)
 
         self.spec: Spectrometer = spectrometer
-        self.spec.integration_time_micros(dye.integration_time_milliseconds * 1000)
+        self.spec.set_integration_time(dye.integration_time_milliseconds * 1000)
         self.dye = dye
 
         self.tw: QTableWidget = self.ui.tableWidget
@@ -40,7 +40,7 @@ class TestSpectrometer(baseclass):
         self.label_integration_Time: QLabel = self.ui.label_integration_time
 
         # Init plot
-        self.x = self.spec.wavelengths()
+        self.x = np.array(self.spec.get_wavelengths(), dtype=np.float32)
         self.y = []
         pyqtgraph.setConfigOptions(antialias=True)
         pyqtgraph.setConfigOption("background", "k")
@@ -142,9 +142,9 @@ class TestSpectrometer(baseclass):
         self._plot_frame()
 
         # Labels
-        self.label_model.setText(f"Spectrometer Model: {self.spec.model}")
+        self.label_model.setText(f"Spectrometer Model: {self.spec.get_model()}")
         self.label_serial.setText(
-            f"Spectrometer Serial Number: {self.spec.serial_number}"
+            f"Spectrometer Serial Number: {self.spec.get_serial_number()}"
         )
         self.label_integration_Time.setText(
             f"Target Integration Time: {self.dye.integration_time_milliseconds} milliseconds"
@@ -159,9 +159,7 @@ class TestSpectrometer(baseclass):
         self.show()
 
     def _plot_frame(self):
-        self.y = self.spec.intensities(
-            correct_dark_counts=self.spec._dp, correct_nonlinearity=self.spec._nc
-        ) # correct dark pixels and nonlinearity if supported by device & backend
+        self.y = np.array(self.spec.get_formatted_spectrum(), dtype=np.float32) # correct dark pixels and nonlinearity if supported by device & backend
         use_rel = (
             cfg.get_spectrometer_display_unit()
             == cfg.SPECTROMETER_DISPLAY_UNIT_RELATIVE

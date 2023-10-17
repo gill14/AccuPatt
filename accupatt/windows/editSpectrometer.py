@@ -5,7 +5,7 @@ from PyQt6 import uic
 from PyQt6.QtCore import pyqtSignal, pyqtSlot, QSignalBlocker
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QPushButton, QComboBox, QLineEdit, QMessageBox
-from seabreeze.spectrometers import Spectrometer
+from oceandirect.OceanDirectAPI import OceanDirectAPI, Spectrometer
 
 from accupatt.models.dye import Dye
 import accupatt.config as cfg
@@ -54,11 +54,15 @@ class EditSpectrometer(baseclass):
     def refresh_spec(self):
         try:
             if self.spec is None:
-                self.spec = Spectrometer.from_first_available()
+                od = OceanDirectAPI()
+                od.find_usb_devices()
+                device_ids = od.get_device_ids()
+                if len(device_ids) > 0:
+                    self.spec = od.open_device(device_ids[0])
         except:
             print('Could not connect to a Spectrometer')
         finally:
-            self.le_spectrometer.setText(self.spec.model if type(self.spec) is Spectrometer else "")
+            self.le_spectrometer.setText(self.spec.get_model() if type(self.spec) is Spectrometer else "")
             self.b_test_spectrometer.setEnabled(type(self.spec) is Spectrometer)
             if type(self.spec) is Spectrometer:
                 self.spectrometer_connected.emit(self.spec)

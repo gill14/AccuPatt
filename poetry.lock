@@ -1530,53 +1530,6 @@ doc = ["jupytext", "matplotlib (>2)", "myst-nb", "numpydoc", "pooch", "pydata-sp
 test = ["asv", "gmpy2", "mpmath", "pooch", "pytest", "pytest-cov", "pytest-timeout", "pytest-xdist", "scikit-umfpack", "threadpoolctl"]
 
 [[package]]
-name = "seabreeze"
-version = "2.4.0"
-description = "Python interface module for Ocean Optics spectrometers. This software is not associated with Ocean Optics. Use it at your own risk."
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "seabreeze-2.4.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:62585e2448e0eadcb8e7d52393a07ffadfdf054422c7145beea4ea518c0d2c34"},
-    {file = "seabreeze-2.4.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:47cd0289183f05d412151e9a5fd1f16b953075f7f273a9ed384497a076059beb"},
-    {file = "seabreeze-2.4.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b303761c199ddc18b599124a1ee95f301e701c10e30de625a0565741d3eb1890"},
-    {file = "seabreeze-2.4.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:632f6dcbe83b088ff24f4234b915262455b895b1d41b2bc8377cbd273b936d3b"},
-    {file = "seabreeze-2.4.0-cp310-cp310-win32.whl", hash = "sha256:afd2e6c70956171a7f56dbd4e8694761eedb9a2e350c60e1236b395c1ecf798d"},
-    {file = "seabreeze-2.4.0-cp310-cp310-win_amd64.whl", hash = "sha256:432e83b1f729e34f12fa158f98298a3876b50b6db0e4028a23d2c2b002d228f2"},
-    {file = "seabreeze-2.4.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:6836143fc765a1e4dbf3f41e0efe6fc70836a370e41b3635e027aea9b35cacd9"},
-    {file = "seabreeze-2.4.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:6f12f59f19338b5460208b6e886e4a30562cd087abf68a430a1cc701bf872b41"},
-    {file = "seabreeze-2.4.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b24a7090eef7f799a8ebf44e15dafca16092583f8f596916206e0dac6fdaffe7"},
-    {file = "seabreeze-2.4.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b233bfe95508a92b5561adfac6d7058af63b0d832aba050b9bd8eb81e6812ff1"},
-    {file = "seabreeze-2.4.0-cp311-cp311-win32.whl", hash = "sha256:f0089dcb830a1d41d7931778713b9012abbac7c919b724095a82551460320c33"},
-    {file = "seabreeze-2.4.0-cp311-cp311-win_amd64.whl", hash = "sha256:a29c6e7a5ab49069236aa1f5aaca523e10fb639044dbbb7518f719f2a16086a0"},
-    {file = "seabreeze-2.4.0-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:f49b0a2165e44590d546f2e6c46579a4c2139aae145122643a7a044a3f9c90ca"},
-    {file = "seabreeze-2.4.0-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a1d160dc3aa047d5164464a304ed08374424ed7cf075b5c06947568137cf4a96"},
-    {file = "seabreeze-2.4.0-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8f8650efb72f2757a2b8bde298e3833dac1b27233769a304fe2cc95670eee292"},
-    {file = "seabreeze-2.4.0-cp37-cp37m-win32.whl", hash = "sha256:0930b6e7fe8eadd2b418cc40e01fcb3f0197ff47511a58d2578416ea177e6d16"},
-    {file = "seabreeze-2.4.0-cp37-cp37m-win_amd64.whl", hash = "sha256:667c3e678d6d792de17541e00f9e75b712879ec538e9883b3dfeda5dfd64c79a"},
-    {file = "seabreeze-2.4.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:e94d9d16da4f5d7d92715606b9b237bb701bf4b4a60becd8b6c849cbbae8a66d"},
-    {file = "seabreeze-2.4.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:08876891d3d5f5a9aae2833c83c9612b1a8d16ff08cd2c11af134e8d6057e69e"},
-    {file = "seabreeze-2.4.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8ebf0d08cd9fd2f701655158160abf8d9bf16716288f4219198dce5a118efc93"},
-    {file = "seabreeze-2.4.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a827164552a2768496d879e82eb92eee5efe012f1b7634db207660453e2e5f3f"},
-    {file = "seabreeze-2.4.0-cp38-cp38-win32.whl", hash = "sha256:9c0a20d56ca4a5b92e85bb2aacfc99d4de239930a418f55d24d66bcd3bf2403b"},
-    {file = "seabreeze-2.4.0-cp38-cp38-win_amd64.whl", hash = "sha256:156cb2735ff728b3058bd95c18f911b1ae7c9eeb9c575fe431759f8204ff5ce3"},
-    {file = "seabreeze-2.4.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:fa2a5e2e060ec8ac045ba5b58035e562947306b2268e1a10cfe972e1a317d536"},
-    {file = "seabreeze-2.4.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:a065ce2c856ac47cf484e4af4a2ae0e95067ae4bec07984f23eda1fae76fc59c"},
-    {file = "seabreeze-2.4.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:9690eb57c4cd0e486fcab4b127aa54c40677eb47b93fea21c619d8ae47b4ce1d"},
-    {file = "seabreeze-2.4.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b519ce9be5e4d475eba2d07fa43d5197c7c084d52d822e0d967e20227db85080"},
-    {file = "seabreeze-2.4.0-cp39-cp39-win32.whl", hash = "sha256:f6858cb115a2823acb28b3b4b5fe9eaf17175cb1fb062d6e4b7210be29b4ca16"},
-    {file = "seabreeze-2.4.0-cp39-cp39-win_amd64.whl", hash = "sha256:b0a0d4b7ea2536f255e59705e2c306980180c6f72e082b48a5e95191c4f19ee8"},
-    {file = "seabreeze-2.4.0.tar.gz", hash = "sha256:e1657199babc7dbfddf7bcdd6af0e197a1c942926dbbc3db48658c4acab1c109"},
-]
-
-[package.dependencies]
-numpy = ">=1.21"
-pyusb = {version = ">=1.0", optional = true, markers = "extra == \"pyseabreeze\""}
-
-[package.extras]
-pyseabreeze = ["pyusb (>=1.0)"]
-tests = ["pytest", "pytest (>=6.2.4)"]
-
-[[package]]
 name = "send2trash"
 version = "1.8.2"
 description = "Send file to trash natively under Mac OS X, Windows and Linux"
@@ -1843,4 +1796,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "283d0436801d9b031a54772e82ab8a67d6f3528831abd181b640c31dca78e874"
+content-hash = "a7e73ceb157605908c7e63c05141a98b19fd3736c0d4e00a4f2969cd7218292e"

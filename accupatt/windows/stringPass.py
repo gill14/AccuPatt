@@ -12,7 +12,7 @@ from accupatt.windows.editStringDrive import EditStringDrive
 from PyQt6 import uic
 from PyQt6.QtCore import QTimer, pyqtSlot, Qt
 from PyQt6.QtWidgets import QMessageBox, QCheckBox, QLabel, QPushButton
-from seabreeze.spectrometers import Spectrometer
+from oceandirect.OceanDirectAPI import OceanDirectAPI, Spectrometer
 
 Ui_Form, baseclass = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "readString.ui")
@@ -147,9 +147,7 @@ class StringPass(baseclass):
             ),
         )
         # Take a full spectrum reading, correct dark pixels and nonlinearity if supported by device & backend
-        intensities = self.spec.intensities(
-            correct_dark_counts=self.spec._dp, correct_nonlinearity=self.spec._nc
-        )
+        intensities = np.array(self.spec.get_formatted_spectrum(), dtype=np.float32)
         # record y_val (emission amplitute) and request plot update
         self.y = np.append(
             self.y, np.average(intensities[self.pix_em[0] : self.pix_em[1] + 1])
@@ -188,10 +186,8 @@ class StringPass(baseclass):
             self.location_start = -cfg.get_string_length() / 2
             self.speed_per_milli = cfg.get_string_speed() / 1000.0
             # Get a handle on pixels for chosen wavelengths
-            wavelengths = self.spec.wavelengths()
-            self.pix_ex = np.abs(
-                wavelengths - self.passData.string.dye.wavelength_excitation
-            ).argmin()
+            wavelengths = np.array(self.spec.get_wavelengths(), np.float32)
+            self.pix_ex, _wav = self.spec.get_index_at_wavelength(self.passData.string.dye.wavelength_excitation)
             bw = self.passData.string.dye.boxcar_width
             self.pix_em = [
                 np.abs(
@@ -247,7 +243,7 @@ class StringPass(baseclass):
         if self.ser and self.ser.is_open:
             self.ser.close()
         if self.spec:
-            self.spec.close()
+            self.spec.close_device()
         # Nofiy requestor and close
         super().reject()
 
@@ -265,7 +261,7 @@ class StringPass(baseclass):
         if self.ser:
             self.ser.close()
         if self.spec:
-            self.spec.close()
+            self.spec.close_device()
         # If all checks out, notify requestor and close
         super().accept()
 
@@ -394,7 +390,11 @@ class StringPass(baseclass):
 
         if self.spec is None:
             try:
-                self.spec = Spectrometer.from_first_available()
+                od = OceanDirectAPI()
+                od.find_usb_devices()
+                device_ids = od.get_device_ids()
+                if len(device_ids) > 0:
+                    self.spec = od.open_device(device_ids[0])
             except:
                 self.cb_spec.setText("Offline")
                 self.cb_spec.setEnabled(False)
@@ -403,7 +403,7 @@ class StringPass(baseclass):
                 return
         # Inform spectrometer of new int time
         try:
-            self.spec.integration_time_micros(
+            self.spec.set_integration_time(
                 self.passData.string.dye.integration_time_milliseconds * 1000
             )
         except:

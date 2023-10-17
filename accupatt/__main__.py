@@ -4,9 +4,6 @@ import accupatt.config as cfg
 
 from PyQt6.QtWidgets import QApplication
 
-import seabreeze
-seabreeze.use('pyseabreeze', force=False)
-
 from accupatt.windows.mainWindow import MainWindow
 
 if __name__ == "__main__":
