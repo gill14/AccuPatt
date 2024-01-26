@@ -2,15 +2,15 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "AccuPatt"
-#define MyAppVersion "2.0.20"
+#define MyAppVersion "2.1.1"
 #define MyAppPublisher "Matt Gill"
 #define MyAppURL "https://www.agaviation.org"
 #define MyAppExeName "AccuPatt.exe"
 #define MyAppAssocName MyAppName + " Data File"
 #define MyAppAssocExt ".db"
 #define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
-#define OutputDir "C:\Users\MattGill\Desktop\AccuPatt\dist\win"
-#define ResourceDir "C:\Users\MattGill\Desktop\AccuPatt\resources"
+#define OutputDir "Y:\iCloud\Projects\AccuPatt\dist\win"
+#define ResourceDir "Y:\iCloud\Projects\AccuPatt\resources"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
