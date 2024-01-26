@@ -7,6 +7,7 @@ Submitted [issues] are not included here, but will also be addressed in order of
 - [ ] export raw/overlay/processed images
 ## String Analysis
 - [ ] Warning for low res patterns - turn ind plot red and slap a warning label on it? - need to constrain to passString window only for compatibility
+- [ ] Fully optionalize all exposed OceanDirect API parameters, such as dark pixel correction, nonlinearity correction, boxcar, etc.
 ## Card Analysis
 - [ ] Image Loader- crop - batch
 - [ ] Simulation Shading

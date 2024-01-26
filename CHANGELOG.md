@@ -1,5 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+## [2.1.1] - 26 January 2024
+### Added
+- Support for SR4 spectrometers, via OceanDirect API
+### Changed
+- Disabled use of card-detection-method in image process
+### Fixed
+- Add Various Embraer Models to Pre-Loaded Aircraft ([#20](https://github.com/gill14/AccuPatt/issues/20))
 ## [2.0.20] - 27 March 2023
 ### Fixed
 - New Series File Aircraft bug introduced in [2.0.19]
