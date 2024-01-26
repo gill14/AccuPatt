@@ -24,6 +24,9 @@ class TestSpectrometer(baseclass):
 
         self.spec: Spectrometer = spectrometer
         self.spec.set_integration_time(dye.integration_time_milliseconds * 1000)
+        self.spec.set_nonlinearity_correction_usage(True)
+        self.spec.set_electric_dark_correction_usage(True)
+        self.spec.set_boxcar_width(1)
         self.dye = dye
 
         self.tw: QTableWidget = self.ui.tableWidget
