@@ -9,8 +9,8 @@
 #define MyAppAssocName MyAppName + " Data File"
 #define MyAppAssocExt ".db"
 #define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
-#define OutputDir "Y:\iCloud\Projects\AccuPatt\dist\win"
-#define ResourceDir "Y:\iCloud\Projects\AccuPatt\resources"
+#define OutputDir "C:\Users\PAASS\OneDrive\Desktop\AccuPatt\dist\win"
+#define ResourceDir "C:\Users\PAASS\OneDrive\Desktop\AccuPatt\resources"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
