@@ -425,7 +425,7 @@ class LoadCards(baseclass):
         if cfg.get_image_flip_y():
             img = cv2.flip(img, 0)
         # Convert to 8-bit, blur and invert LUT if using white cards
-        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
         img_gray = cv2.GaussianBlur(img_gray, (0, 0), 3, borderType=cv2.BORDER_REFLECT)
         # img_gray = (255-img_gray) if self.card_detection == cfg.ROI_DETECTION_METHODS[1] else img_gray
         # Threshold bimodally (Otsu) and find contours
