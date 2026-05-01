@@ -42,7 +42,7 @@ class SeriesDataString(SeriesDataBase):
             return
         # Integrate each pattern to find area under the curve
         areas = [
-            np.trapz(y=p.string.data_mod[p.name], x=p.string.data_mod["loc"], axis=0)
+            np.trapezoid(y=p.string.data_mod[p.name], x=p.string.data_mod["loc"], axis=0)
             for p in passes
         ]
         # Find the pass with the largest integral
@@ -61,7 +61,7 @@ class SeriesDataString(SeriesDataBase):
             average_df = average_df.join(s, how="outer", lsuffix="_l", rsuffix="_r")
         # average_df.fillna(0)
         # take the column-wise average and add that series to the placeholder
-        average_df.interpolate(limit_area="inside", inplace=True)
+        average_df = average_df.interpolate(limit_area="inside")
         average_df["Average"] = average_df.fillna(0).mean(axis="columns")
         average_df = average_df.reset_index()
         return average_df

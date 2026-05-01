@@ -7,6 +7,7 @@ Create Date: 2022-07-06 09:27:40.310271
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -22,8 +23,8 @@ def upgrade():
     # Migrate
     conn = op.get_bind()
     conn.execute(
-        """UPDATE pass_string SET dye = ?, boxcar_width = ?""",
-        ("Rhodamine WT", 0)
+        text("UPDATE pass_string SET dye = :dye, boxcar_width = :bw"),
+        {"dye": "Rhodamine WT", "bw": 0},
     )
 
 

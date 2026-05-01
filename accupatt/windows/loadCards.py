@@ -10,7 +10,7 @@ import pyqtgraph as pg
 from accupatt.models.sprayCard import SprayCard
 from PIL import Image
 from PyQt6 import uic
-from PyQt6.QtGui import QCursor, QImageReader, QPixmap
+from PyQt6.QtGui import QCursor, QImage, QImageReader, QPixmap
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, pyqtSlot, QRectF
 from PyQt6.QtWidgets import (
     QApplication,
@@ -106,7 +106,9 @@ class LoadCards(baseclass):
     def plot_image(self):
         # Load Image from File, invert vertically, add it to plotWidget
         image_reader = QImageReader(self.image_file)
+        image_reader.setAllocationLimit(1024)
         size_og = image_reader.size()
+        self.size_og = size_og
         size_mod = size_og
         if size_og.width() * size_og.height() > 33000000:
             scale = min([2000 / size_mod.width(), 2000 / size_mod.height()])
@@ -115,13 +117,23 @@ class LoadCards(baseclass):
                 int(size_mod.height() * scale),
                 Qt.AspectRatioMode.IgnoreAspectRatio,
             )
+        self.display_scale = size_mod.width() / size_og.width()
         image_reader.setScaledSize(size_mod)
-        self.img = image_reader.read()
-        self.img = self.img.scaled(size_og.width(), size_og.height())
-        self.img = self.img.mirrored(
+        qimg = image_reader.read()
+        qimg = qimg.mirrored(
             horizontal=cfg.get_image_flip_x(), vertical=cfg.get_image_flip_y()
         )
-        self.img_pixmap = QPixmap.fromImage(self.img)
+        # Convert QImage to BGR array for ROI detection before making QPixmap.
+        # RGBA8888 is 4 bytes/pixel and always 4-byte row-aligned, so no stride padding.
+        qimg_rgba = qimg.convertToFormat(QImage.Format.Format_RGBA8888)
+        ptr = qimg_rgba.bits()
+        h, w = qimg_rgba.height(), qimg_rgba.width()
+        ptr.setsize(h * w * 4)
+        img_display = cv2.cvtColor(
+            np.frombuffer(ptr, dtype=np.uint8).reshape(h, w, 4).copy(),
+            cv2.COLOR_RGBA2BGR,
+        )
+        self.img_pixmap = QPixmap.fromImage(qimg)
         self.img = QGraphicsPixmapItem(self.img_pixmap)
 
         self.ui.plotWidget.clear()
@@ -133,16 +145,14 @@ class LoadCards(baseclass):
         self.ui.comboBoxDPI.setCurrentText(str(self.dpi))
         self.show_image_characteristics()
 
-        # Only search image for ROIs once
-        self.roi_rectangles = self._find_rois(self.image_file)
-        # Run initial drawing of ROIs
+        self.roi_rectangles = self._find_rois(img_display)
         self.rois = []
         self.draw_rois()
 
     def show_image_characteristics(self):
         dpi = self.dpi
-        h_px = self.img.pixmap().height()
-        w_px = self.img.pixmap().width()
+        h_px = self.size_og.height()
+        w_px = self.size_og.width()
         self.ui.label_size.setText(f'{(w_px/dpi):.1f}"x{(h_px/dpi):.1f}"')
         self.ui.label_pixel_area.setText(f"{int(25400 / dpi)} microns")
 
@@ -323,6 +333,11 @@ class LoadCards(baseclass):
         prog.setMinimumDuration(0)
         prog.setWindowModality(Qt.WindowModality.WindowModal)
 
+        img = cv2.imread(self.image_file)
+        if cfg.get_image_flip_x():
+            img = cv2.flip(img, 1)
+        if cfg.get_image_flip_y():
+            img = cv2.flip(img, 0)
         for i, roi in enumerate(self.rois):
             if i == 0:
                 prog.setRange(0, len(self.rois))
@@ -333,17 +348,10 @@ class LoadCards(baseclass):
             if prog.wasCanceled():
                 return
             roi: pg.RectROI
-            x = int(roi.pos()[0])
-            y = int(roi.pos()[1])
-            w = int(roi.size()[0])
-            h = int(roi.size()[1])
-            # Use CV to crop image roi
-            img = cv2.imread(self.image_file)
-            # Flip as needed
-            if cfg.get_image_flip_x():
-                img = cv2.flip(img, 1)
-            if cfg.get_image_flip_y():
-                img = cv2.flip(img, 0)
+            x = int(roi.pos()[0] / self.display_scale)
+            y = int(roi.pos()[1] / self.display_scale)
+            w = int(roi.size()[0] / self.display_scale)
+            h = int(roi.size()[1] / self.display_scale)
             img_crop = img[y : y + h, x : x + w]
             # Save to bytestream
             _, buffer = cv2.imencode("*.png", img_crop)
@@ -418,23 +426,15 @@ class LoadCards(baseclass):
         # Once rois_sorted contains all original rois, re-assign the original rois
         self.roi_rectangles = rois_sorted
 
-    def _find_rois(self, image_file):
-        img = cv2.imread(image_file)
-        if cfg.get_image_flip_x():
-            img = cv2.flip(img, 1)
-        if cfg.get_image_flip_y():
-            img = cv2.flip(img, 0)
-        # Convert to 8-bit, blur and invert LUT if using white cards
-        img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    def _find_rois(self, img):
+        # img is a display-scale BGR array with flips already applied
+        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         img_gray = cv2.GaussianBlur(img_gray, (0, 0), 3, borderType=cv2.BORDER_REFLECT)
-        # img_gray = (255-img_gray) if self.card_detection == cfg.ROI_DETECTION_METHODS[1] else img_gray
-        # Threshold bimodally (Otsu) and find contours
         contours, _ = cv2.findContours(
             cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1],
             cv2.RETR_LIST,
             cv2.CHAIN_APPROX_SIMPLE,
         )
-        # Find bounding boxes of contours and retun those that seem to be cards
         return [
             r
             for r in [cv2.boundingRect(c) for c in contours]

@@ -34,12 +34,12 @@ class SeriesDataCard(SeriesDataBase):
                 dd = d
             else:
                 _d = d.set_index("loc")
-                _d.sort_values(by="loc", axis=0, inplace=True)
-                _d["dv01"].interpolate(
-                    method="slinear", fill_value="extrapolate", inplace=True
+                _d = _d.sort_values(by="loc", axis=0)
+                _d["dv01"] = _d["dv01"].interpolate(
+                    method="slinear", fill_value="extrapolate"
                 )
-                _d["dv05"].interpolate(
-                    method="slinear", fill_value="extrapolate", inplace=True
+                _d["dv05"] = _d["dv05"].interpolate(
+                    method="slinear", fill_value="extrapolate"
                 )
 
                 dd = dd.merge(
@@ -51,12 +51,13 @@ class SeriesDataCard(SeriesDataBase):
             lastPassName = p.name
         if dd.empty:
             return dd
-        dd.set_index("loc", inplace=True)
-        dd.sort_values(by="loc", axis=0, inplace=True)
-        dd.interpolate(method="slinear", limit_area="inside", inplace=True)
+        dd = dd.set_index("loc")
+        dd = dd.sort_values(by="loc", axis=0)
+        _dd_interp = dd.select_dtypes(include=['number']).interpolate(method="slinear", limit_area="inside")
+        dd[_dd_interp.columns] = _dd_interp
         for col in dd.columns:
             if y_index in col:
-                dd[col].fillna(0, inplace=True)
+                dd[col] = dd[col].fillna(0)
         dd[f"{y_index}_avg"] = dd.loc[:, dd.columns.str.contains(y_index)].mean(
             axis="columns"
         )
@@ -66,9 +67,8 @@ class SeriesDataCard(SeriesDataBase):
         avg = dd.loc[
             :, [f"{y_index}_avg", "dv01_avg", "dv05_avg", "loc_units"]
         ].reset_index()
-        avg.rename(
+        avg = avg.rename(
             columns={f"{y_index}_avg": y_index, "dv01_avg": "dv01", "dv05_avg": "dv05"},
-            inplace=True,
         )
         return avg
 

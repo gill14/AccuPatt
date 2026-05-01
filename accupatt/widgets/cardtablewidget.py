@@ -8,7 +8,6 @@ from PyQt6.QtCore import (
     QItemSelectionModel,
     QModelIndex,
     Qt,
-    QVariant,
     pyqtSignal,
     pyqtSlot,
 )
@@ -281,8 +280,8 @@ class CardTable(QAbstractTableModel):
             role == Qt.ItemDataRole.DisplayRole
             and orientation == Qt.Orientation.Horizontal
         ):
-            return QVariant(self.headers[column])
-        return QVariant()
+            return self.headers[column]
+        return None
 
     def data(self, index, role):
         if role == Qt.ItemDataRole.TextAlignmentRole:
@@ -441,7 +440,7 @@ class CardTable(QAbstractTableModel):
             if role == Qt.ItemDataRole.EditRole:
                 return str(card.spread_factor_c)
         else:
-            return QVariant()
+            return None
 
     def setData(self, index, value, role=Qt.ItemDataRole.EditRole) -> bool:
         if value is None:

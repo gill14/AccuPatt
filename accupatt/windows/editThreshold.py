@@ -37,6 +37,7 @@ class EditThreshold(baseclass):
         self.passData = passData
 
         self.fit = "horizontal"
+        self._last_images: tuple = (None, None)
 
         # Threshold Type Combobox - Sets contents of Threshold GroupBox
         self.ui.comboBoxThresholdType.addItems(cfg.THRESHOLD_TYPES)
@@ -61,7 +62,8 @@ class EditThreshold(baseclass):
         )
         self.ui.radioButtonManual.toggled.connect(self.toggleThresholdMethodGrayscale)
         self.ui.sliderGrayscale.setValue(self.sprayCard.threshold_grayscale)
-        self.ui.sliderGrayscale.valueChanged[int].connect(self.updateThresholdGrayscale)
+        self.ui.sliderGrayscale.valueChanged[int].connect(self.sprayCard.set_threshold_grayscale)
+        self.ui.sliderGrayscale.sliderReleased.connect(self.updateSprayCardView)
 
         # Populate color ui from spray card
         self.ui.checkBoxHue.setChecked(self.sprayCard.threshold_color_hue_pass)
@@ -85,6 +87,7 @@ class EditThreshold(baseclass):
             )
         )
         rs_hue.valueChanged[tuple].connect(self.updateHue)
+        rs_hue.sliderReleased.connect(self.updateSprayCardView)
         rs_sat.setValue(
             (
                 int(self.sprayCard.threshold_color_saturation_min),
@@ -92,6 +95,7 @@ class EditThreshold(baseclass):
             )
         )
         rs_sat.valueChanged[tuple].connect(self.updateSaturation)
+        rs_sat.sliderReleased.connect(self.updateSprayCardView)
         rs_bri.setValue(
             (
                 int(self.sprayCard.threshold_color_brightness_min),
@@ -99,6 +103,7 @@ class EditThreshold(baseclass):
             )
         )
         rs_bri.valueChanged[tuple].connect(self.updateBrightness)
+        rs_bri.sliderReleased.connect(self.updateSprayCardView)
 
         self.buttonAdvancedOptions: QPushButton = self.ui.buttonAdvancedOptions
         self.buttonAdvancedOptions.clicked.connect(self._clicked_advanced_options)
@@ -138,10 +143,6 @@ class EditThreshold(baseclass):
         self.sprayCard.set_threshold_type(type_=thresh_type)
         self.updateSprayCardView()
 
-    def updateThresholdGrayscale(self, thresh):
-        self.sprayCard.set_threshold_grayscale(threshold=thresh)
-        self.updateSprayCardView()
-
     def toggleThresholdMethodGrayscale(self):
         method = cfg.THRESHOLD_GRAYSCALE_METHOD_AUTO
         if self.ui.radioButtonManual.isChecked():
@@ -151,14 +152,12 @@ class EditThreshold(baseclass):
 
     @pyqtSlot(bool)
     def toggleHuePass(self, checked):
-        print(checked)
         self.sprayCard.set_threshold_color_hue(bandpass=checked)
         self.updateSprayCardView()
 
     @pyqtSlot(tuple)
     def updateHue(self, vals):
         self.sprayCard.set_threshold_color_hue(min_=vals[0], max_=vals[1])
-        self.updateSprayCardView()
 
     @pyqtSlot(bool)
     def toggleSatPass(self, checked):
@@ -168,7 +167,6 @@ class EditThreshold(baseclass):
     @pyqtSlot(tuple)
     def updateSaturation(self, vals):
         self.sprayCard.set_threshold_color_saturation(min_=vals[0], max_=vals[1])
-        self.updateSprayCardView()
 
     @pyqtSlot(bool)
     def toggleBriPass(self, checked):
@@ -178,7 +176,6 @@ class EditThreshold(baseclass):
     @pyqtSlot(tuple)
     def updateBrightness(self, vals):
         self.sprayCard.set_threshold_color_brightness(min_=vals[0], max_=vals[1])
-        self.updateSprayCardView()
 
     @pyqtSlot()
     def _clicked_advanced_options(self):
@@ -190,13 +187,13 @@ class EditThreshold(baseclass):
     def _clicked_rb_horizontal(self, isChecked: bool):
         if isChecked:
             self.fit = "horizontal"
-        self.updateSprayCardView()
+        self._refresh_view()
 
     @pyqtSlot(bool)
     def _clicked_rb_vertical(self, isChecked: bool):
         if isChecked:
             self.fit = "vertical"
-        self.updateSprayCardView()
+        self._refresh_view()
 
     def toggleApplyToAllSeries(self, boo: bool):
         if boo:
@@ -208,8 +205,14 @@ class EditThreshold(baseclass):
     def updateSprayCardView(self):
         if not self.sprayCard.has_image:
             return
-        # Left Image (1) Right Image (2)
         cvImg1, cvImg2 = self.sprayCard.process_image(overlay=True, mask=True)
+        self._last_images = (cvImg1, cvImg2)
+        self._refresh_view()
+
+    def _refresh_view(self):
+        cvImg1, cvImg2 = self._last_images
+        if cvImg1 is None:
+            return
         self.ui.splitCardWidget.updateSprayCardView(cvImg1, cvImg2, self.fit)
         self.ui.labelGrayscaleThresholdCalculated.clear()
         if self.sprayCard.threshold_type == cfg.THRESHOLD_TYPE_GRAYSCALE:

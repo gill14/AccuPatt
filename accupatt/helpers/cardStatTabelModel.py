@@ -1,11 +1,9 @@
-from numpy import TooHardError
 import accupatt.config as cfg
 from accupatt.models.sprayCard import SprayCard
 from PyQt6.QtCore import (
     QAbstractTableModel,
     QModelIndex,
     Qt,
-    QVariant,
     pyqtSignal,
 )
 from PyQt6.QtGui import (
@@ -56,8 +54,8 @@ class CardStatTableModel(QAbstractTableModel):
             role == Qt.ItemDataRole.DisplayRole
             and orientation == Qt.Orientation.Horizontal
         ):
-            return QVariant(self.headers[column])
-        return QVariant()
+            return self.headers[column]
+        return None
 
     def data(self, index, role):
         if role == Qt.ItemDataRole.TextAlignmentRole:
@@ -139,7 +137,7 @@ class CardStatTableModel(QAbstractTableModel):
             if role == Qt.ItemDataRole.DisplayRole:
                 return card.stats.get_stains_per_in2(text=True)
         else:
-            return QVariant()
+            return None
 
     def setData(self, index, value, role=Qt.ItemDataRole.EditRole) -> bool:
         if value is None:

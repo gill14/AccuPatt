@@ -1,3 +1,4 @@
+from io import StringIO
 import os
 import sqlite3
 import alembic.config
@@ -257,8 +258,8 @@ def _load_table_pass_string(c: sqlite3.Cursor, p: Pass):
         d_em,
         ps.include_in_composite,
     ) = c.fetchone()
-    ps.data_ex = pd.read_json(d_ex)
-    ps.data = pd.read_json(d_em)
+    ps.data_ex = pd.read_json(StringIO(d_ex))
+    ps.data = pd.read_json(StringIO(d_em))
 
 
 def _load_table_pass_spray_card(c: sqlite3.Cursor, p: Pass):

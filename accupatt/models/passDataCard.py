@@ -31,7 +31,7 @@ class PassDataCard(PassDataBase):
         return pd.DataFrame(
             {
                 "name": [card.name for card in scs],
-                "loc": [card.location for card in scs],
+                "loc": [float(card.location) for card in scs],
                 "loc_units": [card.location_units for card in scs],
                 "cov": [card.stats.get_percent_coverage() for card in scs],
                 "dep": [card.stats.get_deposition() for card in scs],
@@ -48,9 +48,9 @@ class PassDataCard(PassDataBase):
         for i, (loc, unit) in enumerate(zip(data["loc"], data["loc_units"])):
             if unit != loc_units:
                 if unit == cfg.UNIT_FT:
-                    data["loc"][i] = loc / cfg.FT_PER_M
+                    data.loc[i, "loc"] = loc / cfg.FT_PER_M
                 else:
-                    data["loc"][i] = loc * cfg.FT_PER_M
+                    data.loc[i, "loc"] = loc * cfg.FT_PER_M
         # Centerify
         self._centerify(data, center=self.center, centerMethod=self.center_method)
         # Do more things potentially...
@@ -159,14 +159,14 @@ class PassDataCard(PassDataBase):
                 if method == cfg.CARD_PLOT_SHADING_METHOD_DSC:
                     # Blank active cards need values for dv01/dv05 for shading, so interpolate
                     d = d.set_index("loc")
-                    d.sort_values(by="loc", axis=0, inplace=True)
-                    d["dv01"].interpolate(
-                        method="slinear", fill_value="extrapolate", inplace=True
+                    d = d.sort_values(by="loc", axis=0)
+                    d["dv01"] = d["dv01"].interpolate(
+                        method="slinear", fill_value="extrapolate"
                     )
-                    d["dv05"].interpolate(
-                        method="slinear", fill_value="extrapolate", inplace=True
+                    d["dv05"] = d["dv05"].interpolate(
+                        method="slinear", fill_value="extrapolate"
                     )
-                    d.reset_index(inplace=True)
+                    d = d.reset_index()
                     # Get a np array of dsc's calculated for each interpolated loc
                     kind = (
                         "slinear"

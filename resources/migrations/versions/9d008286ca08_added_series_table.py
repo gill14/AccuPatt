@@ -7,6 +7,7 @@ Create Date: 2022-05-25 15:36:16.428039
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
 revision = '9d008286ca08'
@@ -20,18 +21,16 @@ def upgrade():
     op.add_column("series_spray_card", sa.Column("swath_adjusted", sa.Integer))
     # Migrate
     conn = op.get_bind()
-    result = conn.execute(
-       '''SELECT swath_adjusted FROM spray_system'''
-    )
+    result = conn.execute(text("SELECT swath_adjusted FROM spray_system"))
     swath_adjusted, = result.fetchone()
     print(swath_adjusted)
     conn.execute(
-        """UPDATE series_string SET swath_adjusted=?""",
-        (swath_adjusted)
+        text("UPDATE series_string SET swath_adjusted=:val"),
+        {"val": swath_adjusted},
     )
     conn.execute(
-        """UPDATE series_spray_card SET swath_adjusted=?""",
-        (swath_adjusted)
+        text("UPDATE series_spray_card SET swath_adjusted=:val"),
+        {"val": swath_adjusted},
     )
     op.drop_column(table_name="spray_system", column_name="swath_adjusted")
 

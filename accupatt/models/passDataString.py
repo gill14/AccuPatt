@@ -34,7 +34,7 @@ class PassDataString(PassDataBase):
         # Trim it horizontally
         self.trimLR(self.data_mod, self.trim_l, self.trim_r)
         # Rebase it
-        self.rebaseIt(self.data_mod, self.rebase, self.trim_l, self.trim_r)
+        self.data_mod = self.rebaseIt(self.data_mod, self.rebase, self.trim_l, self.trim_r)
         # Trim it vertically
         self.trimV(self.data_mod, self.trim_v)
         # Center it
@@ -59,33 +59,30 @@ class PassDataString(PassDataBase):
         d.loc[d.index[(-1 - trimR) :], self.name] = -1
         # Find new min inside untrimmed area
         min_ = self.findMin(d, trimL, trimR)
-        # subtract min from all points
-        d[self.name] = d[self.name].sub(min_)
-        # clip all negative values (from trimmed areas) to 0
-        d[self.name] = d[self.name].clip(lower=0)
+        # subtract min from all points and clip all negative values (from trimmed areas) to 0
+        d[self.name] = d[self.name].sub(min_).clip(lower=0)
 
     def findMin(self, d: pd.DataFrame, trimL: int = 0, trimR: int = 0) -> float:
-        return d[trimL : -1 - trimR][self.name].min()
+        return d[self.name].iloc[trimL : -1 - trimR].min()
 
     def rebaseIt(
         self, d: pd.DataFrame, isRebase: bool = False, trimL: int = 0, trimR: int = 0
-    ):
+    ) -> pd.DataFrame:
         if not isRebase:
-            return
+            return d
         # Calculate trimmed/untrimmed distances
         untrimmed_dist = d.at[d.index[-1], "loc"] - d.at[d.index[0], "loc"]
         trimmed_dist = d.at[d.index[-1 - trimR], "loc"] - d.at[d.index[trimL], "loc"]
         # Drop data points outside trimmed area
-        d.drop(d[d.index < trimL].index, inplace=True)
-        d.drop(d[d.index > d.index[-1 - trimR]].index, inplace=True)
+        d = d.drop(d[d.index < trimL].index)
+        d = d.drop(d[d.index > d.index[-1 - trimR]].index)
         # Rebase locations according to ratio of untrimmed:trimmed length
         d["loc"] = d["loc"].multiply(untrimmed_dist / trimmed_dist)
+        return d
 
     def trimV(self, d: pd.DataFrame, trimV: float = 0.0):
-        # Trim Vertical
-        d[self.name] = d[self.name].sub(trimV)
-        # clip all negative values (from trimmed areas) to 0
-        d[self.name] = d[self.name].clip(lower=0)
+        # Trim Vertical and clip all negative values (from trimmed areas) to 0
+        d[self.name] = d[self.name].sub(trimV).clip(lower=0)
 
     def centerify(self, d: pd.DataFrame, center, centerMethod):
         if not center:
@@ -106,16 +103,13 @@ class PassDataString(PassDataBase):
         return (d[self.name] * d["loc"]).sum() / d[self.name].sum()
 
     def _calcCenterOfDistribution(self, d: pd.DataFrame):
-        sumNumerator = 0.0
-        sumDenominator = 0.0
-        for i in range(0, len(d.index) - 1, 1):
-            D = d.at[i, self.name]
-            Dn = d.at[i + 1, self.name]
-            X = d.at[i, "loc"]
-            Xn = d.at[i + 1, "loc"]
-            # Calc Numerator and add to summation
-            sumNumerator += D * (Xn + X) + (Dn - D) * (2 * Xn + X) / 3
-            sumDenominator += Dn + D
+        D = d[self.name].iloc[:-1].to_numpy()
+        Dn = d[self.name].iloc[1:].to_numpy()
+        X = d["loc"].iloc[:-1].to_numpy()
+        Xn = d["loc"].iloc[1:].to_numpy()
+        # Calc Numerator and add to summation
+        sumNumerator = (D * (Xn + X) + (Dn - D) * (2 * Xn + X) / 3).sum()
+        sumDenominator = (Dn + D).sum()
         # Calc and return CoD
         return sumNumerator / sumDenominator
 
@@ -130,10 +124,8 @@ class PassDataString(PassDataBase):
         )
         # Round it up to the next odd integer if needed
         _window = _window + 1 if _window % 2 == 0 else _window
-        # Smooth y vals
-        d[self.name] = sig.savgol_filter(d[self.name], _window, order)
-        # Clip y vals below 0
-        d[self.name] = d[self.name].clip(lower=0)
+        # Smooth y vals and clip below 0
+        d[self.name] = np.clip(sig.savgol_filter(d[self.name], _window, order), 0, None)
 
     def setData(self, x_data, y_data, y_ex_data):
         self.data = pd.DataFrame(
@@ -154,7 +146,7 @@ class PassDataString(PassDataBase):
     def user_set_trim_right(self, value: float):
         # Takes a location domained trim value and converts it to an integer number of points
         self.trim_r = int(
-            self.data["loc"].shape[0] - abs(self.data["loc"] - value).idxmin()
+            self.data["loc"].shape[0] - self.data["loc"].sub(value).abs().idxmin()
         )
 
     def user_set_trim_floor(self, value: float):
@@ -178,8 +170,8 @@ class PassDataString(PassDataBase):
         # Calculate min y val for use with trim_vertical handle
         min_ = self.findMin(self.data, self.trim_l, self.trim_r)
         # Numpy-ize dataframe columns for plotting
-        x = np.array(self.data["loc"].values, dtype=float)
-        y = np.array(self.data[self.name].values, dtype=float)
+        x = self.data["loc"].to_numpy(dtype=float)
+        y = self.data[self.name].to_numpy(dtype=float)
         floor = min_ + self.trim_v
         # Plot raw data
         pyqtplotwidget.plotItem.plot(name="Raw", pen="w").setData(x, y)
@@ -230,8 +222,8 @@ class PassDataString(PassDataBase):
         self.rebaseIt(data_mod, self.rebase, self.trim_l, self.trim_r)
         self.trimV(data_mod, self.trim_v)
         # Numpy-ize dataframe columns for plotting
-        x = np.array(data_mod["loc"].values, dtype=float)
-        y = np.array(data_mod[self.name].values, dtype=float)
+        x = data_mod["loc"].to_numpy(dtype=float)
+        y = data_mod[self.name].to_numpy(dtype=float)
         # Label modifier for if rebasing is utilized
         rebase_str = ", Rebased" if self.rebase else ""
         # Plot trimmed/rebased data
@@ -242,7 +234,7 @@ class PassDataString(PassDataBase):
         if self.smooth:
             self.smoothIt(data_mod, self.smooth, self.smooth_window, self.smooth_order)
             # Numpy-ize dataframe column for plotting
-            y_smooth = np.array(data_mod[self.name].values, dtype=float)
+            y_smooth = data_mod[self.name].to_numpy(dtype=float).copy()
             trim_mask = np.nonzero(y_smooth)[0]
             y_smooth[0 : trim_mask[0]] = np.nan
             y_smooth[trim_mask[-1] : -1] = np.nan

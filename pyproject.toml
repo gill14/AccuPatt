@@ -1,51 +1,54 @@
 [project]
 name="accupatt"
-version="2.0"
+version="2.2.0"
 description="Aircraft Spray Pattern Testing Analysis"
+readme = "README.md"
+requires-python = ">=3.14,<3.15"
+authors = [
+    { name = "Matt Gill", email = "mgill@agaviation.org" },
+]
+dependencies = [
+    "pyserial (>=3.5,<4.0)",
+    "matplotlib (>=3.10.9,<4.0.0)",
+    "scipy (>=1.17.1,<2.0.0)",
+    "pyqt6 (>=6.11.0,<7.0.0)",
+    "superqt (>=0.8.1,<0.9.0)",
+    "pyqtgraph (>=0.14.0,<0.15.0)",
+    "reportlab (>=4.4.10,<5.0.0)",
+    "svglib (>=1.6.0,<2.0.0)",
+    "pyusb (>=1.3.1,<2.0.0)",
+    "libusb (>=1.0.29.post7,<2.0.0)",
+    "pandas (>=3.0.2,<4.0.0)",
+    "numpy (>=2.4.4,<3.0.0)",
+    "openpyxl (>=3.1.5,<4.0.0)",
+    "openpyxl-image-loader (>=1.0.5,<2.0.0)",
+    "imutils (>=0.5.4,<0.6.0)",
+    "opencv-python-headless (>=4.13.0.92,<5.0.0.0)",
+    "scikit-image (>=0.26.0,<0.27.0)",
+    "send2trash (>=2.1.0,<3.0.0)",
+    "sqlalchemy (>=2.0.49,<3.0.0)",
+    "alembic (>=1.18.4,<2.0.0)"
 
-[tool.poetry]
-name = "accupatt"
-version = "2.0"
-description = "Aircraft Spray Pattern Testing Application"
-authors = ["gill14 <59205277+gill14@users.noreply.github.com>"]
+]
 
-[tool.poetry.dependencies]
-python = ">=3.10,<3.12"
-pyserial = "^3.5"
-matplotlib = "^3.5.1"
-scipy = "^1.7.3"
-pyqtgraph = "^0.12.3"
-reportlab = "^4.0.0"
-svglib = "^1.4"
-pandas = "^1.3.5"
-numpy = "^1.22.0"
-openpyxl = "^3.0.9"
-openpyxl-image-loader = "^1.0.5"
-superqt = "^0.3.3"
-PyQt6 = "^6.2.2"
-SQLAlchemy = "^1.4.36"
-alembic = "^1.7.7"
-imutils = "^0.5.4"
-opencv-python-headless = "^4.8.0.76"
-scikit-image = "^0.20.0"
-Send2Trash = "^1.8.0"
-pyusb = "^1.2.1"
-libusb = "^1.0.26b5"
-
-[tool.poetry.group.dev.dependencies]
-black = ">=22"
+[dependency-groups]
+dev = [
+    "black (>=26.3.1,<27.0.0)"
+]
+dev-win = [
+    { include-group = "dev" },
+    "pyinstaller (>=6.20.0,<7.0.0)"
+]
+dev-osx = [
+    { include-group = "dev" },
+    "py2app (>=0.28.10,<0.29.0)"
+]
 
 [tool.poetry.group.dev-win]
 optional = true
 
-[tool.poetry.group.dev-win.dependencies]
-pyinstaller = "^5.2"
-
 [tool.poetry.group.dev-osx]
 optional = true
-
-[tool.poetry.group.dev-osx.dependencies]
-py2app = "^0.28.2"
 
 [tool.setuptools]
 py-modules = []

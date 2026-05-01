@@ -7,7 +7,6 @@ from PyQt6.QtCore import (
     QAbstractTableModel,
     QModelIndex,
     Qt,
-    QVariant,
     pyqtSignal,
     pyqtSlot,
 )
@@ -150,8 +149,8 @@ class PassTable(QAbstractTableModel):
             role == Qt.ItemDataRole.DisplayRole
             and orientation == Qt.Orientation.Vertical
         ):
-            return QVariant(self.headers[section])
-        return QVariant()
+            return self.headers[section]
+        return None
 
     def data(self, index, role):
         if role == Qt.ItemDataRole.TextAlignmentRole:
@@ -238,7 +237,7 @@ class PassTable(QAbstractTableModel):
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
                 return p.get_humidity()[2]
         else:
-            return QVariant()
+            return None
 
     def setData(self, index, value, role=Qt.ItemDataRole.EditRole) -> bool:
         if value is None:

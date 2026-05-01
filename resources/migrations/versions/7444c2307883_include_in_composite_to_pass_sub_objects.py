@@ -7,6 +7,7 @@ Create Date: 2022-06-10 14:52:55.227163
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -22,14 +23,18 @@ def upgrade():
      # Migrate
     conn = op.get_bind()
     result = conn.execute(
-       '''SELECT id, string_include_in_composite, cards_include_in_composite FROM passes'''
+        text("SELECT id, string_include_in_composite, cards_include_in_composite FROM passes")
     )
     passes = result.fetchall()
     for row in passes:
-        conn.execute("""UPDATE pass_string SET include_in_composite = ? WHERE pass_id = ?""",
-                     (row[1],row[0]))
-        conn.execute("""UPDATE pass_spray_card SET include_in_composite = ? WHERE pass_id = ?""",
-                     (row[2],row[0]))
+        conn.execute(
+            text("UPDATE pass_string SET include_in_composite = :inc WHERE pass_id = :pid"),
+            {"inc": row[1], "pid": row[0]},
+        )
+        conn.execute(
+            text("UPDATE pass_spray_card SET include_in_composite = :inc WHERE pass_id = :pid"),
+            {"inc": row[2], "pid": row[0]},
+        )
     op.drop_column(table_name="passes", column_name="string_include_in_composite")
     op.drop_column(table_name="passes", column_name="cards_include_in_composite")
 

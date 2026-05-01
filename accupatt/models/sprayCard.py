@@ -6,7 +6,7 @@ import accupatt.config as cfg
 import cv2
 from skimage.draw import ellipse_perimeter
 from skimage.feature import peak_local_max
-from skimage.measure import find_contours, label as sklabel, regionprops
+from skimage.measure import find_contours, label as sklabel, regionprops_table
 from skimage.segmentation import watershed
 from scipy import ndimage
 import numpy as np
@@ -56,9 +56,15 @@ class SprayCard:
         self.current = False
         # Temporary working variable
         self.threshold_grayscale_calculated = cfg.get_threshold_grayscale()
+        # Single-entry image cache: (filepath, ndarray) — avoids repeated disk reads
+        # during interactive threshold tuning. Always return a copy so in-place
+        # drawContours calls in get_overlay_image don't corrupt the cached original.
+        self._image_cache: tuple = (None, None)
 
     def image_original(self):
-        return sprayCardImageFileHandler.read_image_from_file(self)
+        if self._image_cache[0] != self.filepath:
+            self._image_cache = (self.filepath, sprayCardImageFileHandler.read_image_from_file(self))
+        return self._image_cache[1].copy()
 
     def process_image(self, overlay=False, mask=False):
         self.current = True
@@ -77,6 +83,7 @@ class SprayCard:
 
     def set_filepath(self, filepath):
         self.filepath = filepath
+        self._image_cache = (None, None)
 
     def set_threshold_type(self, type_=cfg.THRESHOLD_TYPE__DEFAULT):
         self.threshold_type = type_
@@ -114,6 +121,9 @@ class SprayCard:
             self.threshold_color_brightness_pass = bandpass
 
 
+_atomization_model = AtomizationModel()
+
+
 @dataclass
 class SprayCardStats:
     sprayCard: SprayCard
@@ -136,7 +146,7 @@ class SprayCardStats:
             return self.dv01
 
     def get_dv01_color(self) -> str:
-        return AtomizationModel().dsc_color_dv01(dv01=self.dv01)
+        return _atomization_model.dsc_color_dv01(dv01=self.dv01)
 
     def get_dv05(self, text=False):
         if text:
@@ -145,7 +155,7 @@ class SprayCardStats:
             return self.dv05
 
     def get_dv05_color(self) -> str:
-        return AtomizationModel().dsc_color_dv05(dv05=self.dv05)
+        return _atomization_model.dsc_color_dv05(dv05=self.dv05)
 
     def get_dv09(self, text=False):
         if text:
@@ -154,13 +164,13 @@ class SprayCardStats:
             return self.dv09
 
     def get_dv09_color(self) -> str:
-        return AtomizationModel().dsc_color_dv09(dv09=self.dv09)
+        return _atomization_model.dsc_color_dv09(dv09=self.dv09)
 
     def get_dsc(self):
-        return AtomizationModel().dsc(dv01=self.dv01, dv05=self.dv05)
+        return _atomization_model.dsc(dv01=self.dv01, dv05=self.dv05)
 
     def get_dsc_color(self) -> str:
-        return AtomizationModel().dsc_color(dv01=self.dv01, dv05=self.dv05)
+        return _atomization_model.dsc_color(dv01=self.dv01, dv05=self.dv05)
 
     def get_relative_span(self, text=False):
         if self.dv05 == 0:
@@ -197,7 +207,7 @@ class SprayCardStats:
             return 0
         # Calculate coverage as percent of pixel area
         cov = (
-            sum([stain["area"] for stain in stains]) / self.sprayCard.area_px2
+            sum(stain["area"] for stain in stains) / self.sprayCard.area_px2
         ) * 100.0
         if text:
             return f"{cov:.2f}%"
@@ -205,7 +215,7 @@ class SprayCardStats:
             return cov
 
     def get_number_of_stains(self, text=False):
-        l = len([s for s in self.sprayCard.stains if s["is_include"]])
+        l = sum(1 for s in self.sprayCard.stains if s["is_include"])
         if text:
             return str(l)
         else:
@@ -270,26 +280,15 @@ class SprayCardStats:
 
     # Publicly accessible getter for dd and dv lists, only public so can be used in Composite Card calculations
 
-    def get_droplet_diameters_and_volumes(self) -> tuple[list[float], list[float]]:
-        stains = [s for s in self.sprayCard.stains if s["is_include"]]
-        # Protect agains empty array
-        if not stains:
+    def get_droplet_diameters_and_volumes(self) -> tuple[np.ndarray, np.ndarray]:
+        areas = np.array([s["area"] for s in self.sprayCard.stains if s["is_include"]])
+        if areas.size == 0:
             return [], []
-        drop_dia_um = []
-        drop_vol_um3 = []
-        # Sort areas into ascending order of size
-        stains.sort(key=lambda s: s["area"])
-        for stain in stains:
-            # Convert px2 to um2
-            area_um2 = self._px2_to_um2(stain["area"])
-            # Calculate stain diameter assuming circular stain
-            dia_um = math.sqrt((4.0 * area_um2) / math.pi)
-            # Apply Spread Factors to get originating drop diameter
-            drop_dia_um.append(self._stain_dia_to_drop_dia(dia_um))
-            # Use drop diameter to calculate drop volume
-            vol_um3 = (math.pi * drop_dia_um[-1] ** 3) / 6.0
-            # Build volume list
-            drop_vol_um3.append(vol_um3)
+        areas.sort()
+        area_um2 = self._px2_to_um2(areas)
+        dia_um = np.sqrt((4.0 * area_um2) / np.pi)
+        drop_dia_um = self._stain_dia_to_drop_dia(dia_um)
+        drop_vol_um3 = (np.pi * drop_dia_um**3) / 6.0
         return drop_dia_um, drop_vol_um3
 
     # Internal Functions
@@ -400,37 +399,36 @@ class SprayCardImageProcessor:
             labels = watershed(-distance, markers, mask=image_t, watershed_line=True)
         else:
             labels = sklabel(image_t)
-        # Iterate over each generated label
-        for r in regionprops(labels):
-            # Skip background
-            if r.label == 0:
-                continue
-            # Check for mimimum area
-            is_too_small = r.area < sc.min_stain_area_px
-            # Get bbox vals for offsetting local region
-            x1, y1, x2, y2 = r.bbox
-            # Check if touching edge
-            is_edge = (
-                True
-                if x1 <= 0
-                or y1 <= 0
-                or x2 >= image_t.shape[0] - 1
-                or y2 >= image_t.shape[1] - 1
-                else False
-            )
-            # Valid unless otherwise declared
+        _base = ["label", "area", "bbox", "centroid"]
+        _method = sc.stain_approximation_method
+        if _method in [
+            cfg.STAIN_APPROXIMATION_ELLIPSE,
+            cfg.STAIN_APPROXIMATION_MIN_CIRCLE,
+        ]:
+            _extra = ["minor_axis_length", "major_axis_length", "orientation", "image"]
+        elif _method == cfg.STAIN_APPROXIMATION_CONVEX_HULL:
+            _extra = ["image_convex", "area_convex"]
+        else:
+            _extra = ["image"]
+        props = regionprops_table(labels, properties=_base + _extra)
+        h, w = image_t.shape
+        p_label = props["label"]
+        p_area = props["area"]
+        p_x1 = props["bbox-0"]
+        p_y1 = props["bbox-1"]
+        p_x2 = props["bbox-2"]
+        p_y2 = props["bbox-3"]
+        min_area = sc.min_stain_area_px
+        for i in range(len(p_label)):
+            x1, y1, x2, y2 = p_x1[i], p_y1[i], p_x2[i], p_y2[i]
+            is_too_small = p_area[i] < min_area
+            is_edge = x1 <= 0 or y1 <= 0 or x2 >= h - 1 or y2 >= w - 1
             is_include = not is_too_small and not is_edge
-            c, area = self._approximate_stain(r, image_t.shape)
-            # Convert to cv2 image array, applying offsets (-1 for padding above)
-            c_ = []
-            for pt in c:
-                c_.append([int(pt[1]), int(pt[0])])
-            c = np.array(c_).astype(int)
-
-            # Add it to the stains list for later use
+            c, area = self._approximate_stain(props, i, image_t.shape)
+            c = c[:, ::-1].astype(int)
             sc.stains.append(
                 {
-                    "index": r.label,
+                    "index": p_label[i],
                     "contour": c,
                     "area": area,
                     "is_too_small": is_too_small,
@@ -455,34 +453,19 @@ class SprayCardImageProcessor:
         sc = self.sprayCard
         img = np.zeros((self.img_src.shape[0], self.img_src.shape[1], 3), np.uint8)
         img[:] = (255, 255, 255)
-        cv2.drawContours(
-            img,
-            [stain["contour"] for stain in sc.stains if stain["is_too_small"]],
-            -1,
-            cfg.COLOR_STAIN_FILL_ALL[::-1],
-            -1,
-        )
-        cv2.drawContours(
-            img,
-            [stain["contour"] for stain in sc.stains if stain["is_edge"]],
-            -1,
-            cfg.COLOR_STAIN_FILL_EDGE[::-1],
-            -1,
-        )
-        cv2.drawContours(
-            img,
-            [stain["contour"] for stain in sc.stains if stain["is_include"]],
-            -1,
-            cfg.COLOR_STAIN_FILL_VALID[::-1],
-            -1,
-        )
-        cv2.drawContours(
-            img,
-            [stain["contour"] for stain in sc.stains if stain["is_include"]],
-            -1,
-            (255, 255, 255),
-            1,
-        )
+        too_small, edge, include = [], [], []
+        for stain in sc.stains:
+            c = stain["contour"]
+            if stain["is_too_small"]:
+                too_small.append(c)
+            if stain["is_edge"]:
+                edge.append(c)
+            if stain["is_include"]:
+                include.append(c)
+        cv2.drawContours(img, too_small, -1, cfg.COLOR_STAIN_FILL_ALL[::-1], -1)
+        cv2.drawContours(img, edge, -1, cfg.COLOR_STAIN_FILL_EDGE[::-1], -1)
+        cv2.drawContours(img, include, -1, cfg.COLOR_STAIN_FILL_VALID[::-1], -1)
+        cv2.drawContours(img, include, -1, (255, 255, 255), 1)
         return img
 
     def _image_threshold(self, img):
@@ -530,76 +513,72 @@ class SprayCardImageProcessor:
         bvl = self.sprayCard.threshold_color_brightness_min
         bvh = self.sprayCard.threshold_color_brightness_max
         bbh = 255
+        # Pre-build bounds arrays once — avoids repeated small allocations inside conditionals
+        lo_all  = np.array([hbl, sbl, bbl], dtype=np.uint8)
+        hi_all  = np.array([hbh, sbh, bbh], dtype=np.uint8)
+        hue_bp  = (np.array([hvl, sbl, bbl], dtype=np.uint8), np.array([hvh, sbh, bbh], dtype=np.uint8))
+        hue_brl = (lo_all,                                     np.array([hvl, sbh, bbh], dtype=np.uint8))
+        hue_brh = (np.array([hvh, sbl, bbl], dtype=np.uint8), hi_all)
+        sat_bp  = (np.array([hbl, svl, bbl], dtype=np.uint8), np.array([hbh, svh, bbh], dtype=np.uint8))
+        sat_brl = (lo_all,                                     np.array([hbh, svl, bbh], dtype=np.uint8))
+        sat_brh = (np.array([hbl, svh, bbl], dtype=np.uint8), hi_all)
+        bri_bp  = (np.array([hbl, sbl, bvl], dtype=np.uint8), np.array([hbh, sbh, bvh], dtype=np.uint8))
+        bri_brl = (lo_all,                                     np.array([hbh, sbh, bvl], dtype=np.uint8))
+        bri_brh = (np.array([hbl, sbl, bvh], dtype=np.uint8), hi_all)
         # Use HSV colorspace
         img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         # Check Hue channel
         if self.sprayCard.threshold_color_hue_pass:
             # Band-Pass
-            mask_hue = cv2.inRange(
-                img_hsv, np.array([hvl, sbl, bbl]), np.array([hvh, sbh, bbh])
-            )
+            mask_hue = cv2.inRange(img_hsv, *hue_bp)
         else:
             # Band-Reject
-            mask_hue_low = cv2.inRange(
-                img_hsv, np.array([hbl, sbl, bbl]), np.array([hvl, sbh, bbh])
+            mask_hue = cv2.bitwise_or(
+                cv2.inRange(img_hsv, *hue_brl),
+                cv2.inRange(img_hsv, *hue_brh),
             )
-            mask_hue_high = cv2.inRange(
-                img_hsv, np.array([hvh, sbl, bbl]), np.array([hbh, sbh, bbh])
-            )
-            mask_hue = cv2.bitwise_or(mask_hue_low, mask_hue_high)
         # Check Saturation channel
         if self.sprayCard.threshold_color_saturation_pass:
             # Band-Pass
-            mask_sat = cv2.inRange(
-                img_hsv, np.array([hbl, svl, bbl]), np.array([hbh, svh, bbh])
-            )
+            mask_sat = cv2.inRange(img_hsv, *sat_bp)
         else:
             # Band-Reject
-            mask_sat_low = cv2.inRange(
-                img_hsv, np.array([hbl, sbl, bbl]), np.array([hbh, svl, bbh])
+            mask_sat = cv2.bitwise_or(
+                cv2.inRange(img_hsv, *sat_brl),
+                cv2.inRange(img_hsv, *sat_brh),
             )
-            mask_sat_high = cv2.inRange(
-                img_hsv, np.array([hbl, svh, bbl]), np.array([hbh, sbh, bbh])
-            )
-            mask_sat = cv2.bitwise_or(mask_sat_low, mask_sat_high)
         # Check Brightness channel
         if self.sprayCard.threshold_color_brightness_pass:
             # Band-Pass
-            mask_bri = cv2.inRange(
-                img_hsv, np.array([hbl, sbl, bvl]), np.array([hbh, sbh, bvh])
-            )
+            mask_bri = cv2.inRange(img_hsv, *bri_bp)
         else:
             # Band-Reject
-            mask_bri_low = cv2.inRange(
-                img_hsv, np.array([hbl, sbl, bbl]), np.array([hbh, sbh, bvl])
+            mask_bri = cv2.bitwise_or(
+                cv2.inRange(img_hsv, *bri_brl),
+                cv2.inRange(img_hsv, *bri_brh),
             )
-            mask_bri_high = cv2.inRange(
-                img_hsv, np.array([hbl, sbl, bvh]), np.array([hbh, sbh, bbh])
-            )
-            mask_bri = cv2.bitwise_or(mask_bri_low, mask_bri_high)
         # Merge layers and return
         return 0, cv2.bitwise_and(cv2.bitwise_and(mask_hue, mask_sat), mask_bri)
 
-    def _approximate_stain(self, regionprop, image_shape):
-        x, y = regionprop.centroid
-        x = int(x)
-        y = int(y)
+    def _approximate_stain(self, props, i, image_shape):
+        x = int(props["centroid-0"][i])
+        y = int(props["centroid-1"][i])
         method = self.sprayCard.stain_approximation_method
         if method in [
             cfg.STAIN_APPROXIMATION_ELLIPSE,
             cfg.STAIN_APPROXIMATION_MIN_CIRCLE,
         ]:
-            r_radius = int(regionprop.minor_axis_length / 2)
-            c_radius = int(regionprop.major_axis_length / 2)
+            r_radius = int(props["minor_axis_length"][i] / 2)
+            c_radius = int(props["major_axis_length"][i] / 2)
             if method == cfg.STAIN_APPROXIMATION_MIN_CIRCLE:
                 radius_max = max(r_radius, c_radius)
                 r_radius = radius_max
                 c_radius = radius_max
             angle = (
                 2 * np.pi
-            ) - regionprop.orientation  # To account for regionprops(ccw) to ellipse_perimeter(cw)
+            ) - props["orientation"][i]  # To account for regionprops(ccw) to ellipse_perimeter(cw)
             if x < 1 or y < 1 or r_radius < 1 or c_radius < 1:
-                return self._get_raw_stain(regionprop)
+                return self._get_raw_stain(props, i)
             rr, cc = ellipse_perimeter(
                 x, y, c_radius, r_radius, shape=image_shape, orientation=angle
             )
@@ -611,19 +590,19 @@ class SprayCardImageProcessor:
             return np.array((rr, cc)).T, np.pi * r_radius * c_radius
         else:
             # No approximation or convex hull
-            return self._get_raw_stain(regionprop)
+            return self._get_raw_stain(props, i)
 
-    def _get_raw_stain(self, regionprop):
-        x1, y1, x2, y2 = regionprop.bbox
+    def _get_raw_stain(self, props, i):
+        x1, y1 = props["bbox-0"][i], props["bbox-1"][i]
         if (
             self.sprayCard.stain_approximation_method
             == cfg.STAIN_APPROXIMATION_CONVEX_HULL
         ):
-            image = regionprop.image_convex
-            area = regionprop.area_convex
+            image = props["image_convex"][i]
+            area = props["area_convex"][i]
         else:
-            image = regionprop.image
-            area = regionprop.area
+            image = props["image"][i]
+            area = props["area"][i]
         # Take local region (bbox) binary image and get the contour of current label
         img_binary_padded = np.pad(image, 1, mode="constant", constant_values=False)
         c = find_contours(
