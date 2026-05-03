@@ -199,7 +199,6 @@ class TabWidgetCards(TabWidgetBase):
         passData.cards.plot(
             mplWidget=self.plotWidgetPass,
             loc_units=self.seriesData.info.swath_units,
-            mod=False,
         )
         model = CardStatTableModel()
         proxyModel = QSortFilterProxyModel()

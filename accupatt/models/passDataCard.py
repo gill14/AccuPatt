@@ -1,4 +1,3 @@
-import matplotlib.ticker
 import numpy as np
 import pandas as pd
 from scipy import interpolate
@@ -33,70 +32,50 @@ class PassDataCard(PassDataBase):
                 "name": [card.name for card in scs],
                 "loc": [float(card.location) for card in scs],
                 "loc_units": [card.location_units for card in scs],
-                "cov": [card.stats.get_percent_coverage() for card in scs],
-                "dep": [card.stats.get_deposition() for card in scs],
+                cfg.CARD_PLOT_Y_AXIS_COVERAGE: [card.stats.get_percent_coverage() for card in scs],
+                cfg.CARD_PLOT_Y_AXIS_DEPOSITION: [card.stats.get_deposition() for card in scs],
                 "dv01": [card.stats.get_dv01() for card in scs],
                 "dv05": [card.stats.get_dv05() for card in scs],
                 "dv09": [card.stats.get_dv09() for card in scs],
             }
         )
 
-    def get_data_mod(self, loc_units, data=pd.DataFrame()) -> pd.DataFrame:
+    def get_data_mod(self, loc_units, data=pd.DataFrame(), doUnits=True, doCenter=True) -> pd.DataFrame:
         if data.empty:
             data = self._get_data_from_card_list()
-        # Homogenize location units to arg
-        for i, (loc, unit) in enumerate(zip(data["loc"], data["loc_units"])):
-            if unit != loc_units:
-                if unit == cfg.UNIT_FT:
-                    data.loc[i, "loc"] = loc / cfg.FT_PER_M
-                else:
-                    data.loc[i, "loc"] = loc * cfg.FT_PER_M
-        # Centerify
-        self._centerify(data, center=self.center, centerMethod=self.center_method)
+        if doUnits:
+            self._adapt_location_units(data, loc_units)
+        if doCenter:
+            self._centerify(data, center=self.center, centerMethod=self.center_method)
         # Do more things potentially...
         return data
+
+    def _adapt_location_units(self, d: pd.DataFrame, loc_units):
+        mask = d["loc_units"] != loc_units
+        ft_mask = mask & (d["loc_units"] == cfg.UNIT_FT)
+        d.loc[ft_mask, "loc"] /= cfg.FT_PER_M
+        d.loc[mask & ~ft_mask, "loc"] *= cfg.FT_PER_M
 
     def _centerify(self, d: pd.DataFrame, center, centerMethod):
         if not center or d.empty:
             return
         if centerMethod == cfg.CENTER_METHOD_CENTROID:
             # Use Centroid
-            c = self._calcCentroid(d)
+            y = d[cfg.get_card_plot_y_axis()]
+            c = (y * d["loc"]).sum() / y.sum()
         elif centerMethod == cfg.CENTER_METHOD_COD:
             # Use Center of Distribution
-            c = self._calcCenterOfDistribution(d)
+            # Trapezoid integration: weighted midpoint across each adjacent pair of cards
+            y = d[cfg.get_card_plot_y_axis()].to_numpy()
+            x = d["loc"].to_numpy()
+            numerator = (y[:-1] * (x[1:] + x[:-1]) + (y[1:] - y[:-1]) * (2 * x[1:] + x[:-1]) / 3).sum()
+            denominator = (y[1:] + y[:-1]).sum()
+            c = numerator / denominator
         else:
             # No centering applied
             c = 0
         # Subtract the calculated center from the x vals
-        d["loc"] = d["loc"].sub(c)
-
-    def _calcCentroid(self, d: pd.DataFrame):
-        y_index = (
-            "dep"
-            if cfg.get_card_plot_y_axis() == cfg.CARD_PLOT_Y_AXIS_DEPOSITION
-            else "cov"
-        )
-        return (d[y_index] * d["loc"]).sum() / d[y_index].sum()
-
-    def _calcCenterOfDistribution(self, d: pd.DataFrame):
-        y_index = (
-            "dep"
-            if cfg.get_card_plot_y_axis() == cfg.CARD_PLOT_Y_AXIS_DEPOSITION
-            else "cov"
-        )
-        sumNumerator = 0.0
-        sumDenominator = 0.0
-        for i in range(0, len(d.index) - 1, 1):
-            D = d.at[i, y_index]
-            Dn = d.at[i + 1, y_index]
-            X = d.at[i, "loc"]
-            Xn = d.at[i + 1, "loc"]
-            # Calc Numerator and add to summation
-            sumNumerator += D * (Xn + X) + (Dn - D) * (2 * Xn + X) / 3
-            sumDenominator += Dn + D
-        # Calc and return CoD
-        return sumNumerator / sumDenominator
+        d["loc"] -= c
 
     """
     Plot Methods
@@ -122,36 +101,23 @@ class PassDataCard(PassDataBase):
         self,
         mplWidget: MplWidget,
         loc_units,
-        mod=True,
+        # mod=True,
         d=pd.DataFrame(),
     ):
         if d.empty:
-            if mod:
-                d = self.get_data_mod(loc_units=loc_units)
-            else:
-                d = self._get_data_from_card_list()
+            d = self.get_data_mod(loc_units=loc_units, doUnits=True, doCenter=False)
         # Setup Axes and Clear
         ax = mplWidget.canvas.ax
         ax.clear()
         ax.set_xlabel(f"Location ({loc_units})")
-        y_index = (
-            "dep"
-            if cfg.get_card_plot_y_axis() == cfg.CARD_PLOT_Y_AXIS_DEPOSITION
-            else "cov"
-        )
-        ylab = cfg.get_card_plot_y_axis().capitalize()
-        if y_index == "dep":
-            ylab = ylab + f" ({cfg.get_unit_rate()})"
-        elif y_index == "cov":
-            ylab = ylab + f" (%)"
-        ax.set_ylabel(ylab)
+        ax.set_ylabel(cfg.get_card_plot_y_axis_label())
         # Populate data if available
         if not d["loc"].empty:
             # Interpolate so that fill-between looks good
             locs_i = np.linspace(
                 d["loc"].iloc[0], d["loc"].iloc[-1], num=d.shape[0] * 10
             )
-            y_i = interpolate.interp1d(d["loc"], d[y_index], kind="slinear")(locs_i)
+            y_i = interpolate.interp1d(d["loc"], d[cfg.get_card_plot_y_axis()], kind="slinear")(locs_i)
 
             # Colorize
             if cfg.get_card_plot_shading():
@@ -159,7 +125,7 @@ class PassDataCard(PassDataBase):
                 if method == cfg.CARD_PLOT_SHADING_METHOD_DSC:
                     # Blank active cards need values for dv01/dv05 for shading, so interpolate
                     d = d.set_index("loc")
-                    d = d.sort_values(by="loc", axis=0)
+                    d = d.sort_index()
                     d["dv01"] = d["dv01"].interpolate(
                         method="slinear", fill_value="extrapolate"
                     )
@@ -173,18 +139,17 @@ class PassDataCard(PassDataBase):
                         if cfg.get_card_plot_shading_interpolate()
                         else "nearest"
                     )
-                    interpolator = interpolate.interp1d(
-                        d["loc"], d["dv01"], kind=kind, fill_value="extrapolate"
-                    )
-                    dv01_i = interpolator(locs_i)
-                    interpolator = interpolate.interp1d(
-                        d["loc"], d["dv05"], kind=kind, fill_value="extrapolate"
-                    )
-                    dv05_i = interpolator(locs_i)
+                    dv_i = interpolate.interp1d(
+                        d["loc"],
+                        np.array([d["dv01"], d["dv05"]]),
+                        kind=kind,
+                        fill_value="extrapolate",
+                    )(locs_i)
+                    model = AtomizationModel()
                     dsc_i = np.array(
                         [
-                            AtomizationModel().dsc(dv01=dv01, dv05=dv05)
-                            for (dv01, dv05) in zip(dv01_i, dv05_i)
+                            model.dsc(dv01=dv01, dv05=dv05)
+                            for dv01, dv05 in zip(dv_i[0], dv_i[1])
                         ]
                     )
                     # Plot the fill data using dsc-specified colors
@@ -198,10 +163,10 @@ class PassDataCard(PassDataBase):
                         fill_mask = np.ma.masked_where(dsc_i != category, y_i)
                         if not np.any(np.ma.getmask(fill_mask)):
                             continue
-                        d = np.diff(np.asarray(np.ma.getmask(fill_mask), dtype=int))
-                        d = np.append(d, 0)  # To sync shape
+                        diff = np.diff(np.asarray(np.ma.getmask(fill_mask), dtype=int))
+                        diff = np.append(diff, 0)  # To sync shape
                         # -1 vals are at trailing ends of unmasked regions
-                        fill_mask[d < 0] = y_i[d < 0]
+                        fill_mask[diff < 0] = y_i[diff < 0]
                         ax.fill_between(
                             locs_i,
                             fill_mask,

@@ -1040,6 +1040,14 @@ def get_card_plot_y_axis() -> str:
         _CARD_PLOT_Y_AXIS, defaultValue=CARD_PLOT_Y_AXIS__DEFAULT, type=str
     )
 
+def get_card_plot_y_axis_label() -> str:
+    y_axis = get_card_plot_y_axis()
+    if y_axis == CARD_PLOT_Y_AXIS_COVERAGE:
+        return f"{y_axis.capitalize()} (%)"
+    elif y_axis == CARD_PLOT_Y_AXIS_DEPOSITION:
+        return f"{y_axis.capitalize()} ({get_unit_rate()})"
+    else:
+        return ""
 
 def set_card_plot_y_axis(value: str):
     QSettings().setValue(_CARD_PLOT_Y_AXIS, value)
