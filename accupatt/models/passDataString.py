@@ -239,9 +239,17 @@ class PassDataString(PassDataBase):
             y_smooth[0 : trim_mask[0]] = np.nan
             y_smooth[trim_mask[-1] : -1] = np.nan
             # Plot trimmed/rebased/smoothed data
+            y_smooth_plot = y_smooth[y != 0]
             pyqtplotwidget.plotItem.plot(
                 name=f"Trimmed{rebase_str}, Smoothed", pen=mkPen("y", width=3)
-            ).setData(x[y != 0], y_smooth[y != 0])
+            ).setData(x[y != 0], y_smooth_plot)
+            # Scale y-axis to smoothed line
+            valid = y_smooth_plot[~np.isnan(y_smooth_plot)]
+            if valid.size:
+                padding = (valid.max() - valid.min()) * 0.05
+                pyqtplotwidget.plotItem.setYRange(
+                    valid.min() - padding, valid.max() + padding, padding=0
+                )
 
     def _config_pypqt_plotter(self, pyqtplotwidget: PlotWidget):
         setConfigOptions(antialias=True, background="k", foreground="w")
