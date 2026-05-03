@@ -315,6 +315,13 @@ class SprayCardStats:
                 + self.sprayCard.spread_factor_b * stain_dia
                 + self.sprayCard.spread_factor_c
             )
+        elif self.sprayCard.spread_method == cfg.SPREAD_METHOD_LN:
+            # D = A * ln(S) + B
+            return (
+                self.sprayCard.spread_factor_a * np.log(stain_dia)
+                + self.sprayCard.spread_factor_b * stain_dia
+                + self.sprayCard.spread_factor_c
+            )
         # DD = DS
         return stain_dia
 

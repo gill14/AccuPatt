@@ -104,6 +104,19 @@
          </widget>
         </item>
         <item>
+         <widget class="QRadioButton" name="radioButtonLn">
+          <property name="toolTip">
+           <string>DD = A * ln(DS) + B</string>
+          </property>
+          <property name="toolTipDuration">
+           <number>5</number>
+          </property>
+          <property name="text">
+           <string>Natural Log</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QRadioButton" name="radioButtonNone">
           <property name="toolTip">
            <string>DD = DS</string>

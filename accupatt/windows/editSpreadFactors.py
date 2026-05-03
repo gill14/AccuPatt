@@ -30,6 +30,8 @@ class EditSpreadFactors(baseclass):
             self.ui.radioButtonAdaptive.setChecked(True)
         elif self.method == cfg.SPREAD_METHOD_DIRECT:
             self.ui.radioButtonDirect.setChecked(True)
+        elif self.method == cfg.SPREAD_METHOD_LN:
+            self.ui.radioButtonLn.setChecked(True)
         else:
             self.ui.radioButtonNone.setChecked(True)
         self.ui.spreadFactorALineEdit.setText(f"{self.sprayCard.spread_factor_a:g}")
@@ -39,6 +41,7 @@ class EditSpreadFactors(baseclass):
         # Setup signals
         self.ui.radioButtonAdaptive.toggled.connect(self.updateLabel)
         self.ui.radioButtonDirect.toggled.connect(self.updateLabel)
+        self.ui.radioButtonLn.toggled.connect(self.updateLabel)
         self.ui.radioButtonNone.toggled.connect(self.updateLabel)
         self.ui.spreadFactorALineEdit.textChanged.connect(self.updateLabel)
         self.ui.spreadFactorBLineEdit.textChanged.connect(self.updateLabel)
@@ -97,6 +100,9 @@ class EditSpreadFactors(baseclass):
         elif self.ui.radioButtonDirect.isChecked():
             eqn = "DD = " + "+".join(pcs)
             self.method = cfg.SPREAD_METHOD_DIRECT
+        elif self.ui.radioButtonLn.isChecked():
+            eqn = "DD = " + f"{a}*ln(DS) + {b}*DS + {c}"
+            self.method = cfg.SPREAD_METHOD_LN
 
         self.ui.labelEquation.setText(eqn)
 
@@ -114,6 +120,10 @@ class EditSpreadFactors(baseclass):
         with QSignalBlocker(self.ui.radioButtonDirect):
             self.ui.radioButtonDirect.setChecked(
                 self.method == cfg.SPREAD_METHOD_DIRECT
+            )
+        with QSignalBlocker(self.ui.radioButtonLn):
+            self.ui.radioButtonLn.setChecked(
+                self.method == cfg.SPREAD_METHOD_LN
             )
         with QSignalBlocker(self.ui.radioButtonAdaptive):
             self.ui.radioButtonAdaptive.setChecked(
