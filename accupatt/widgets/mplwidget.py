@@ -11,7 +11,7 @@ matplotlib.use("QTAgg")
 # Matplotlib canvas class to create figure
 class MplCanvas(Canvas):
     def __init__(self):
-        self.fig = Figure(layout="tight")
+        self.fig = Figure(layout="constrained")
         self.ax: Axes = self.fig.add_subplot(111)
         Canvas.__init__(self, self.fig)
 
@@ -39,15 +39,15 @@ class MplWidget(QtWidgets.QWidget):
         fig.set_size_inches(width_inches, height_inches)
         if self.legend_outside:
             self.canvas.ax.legend(
-                loc="center left", bbox_to_anchor=(1, 0.5), fontsize=6
+                loc="center left", bbox_to_anchor=(1, 0.5), fontsize=8
             )
         elif self.has_legend:
-            self.canvas.ax.legend(fontsize=6)
-        self.canvas.ax.tick_params(axis="both", which="major", labelsize=6)
+            self.canvas.ax.legend(fontsize=8)
+        self.canvas.ax.tick_params(axis="both", which="major", labelsize=8)
         self.xlab_size_original = self.canvas.ax.xaxis.label.get_size()
-        self.canvas.ax.xaxis.label.set_size(6)
+        self.canvas.ax.xaxis.label.set_size(8)
         self.ylab_size_original = self.canvas.ax.yaxis.label.get_size()
-        self.canvas.ax.yaxis.label.set_size(6)
+        self.canvas.ax.yaxis.label.set_size(8)
         self.canvas.draw()
 
     def resize_inches_reset(self):

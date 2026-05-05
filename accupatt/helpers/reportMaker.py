@@ -32,7 +32,10 @@ class ReportMaker:
         self.page_width, self.page_height = letter
         self.bound_x_left = int(0.05 * self.page_width)
         self.bound_x_right = int(0.95 * self.page_width)
-        self.bound_width = round(0.90 * self.page_width)
+        self.bound_y_top = int(0.95 * self.page_height)
+        self.bound_y_bottom = int(0.05 * self.page_height)
+        self.bound_width = int(0.90 * self.page_width)
+        self.bound_height = int(0.90 * self.page_height)
         self.canvas.setLineCap(2)
         self.canvas.setFont("Helvetica", 8)
 
@@ -105,93 +108,6 @@ class ReportMaker:
             width = height / aspect
         return PImage(self.logo_path, width=width, height=height)
 
-    def printHeaders(
-        self,
-        applicator: bool = True,
-        aircraft: bool = True,
-        spray_system: bool = True,
-        nozzles: bool = True,
-        flyin: bool = True,
-        observables: bool = True,
-        setup_notes: bool = True,
-        string_include=False,
-        cards_include=False,
-    ):
-        # Header
-        head = Paragraph(
-            f"{self.i.flyin_name}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;{self.i.flyin_location}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;{self.i.flyin_date}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Analyst:&nbsp;{self.i.flyin_analyst}",
-            style=self.style_center,
-        )
-        f_0 = Frame(
-            self.bound_x_left,
-            700,
-            self.bound_width,
-            75,
-            leftPadding=0,
-            rightPadding=0,
-            bottomPadding=0,
-            topPadding=0,
-            showBoundary=1,
-        )
-        f_0.add(head, self.canvas)
-
-        # Build first row of tables
-        line_1 = []
-        if applicator:
-            line_1.append(self._header_applicator())
-        if aircraft:
-            line_1.append(self._header_aircraft())
-        if spray_system:
-            line_1.append(self._header_spray_system())
-        if nozzles:
-            line_1.append(self._header_nozzles())
-        if len(line_1) > 0:
-            # Make table of tables for row 1 and add it to canvas
-            t_1 = Table([line_1], hAlign="CENTER", vAlign="CENTER")
-            t_1.wrapOn(self.canvas, 50, 30)
-            f_1 = Frame(
-                self.bound_x_left,
-                685,
-                self.bound_width,
-                75,
-                leftPadding=0,
-                rightPadding=0,
-                bottomPadding=0,
-                topPadding=0,
-                showBoundary=0,
-            )
-            f_1.addFromList([t_1], self.canvas)
-        # Build second row of tables
-        line_2 = []
-        # if flyin:
-        #    line_2.append(self._header_flyin())
-        if self.include_logo:
-            line_2.append(self.get_logo_image(max_width=1.5 * inch, max_height=75))
-        if observables:
-            line_2.append(
-                self._header_observables(
-                    string_included=string_include, cards_included=cards_include
-                )
-            )
-        if setup_notes:
-            line_2.append(self._header_setup_notes())
-        if len(line_2) > 0:
-            # Make table of tables for row 2 and add it to canvas
-            t_2 = Table([line_2], hAlign="CENTER", vAlign="CENTER")
-            t_2.wrapOn(self.canvas, 50, 30)
-            f_2 = Frame(
-                self.bound_x_left,
-                595,
-                self.bound_width,
-                90,
-                leftPadding=0,
-                rightPadding=0,
-                bottomPadding=0,
-                topPadding=0,
-                showBoundary=0,
-            )
-            f_2.addFromList([t_2], self.canvas)
-
     def report_safe_string(
         self,
         overlayWidget: MplWidget,
@@ -200,58 +116,49 @@ class ReportMaker:
         backAndForthWidget: MplWidget,
         tableView,
     ):
-        # Headers
-        self.printHeaders(string_include=True)
-        # String Plots
-        y_space = 20
-        y_tall = 137
-        y_short = 110
-        y = 425
-        renderPDF.draw(
-            self._drawing_from_plot_widget(
-                overlayWidget, 0.8 * self.bound_width / inch, y_tall / inch
-            ),
-            self.canvas,
-            self.bound_x_left,
-            y,
+        x, y = self._render_headers(string_include=True)
+        h_space = 5
+        h_large = 145
+        h_small = 115
+        w_large = self.bound_width
+        w_small = 0.725 * self.bound_width
+        y = y - (h_large+h_space)
+        self._render_from_plot_widget(
+            plot_widget = overlayWidget,
+            x = x,
+            y = y,
+            width = w_large,
+            height = h_large,
+            legend_outside = False
         )
-        y = y - y_space - y_tall - 3
-        renderPDF.draw(
-            self._drawing_from_plot_widget(
-                averageWidget, 0.8 * self.bound_width / inch, y_tall / inch
-            ),
-            self.canvas,
-            self.bound_x_left,
-            y,
+        y = y - (h_large + h_space)
+        self._render_from_plot_widget(
+            plot_widget = averageWidget,
+            x = x,
+            y = y,
+            width = w_large,
+            height = h_large,
+            legend_outside = False
         )
-        y = y - y_space - y_short
-        renderPDF.draw(
-            self._drawing_from_plot_widget(
-                racetrackWidget,
-                0.6 * self.bound_width / inch,
-                y_short / inch,
-                legend_outside=True,
-            ),
-            self.canvas,
-            self.bound_x_left,
-            y,
+        y = y - (h_small + h_space)
+        self._render_from_plot_widget(
+            plot_widget = racetrackWidget,
+            x = x,
+            y = y,
+            width = w_small,
+            height = h_small,
+            legend_outside = True
         )
-        y = y - y_space - y_short + 5
-        renderPDF.draw(
-            self._drawing_from_plot_widget(
-                backAndForthWidget,
-                0.6 * self.bound_width / inch,
-                y_short / inch,
-                legend_outside=True,
-            ),
-            self.canvas,
-            self.bound_x_left,
-            y,
+        y = y - (h_small + h_space)
+        self._render_from_plot_widget(
+            plot_widget = backAndForthWidget,
+            x = x,
+            y = y,
+            width = w_small,
+            height = h_small,
+            legend_outside = True
         )
-        # String CV Table
-        table_cv = self._table_string_cv(tableView)
-        table_cv.wrapOn(self.canvas, 100, 250)
-        table_cv.drawOn(self.canvas, 450, 45)
+        self._render_table_string_cv(tableView, 450, 45, 130, 250)
         # Page Break
         self.canvas.showPage()
 
@@ -263,63 +170,55 @@ class ReportMaker:
         tableView,
         passData: Pass,
     ):
-        # Headers
-        self.printHeaders(cards_include=True)
+        # Headers (returns bottom y of headers for plotting start)
+        x, y = self._render_headers(cards_include=True)
         # Card Plots
-        y_space = 25
-        y_tall = 140
-        y_short = 110
-        y = 425
-        """renderPDF.draw(
-            self._drawing_from_plot_widget(
-                spatialDVWidget,
-                0.8 * self.bound_width / inch,
-                y_tall / inch,
-                legend_outside=True,
-            ),
-            self.canvas,
-            self.bound_x_left,
-            y,
+        w_large = self.bound_width
+        w_small = 0.65 * self.bound_width
+        h_large = 160
+        h_small = 140
+        h_space = 5
+        y = y - (h_large + h_space)
+        self._render_from_plot_widget(
+            plot_widget = spatialCoverageWidget,
+            x = x,
+            y = y,
+            width = w_large,
+            height = h_large,
+            legend_outside = True
         )
-        y = y - y_space - y_tall"""
-        renderPDF.draw(
-            self._drawing_from_plot_widget(
-                spatialCoverageWidget,
-                0.8 * self.bound_width / inch,
-                y_tall / inch,
-                legend_outside=True,
-            ),
-            self.canvas,
-            self.bound_x_left,
-            y,
+        y = y - (h_small + h_space)
+        y_table = y + 20
+        self._render_from_plot_widget(
+            plot_widget = histogramNumberWidget,
+            x = x,
+            y = y,
+            width = w_small,
+            height = h_small,
+            legend_outside = False
         )
-        y = y - y_space - y_short
-        renderPDF.draw(
-            self._drawing_from_plot_widget(
-                histogramNumberWidget, 0.5 * self.bound_width / inch, y_short / inch
-            ),
-            self.canvas,
-            self.bound_x_left,
-            y,
+        y = y - (h_small + h_space)
+        self._render_from_plot_widget(
+            plot_widget = histogramCoverageWidget,
+            x = x,
+            y = y,
+            width = w_small,
+            height = h_small,
+            legend_outside = False
         )
-        y = y - y_space - y_short + 5
-        renderPDF.draw(
-            self._drawing_from_plot_widget(
-                histogramCoverageWidget, 0.5 * self.bound_width / inch, y_short / inch
-            ),
-            self.canvas,
-            self.bound_x_left,
-            y,
+        x_table = x + w_small + (0.025 * self.bound_width)
+        h_table = 250
+        w_table = 0.3 * self.bound_width
+        self._render_table_card_stats(
+            tableView,
+            passData = passData,
+            x = x_table,
+            y = y_table,
+            width = w_table,
+            height = h_table
         )
-        # Droplet Dist Table
-        table_cv = self._table_card_stats(tableView, passData.name)
-        table_cv.wrapOn(self.canvas, 100, 250)
-        table_cv.drawOn(self.canvas, 400, y + 145)
-        # Disclaimers
-        size = 6
-        # y = 80
-        # x = 405
-        frame_disclaimers = Frame(400, y + 15, 160, 120)
+        h_disclaimer = 125
+        frame_disclaimers = Frame(x_table, y_table-h_disclaimer, w_table, h_disclaimer)
         frame_disclaimers.addFromList(self._list_disclaimers(passData), self.canvas)
         # Page Break
         self.canvas.showPage()
@@ -438,6 +337,109 @@ class ReportMaker:
         # Return a reportlab-friendly wrapper
         return ImageReader(im_pil)
 
+    def _render_headers(
+        self,
+        applicator: bool = True,
+        aircraft: bool = True,
+        spray_system: bool = True,
+        nozzles: bool = True,
+        flyin: bool = True,
+        observables: bool = True,
+        setup_notes: bool = True,
+        string_include: bool = False,
+        cards_include: bool = False,
+    ) -> tuple[int, int]:
+        x = self.bound_x_left
+        h_flyin_header = 10
+        y_flyin_header = self.bound_y_top - h_flyin_header
+        w = self.bound_width
+        h_space = 5
+        
+        if flyin:
+            Frame(
+                x1=x,
+                y1=y_flyin_header,
+                width=w,
+                height=h_flyin_header,
+                leftPadding=0,
+                rightPadding=0,
+                bottomPadding=0,
+                topPadding=0,
+                showBoundary=1,
+            ).add(Paragraph(
+                f"{self.i.flyin_name}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;{self.i.flyin_location}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;{self.i.flyin_date}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Analyst:&nbsp;{self.i.flyin_analyst}",
+                style=self.style_center,
+            ), self.canvas)  
+
+        # Build first row of tables
+        h_row1 = 75
+        y_row1 = y_flyin_header - (h_row1 + h_space)
+        
+        line_1 = []
+        if applicator:
+            line_1.append(self._header_applicator())
+        if aircraft:
+            line_1.append(self._header_aircraft())
+        if spray_system:
+            line_1.append(self._header_spray_system())
+        if nozzles:
+            line_1.append(self._header_nozzles())
+        if len(line_1) > 0:
+            # Make table of tables for row 1 and add it to canvas
+            t_1 = Table([line_1], hAlign="CENTER", vAlign="CENTER")
+            t_1.wrapOn(self.canvas, w, h_row1)
+            f_1 = Frame(
+                x1=x,
+                y1=y_row1,
+                width=w,
+                height=h_row1,
+                leftPadding=0,
+                rightPadding=0,
+                bottomPadding=0,
+                topPadding=0,
+                showBoundary=0,
+            )
+            f_1.addFromList([t_1], self.canvas)
+        
+        # Build second row of tables
+        h_row2 = 90
+        y_row2 = y_row1 - (h_row2 + h_space)
+        
+        line_2 = []
+        colWidths = []
+        if observables:
+            line_2.append(
+                self._header_observables(
+                    string_included=string_include, cards_included=cards_include
+                )
+            )
+            colWidths.append(None)
+        if setup_notes:
+            line_2.append(self._header_setup_notes())
+            colWidths.append(None)
+        if self.include_logo:
+            line_2.append(self.get_logo_image(max_width=1.5 * inch, max_height=h_row2))
+            colWidths.append(line_2[-1].drawWidth + 10)
+
+        if len(line_2) > 0:
+            # Make table of tables for row 2 and add it to canvas
+            t_2 = Table([line_2], hAlign="CENTER", vAlign="MIDDLE", colWidths=colWidths)
+            t_2.setStyle(TableStyle([("VALIGN", (-1, -1), (-1, -1), "MIDDLE")]))
+            t_2.wrapOn(self.canvas, self.bound_width, h_row2)
+            f_2 = Frame(
+                x1=x,
+                y1=y_row2,
+                width=w,
+                height=h_row2,
+                leftPadding=0,
+                rightPadding=0,
+                bottomPadding=0,
+                topPadding=0,
+                showBoundary=0,
+            )
+            f_2.addFromList([t_2], self.canvas)
+        return x, y_row2
+
     def _header_applicator(self):
         return Table(
             [
@@ -448,6 +450,7 @@ class ReportMaker:
                 ["", self.i.string_phone()],
                 ["", self.i.email],
             ],
+            colWidths=[14, None],
             style=self.tablestyle,
         )
 
@@ -464,6 +467,7 @@ class ReportMaker:
                 ["", "Wingspan:", self.i.string_wingspan()],
                 ["", "Winglets?:", self.i.winglets],
             ],
+            colWidths=[14, None, None],
             style=tablestyle_alt,
         )
 
@@ -477,6 +481,7 @@ class ReportMaker:
                 ["", "Boom Drop:", self.i.string_boom_drop()],
                 ["", "Nozzle Spacing:", self.i.string_nozzle_spacing()],
             ],
+            colWidths=[14, None, None],
             style=self.tablestyle,
         )
 
@@ -500,6 +505,7 @@ class ReportMaker:
                 ["", f"{nozzle2[0]}"],
                 ["", f"{nozzle2[1]}"],
             ],
+            colWidths=[14, None],
             style=tablestyle_alt,
         )
 
@@ -511,6 +517,7 @@ class ReportMaker:
                 ["", self.i.flyin_date],
                 ["", f"Analyst: {self.i.flyin_analyst}"],
             ],
+            colWidths=[14, None],
             style=self.tablestyle,
         )
 
@@ -580,33 +587,40 @@ class ReportMaker:
         row7.append(humidity_string)
         return Table(
             [row1, row2, row3, row4, row5, row6, row7],
+            colWidths=[14] + [None] * (len(row1) - 1),
             style=self.tablestyle_with_headers,
         )
 
     def _header_setup_notes(self):
         notes = [[TTR("Setup Notes"), Paragraph(self.i.notes_setup, style=self.style)]]
         return Table(
-            notes, style=self.tablestyle, rowHeights=[75], colWidths=[None, 80]
+            notes, style=self.tablestyle, rowHeights=[80], colWidths=[14, None]
         )
 
-    def _drawing_from_plot_widget(
-        self, plot_widget: MplWidget, width_in, height_in, legend_outside: bool = False
+    def _render_from_plot_widget(
+        self, plot_widget: MplWidget, x, y, width, height, legend_outside: bool = False
     ):
-        canvas = plot_widget.canvas
-        fig = canvas.fig
+        # Resize the plot widget to the desired size in inches
+        mplCanvas = plot_widget.canvas
+        fig = mplCanvas.fig
         plot_widget.legend_outside = legend_outside
-        plot_widget.resize_inches(width_in, height_in)
-
-        canvas.draw()
+        plot_widget.resize_inches(width / inch, height / inch)
+        mplCanvas.draw()
+        # Save the plot to a BytesIO object in SVG format
         imgdata = BytesIO()
         fig.savefig(imgdata, format="svg")
         imgdata.seek(0)  # rewind the data
-
+        # Reset the plot widget size to avoid affecting the UI
         plot_widget.resize_inches_reset()
-
-        return svg2rlg(imgdata)
-
-    def _table_string_cv(self, tableView):
+        # Convert the SVG data to a ReportLab drawing and render it on the canvas
+        renderPDF.draw(
+            drawing=svg2rlg(imgdata),
+            canvas=self.canvas,
+            x=x,
+            y=y,
+        )
+        
+    def _render_table_string_cv(self, tableView, x, y, width, height):
         tablestyle_alt = TableStyle(
             [
                 ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
@@ -633,31 +647,32 @@ class ReportMaker:
                     tableView.item(row, 2).text(),
                 ]
             )
-        return Table(data, style=tablestyle_alt)
+        table = Table(data, style=tablestyle_alt)
+        table.wrapOn(self.canvas, width, height)
+        table.drawOn(self.canvas, x, y)
 
-    def _table_card_stats(self, tableWidget, passName: str):
+    def _render_table_card_stats(self, tableWidget, passData: Pass, x, y, width, height):
         tablestyle_alt = self.tablestyle_with_headers + [
             ("BACKGROUND", (3, 6), (3, -1), colors.lightgrey)
         ]
         dv01, dv05, dv09, dsc, rs = self.s.calc_droplet_stats(cards_included=True)
-        data = []
-        data.append(["", "", "Measured \u00B9\u22C5\u00B2", "USDA Model \u00B3"])
-        for row in range(tableWidget.rowCount()):
-            data.append(
+        model_values = {0: dsc, 1: dv01, 2: dv05, 3: dv09, 4: rs}
+        data = [
+            ["", "", "Measured \u00B9\u22C5\u00B2", "USDA Model \u00B3"],
+            *[
                 [
                     "",
                     tableWidget.item(row, 0).text(),
                     tableWidget.item(row, 1).text(),
-                    "",
+                    model_values.get(row, ""),
                 ]
-            )
-        data[1][0] = TTR(f"Composite - {passName}")
-        data[1][3] = dsc
-        data[2][3] = dv01
-        data[3][3] = dv05
-        data[4][3] = dv09
-        data[5][3] = rs
-        return Table(data, style=tablestyle_alt)
+                for row in range(tableWidget.rowCount())
+            ],
+        ]
+        data[1][0] = TTR(f"Composite - {passData.name}")
+        table = Table(data, colWidths=[14, None, None, None], style=tablestyle_alt)
+        table.wrapOn(self.canvas, width, height)
+        table.drawOn(self.canvas, x, y)
 
     def _list_disclaimers(self, passData: Pass):
         disclaimers = []
@@ -665,20 +680,23 @@ class ReportMaker:
         sc = [card for card in passData.cards.card_list if card.include_in_composite][0]
         disclaimers.append(
             Paragraph(
-                f"\u00B9  Based on inputs, minimum detectable droplet diameter is {sc.stats.get_minimum_detectable_droplet_diameter()} μm.",
+                f"Based on inputs, minimum detectable droplet diameter is {sc.stats.get_minimum_detectable_droplet_diameter()} μm.",
                 style=self.style,
+                bulletText="•",
             )
         )
         disclaimers.append(
             Paragraph(
-                f"\u00B2  Measured Droplet Spectrum Category is calculated with reference nozzle data, and should not be considered absolute.",
+                "Measured Droplet Spectrum Category is calculated with reference nozzle data, and should not be considered absolute.",
                 style=self.style,
+                bulletText="•",
             )
         )
         disclaimers.append(
             Paragraph(
-                f"\u00B3  USDA Model flow-weighted and interpolated composite calculation based on stated nozzle configuration and quantities.",
+                "USDA Model flow-weighted and interpolated composite calculation based on stated nozzle configuration and quantities.",
                 style=self.style,
+                bulletText="•",
             )
         )
         return disclaimers
