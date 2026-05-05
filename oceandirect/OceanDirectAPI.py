@@ -6,7 +6,7 @@ Created on Wed Jan  9 16:23:44 2019
 import traceback
 import json
 from typing import List
-from ctypes import cdll, c_int, c_ushort, c_uint, c_long, create_string_buffer, c_ulong, c_ubyte, c_double, c_float, c_longlong, POINTER, byref
+from ctypes import c_char, cdll, c_int, c_int32, c_ushort, c_uint, c_long, create_string_buffer, c_ulong, c_ubyte, c_double, c_float, c_longlong, POINTER, byref
 from enum import Enum,auto
 from oceandirect.sdk_properties import oceandirect_dll
 from oceandirect.od_logger import od_logger
@@ -83,8 +83,7 @@ class OceanDirectAPI:
         @param caller: The caller which produces the error code. Use for debugging purposes only.
         :type caller: str
         """
-
-        error_str_len = self.oceandirect.odapi_get_error_string_length(errno)
+        error_str_len = self.oceandirect.odapi_get_error_string_length(errno) + 1 # add 1 for the null terminator
         errstr_cp     = create_string_buffer(b'\000'*error_str_len)
         self.oceandirect.odapi_get_error_string(errno, errstr_cp, error_str_len)
         errstr = ("%s errcode(%d): %s" % (caller, errno, errstr_cp.value.decode()))
@@ -98,38 +97,101 @@ class OceanDirectAPI:
         Return OceanDirect api version information.
         @return An integer tuple of major, minor, and point value.
         """
-
         major = c_uint(0)
         minor = c_uint(0)
         point = c_uint(0)
 
         self.oceandirect.odapi_get_api_version_numbers.argtypes = [POINTER(c_uint), POINTER(c_uint), POINTER(c_uint)]
         self.oceandirect.odapi_get_api_version_numbers(byref(major), byref(minor), byref(point) )
-
         return (major.value, minor.value, point.value)
 
-    def open_device(self, device_id: int) -> 'Spectrometer':
+    def set_multicast_msg_send_retry(self, retryCount: int) -> None:
         """!
-        Attach to a device discovered by probe_devices or get_device_ids. It also saves it to a map
-        keyed off of the device id. After the device is closed the device_id becomes invalid. You need to 
-        call either find_devices()/find_usb_devices()/add_network_device() and get_device_ids() in order 
-        to have a valid id before reopening the device again. Note that this should only be done by
-        one thread at a time. For multithreaded application this function must be synchronized.
-        @param[in] device_id  The device id.
-        @return The device object.
+        Set the number of times to send multicast message for dynamic probing. This must be called before probing network devices.
+        @see find_devices()
+        @param retryCount The number of times to send messages.
+        """
+        self.oceandirect.odapi_set_multicast_msg_send_retry.argtypes = [c_uint]
+        self.oceandirect.odapi_set_multicast_msg_send_retry(retryCount)
+
+    def set_multicast_msg_response_read_delay(self, delayMs: int) -> None:
+        """!
+        Set the delay between reading multicast response. This must be called before probing network devices.
+        @see find_devices()
+        @param delayMs The delay in milliseconds before next read.
+        """
+        self.oceandirect.odapi_set_multicast_msg_response_read_delay.argtypes = [c_uint]
+        self.oceandirect.odapi_set_multicast_msg_response_read_delay(delayMs)
+
+    def set_multicast_msg_response_read_retry(self, retryCount: int) -> None:
+        """!
+        Set the number of times to read multicast message response. This must be called before probing network devices.
+        @see find_devices()
+        @param retryCount The number of times to try reading multicast response messages.
+        """
+        self.oceandirect.odapi_set_multicast_msg_response_read_retry.argtypes = [c_uint]
+        self.oceandirect.odapi_set_multicast_msg_response_read_retry(retryCount)
+
+    def open_device2(self, device_id: int, retryCount: int, timeoutMs: int) -> 'Spectrometer':
+        """!
+        Opens the spectrometer with the given device ID with timeout limit, which allows the various operations
+        listed below to be performed on it by passing this same device ID.  After being opened, the
+        spectrometer not be opened again until it is first closed using closeDevice(). After the device
+        is closed the id becomes invalid. You need to call either findDevices()/findUSBDevices/addNetworkDevice()
+        and getDeviceIDs() in order to have a valid id before reopening the device again. For a network
+        connected device this function may return an error code if the device is not yet ready to accept
+        incoming connection or the device is unreachable(timeout). Note that this should only be done by one
+        thread at a time. For multithreaded application this function must be synchronized.
         @see find_devices()
         @see find_usb_devices()
         @see add_network_device()
+        @param device_id  The device id.
+        @param retryCount Number of times to try opening the device.
+        @param timeoutMs The amount of time(ms) waiting for open device to return before a timeout event is generated.
+        @return The device object.
         """
-
         if device_id in self.open_devices:
             device = self.open_devices[device_id]
-            device.open_device()
         else:
             device = Spectrometer(device_id, self.oceandirect)
-            device.open_device()
+            device.open_device2(retryCount, timeoutMs)
             self.open_devices[device_id] = device
         return device
+
+    def open_device(self, device_id: int) -> 'Spectrometer':
+        """!
+        Opens the spectrometer with the given device ID, which allows the various operations
+        listed below to be performed on it by passing this same device ID.  After being opened, the
+        spectrometer not be opened again until it is first closed using closeDevice(). After the device 
+        is closed the id becomes invalid. You need to call either findDevices()/findUSBDevices/addNetworkDevice()
+        and getDeviceIDs() in order to have a valid id before reopening the device again. For a network
+        connected device this function may return an error code if the device is not yet ready to accept
+        incoming connection or the device is unreachable(timeout). Note that this should only be done by one 
+        thread at a time. For multithreaded application this function must be synchronized.
+        @see find_devices()
+        @see find_usb_devices()
+        @see add_network_device()
+        @param deviceID  The device ID of the device to be opened (get using findDevices())
+        @return The device object.
+        """
+        return self.open_device2(device_id, 1, 500)
+
+    def get_open_device_status(self, device_id: int) -> bool:
+        """!
+        Check if the given device is open or not. If the id is not valid then this function will return false.
+        @see get_device_ids()
+        @param deviceID the identifier of the device as returned by getDeviceIDs.
+        @return True if the device is open otherwise False.
+        """
+        self.oceandirect.odapi_get_open_device_status.argtypes = [c_uint]
+        self.oceandirect.odapi_get_open_device_status.restype  = c_ubyte
+        return bool(self.oceandirect.odapi_get_open_device_status(device_id))
+
+    def get_device(self, device_id: int) -> 'Spectrometer':
+        if device_id in self.open_devices:
+            return self.open_devices[device_id]
+        else:
+            return None
 
     def add_network_device(self, ipAddressStr: str, deviceTypeStr: str) -> None:
         """!
@@ -137,10 +199,9 @@ class OceanDirectAPI:
         the openDevice() function. It is the responsiblitiy of the user to ensure that 
         the device exist and configured properly. Note that this should only be done by one thread
         at a time. For multithreaded application this function must be synchronized.
-        @param[in] ipAddressStr   The ip address of the device to be opened.
-        @param[in] deviceTypeStr  The device type could be OceanFX or OceanHDX. This is case sensitive.
+        @param ipAddressStr   The ip address of the device to be opened.
+        @param deviceTypeStr  The device type could be OceanFX or OceanHDX. This is case sensitive.
         """
-
         if not ipAddressStr or not deviceTypeStr:
             error_msg = self.decode_error(15, "add_network_device")
             raise OceanDirectError(15, error_msg)
@@ -157,10 +218,10 @@ class OceanDirectAPI:
         Detach from the device indicated by device_id. This persists the device for later use. The device_id becomes 
         invalid after closing the device. Note that this should only be done by one thread at a time.
         For multithreaded application this function must be synchronized.
-        @param[in] device_id  The id of the device to be closed.
+        @param device_id  The id of the device to be closed.
         @see open_device()
+        @see open_device2()
         """
-
         if device_id in self.open_devices:
             device = self.open_devices[device_id]
             device.close_device()
@@ -184,10 +245,11 @@ class OceanDirectAPI:
         devices that respond to UDP multicast (FX and HDX), and also returning IDs for any TCP-enabled
         devices that have been manually specified using addTCPDeviceLocation(). Note that this should 
         only be done by one thread at a time. For multithreaded application this function must be synchronized.
-        @return Number of devices found.
+        @see find_usb_devices()
         @see open_device()
+        @see open_device2()
+        @return Number of devices found.
         """
-
         try:
             self.tcpip_devices = self.oceandirect.odapi_detect_network_devices()
         except Exception as e:
@@ -217,10 +279,11 @@ class OceanDirectAPI:
         Finds all available Ocean devices by scanning on USB for devices with Ocean drivers. Note that 
         this should only be done by one thread at a time. For multithreaded application this function
         must be synchronized.
-        @return Number of devices found.
+        @see find_devices()
         @see open_device()
+        @see open_device2()
+        @return Number of devices found.
         """
-
         try:
             self.usb_devices = self.oceandirect.odapi_probe_devices()
         except Exception as e:
@@ -234,12 +297,12 @@ class OceanDirectAPI:
         Manually create an instance of the network attached device and then open it using the openDevice() function. It 
         is the responsiblitiy of the user to ensure that the device exist and configured properly. Note that this
         should only be done by one thread at a time.
-        @param[in] ipAddress The ip address as string (ex: "10.20.30.100" ) of the device to be opened.
-        @param[in] deviceType The device type could be OceanFX or OceanHDX. This is case sensitive.
-        @return The device id.
         @see open_device()
+        @see open_device2()
+        @param ipAddress The ip address as string (ex: "10.20.30.100" ) of the device to be opened.
+        @param deviceType The device type could be OceanFX or OceanHDX. This is case sensitive.
+        @return The device id.
         """
-
         deviceId = -1
         err_cp   = (c_long * 1)(0)
 
@@ -267,14 +330,12 @@ class OceanDirectAPI:
         one thread at a time.
         @return The number of connected(discovered) devices.
         """
-
         try:
             self.num_devices = self.oceandirect.odapi_get_number_of_device_ids()
         except Exception as e:
             exe_msg = traceback.format_exc()
             sdk_data_json = json.dumps(exe_msg)
             logger.error(sdk_data_json)   
-    
         return self.num_devices
 
     def get_device_ids(self) -> list[int]:
@@ -284,21 +345,19 @@ class OceanDirectAPI:
         function must be synchronized.
         @return List of device id's.
         """
-
         #probed  = self.probe_devices(devtype)
         num_ids = self.get_number_devices()
         ids_cp = (c_long * num_ids)()
         err_cp = (c_long * 1)()
-        n      = self.oceandirect.odapi_get_device_ids(ids_cp, err_cp)
+        n      = self.oceandirect.odapi_get_device_ids(ids_cp, num_ids)
 
         if n > 0:
-            self.device_ids = list(ids_cp)
+            self.device_ids = list(ids_cp)[0 : n]
         else:
             self.device_ids =list()
         if err_cp[0] != 0:
             error_msg = self.decode_error(err_cp[0], "get_device_ids")
             raise OceanDirectError(err_cp[0], error_msg)
-
         return self.device_ids
 
     def get_network_device_ids(self) -> list[int]:
@@ -308,30 +367,25 @@ class OceanDirectAPI:
         this function must be synchronized.
         @return List of network device id's.
         """
-
-        #probed  = self.probe_devices(devtype)
+        self.oceandirect.odapi_get_network_device_ids.argtypes = [POINTER(c_long), c_uint]
+        self.oceandirect.odapi_get_network_device_ids.restype  = c_int
         num_ids = self.get_number_devices()
-        ids_cp = (c_long * num_ids)()
-        err_cp = (c_long * 1)()
-        n      = self.oceandirect.odapi_get_network_device_ids(ids_cp, err_cp)
+        ids_cp  = (c_long * num_ids)()
+        n       = self.oceandirect.odapi_get_network_device_ids(ids_cp, c_uint(num_ids))
         networkIds = list()
         if n > 0:
-            for i in range(n):
-                networkIds.append(int(ids_cp[i]))
-        if err_cp[0] != 0:
-            error_msg = self.decode_error(err_cp[0], "get_network_device_ids")
-            raise OceanDirectError(err_cp[0], error_msg)
-
+            networkIds = list(ids_cp)[0 : n]
+            #for i in range(n):
+            #    networkIds.append(int(ids_cp[i]))
         return networkIds
 
     def from_serial_number(self, serial_num: str) -> 'Spectrometer':
         """!
         Return a spectrometer object associated with device id. User should not call this function. This function is
         used internally in OceanDirect.
-        @param[in] serial_num The device serial number.
+        @param serial_num The device serial number.
         @return The spectrometer object if found, None otherwise.
         """
-
         devids = self.get_device_ids()
         dev    = None
 
@@ -349,13 +403,12 @@ class OceanDirectAPI:
     def add_rs232_device(self, device_type: str, bus_path: str, baud: int) -> None:
         """!
         Adds a device connected via RS 232 to the device list. Untested.
-        @param[in] device_type  The name of a type of device. This can be one of the following: QE-PRO, STS.
-        @param[in] bus_path     The location of the device on the RS232 bus. This will be a platform-specific
+        @param device_type  The name of a type of device. This can be one of the following: QE-PRO, STS.
+        @param bus_path     The location of the device on the RS232 bus. This will be a platform-specific
                                 location. Under Windows, this may be COM1, COM2, etc. Under Linux, this might
                                 be /dev/ttyS0, /dev/ttyS1,
-        @param[in] baud         The baud rate. See device manual for supported baud rate.
+        @param baud         The baud rate. See device manual for supported baud rate.
         """
-
         dev_type_cp = create_string_buffer(str.encode(device_type), len(device_type))
         bus_path_cp = create_string_buffer(str.encode(bus_path), len(bus_path))
         added       = self.oceandirect.odapi_add_RS232_device_location(dev_type_cp, bus_path_cp, baud)
@@ -368,10 +421,9 @@ class OceanDirectAPI:
     def get_serial_number(self, dev_id: int) -> str:
         """!
         Gets the serial number of a specified device. This is used internally to find the desired device.
-        @param[in] dev_id  The id of a device.
+        @param dev_id  The id of a device.
         @return The device serial number if found, None otherwise.
         """
-
         serial_number = None
         if dev_id in self.open_devices:
             serial_number = self.open_devices[dev_id].serial_number
@@ -471,7 +523,6 @@ class Spectrometer():
         Read the device serial number.
         @return The serial number.
         """
-
         serial_cp = create_string_buffer(b'\000'*32)
         err_cp    = (c_long * 1)(0)
         self.oceandirect.odapi_get_serial_number(self.device_id, err_cp, serial_cp, 32)
@@ -488,15 +539,13 @@ class Spectrometer():
         Read the device type.
         @return The device type.
         """
-
         device_type = create_string_buffer(b'\000' * 32)
-        err_cp = (c_long * 1)(0)
+        err_cp      = (c_long * 1)(0)
         self.oceandirect.odapi_get_device_type(self.device_id, err_cp, device_type, 32)
 
         if err_cp[0] != 0:
             error_msg = self.decode_error(err_cp[0], "get_device_type")
             raise OceanDirectError(err_cp[0], error_msg)
-
         return device_type.value.decode()
 
     def get_model(self) -> str:
@@ -504,7 +553,6 @@ class Spectrometer():
         Read the correct spectrometer model name assigned.
         @return The device model name.
         """
-
         model_cp = create_string_buffer(b'\000'*32)
         err_cp   = (c_long * 1)(0)
         self.oceandirect.odapi_get_device_name(self.device_id, err_cp, model_cp, 32)
@@ -519,45 +567,65 @@ class Spectrometer():
     def decode_error(self, errno: int, caller: str) -> str:
         """!
         Decodes the error string returned from device calls.
-        @param[in] errno  The error code.
-        @param[in] caller The method name that calls this function.
+        @param errno  The error code.
+        @param caller The method name that calls this function.
         @return The string description of the error code.
         """
-
         error_str_len = self.oceandirect.odapi_get_error_string_length(errno)
-        errstr_cp = create_string_buffer(b'\000'*error_str_len)
+        errstr_cp     = create_string_buffer(b'\000'*error_str_len)
         self.oceandirect.odapi_get_error_string(errno, errstr_cp, error_str_len)
         #logger.error("%s errno(%d): %s" % (caller, errno, errstr_cp.value.decode()))
         return errstr_cp.value.decode()
     
+    def open_device2(self, retryCount: int, timeoutMs: int) -> None:
+        """!
+        Open the current device associated with this spectrometer object.
+        @see close_device()
+        """
+        err_cp = c_int32(0)
+        self.oceandirect.odapi_open_device2.restype  = None
+        self.oceandirect.odapi_open_device2.argtypes = [c_long, POINTER(c_int32), c_uint, c_uint]
+        self.oceandirect.odapi_open_device2(self.device_id, byref(err_cp), retryCount, timeoutMs)
+
+        #LH_WARN_DEVICE_INITIALIZE_INCOMPLETE = 10001
+        if err_cp.value != 0 and err_cp.value != 10001:
+            error_msg = self.decode_error(err_cp.value,"open_device")
+            raise OceanDirectError(err_cp.value, error_msg)
+        else:
+            self.status = 'open'
+            err_cp      = c_int32(0)
+            self.pixel_count_formatted = self.oceandirect.odapi_get_formatted_spectrum_length(self.device_id, byref(err_cp))
+
+            if err_cp.value != 0:
+                error_msg = self.decode_error(err_cp.value, "get_formatted_spectrum_length")
+                raise OceanDirectError(err_cp.value, error_msg)
+            if self.serial_number is None:
+                try:
+                    self.serial_number = self.get_serial_number()
+                except OceanDirectError as err:
+                    [errorCode, errorMsg] = err.get_error_details()
+
+            #Handle an exception. This happens in new devices that doesn't have wavelength
+            #coefficients in it.
+            try:
+                self.get_wavelengths()
+            except OceanDirectError as err:
+                [errorCode, errorMsg] = err.get_error_details()
+                print("open_device(): get_wavelengths() %d = %s" % (errorCode, errorMsg))
+
     def open_device(self) -> None:
         """!
         Open the current device associated with this spectrometer object.
+        @see close_device()
         """
-
-        err_cp = (c_long * 1)(0)
-        self.oceandirect.odapi_open_device(self.device_id, err_cp)
-
-        if err_cp[0] != 0:
-            #logger.error("open_device %s" % self.decode_error(err_cp[0], "open_device"))
-            error_msg = self.decode_error(err_cp[0],"open_device")
-            raise OceanDirectError(err_cp[0], error_msg)
-        else:
-            self.status = 'open'
-            err_cp = (c_long * 1)(0)
-            self.pixel_count_formatted = self.oceandirect.odapi_get_formatted_spectrum_length(self.device_id, err_cp)
-            if err_cp[0] != 0:
-                error_msg = self.decode_error(err_cp[0], "get_formatted_spectrum_length")
-                raise OceanDirectError(err_cp[0], error_msg)
-            if self.serial_number is None:
-                self.serial_number = self.get_serial_number()
-            self.get_wavelengths()
+        self.open_device2(1, 500)
 
     def close_device(self) -> None:
         """!
         Detaches the device to free it up for other users. This function must be called when you're done using the device.
+        @see open_device()
+        @see open_device2()
         """
-
         err_cp = (c_long * 1)(0)
         if self.status == 'open':
             self.oceandirect.odapi_close_device(self.device_id, err_cp)
@@ -569,9 +637,8 @@ class Spectrometer():
     def use_nonlinearity(self, nonlinearity_flag: bool) -> None:
         """!
         Determine if nonlinearity correction should be used in calculations. Typically should be set to true.
-        @param[in] nonlinearity_flag True to enable nonlinearity correction otherwise it's False.
+        @param nonlinearity_flag True to enable nonlinearity correction otherwise it's False.
         """
-
         self.apply_nonlinearity = nonlinearity_flag
         if nonlinearity_flag:
             self.__nlflag = c_ubyte(1)
@@ -580,10 +647,10 @@ class Spectrometer():
 
     def set_scans_to_average(self, newScanToAverage: int) -> None:
         """!
-        Sets the number of spectra to average. 
-        @param[in] newScanToAverage The number of spectra to average.
+        Sets the number of spectra to average.
+        @see get_scans_to_average()
+        @param newScanToAverage The number of spectra to average.
         """
-
         err_cp = (c_long * 1)(0)
         self.oceandirect.odapi_set_scans_to_average(self.device_id, err_cp, newScanToAverage)
 
@@ -594,24 +661,23 @@ class Spectrometer():
     def get_scans_to_average(self) -> int:
         """!
         Gets the number of spectra to average.
+        @see set_scans_to_average()
         @return The number of spectra to average.
         """
-
-        err_cp = (c_long * 1)(0)
+        err_cp        = (c_long * 1)(0)
         scanToAverage = self.oceandirect.odapi_get_scans_to_average(self.device_id, err_cp)
 
         if err_cp[0] != 0:
             error_msg = self.decode_error(err_cp[0], "get_scans_to_average")
             raise OceanDirectError(err_cp[0], error_msg)
-
         return scanToAverage
 
     def set_boxcar_width(self, newBoxcarWidth: int) -> None:
         """!
         Sets the boxcar width to average the spectral data.
-        @param[in] newBoxcarWidth The boxcar width.
+        @see get_boxcar_width()
+        @param newBoxcarWidth The boxcar width.
         """
-
         err_cp = (c_long * 1)(0)
         self.oceandirect.odapi_set_boxcar_width(self.device_id, err_cp, newBoxcarWidth)
 
@@ -622,16 +688,15 @@ class Spectrometer():
     def get_boxcar_width(self) -> int:
         """!
         Read the current boxcar width setting.
+        @see set_boxcar_width()
         @return The boxcar width.
         """
-
-        err_cp = (c_long * 1)(0)
+        err_cp      = (c_long * 1)(0)
         boxcarWidth = self.oceandirect.odapi_get_boxcar_width(self.device_id, err_cp)
 
         if err_cp[0] != 0:
             error_msg = self.decode_error(err_cp[0], "get_boxcar_width")
             raise OceanDirectError(err_cp[0], error_msg)
-
         return boxcarWidth
 
     def get_max_intensity(self) -> int:
@@ -639,7 +704,6 @@ class Spectrometer():
         Returns the maximum pixel value the detector can read.
         @return The maximum intensity.
         """
-
         self.oceandirect.odapi_get_maximum_intensity.restype = c_double
         err_cp        = (c_long * 1)(0)
         max_intensity = self.oceandirect.odapi_get_maximum_intensity(self.device_id, err_cp)
@@ -652,23 +716,51 @@ class Spectrometer():
     def get_formatted_spectrum(self) -> list[float]:
         """!
         Return a formatted spectrum.
+        @deprecated Replaced this function with a more friendly name get_spectrum().
         @return The formatted spectrum.
         """
-
-        spd_c = (c_double * self.pixel_count_formatted)()
-        err_cp = (c_long * 1)(0)
-        self.oceandirect.odapi_get_formatted_spectrum(self.device_id, err_cp, spd_c, self.pixel_count_formatted)
+        spd_c       = (c_double * self.pixel_count_formatted)(0)
+        err_cp      = (c_long * 1)(0)
+        copiedCount = self.oceandirect.odapi_get_formatted_spectrum(self.device_id, err_cp, spd_c, self.pixel_count_formatted)
         if err_cp[0] != 0:
             error_msg = self.decode_error(err_cp[0],"get_formatted_spectrum")
             raise OceanDirectError(err_cp[0], error_msg)
-        return list(spd_c)
+
+        if copiedCount == 0:
+            return list()
+        else:
+            return list(spd_c)
+
+    def get_spectrum(self) -> list[float]:
+        """!
+        Return a spectrum.
+        @return A single spectrum.
+        """
+        spd_c       = (c_double * self.pixel_count_formatted)(0)
+        err_cp      = (c_long * 1)(0)
+        copiedCount = self.oceandirect.odapi_get_spectrum(self.device_id, err_cp, spd_c, self.pixel_count_formatted)
+        if err_cp[0] != 0:
+            error_msg = self.decode_error(err_cp[0],"get_formatted_spectrum")
+            raise OceanDirectError(err_cp[0], error_msg)
+
+        if copiedCount == 0:
+            return list()
+        else:
+            return list(spd_c)
 
     def get_formatted_spectrum_length(self) -> int:
         """!
         Return the formatted spectra length.
+        @deprecated Replaced this function with a more friendly name get_spectrum_length().
         @return The spectra length.
         """
+        return self.pixel_count_formatted
 
+    def get_spectrum_length(self) -> int:
+        """!
+        Return the spectrum length.
+        @return The spectrum length.
+        """
         return self.pixel_count_formatted
 
     def get_wavelengths(self) -> list[float]:
@@ -677,10 +769,9 @@ class Spectrometer():
 	    provided array (up to the given length) with those values.
         @return The wavelength values for the device in a python list.
         """
-
         if self.wavelengths is None:
-            wl_c   = (c_double * self.pixel_count_formatted)()
-            err_cp = (c_long * 1)(0)
+            wl_c        = (c_double * self.pixel_count_formatted)()
+            err_cp      = (c_long * 1)(0)
             buffer_size = self.oceandirect.odapi_get_wavelengths(self.device_id, err_cp, wl_c, self.pixel_count_formatted)
             #logger.info("Buffer size returned: %d  expected %d " % (buffer_size, self.pixel_count_formatted))
             if err_cp[0] != 0:
@@ -695,7 +786,6 @@ class Spectrometer():
         Returns the minimum allowable integration time on the device.
         @return The minimum integration time.
         """
-
         err_cp       = (c_long * 1)(0)
         int_time_min = self.oceandirect.odapi_get_minimum_integration_time_micros(self.device_id, err_cp)
 
@@ -710,14 +800,19 @@ class Spectrometer():
         Returns the maximum allowable integration time on the device.
         @return The maximum integration time.
         """
+        self.oceandirect.odapi_get_maximum_integration_time_micros.restype  = c_ulong
+        self.oceandirect.odapi_get_maximum_integration_time_micros.argtypes = [c_long, POINTER(c_int32)]
+        err_cp       = c_int32(0)
+        int_time_max = self.oceandirect.odapi_get_maximum_integration_time_micros(self.device_id, byref(err_cp))
 
-        err_cp       = (c_long * 1)(0)
-        int_time_max = self.oceandirect.odapi_get_maximum_integration_time_micros(self.device_id, err_cp)
+        if err_cp.value != 0:
+            error_msg = self.decode_error(err_cp.value,"get_maximum_integration_time")
+            raise OceanDirectError(err_cp.value, error_msg)
 
-        if err_cp[0] != 0:
-            error_msg = self.decode_error(err_cp[0], "get_maximum_integration_time")
-            raise OceanDirectError(err_cp[0], error_msg)
-        self.integration_max = int_time_max
+        #NOTE: 
+        #The mask is needed in order to chop off some bytes that are set to 1 (it should be 0) which resulted into
+        #a bad value. This bug was reproduced on device that has very high integration time. This is a python bug.
+        self.integration_max = int_time_max & 0xFFFFFFFF
         return self.integration_max
  
     def get_minimum_averaging_integration_time(self) -> int:
@@ -730,66 +825,72 @@ class Spectrometer():
         using odapi_get_minimum_averaging_integration_time_micros.
         @return The minimum averaging integration time.
         """
+        self.oceandirect.odapi_get_minimum_averaging_integration_time_micros.restype  = c_ulong
+        self.oceandirect.odapi_get_minimum_averaging_integration_time_micros.argtypes = [c_long, POINTER(c_int32)]
+        err_cp       = c_int32(0)
+        int_time_min = self.oceandirect.odapi_get_minimum_averaging_integration_time_micros(self.device_id, byref(err_cp))
 
-        err_cp       = (c_long * 1)(0)
-        int_time_min = self.oceandirect.odapi_get_minimum_averaging_integration_time_micros(self.device_id, err_cp)
-
-        if err_cp[0] != 0:
-            error_msg = self.decode_error(err_cp[0],"get_minimum_averaging_integration_time")
-            raise OceanDirectError(err_cp[0], error_msg)
+        if err_cp.value != 0:
+            error_msg = self.decode_error(err_cp.value,"get_minimum_averaging_integration_time")
+            raise OceanDirectError(err_cp.value, error_msg)
         return int_time_min
 
     def set_integration_time(self, int_time: int) -> None:
         """!
         Sets the integration time on the device. This should be verified to be within range prior
         to calling this function.
-        @param[in] int_time The new integration time in microseconds. See device manual for supported integration increment.
+        @see get_integration_time()
+        @param int_time The new integration time in microseconds. See device manual for supported integration increment.
         """
-
         self.integration_time = int_time
-        err_cp    = (c_long * 1)(0)
-        error_msg = self.oceandirect.odapi_set_integration_time_micros(self.device_id, err_cp, c_ulong(int_time))
+        err_cp    = c_int32(0)
+        error_msg = self.oceandirect.odapi_set_integration_time_micros(self.device_id, byref(err_cp), c_ulong(int_time))
 
-        if err_cp[0] != 0:
-            error_msg = self.decode_error(err_cp[0],"set_integration_time")
-            raise OceanDirectError(err_cp[0], error_msg)
+        if err_cp.value != 0:
+            error_msg = self.decode_error(err_cp.value,"set_integration_time")
+            raise OceanDirectError(err_cp.value, error_msg)
 
     def get_integration_time(self) -> int:
         """!
         Returns the current integration time on the device.
+        @see set_integration_time()
         @return The integration time in microsecond.
         """
+        self.oceandirect.odapi_get_integration_time_micros.restype  = c_ulong
+        self.oceandirect.odapi_get_integration_time_micros.argtypes = [c_long, POINTER(c_int32)]
+        err_cp   = c_int32(0)
+        int_time = self.oceandirect.odapi_get_integration_time_micros(self.device_id, byref(err_cp))
 
-        err_cp   = (c_long * 1)(0)
-        int_time = self.oceandirect.odapi_get_integration_time_micros(self.device_id, err_cp)
+        if err_cp.value != 0:
+            error_msg = self.decode_error(err_cp.value,"get_integration_time")
+            raise OceanDirectError(err_cp.value, error_msg)
 
-        if err_cp[0] != 0:
-            error_msg = self.decode_error(err_cp[0], "get_integration_time")
-            raise OceanDirectError(err_cp[0], error_msg)
-
-        return int_time
+        #NOTE: 
+        #The mask is needed in order to chop off some bytes that are set to 1 (it should be 0) which resulted into
+        #a bad value. This bug was reproduced on device that has very high integration time. This is a python bug.
+        return int_time & 0xFFFFFFFF
 
     def get_integration_time_increment(self) -> int:
         """!
         Returns the integration time increment on the device.
         @return The integration time increment in microsecond.
         """
+        self.oceandirect.odapi_get_integration_time_increment_micros.restype  = c_ulong
+        self.oceandirect.odapi_get_integration_time_increment_micros.argtypes = [c_long, POINTER(c_int32)]
+        err_cp   = c_int32(0)
+        int_time = self.oceandirect.odapi_get_integration_time_increment_micros(self.device_id, byref(err_cp))
 
-        err_cp   = (c_long * 1)(0)
-        int_time = self.oceandirect.odapi_get_integration_time_increment_micros(self.device_id, err_cp)
-
-        if err_cp[0] != 0:
-            error_msg = self.decode_error(err_cp[0], "get_integration_time_increment")
-            raise OceanDirectError(err_cp[0], error_msg)
-
+        if err_cp.value != 0:
+            error_msg = self.decode_error(err_cp.value,"get_integration_time_increment")
+            raise OceanDirectError(err_cp.value, error_msg)
         return int_time
 
     def set_trigger_mode(self, mode: int) -> None:
         """!
         Set the device trigger mode.
-        @param[in] mode Trigger mode. See device manual for the supported trigger mode.
+        @see get_trigger_mode()
+        @param mode Trigger mode. See device manual for the supported trigger mode.
         """
-
         err_cp = (c_long * 1)(0)
         self.oceandirect.odapi_adv_set_trigger_mode(self.device_id, err_cp, mode)
 
@@ -801,27 +902,25 @@ class Spectrometer():
         """!
         Returns the current trigger mode from the device. If this function is not
         supported by the device then an exception will be thrown.
+        @see set_trigger_mode()
         @return The trigger mode.
         """
-
         err_cp  = (c_long * 1)(0)
         trigger = self.oceandirect.odapi_adv_get_trigger_mode(self.device_id, err_cp)
 
         if err_cp[0] != 0:
             error_msg = self.decode_error(err_cp[0], "get_trigger_mode")
             raise OceanDirectError(err_cp[0], error_msg)
-
         return trigger
 
     def get_index_at_wavelength(self, wavelength: float) -> tuple[int, float]:
         """!
         Given an approximate wavelength, finds the closest wavelength and returns the index (pixel number) of that
         wavelength, and the exact wavelength as an ordered pair
-        @param[in] wavelength A double value containing a best guess or approximate (this should be within bounds
+        @param wavelength A double value containing a best guess or approximate (this should be within bounds
                               of the entire wavelength array or an error is generated).
         @return A pair value (tuple) of index (pixel) and wavelength value.
         """
-
         new_wl = (c_double * 1)(0)
         err_cp = (c_long * 1)(0)
         index  = self.oceandirect.odapi_get_index_at_wavelength(self.device_id, err_cp, new_wl, c_double(wavelength))
@@ -835,7 +934,7 @@ class Spectrometer():
         """!
         Given a list of approximate wavelengths, finds the closest wavelengths and returns the indices (pixel numbers) of those
         wavelengths, and the exact wavelength as an ordered pair of lists
-        @param[in] wavelengths  List of approximate wavelengths.
+        @param wavelengths  List of approximate wavelengths.
         @return A pair value (tuple) of list(indices) and list(actual_wavelengths).
         """
         wavelengthCount = len(self.get_wavelengths())
@@ -857,12 +956,11 @@ class Spectrometer():
         """!
         Given a list of approximate wavelengths, finds the closest wavelengths and returns the indices
         (pixel numbers) of those wavelengths, and the exact wavelength as an ordered pair of lists.
-        @param[in] lo     Wavelength lower limit.
-        @param[in] hi     Wavelength upper limit.
-        @param[in] length The number of wavelengths to return.
+        @param lo     Wavelength lower limit.
+        @param hi     Wavelength upper limit.
+        @param length The number of wavelengths to return.
         @return A pair value (tuple) of list(indices) and list(actual_wavelengths)
         """
-
         wavelengthCount = len(self.get_wavelengths())
         c_indices    = (c_int * wavelengthCount)()
         c_wavelength = (c_double * wavelengthCount)() 
@@ -888,14 +986,12 @@ class Spectrometer():
         in that case, this function will return zero.
         @return The number of electric dark pixels on the spectrometer.
         """
-
         err_cp = (c_long * 1)(0)
         self.num_electric_dark_pixels = self.oceandirect.odapi_get_electric_dark_pixel_count(self.device_id, err_cp)
 
         if err_cp[0] != 0:
             error_msg = self.decode_error(err_cp[0],"get_number_electric_dark_pixels")
             raise OceanDirectError(err_cp[0], error_msg)
-
         return self.num_electric_dark_pixels
 
     def get_electric_dark_pixel_indices(self) -> list[int]:
@@ -905,7 +1001,6 @@ class Spectrometer():
         masked pixels; in that case, this function will return zero.
         @return A list of pixels that are electric dark on that spectrometer.
         """
-
         if self.num_electric_dark_pixels is None:
             self.get_number_electric_dark_pixels()
         ed_idx_c = (c_int * self.num_electric_dark_pixels)()
@@ -916,14 +1011,12 @@ class Spectrometer():
             error_msg = self.decode_error(err_cp[0],"electric_dark_pixel_count")
             raise OceanDirectError(err_cp[0], error_msg)
         self.electric_dark_pixels = list(ed_idx_c)
-
         return self.electric_dark_pixels
     
     def details(self) -> None:
         """!
         Prints the defined set of details about the device.
         """
-
         logger.info("Device ID    : %d    status %s" % (self.device_id, self.status))
         logger.info("Serial Number: %s" % self.get_serial_number())
         logger.info("Model        : %s" % self.get_model())
@@ -932,16 +1025,15 @@ class Spectrometer():
     def is_feature_id_enabled(self, featureID: FeatureID) -> bool:
         """!
         Check if the given feature ID is supported by the device or not.
-        @param[in] featureID An id from FeatureID enum.
+        @param featureID An id from FeatureID enum.
         @return True if the feature is supported otherwise it's false.
         """
-        err_cp = (c_long * 1)(0)
+        err_cp            = (c_long * 1)(0)
         feature_supported =self.oceandirect.odapi_is_feature_enabled(self.device_id, err_cp, featureID.value)
 
         if err_cp[0] != 0:
             error_msg = self.decode_error(err_cp[0], "is_feature_id_enabled")
             raise OceanDirectError(err_cp[0], error_msg)
-
         return bool(c_ubyte(feature_supported))
 
     def set_acquisition_delay(self, delayMicrosecond: int) -> None:
@@ -949,9 +1041,9 @@ class Spectrometer():
         Set the acquisition delay in microseconds.  This may also be referred to as the
         trigger delay. In any event, it is the time between some event (such as a request
         for data, or an external trigger pulse) and when data acquisition begins.
-        @param[in] delayMicrosecond The new delay to use in microseconds.
+        @see get_acquisition_delay()
+        @param delayMicrosecond The new delay to use in microseconds.
         """
-
         err_cp = (c_long * 1)(0)
         self.oceandirect.odapi_set_acquisition_delay_microseconds(self.device_id, err_cp, c_ulong(delayMicrosecond))
 
@@ -968,10 +1060,10 @@ class Spectrometer():
         returned value will be the last value sent to odapi_adv_set_acquisition_delay_microseconds().
         If no value has been set and the value cannot be read back, this function will
         indicate an error.
+        @see set_acquisition_delay()
         @return The acquisition delay in microseconds.
         """
-
-        err_cp = (c_long * 1)(0)
+        err_cp            = (c_long * 1)(0)
         delay_microsecond = self.oceandirect.odapi_get_acquisition_delay_microseconds(self.device_id, err_cp)
 
         if err_cp[0] != 0:
@@ -984,8 +1076,7 @@ class Spectrometer():
         Get the allowed step size for the acquisition delay in microseconds.
         @return The acquisition delay step size in microseconds.
         """
-
-        err_cp = (c_long * 1)(0)
+        err_cp                      = (c_long * 1)(0)
         delay_increment_microsecond = self.oceandirect.odapi_get_acquisition_delay_increment_microseconds(self.device_id, err_cp)
 
         if err_cp[0] != 0:
@@ -998,8 +1089,7 @@ class Spectrometer():
         Get the maximum allowed acquisition delay in microseconds.
         @return The maximum acquisition delay in microseconds.
         """
-
-        err_cp = (c_long * 1)(0)
+        err_cp                    = (c_long * 1)(0)
         delay_maximum_microsecond = self.oceandirect.odapi_get_acquisition_delay_maximum_microseconds(self.device_id, err_cp)
 
         if err_cp[0] != 0:
@@ -1012,8 +1102,7 @@ class Spectrometer():
         Get the minimum allowed acquisition delay in microseconds.
         @return The minimum acquisition delay in microseconds.
         """
-
-        err_cp = (c_long * 1)(0)
+        err_cp                    = (c_long * 1)(0)
         delay_minimum_microsecond = self.oceandirect.odapi_get_acquisition_delay_minimum_microseconds(self.device_id, err_cp)
 
         if err_cp[0] != 0:
@@ -1025,9 +1114,8 @@ class Spectrometer():
         """!
         Store a dark spectrum for use in subsequent corrections i.e. dark correction and nonlinearity correction.
         @see getStoredDarkSpectrum.
-        @param darkSpectrum[in] the buffer that contains the dark spectrum to be stored.
+        @param darkSpectrum The buffer that contains the dark spectrum to be stored.
         """
-
         if len(darkSpectrum) == 0:
             #code 10 means missing value
             error_msg = self.decode_error(10,"set_stored_dark_spectrum")
@@ -1051,7 +1139,6 @@ class Spectrometer():
         @see setStoredDarkSpectrum.
         @return The dark spectrum.
         """
-
         double_array = (c_double * self.pixel_count_formatted)()
         err_cp       = (c_long * 1)(0)
         self.oceandirect.odapi_get_stored_dark_spectrum(self.device_id, err_cp, double_array, self.pixel_count_formatted)
@@ -1063,10 +1150,9 @@ class Spectrometer():
     def get_dark_corrected_spectrum1(self, darkSpectrum: list[float]) -> list[float]:
         """!
         Acquire a spectrum and use the supplied dark spectrum to perform a dark correction then return the dark corrected spectrum.
-        @param darkSpectrum[in] the buffer that contains the dark spectrum to be used for the dark correction.
+        @param darkSpectrum The buffer that contains the dark spectrum to be used for the dark correction.
         @return The dark corrected spectrum.
         """
-
         if len(darkSpectrum) == 0:
             #code 10 means missing value
             error_msg = self.decode_error(10,"get_dark_corrected_spectrum1")
@@ -1090,10 +1176,9 @@ class Spectrometer():
         """!
         Dark correct a previously acquired illuminated spectrum and using a stored dark spectrum.
         @see setStoredDarkSpectrum
-        @param illuminatedSpectrum[in] the buffer that contains the illuminated spectrum to be corrected.
+        @param illuminatedSpectrum  The buffer that contains the illuminated spectrum to be corrected.
         @return The dark corrected spectrum.
         """
-
         if len(illuminatedSpectrum) == 0:
             #code 10 means missing value
             error_msg = self.decode_error(10,"dark_correct_spectrum1")
@@ -1119,7 +1204,6 @@ class Spectrometer():
         @see setStoredDarkSpectrum.
         @return The dark corrected spectrum.
         """
-
         corrected_spectrum_array = (c_double * self.pixel_count_formatted)()
         err_cp                   = (c_long * 1)(0)
         self.oceandirect.odapi_get_dark_corrected_spectrum2(self.device_id, err_cp, corrected_spectrum_array, self.pixel_count_formatted)
@@ -1131,11 +1215,10 @@ class Spectrometer():
     def dark_correct_spectrum2(self, darkSpectrum: list[float], illuminatedSpectrum: list[float]) -> list[float]:
         """!
         Dark correct a previously acquired illuminated spectrum and using a previously acquired dark spectrum.
-        @param darkSpectrum[in] the buffer that contains the dark spectrum to be used for the dark correction.
-        @param illuminatedSpectrum[in] the buffer that contains the illuminated spectrum to be corrected.
+        @param darkSpectrum         The buffer that contains the dark spectrum to be used for the dark correction.
+        @param illuminatedSpectrum  The buffer that contains the illuminated spectrum to be corrected.
         @return The dark corrected spectrum.
         """
-
         if len(darkSpectrum) == 0 or len(illuminatedSpectrum) == 0:
             #code 10 means missing value
             error_msg = self.decode_error(10,"dark_correct_spectrum2")
@@ -1165,10 +1248,9 @@ class Spectrometer():
         """!
         Acquire a spectrum and use the supplied dark spectrum to perform a dark correction
         followed by the nonlinearity correction then return the nonlinearity corrected spectrum.
-        @param darkSpectrum[in] the buffer that contains the dark spectrum to be used for the dark correction.
+        @param darkSpectrum  The buffer that contains the dark spectrum to be used for the dark correction.
         @return The nonlinearity corrected spectrum.
         """
-
         if len(darkSpectrum) == 0:
             #code 10 means missing value
             error_msg = self.decode_error(10,"get_nonlinearity_corrected_spectrum1")
@@ -1193,7 +1275,7 @@ class Spectrometer():
         Nonlinearity correct a previously acquired illuminated spectrum  using a stored dark spectrum.
         This function performs a dark correction using a previously stored dark spectrum prior to performing the nonlinearity correction.
         @see setStoredDarkSpectrum
-        @param illuminatedSpectrum[in] the buffer that contains the illuminated spectrum to be corrected.
+        @param illuminatedSpectrum  The buffer that contains the illuminated spectrum to be corrected.
         @return The nonlinearity corrected spectrum.
         """
         if len(illuminatedSpectrum) == 0:
@@ -1222,7 +1304,6 @@ class Spectrometer():
         @see setStoredDarkSpectrum.
         @return The nonlinearity corrected spectrum.
         """
-
         corrected_spectrum_array = (c_double * self.pixel_count_formatted)()
         err_cp                   = (c_long * 1)(0)
 
@@ -1235,8 +1316,8 @@ class Spectrometer():
     def nonlinearity_correct_spectrum2(self, darkSpectrum: list[float], illuminatedSpectrum: list[float]) -> list[float]:
         """!
         Nonlinearity correct a previously acquired illuminated spectrum after dark correction using a previously acquired dark spectrum.
-        @param darkSpectrum[in] the buffer that contains the dark spectrum to be used prior to the nonlinearity correction.
-        @param illuminatedSpectrum[in] the buffer that contains the illuminated spectrum to be corrected.
+        @param darkSpectrum         The buffer that contains the dark spectrum to be used prior to the nonlinearity correction.
+        @param illuminatedSpectrum  The buffer that contains the illuminated spectrum to be corrected.
         @return The nonlinearity corrected spectrum.
         """
         if len(darkSpectrum) == 0 or len(illuminatedSpectrum) == 0:
@@ -1265,12 +1346,43 @@ class Spectrometer():
             raise OceanDirectError(err_cp[0], error_msg)
         return list(corrected_spectrum_array)
 
+    def boxcar_correct_spectrum(self, illuminatedSpectrum: list[float], boxcarWidth: int) -> list[float]:
+        """!
+        Apply a boxcar correction on the given illuminated spectrum.
+        @param illuminatedSpectrum  The spectrum that will be boxcar corrected.
+        @param boxcarWidth          The boxcar width.
+        @return The boxcar corrected spectrum.
+        """
+        if len(illuminatedSpectrum) == 0:
+            #code 10 means missing value
+            error_msg = self.decode_error(10,"boxcar_correct_spectrum")
+            raise OceanDirectError(10, error_msg)
+
+        self.oceandirect.odapi_boxcar_correct_spectrum.argtypes = [c_long, POINTER(c_int), POINTER(c_double), c_uint, c_uint, POINTER(c_double), c_uint]
+
+        illuminated_spectrum_array_count = len(illuminatedSpectrum)
+        illuminated_spectrum_array       = (c_double * illuminated_spectrum_array_count)()
+        boxcar_corrected_spectrum_array  = (c_double * illuminated_spectrum_array_count)(0)
+        err_cp                           = c_int(0)
+
+        for x in range(illuminated_spectrum_array_count):
+            illuminated_spectrum_array[x] = illuminatedSpectrum[x]
+
+        self.oceandirect.odapi_boxcar_correct_spectrum(self.device_id, byref(err_cp), 
+                                                       illuminated_spectrum_array, illuminated_spectrum_array_count, boxcarWidth,
+                                                       boxcar_corrected_spectrum_array, illuminated_spectrum_array_count)
+
+        if err_cp.value != 0:
+            error_msg = self.decode_error(err_cp.value,"boxcar_correct_spectrum")
+            raise OceanDirectError(err_cp.value, error_msg)
+        return list(boxcar_corrected_spectrum_array)
+
     def set_electric_dark_correction_usage(self, isEnabled: bool) -> None:
         """!
         Enable or disable an electric dark correction.
-        @param[in] isEnabled True to enable electric dark correction otherwise it's False.
+        @see get_electric_dark_correction_usage()
+        @param isEnabled True to enable electric dark correction otherwise it's False.
         """
-
         err_cp = (c_long * 1)(0)
         self.oceandirect.odapi_apply_electric_dark_correction_usage(self.device_id, err_cp, isEnabled)
 
@@ -1281,24 +1393,23 @@ class Spectrometer():
     def get_electric_dark_correction_usage(self) -> bool:
         """!
         Return electric dark correction usage.
+        @see set_electric_dark_correction_usage()
         @return True if electric dark connection is applied otherwise it's False.
         """
-
-        err_cp = (c_long * 1)(0)
+        err_cp          = (c_long * 1)(0)
         correctionState = self.oceandirect.odapi_get_electric_dark_correction_usage(self.device_id, err_cp)
 
         if err_cp[0] != 0:
             error_msg = self.decode_error(err_cp[0], "get_electric_dark_correction_usage")
             raise OceanDirectError(err_cp[0], error_msg)
-
         return bool(c_ubyte(correctionState))
 
     def set_nonlinearity_correction_usage(self, isEnabled: bool) -> None:
         """!
         Enable or disable nonlinearity correction.
-        @param[in] isEnabled True to enable nonlinearity correction otherwise it's False.
+        @see get_nonlinearity_correction_usage()
+        @param isEnabled True to enable nonlinearity correction otherwise it's False.
         """
-
         err_cp = (c_long * 1)(0)
         self.oceandirect.odapi_apply_nonlinearity_correct_usage(self.device_id, err_cp, isEnabled)
 
@@ -1309,39 +1420,83 @@ class Spectrometer():
     def get_nonlinearity_correction_usage(self) -> bool:
         """!
         Return nonlinearity correction usage.
+        @see set_nonlinearity_correction_usage()
         @return True if nonlinearity connection is applied otherwise it's False.
         """
-
-        err_cp = (c_long * 1)(0)
+        err_cp          = (c_long * 1)(0)
         correctionState = self.oceandirect.odapi_get_nonlinearity_correct_usage(self.device_id, err_cp)
 
         if err_cp[0] != 0:
             error_msg = self.decode_error(err_cp[0], "get_nonlinearity_correction_usage")
             raise OceanDirectError(err_cp[0], error_msg)
-
         return bool(c_ubyte(correctionState))
 
+    def set_saturation_check(self, checkCorrectedCount: bool)->None:
+        """!
+        Apply spectrum saturation count check. The default saturation check is on the corrected spectrum.
+        @see get_saturation_check()
+        @see get_saturated_spectrum()
+        @param checkCorrectedCount True will apply saturation check on corrected spectrum otherwise it's on raw spectrum.
+        """
+        err_cp = (c_long * 1)(0)
+        self.oceandirect.odapi_apply_saturation_check.argtypes = [c_long, POINTER(c_int), c_ubyte]
+        self.oceandirect.odapi_apply_saturation_check(self.device_id, err_cp, c_ubyte(checkCorrectedCount))
+
+        if err_cp[0] != 0:
+            error_msg = self.decode_error(err_cp[0], "set_saturation_check")
+            raise OceanDirectError(err_cp[0], error_msg)
+
+    def get_saturation_check(self)->bool:
+        """!
+        Return the saturation check state.
+        @see set_saturation_check()
+        @see get_saturated_spectrum()
+        @return return true if saturation check was done on corrected spectrum otherwise it's false.
+        """
+        err_cp = (c_long * 1)(0)
+        self.oceandirect.odapi_get_saturation_check.restype = c_ubyte
+        saturationMode = self.oceandirect.odapi_get_saturation_check(self.device_id, err_cp)
+
+        if err_cp[0] != 0:
+            error_msg = self.decode_error(err_cp[0], "get_saturation_check")
+            raise OceanDirectError(err_cp[0], error_msg)
+        return bool(c_ubyte(saturationMode))
+
+    def get_saturated_spectrum(self)->bool:
+        """!
+        Return the saturation state of the recently read spectrum.
+        @see set_saturation_check()
+        @see get_saturation_check()
+        @return true if saturation was detected otherwise false.
+        """
+        err_cp = (c_long * 1)(0)
+        self.oceandirect.odapi_get_saturated_spectrum.restype = c_ubyte
+        saturationState = self.oceandirect.odapi_get_saturated_spectrum(self.device_id, err_cp)
+
+        if err_cp[0] != 0:
+            error_msg = self.decode_error(err_cp[0], "get_saturated_spectrum")
+            raise OceanDirectError(err_cp[0], error_msg)
+        return bool(c_ubyte(saturationState))
 
     class Advanced():
         """!
         Subclass containing advanced features that may or may not be in the spectrometer. The spectrometer
         specification guide (manual) should be consulted prior to using any of these features.
         """
-
-        lamp_on = c_ubyte(1)
+        lamp_on  = c_ubyte(1)
         lamp_off = c_ubyte(0)
         num_nonlinearity_coeffs = 8
 
         def __init__(self, device: 'Spectrometer'):
-            self.device = device
+            self.device             = device
             self._temperature_count = None
 
         def set_enable_lamp(self, enable: bool) -> None:
             """!
             Enable or disable the lamp.
-            @param[in] enable True to enable lamp, False otherwise.
+            @see get_enable_lamp()
+            @param enable True to enable lamp, False otherwise.
             """
-
             err_cp = (c_long * 1)(0)
 
             if enable :
@@ -1356,10 +1511,10 @@ class Spectrometer():
         def get_enable_lamp(self) -> bool:
             """!
             Return the lamp state.
+            @see set_enable_lamp()
             @return True if lamp is ON otherwise False.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp  = (c_long * 1)(0)
             enabled = self.device.oceandirect.odapi_adv_get_lamp_enable(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -1369,10 +1524,14 @@ class Spectrometer():
 
         def set_shutter_open(self, shutterState: bool) -> None:
             """!
-            This function will open or close the shutter on the spectrometer.
-            @param[in[ shutterState  True will open the shutter. False will then close the shutter.
+            Set the shutter to open or closed. For legacy units like NIRQuest and QEPro, you can
+            also open or close the shutter via GPIO pin 4 by setting the direction to output and
+            the value high(open) or low(close).
+            @see gpio_set_output_enable1()
+            @see gpio_set_value1()
+            @param shutterState  True will open the shutter. False will then close the shutter.
             """
-            err_cp = (c_long * 1)(0)
+            err_cp  = (c_long * 1)(0)
             enabled = self.device.oceandirect.odapi_adv_set_shutter_open(self.device.device_id, err_cp, c_ubyte(shutterState))
 
             if err_cp[0] != 0:
@@ -1381,10 +1540,14 @@ class Spectrometer():
 
         def get_shutter_state(self) -> None:
             """!
-            This function returns the shutter state of the spectrometer.
+            Get the shutter on whether it's open or closed. For legacy units like NIRQuest and QEPro, you can
+            also read the shutter state via GPIO pin 4 by checking the direction as output and check 
+            the value high(open) or low(close).
+            @see gpio_get_output_enable1()
+            @see gpio_set_value1()
             @return True if the shutter is opened otherwise returns False.
             """
-            err_cp = (c_long * 1)(0)
+            err_cp       = (c_long * 1)(0)
             shutterState = self.device.oceandirect.odapi_adv_get_shutter_state(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -1398,16 +1561,14 @@ class Spectrometer():
             If the device don't support this command then a non-zero error code will be returned.
             @return List of wavelength coefficient values.
             """
-
-            wl_c = (c_double * 20)()
-            err_cp = (c_long * 1)(0)
+            wl_c        = (c_double * 20)()
+            err_cp      = (c_long * 1)(0)
             buffer_size = self.device.oceandirect.odapi_get_wavelength_coeffs(self.device.device_id, err_cp, wl_c, 20)
 
             logger.info("Buffer size returned: %d  " % (buffer_size))
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_wavelength_coeffs")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return list(wl_c)[:buffer_size]
 
         def get_nonlinearity_coeffs(self) -> list[float]:
@@ -1416,7 +1577,6 @@ class Spectrometer():
             If the device don't support this command then a non-zero error code will be returned.
             @return A list of nonlinearity coefficients.
             """
-
             num_coeffs = self.num_nonlinearity_coeffs
             nl_coeff   = (c_double * num_coeffs)(0)
             err_cp     = (c_long * 1)(0)
@@ -1425,7 +1585,6 @@ class Spectrometer():
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0],"get_nonlinearity_coeffs")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return list(nl_coeff)
 
         def get_nonlinearity_coeffs_count1(self) -> int:
@@ -1434,14 +1593,12 @@ class Spectrometer():
             If the device don't support this command then a non-zero error code will be returned.
             @return The nonlinearity coefficients count.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp   = (c_long * 1)(0)
             nl_count = self.device.oceandirect.odapi_adv_get_nonlinearity_coeffs_count1(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_nonlinearity_coeffs_count1")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return nl_count
 
         def get_nonlinearity_coeffs1(self, index: int) -> float:
@@ -1449,10 +1606,9 @@ class Spectrometer():
             Read the nonlinearity coefficients count of a given position from the device. This command is being used in legacy devices.
             If the device don't support this command then a non-zero error code will be returned. Use the function
             "get_nonlinearity_coeffs_count1()" to get the correct range of the index value.
-            @param[in] index A zero based value referring to the coefficient position.
+            @param index A zero based value referring to the coefficient position.
             @return The nonlinearity coefficients.
             """
-
             self.device.oceandirect.odapi_adv_get_nonlinearity_coeffs1.restype = c_double
 
             err_cp = (c_long * 1)(0)
@@ -1461,7 +1617,6 @@ class Spectrometer():
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_nonlinearity_coeffs1")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return nl_coefficient
 
         def get_tec_temperature_degrees_C(self) -> float:
@@ -1471,7 +1626,6 @@ class Spectrometer():
             supported by the device then an exception will be thrown.
             @return The temperature in degrees celsius.
             """
-
             self.device.oceandirect.odapi_adv_tec_get_temperature_degrees_C.restype = c_double
             err_cp = (c_long * 1)(0)
             temp   = self.device.oceandirect.odapi_adv_tec_get_temperature_degrees_C(self.device.device_id, err_cp)
@@ -1485,14 +1639,14 @@ class Spectrometer():
             """!
             Apply the setpoint temperature (Celsius) in the thermo-electric cooler. If this function is not
             supported by the device then an exception will be thrown.
-            @param[in] temp_C The setpoint temperature in celsius.
+            @see get_temperature_setpoint_degrees_C()
+            @param temp_C The setpoint temperature in celsius.
             """
-
             err_cp = (c_long * 1)(0)
             temp   = self.device.oceandirect.odapi_adv_tec_set_temperature_setpoint_degrees_C(self.device.device_id, err_cp, c_double(temp_C))
 
             if err_cp[0] != 0:
-                error_msg = self.device.decode_error(err_cp[0],"set_tec_setpoint")
+                error_msg = self.device.decode_error(err_cp[0],"set_temperature_setpoint_degrees_C")
                 raise OceanDirectError(err_cp[0], error_msg)
             #return temp
 
@@ -1500,9 +1654,9 @@ class Spectrometer():
             """!
             Enable or disable the thermo-electric cooler attached to the detector. If this function is not
             supported by the device then an exception will be thrown.
-            @param[in] coolerEnable True to enable the cooler, False otherwise.
+            @see get_tec_enable()
+            @param coolerEnable True to enable the cooler, False otherwise.
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_tec_set_enable(self.device.device_id, err_cp, c_ubyte(coolerEnable))
 
@@ -1514,9 +1668,9 @@ class Spectrometer():
             """!
             Read the state of the thermo-electric cooler whether it's enable or disable. If this function
             is not supported by the device then an exception will be thrown.
+            @see set_tec_enable()
             @return True if the thermo-electric cooler is enabled, False otherwise.
             """
-
             err_cp  = (c_long * 1)(0)
             enabled = self.device.oceandirect.odapi_adv_tec_get_enable(self.device.device_id, err_cp)
 
@@ -1529,15 +1683,15 @@ class Spectrometer():
             """!
             Read the set point temperature of the thermo-electric cooler. If this function is not supported
             by the device then an exception will be thrown.
+            @see set_temperature_setpoint_degrees_C()
             @return The temperature value in celsius.
             """
-
             self.device.oceandirect.odapi_adv_tec_get_temperature_setpoint_degrees_C.restype = c_float
             err_cp = (c_long * 1)(0)
             temp   = self.device.oceandirect.odapi_adv_tec_get_temperature_setpoint_degrees_C(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
-                error_msg = self.device.decode_error(err_cp[0], "get_tec_setpoint")
+                error_msg = self.device.decode_error(err_cp[0], "get_temperature_setpoint_degrees_C")
                 raise OceanDirectError(err_cp[0], error_msg)
             return temp
 
@@ -1547,7 +1701,6 @@ class Spectrometer():
             temperature or not. If this function is not supported by the device then an exception will be thrown.
             @return True if it's stable, False otherwise.
             """
-
             err_cp  = (c_long * 1)(0)
             enabled = self.device.oceandirect.odapi_adv_tec_get_stable(self.device.device_id, err_cp)
 
@@ -1562,7 +1715,6 @@ class Spectrometer():
             If this function is not supported by the device then an exception will be thrown.
             @return True if the fan is enabled, False otherwise.
             """
-
             err_cp  = (c_long * 1)(0)
             enabled = self.device.oceandirect.odapi_adv_tec_get_fan_enable(self.device.device_id, err_cp)
 
@@ -1579,8 +1731,7 @@ class Spectrometer():
             which should be queried before they are used.
             @return The number of light sources (e.g. bulbs) in the indicated feature
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp             = (c_long * 1)(0)
             light_source_count = self.device.oceandirect.odapi_adv_get_light_source_count(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -1592,12 +1743,11 @@ class Spectrometer():
             Queries whether the indicated light source within the given feature instance has a usable
             enable/disable control. If this returns False (meaning no enable available) then calling enable_light_source()
 	        or is_light_source_enabled() is likely to result in an error.
-            @param[in] light_source_index Which of potentially many light sources (LEDs, lasers, light bulbs)
+            @param light_source_index Which of potentially many light sources (LEDs, lasers, light bulbs)
                                        within the indicated feature instance to query
             @return False to indicate specified light source cannot be enabled/disabled. True to indicate specified
                      light source can be enabled/disabled with enable_light_source()
             """
-
             err_cp = (c_long * 1)(0)
             status = self.device.oceandirect.odapi_adv_light_source_has_enable(self.device.device_id, err_cp, light_source_index)
 
@@ -1609,12 +1759,11 @@ class Spectrometer():
         def is_light_source_enabled(self, light_source_index: int) -> bool:
             """!
             Queries whether the indicated light source within the given feature instance is enabled (energized).
-            @param[in] light_source_index Which of potentially many light sources (LEDs, lasers, light bulbs)
+            @param light_source_index Which of potentially many light sources (LEDs, lasers, light bulbs)
                                           within the indicated feature instance to query.
             @return False to indicate specified light source is disabled (should emit no light). True to indicate
                      specified light source is enabled (should emit light depending on configured intensity setting).
             """
-
             err_cp = (c_long * 1)(0)
             status = self.device.oceandirect.odapi_adv_light_source_is_enabled(self.device.device_id, err_cp, light_source_index)
 
@@ -1629,12 +1778,11 @@ class Spectrometer():
             all light sources have an enable/disable control, and this capability can be queried with has_light_source_enable().
 	        Note that an enabled light source should emit light according to its last (or default) intensity
 	        setting which might be the minimum; in this case, the light source might appear to remain off.
-            @param[in] light_source_index  Which of potentially many light sources (LEDs, lasers, light bulbs) within
+            @param light_source_index  Which of potentially many light sources (LEDs, lasers, light bulbs) within
                                     the indicated feature instance to query.
-            @param[in] enable  Whether to enable the light source.  A value of False will attempt to disable the
+            @param enable  Whether to enable the light source.  A value of False will attempt to disable the
                            light source, and any other value will enable it.
             """
-
             err_cp = (c_long * 1)(0)
 
             if enable :
@@ -1652,9 +1800,9 @@ class Spectrometer():
             devices the enable control is shared with other signals (e.g. lamp
             enable and continuous strobe) so this may have some side-effects and
             changing those features may affect the single strobe as well.
-            @param[in] enable  True to enable single strobe otherwise use False.
+            @see get_single_strobe_enable()
+            @param enable  True to enable single strobe otherwise use False.
             """
-
             err_cp = (c_long * 1)(0)
 
             if enable :
@@ -1670,10 +1818,9 @@ class Spectrometer():
             """!
             Set the amount of time, in microseconds, that should elapse after a starting event before
             the single strobe should have a rising edge.
-            @param[in] delayMicrosecond The delay, in microseconds, that the single strobe should wait before
-                                      the pulse begins.
+            @see get_single_strobe_delay()
+            @param delayMicrosecond The delay, in microseconds, that the single strobe should wait before the pulse begins.
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_set_single_strobe_delay(self.device.device_id, err_cp, c_ulong(delayMicrosecond))
 
@@ -1684,11 +1831,11 @@ class Spectrometer():
         def set_single_strobe_width(self, widthMicrosecond: int) -> None:
             """!
             Set the amount of time, in microseconds, that the single strobe pulse should remain high after it begins.
-            @param[in] widthMicrosecond  The duration, in microseconds, of the single strobe pulse after
+            @see get_single_strobe_width()
+            @param widthMicrosecond  The duration, in microseconds, of the single strobe pulse after
                                       the rising edge occurs. Once this duration elapses, a falling edge
                                       will be generated.
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_set_single_strobe_width(self.device.device_id, err_cp, c_ulong(widthMicrosecond))
 
@@ -1702,9 +1849,9 @@ class Spectrometer():
             devices the enable control is shared with other signals (e.g. lamp
             enable and continuous strobe) so this may have some side-effects and
             changing those features may affect the single strobe as well.
+            @see set_single_strobe_enable()
             @return True if single strobe is enabled otherwise it's False.
             """
-
             err_cp = (c_long * 1)(0)
             enable = self.device.oceandirect.odapi_adv_get_single_strobe_enable(self.device.device_id, err_cp)
 
@@ -1716,11 +1863,11 @@ class Spectrometer():
         def get_single_strobe_delay(self) -> int:
             """!
             Get the amount of time, in microseconds, that should elapse after
-            a starting event before the single strobe should have a rising edge
+            a starting event before the single strobe should have a rising edge.
+            @see set_single_strobe_delay()
             @return The delay in microseconds.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp            = (c_long * 1)(0)
             delay_microsecond = self.device.oceandirect.odapi_adv_get_single_strobe_delay(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -1732,10 +1879,10 @@ class Spectrometer():
             """!
             Get the amount of time, in microseconds, that the single strobe pulse
 	        should remain high after it begins.
+            @see set_single_strobe_width()
             @return The pulse width in microseconds.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp            = (c_long * 1)(0)
             width_microsecond = self.device.oceandirect.odapi_adv_get_single_strobe_width(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -1749,11 +1896,9 @@ class Spectrometer():
             light sources could be individual LEDs, light bulbs, lasers, etc.  Each of these light
             sources may have different capabilities, such as programmable intensities and enables,
             which should be queried before they are used.
-
             @return The number of light sources (e.g. bulbs) in the indicated feature
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp             = (c_long * 1)(0)
             light_source_count = self.device.oceandirect.odapi_adv_get_light_source_count(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -1766,13 +1911,11 @@ class Spectrometer():
             Queries whether the indicated light source within the given feature instance has a usable
             enable/disable control. If this returns False (meaning no enable available) then calling enable_light_source()
 	        or is_light_source_enabled() is likely to result in an error.
-
-            @param[in] light_source_index Which of potentially many light sources (LEDs, lasers, light bulbs)
+            @param light_source_index Which of potentially many light sources (LEDs, lasers, light bulbs)
                                        within the indicated feature instance to query
             @return False to indicate specified light source cannot be enabled/disabled. True to indicate specified
                      light source can be enabled/disabled with enable_light_source()
             """
-
             err_cp = (c_long * 1)(0)
             status = self.device.oceandirect.odapi_adv_light_source_has_enable(self.device.device_id, err_cp, light_source_index)
 
@@ -1784,13 +1927,11 @@ class Spectrometer():
         def is_light_source_enabled(self, light_source_index: int) -> bool:
             """!
             Queries whether the indicated light source within the given feature instance is enabled (energized).
-
-            @param[in] light_source_index Which of potentially many light sources (LEDs, lasers, light bulbs)
+            @param light_source_index Which of potentially many light sources (LEDs, lasers, light bulbs)
                                           within the indicated feature instance to query.
             @return False to indicate specified light source is disabled (should emit no light). True to indicate
                      specified light source is enabled (should emit light depending on configured intensity setting).
             """
-
             err_cp = (c_long * 1)(0)
             status = self.device.oceandirect.odapi_adv_light_source_is_enabled(self.device.device_id, err_cp, light_source_index)
 
@@ -1805,13 +1946,11 @@ class Spectrometer():
             all light sources have an enable/disable control, and this capability can be queried with has_light_source_enable().
 	        Note that an enabled light source should emit light according to its last (or default) intensity
 	        setting which might be the minimum; in this case, the light source might appear to remain off.
-
-            @param[in] light_source_index  Which of potentially many light sources (LEDs, lasers, light bulbs) within
+            @param light_source_index  Which of potentially many light sources (LEDs, lasers, light bulbs) within
                                     the indicated feature instance to query.
-            @param[in] enable  Whether to enable the light source.  A value of False will attempt to disable the
+            @param enable  Whether to enable the light source.  A value of False will attempt to disable the
                            light source, and any other value will enable it.
             """
-
             err_cp = (c_long * 1)(0)
 
             if enable :
@@ -1825,14 +1964,12 @@ class Spectrometer():
 
         def set_single_strobe_enable(self, enable: bool) -> None:
             """!
-            Set the enable status of the single strobe signal.  Note that on some
-            devices the enable control is shared with other signals (e.g. lamp
-            enable and continuous strobe) so this may have some side-effects and
+            Set the enable status of the single strobe signal.  Note that on some  devices the enable control is
+            shared with other signals (e.g. lamp enable and continuous strobe) so this may have some side-effects and
             changing those features may affect the single strobe as well.
-
-            @param[in] enable  True to enable single strobe otherwise use False.
+            @see get_single_strobe_enable()
+            @param enable  True to enable single strobe otherwise use False.
             """
-
             err_cp = (c_long * 1)(0)
 
             if enable :
@@ -1848,11 +1985,10 @@ class Spectrometer():
             """!
             Set the amount of time, in microseconds, that should elapse after a starting event before
             the single strobe should have a rising edge.
-
-            @param[in] delayMicrosecond The delay, in microseconds, that the single strobe should wait before
-                                      the pulse begins.
+            @see get_single_strobe_delay()
+            @param delayMicrosecond  The delay, in microseconds, that the single strobe should wait before
+                                     the pulse begins.
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_set_single_strobe_delay(self.device.device_id, err_cp, c_ulong(delayMicrosecond))
 
@@ -1863,12 +1999,11 @@ class Spectrometer():
         def set_single_strobe_width(self, widthMicrosecond: int) -> None:
             """!
             Set the amount of time, in microseconds, that the single strobe pulse should remain high after it begins.
-
-            @param[in] widthMicrosecond  The duration, in microseconds, of the single strobe pulse after
+            @see get_single_strobe_width()
+            @param widthMicrosecond  The duration, in microseconds, of the single strobe pulse after
                                       the rising edge occurs. Once this duration elapses, a falling edge
                                       will be generated.
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_set_single_strobe_width(self.device.device_id, err_cp, c_ulong(widthMicrosecond))
 
@@ -1878,14 +2013,12 @@ class Spectrometer():
 
         def get_single_strobe_enable(self) -> bool:
             """!
-            Get the enable status of the single strobe signal.  Note that on some
-            devices the enable control is shared with other signals (e.g. lamp
-            enable and continuous strobe) so this may have some side-effects and
+            Get the enable status of the single strobe signal.  Note that on some  devices the enable control is shared 
+            with other signals (e.g. lamp enable and continuous strobe) so this may have some side-effects and
             changing those features may affect the single strobe as well.
-
+            @see set_single_strobe_enable()
             @return True if single strobe is enabled otherwise it's False.
             """
-
             err_cp = (c_long * 1)(0)
             enable = self.device.oceandirect.odapi_adv_get_single_strobe_enable(self.device.device_id, err_cp)
 
@@ -1896,13 +2029,12 @@ class Spectrometer():
 
         def get_single_strobe_delay(self) -> int:
             """!
-            Get the amount of time, in microseconds, that should elapse after
-            a starting event before the single strobe should have a rising edge
-
+            Get the amount of time, in microseconds, that should elapse after a starting event before the single
+            strobe should have a rising edge
+            @see set_single_strobe_delay()
             @return The delay in microseconds.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp            = (c_long * 1)(0)
             delay_microsecond = self.device.oceandirect.odapi_adv_get_single_strobe_delay(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -1912,13 +2044,11 @@ class Spectrometer():
 
         def get_single_strobe_width(self) -> int:
             """!
-            Get the amount of time, in microseconds, that the single strobe pulse
-	        should remain high after it begins.
-
+            Get the amount of time, in microseconds, that the single strobe pulse should remain high after it begins.
+            @see set_single_strobe_width()
             @return The pulse width in microseconds.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp            = (c_long * 1)(0)
             width_microsecond = self.device.oceandirect.odapi_adv_get_single_strobe_width(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -1928,13 +2058,11 @@ class Spectrometer():
 
         def get_single_strobe_delay_minimum(self) -> int:
             """!
-            Get the minimum amount of time, in microseconds, that should elapse after
-            a starting event before the single strobe should have a rising edge.
-
+            Get the minimum amount of time, in microseconds, that should elapse after a starting event before the single 
+            strobe should have a rising edge.
             @return The minimum delay in microseconds.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp               = (c_long * 1)(0)
             minimum_microseconds = self.device.oceandirect.odapi_adv_get_single_strobe_delay_minimum(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -1944,13 +2072,11 @@ class Spectrometer():
 
         def get_single_strobe_delay_maximum(self) -> int:
             """!
-            Get the maximum amount of time, in microseconds, that should elapse after
-            a starting event before the single strobe should have a rising edge.
-
+            Get the maximum amount of time, in microseconds, that should elapse after a starting event before the single 
+            strobe should have a rising edge.
             @return The maximum delay in microseconds.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp               = (c_long * 1)(0)
             maximum_microseconds = self.device.oceandirect.odapi_adv_get_single_strobe_delay_maximum(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -1963,7 +2089,7 @@ class Spectrometer():
             Gets the single strobe delay increment in microseconds.
             @return The delay increment.
             """
-            err_cp = (c_long * 1)(0)
+            err_cp          = (c_long * 1)(0)
             delay_increment = self.device.oceandirect.odapi_adv_get_single_strobe_delay_increment(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -1973,12 +2099,10 @@ class Spectrometer():
 
         def get_single_strobe_width_minimum(self) -> int:
             """!
-            Get the minimum amount of time, in microseconds, that the single strobe pulse
-	        should remain high after it begins.
+            Get the minimum amount of time, in microseconds, that the single strobe pulse should remain high after it begins.
             @return The minimum width in microseconds.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp        = (c_long * 1)(0)
             width_minimum = self.device.oceandirect.odapi_adv_get_single_strobe_width_minimum(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -1988,11 +2112,10 @@ class Spectrometer():
 
         def get_single_strobe_width_maximum(self) -> int:
             """!
-            Get the maximum amount of time, in microseconds, that the single strobe pulse
-	        should remain high after it begins.
+            Get the maximum amount of time, in microseconds, that the single strobe pulse should remain high after it begins.
             @return The maximum width in microseconds.
             """
-            err_cp = (c_long * 1)(0)
+            err_cp        = (c_long * 1)(0)
             width_maximum = self.device.oceandirect.odapi_adv_get_single_strobe_width_maximum(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -2005,7 +2128,7 @@ class Spectrometer():
             Get the single strobe width increment.
             @return The width increment.
             """
-            err_cp = (c_long * 1)(0)
+            err_cp          = (c_long * 1)(0)
             width_increment = self.device.oceandirect.odapi_adv_get_single_strobe_width_increment(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -2018,8 +2141,7 @@ class Spectrometer():
             Gets the single strobe cycle maximum in microseconds.
             @return The maximum cycle value.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp       = (c_long * 1)(0)
             cyle_maximum = self.device.oceandirect.odapi_adv_get_single_strobe_cycle_maximum(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -2030,9 +2152,9 @@ class Spectrometer():
         def set_continuous_strobe_period(self, period: int) -> None:
             """!
             Sets the continuous strobe period in microseconds.
-            @param[in] period The new period of the continuous strobe measured in microseconds
+            @see get_continuous_strobe_period()
+            @param period The new period of the continuous strobe measured in microseconds
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_set_continuous_strobe_period_micros(self.device.device_id, err_cp, period)
 
@@ -2043,14 +2165,14 @@ class Spectrometer():
         def set_continuous_strobe_enable(self, enable: bool) -> None:
             """!
             Sets the continuous strobe enable state on the device.
-            @param[in] enable A boolean used for denoting the desired state (on/off) of the continuous
+            @see get_continuous_strobe_enable()
+            @param enable  A boolean used for denoting the desired state (on/off) of the continuous
                            strobe generator. If the value of enable is nonzero, then the continuous
                            strobe will operate. If the value of enable is zero, then the continuous
                            strobe will stop. Note that on some devices the continuous strobe enable
                            is tied to other enables (such as lamp enable or single strobe enable)
                            which may cause side effects.
             """
-
             err_cp = (c_long * 1)(0)
 
             if enable :
@@ -2065,10 +2187,10 @@ class Spectrometer():
         def get_continuous_strobe_period(self) -> int:
             """!
             Get the continuous strobe period in microseconds.
+            @see set_continuous_strobe_period()
             @return the period in microseconds.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp             = (c_long * 1)(0)
             period_microsecond = self.device.oceandirect.odapi_adv_get_continuous_strobe_period_micros(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -2079,9 +2201,9 @@ class Spectrometer():
         def get_continuous_strobe_enable(self) -> bool:
             """!
             Gets the continuous strobe state (enabled or disabled) of the device.
+            @see set_continuous_strobe_enable()
             @return True if continuous strobe is enabled otherwise it's False.
             """
-
             err_cp = (c_long * 1)(0)
             enable = self.device.oceandirect.odapi_adv_get_continuous_strobe_enable(self.device.device_id, err_cp)
 
@@ -2095,8 +2217,7 @@ class Spectrometer():
             Gets the minimum continuous strobe period of the device in microseconds.
             @return The minimum strobe period in microseconds.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp              = (c_long * 1)(0)
             minimum_microsecond = self.device.oceandirect.odapi_adv_get_continuous_strobe_period_minimum_micros(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -2109,8 +2230,7 @@ class Spectrometer():
             Gets the maximum continuous strobe period of the device in microseconds.
             @return The maximum strobe period in microseconds.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp              = (c_long * 1)(0)
             maximum_microsecond = self.device.oceandirect.odapi_adv_get_continuous_strobe_period_maximum_micros(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -2126,8 +2246,7 @@ class Spectrometer():
             increments, typically 1ms.
             @return The current strobe period increment in microseconds.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp                = (c_long * 1)(0)
             increment_microsecond = self.device.oceandirect.odapi_adv_get_continuous_strobe_period_increment_micros(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -2138,9 +2257,10 @@ class Spectrometer():
         def get_continuous_strobe_width(self) -> int:
             """!
             Gets the strobe width of the device in microseconds.
+            @see set_continuous_strobe_width()
             @return The current strobe width in microseconds.
             """
-            err_cp = (c_long * 1)(0)
+            err_cp            = (c_long * 1)(0)
             width_microsecond = self.device.oceandirect.odapi_adv_get_continuous_strobe_width_micros(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -2151,9 +2271,9 @@ class Spectrometer():
         def set_continuous_strobe_width(self, widthMicrosecond: int) -> None:
             """!
             Sets the continuous strobe width on the device.
-            @param[in] widthMicrosecond The new width of the continuous strobe measured in microseconds.
+            @see get_continuous_strobe_width()
+            @param widthMicrosecond The new width of the continuous strobe measured in microseconds.
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_set_continuous_strobe_width_micros(self.device.device_id, err_cp, c_ulong(widthMicrosecond))
 
@@ -2165,7 +2285,6 @@ class Spectrometer():
             """!
             Clear the data buffer. An exception will be thrown if the command is not supported by the device.
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_clear_data_buffer(self.device.device_id, err_cp)
 
@@ -2179,8 +2298,7 @@ class Spectrometer():
             the command is not supported by the device.
             @return A count of how many items are available for retrieval from the buffer.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp             = (c_long * 1)(0)
             number_of_elements = self.device.oceandirect.odapi_adv_get_data_buffer_number_of_elements(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -2191,12 +2309,11 @@ class Spectrometer():
         def get_data_buffer_capacity(self) -> int:
             """!
             Get the present limit of how many data elements will be retained by the buffer. This value can be
-            changed with set_data_buffer_capacity(). An exception will be thrown if the command is
-            not supported by the device.
+            changed with set_data_buffer_capacity(). An exception will be thrown if the command is not supported by the device.
+            @see set_data_buffer_capacity()
             @return A count of how many items the buffer will store before data may be lost.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp         = (c_long * 1)(0)
             maximum_buffer = self.device.oceandirect.odapi_adv_get_data_buffer_capacity(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -2210,8 +2327,7 @@ class Spectrometer():
             the command is not supported by the device.
             @return The largest value that may be set with set_data_buffer_capacity().
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp                  = (c_long * 1)(0)
             maximum_buffer_capacity = self.device.oceandirect.odapi_adv_get_data_buffer_capacity_maximum(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -2225,8 +2341,7 @@ class Spectrometer():
             the command is not supported by the device.
             @return The smallest value that may be set with set_data_buffer_capacity().
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp                  = (c_long * 1)(0)
             minimum_buffer_capacity = self.device.oceandirect.odapi_adv_get_data_buffer_capacity_minimum(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -2239,10 +2354,10 @@ class Spectrometer():
             Set the number of data elements that the buffer should retain. This function must be used
             with "set_number_of_backtoback_scans()". An exception will be thrown if the command is
             not supported by the device.
-            @param[in] capacity Limit on the number of data elements to store. This is bounded by what is returned
+            @see get_data_buffer_capacity()
+            @param capacity  Limit on the number of data elements to store. This is bounded by what is returned
                              by get_data_buffer_capacity_minimum() and get_data_buffer_capacity_maximum().
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_set_data_buffer_capacity(self.device.device_id, err_cp, capacity)
 
@@ -2252,11 +2367,10 @@ class Spectrometer():
 
         def set_data_buffer_enable(self, enable: bool) -> None:
             """!
-            Enable or disable data buffering. An exception will be thrown if the command is
-            not supported by the device.
-            @param[in] enable True enable the buffer. False disable the buffer.
+            Enable or disable data buffering. An exception will be thrown if the command is not supported by the device.
+            @see get_data_buffer_enable()
+            @param enable True enable the buffer. False disable the buffer.
             """
-
             flag = c_ubyte(0)
             if enable == True or enable == 1:
                 flag = c_ubyte(1)
@@ -2270,11 +2384,10 @@ class Spectrometer():
 
         def get_data_buffer_enable(self) -> bool:
             """!
-            Reads the device data buffering enable state. An exception will be thrown if the command
-            is not supported by the device.
+            Reads the device data buffering enable state. An exception will be thrown if the command is not supported by the device.
+            @see set_data_buffer_enable()
             @return True if data buffering is enabled otherwise it's False.
             """
-
             err_cp          = (c_long * 1)(0)
             dataBufferState = self.device.oceandirect.odapi_adv_get_data_buffer_enable(self.device.device_id, err_cp)
 
@@ -2288,8 +2401,9 @@ class Spectrometer():
             Abort spectra acquisition and put the device into an idle state. To resume spectra acquisition,
             you have to call acquire_spectra_to_buffer() first before calling the get spectra command. Very
             few devices supported this command.
+            @see acquire_spectra_to_buffer()
+            @see get_device_idle_state()
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_abort_acquisition(self.device.device_id, err_cp)
 
@@ -2302,8 +2416,9 @@ class Spectrometer():
             Start spectra acquisition. This would transition the device into a non-idle state. Very
             few devices supported this command. An exception will be thrown if the command is
             not supported by the device.
+            @see abort_acquisition()
+            @see get_device_idle_state()
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_acquire_spectra_to_buffer(self.device.device_id, err_cp)
 
@@ -2315,40 +2430,38 @@ class Spectrometer():
             """!
             Return device idle state. Very few devices supported this command. An exception will be thrown if
             the command is not supported by the device.
+            @see abort_acquisition()
             @return True if the device is idle otherwise it's False.
             """
-
             err_cp = (c_long * 1)(0)
             retval = self.device.oceandirect.odapi_adv_get_device_idle_state(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_device_idle_state")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return bool(c_ubyte(retval))
 
         def get_number_of_backtoback_scans(self) -> int:
             """!
             Get the number of back-to-back scans. See device manual if data buffering is supported.
+            @see set_number_of_backtoback_scans()
             @return The back-to-back scan value.
             """
-
             err_cp = (c_long * 1)(0)
             retval = self.device.oceandirect.odapi_adv_get_number_of_backtoback_scans(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_number_of_backtoback_scans")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return retval
 
         def set_number_of_backtoback_scans(self, numScans: int) -> None:
             """!
             Set the number of spectra that the device will capture per trigger event. This function requires
             data buffer to be enabled. See "set_data_buffer_enable()". See device manual if data buffering is supported.
-            @param[in] numScans The back-to-back scan value.
+            @see get_number_of_backtoback_scans()
+            @param numScans The back-to-back scan value.
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_set_number_of_backtoback_scans(self.device.device_id, err_cp, numScans)
 
@@ -2356,18 +2469,123 @@ class Spectrometer():
                 error_msg = self.device.decode_error(err_cp[0], "set_number_of_backtoback_scans")
                 raise OceanDirectError(err_cp[0], error_msg)
 
+        def abort_spectrum_acquisition(self) -> None:
+            """!
+            Stops buffer acquisition and will clear the buffer from any stored spectrum. This data buffer
+            function is only applicable to OBP2 enabled devices.
+            """
+            self.device.oceandirect.odapi_adv_abort_spectrum_acquisition.argtypes = [c_long, POINTER(c_int32)]
+            err_cp = (c_long * 1)(0)
+            self.device.oceandirect.odapi_adv_abort_spectrum_acquisition(self.device.device_id, err_cp)
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "abort_spectrum_acquisition")
+                raise OceanDirectError(err_cp[0], error_msg)
+
+        def get_buffered_spectrum_with_metadata(self) -> tuple[list[float], int]:
+            """!
+            Read a single bufferred spectrum. This data buffer function is only applicable to OBP2 enabled devices.
+            @return A tuple object containing spectrum and timestamp.
+            """
+
+            self.device.oceandirect.odapi_adv_get_buffered_spectrum_with_metadata.restype  = c_uint
+            self.device.oceandirect.odapi_adv_get_buffered_spectrum_with_metadata.argtypes = [c_long, POINTER(c_int32), POINTER(c_double), c_uint, POINTER(c_longlong)]
+
+            buffer    = (c_double * self.device.pixel_count_formatted)()
+            timestamp = (c_longlong * 1)(0)
+            err_cp    = (c_long * 1)(0)
+            spectraCount = self.device.oceandirect.odapi_adv_get_buffered_spectrum_with_metadata(self.device.device_id, err_cp, buffer,
+                                                                                                 self.device.pixel_count_formatted, timestamp)
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "get_buffered_spectrum_with_metadata")
+                raise OceanDirectError(err_cp[0], error_msg)
+
+            spectrum = [None] * self.device.pixel_count_formatted
+            #Convert c-types into python. There might be a better way to do this.
+            for y in range(self.device.pixel_count_formatted):
+                spectrum[y] = buffer[y]
+
+            return (spectrum, timestamp[0])
+
+        def get_hardware_buffer_capacity(self) -> int:
+            """!
+            Read the maximum number of spectra the hardware buffer can hold. This data buffer
+            function is only applicable to OBP2 enabled devices.
+            @return The hardware buffer capacity value.
+            """
+            self.device.oceandirect.odapi_adv_get_hardware_buffer_capacity.restype  = c_uint
+            self.device.oceandirect.odapi_adv_get_hardware_buffer_capacity.argtypes = [c_long, POINTER(c_int32)]
+            err_cp = (c_long * 1)(0)
+            retval = self.device.oceandirect.odapi_adv_get_hardware_buffer_capacity(self.device.device_id, err_cp)
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "get_hardware_buffer_capacity")
+                raise OceanDirectError(err_cp[0], error_msg)
+            return retval
+
+        def get_max_spectrum_to_capture(self) -> int:
+            """!
+            Read the number of spectra to capture into the buffer per trigger. This data buffer
+            function is only applicable to OBP2 enabled devices.
+            @return The number of spectra per trigger.
+            """
+            self.device.oceandirect.odapi_adv_get_max_spectrum_to_capture.restype  = c_uint
+            self.device.oceandirect.odapi_adv_get_max_spectrum_to_capture.argtypes = [c_long, POINTER(c_int32)]
+            err_cp = (c_long * 1)(0)
+            retval = self.device.oceandirect.odapi_adv_get_max_spectrum_to_capture(self.device.device_id, err_cp)
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "get_max_spectrum_to_capture")
+                raise OceanDirectError(err_cp[0], error_msg)
+            return retval
+
+        def set_max_spectrum_to_capture(self, count: int) -> int:
+            """!
+            Set the number of spectra to capture into the buffer per trigger. This data buffer
+            function is only applicable to OBP2 enabled devices.
+            @param count The maximum number of spectra to capture.
+            """
+            self.device.oceandirect.odapi_adv_set_max_spectrum_to_capture.restype  = c_uint
+            self.device.oceandirect.odapi_adv_set_max_spectrum_to_capture.argtypes = [c_long, POINTER(c_int32), c_uint]
+            err_cp = (c_long * 1)(0)
+            retval = self.device.oceandirect.odapi_adv_set_max_spectrum_to_capture(self.device.device_id, err_cp, count)
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "set_max_spectrum_to_capture")
+                raise OceanDirectError(err_cp[0], error_msg)
+            return retval
+
+        def get_buffered_spectrum_count(self) -> int:
+            """!
+            Read the total number of spectra in the buffer. This data buffer
+            function is only applicable to OBP2 enabled devices.
+            @return Total spectra stored in the buffer.
+            """
+            self.device.oceandirect.odapi_adv_get_buffered_spectrum_count.restype  = c_uint
+            self.device.oceandirect.odapi_adv_get_buffered_spectrum_count.argtypes = [c_long, POINTER(c_int32)]
+            err_cp = (c_long * 1)(0)
+            retval = self.device.oceandirect.odapi_adv_get_buffered_spectrum_count(self.device.device_id, err_cp)
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "get_buffered_spectrum_count")
+                raise OceanDirectError(err_cp[0], error_msg)
+            return retval
+    
+
+
         def get_raw_spectrum_with_metadata(self, list_raw_spectra: list[list[float]], list_timestamp: list[int], buffer_size: int) -> int:
             """!
             Returns spectra with metadata information. For older devices such as FX/HDX, read a maximum of 15
             spectra from the data buffer. This function requires that both back to back scans and data buffer
             be enabled. See "set_data_buffer_enable()" and "set_number_of_backtoback_scans()". For newer devices
             such as Ocean SR2, you can call this function right away. See device manual if this command is supported.
-            @param[in] list_raw_spectra The spectra output buffer.
-            @param[in] list_timestamp   The timestamp output buffer of each spectra.
-            @param[in] buffer_size      The buffer array size (maximum is 15).
+            @deprecated Replaced this function with a more friendly name get_spectrum_with_metadata().
+            @param list_raw_spectra The spectra output buffer.
+            @param list_timestamp   The timestamp output buffer of each spectra.
+            @param buffer_size      The buffer array size (maximum is 15).
             @return The number of spectra read. It can be zero.
             """
-
             buffer = (POINTER(c_double) * buffer_size)()
             for x in range(buffer_size):
                 buffer[x] = (c_double * self.device.pixel_count_formatted)()
@@ -2391,7 +2609,41 @@ class Spectrometer():
                 list_raw_spectra.append(spectra)
                 #list_raw_spectra.append(buffer[x])
                 list_timestamp.append(timestamp[x])
+            return spectraCount
 
+        def get_spectrum_with_metadata(self, list_spectra: list[list[float]], list_timestamp: list[int], buffer_size: int) -> int:
+            """!
+            Returns spectra with metadata information. For older devices such as FX/HDX, read a maximum of 15
+            spectra from the data buffer. This function requires that both back to back scans and data buffer
+            be enabled. See "set_data_buffer_enable()" and "set_number_of_backtoback_scans()". For newer devices
+            such as Ocean SR2, you can call this function right away. See device manual if this command is supported.
+            @param list_spectra    The spectra output buffer.
+            @param list_timestamp  The timestamp output buffer of each spectra.
+            @param buffer_size     The buffer array size (maximum is 15).
+            @return The number of spectra read. It can be zero.
+            """
+            buffer = (POINTER(c_double) * buffer_size)()
+            for x in range(buffer_size):
+                buffer[x] = (c_double * self.device.pixel_count_formatted)()
+
+            timestamp    = (c_longlong * buffer_size)(0)
+            err_cp       = (c_long * 1)(0)
+            spectraCount = self.device.oceandirect.odapi_get_spectrum_with_metadata(self.device.device_id, err_cp, buffer, buffer_size,
+                                                                                    self.device.pixel_count_formatted, timestamp, buffer_size)
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "get_spectrum_with_metadata")
+                raise OceanDirectError(err_cp[0], error_msg)
+
+            for x in range(spectraCount):
+                spectra = [None] * self.device.pixel_count_formatted
+
+                #Convert c-types into python. There might be a better way to do this.
+                for y in range(self.device.pixel_count_formatted):
+                    spectra[y] = buffer[x][y]
+                
+                list_spectra.append(spectra)
+                list_timestamp.append(timestamp[x])
             return spectraCount
 
         def get_usb_endpoint_primary_out(self) -> int:
@@ -2401,8 +2653,7 @@ class Spectrometer():
             value is not valid in this context.
             @return The usb endpoint address.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp                   = (c_long * 1)(0)
             usb_primary_endpoint_out = self.device.oceandirect.odapi_get_device_usb_endpoint_primary_out(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -2417,8 +2668,7 @@ class Spectrometer():
             value is not valid in this context.
             @return The usb endpoint address.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp                  = (c_long * 1)(0)
             usb_primary_endpoint_in = self.device.oceandirect.odapi_get_device_usb_endpoint_primary_in(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -2433,8 +2683,7 @@ class Spectrometer():
             value is not valid in this context.
             @return The usb endpoint address.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp                     = (c_long * 1)(0)
             usb_secondary_endpoint_out = self.device.oceandirect.odapi_get_device_usb_endpoint_secondary_out(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
@@ -2449,9 +2698,7 @@ class Spectrometer():
             value is not valid in this context.
             @return The usb endpoint address.
             """
-
-            err_cp = (c_long * 1)(0)
-
+            err_cp                    = (c_long * 1)(0)
             usb_secondary_endpoint_in = self.device.oceandirect.odapi_get_device_usb_endpoint_secondary_in(self.device.device_id, err_cp)
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_usb_endpoint_secondary_in")
@@ -2463,40 +2710,74 @@ class Spectrometer():
             Reads out the firmware revision from the device's internal memory if that feature is supported.
             @return The firmware revision.
             """
-
-            err_cp         = (c_long * 1)(0)
+            self.device.oceandirect.odapi_adv_get_revision_firmware.argtypes = [c_long, POINTER(c_int32), POINTER(c_char), c_int32]
+            self.device.oceandirect.odapi_adv_get_revision_firmware.restype  = c_int32
+            err_cp         = c_int32(0)
             fw_revision_cp = create_string_buffer(b'\000' * 100)
-            bytesRead      = self.device.oceandirect.odapi_adv_get_revision_firmware(self.device.device_id, err_cp, fw_revision_cp, 100)
+            bytesRead      = self.device.oceandirect.odapi_adv_get_revision_firmware(self.device.device_id, byref(err_cp), fw_revision_cp, 100)
 
-            if err_cp[0] != 0:
-                error_msg = self.device.decode_error(err_cp[0], "get_revision_firmware")
-                raise OceanDirectError(err_cp[0], error_msg)
-            return fw_revision_cp.value.decode()
+            if err_cp.value != 0:
+                error_msg = self.device.decode_error(err_cp.value, "get_revision_firmware")
+                raise OceanDirectError(err_cp.value, error_msg)
+
+            version = fw_revision_cp.value.decode()
+            if "." not in version and bytesRead == 3:
+                version = "{0}.{1}.{2}".format(chr(fw_revision_cp.value[0]),
+                                               chr(fw_revision_cp.value[1]), chr(fw_revision_cp.value[2]))
+            return version
+
 
         def get_revision_fpga(self) -> str:
             """!
             Reads out the FPGA revision from the device's internal memory if that feature is supported.
             @return The fpga revision.
             """
-
-            err_cp         = (c_long * 1)(0)
+            self.device.oceandirect.odapi_adv_get_revision_fpga.argtypes = [c_long, POINTER(c_int32), POINTER(c_char), c_int32]
+            self.device.oceandirect.odapi_adv_get_revision_fpga.restype  = c_int32
+            err_cp           = c_int32(0)
             fpga_revision_cp = create_string_buffer(b'\000' * 100)
-            bytesRead      = self.device.oceandirect.odapi_adv_get_revision_fpga(self.device.device_id, err_cp, fpga_revision_cp, 100)
+            bytesRead        = self.device.oceandirect.odapi_adv_get_revision_fpga(self.device.device_id, byref(err_cp), fpga_revision_cp, 100)
 
-            if err_cp[0] != 0:
-                error_msg = self.device.decode_error(err_cp[0], "get_revision_fpga")
-                raise OceanDirectError(err_cp[0], error_msg)
-            return fpga_revision_cp.value.decode()
+            if err_cp.value != 0:
+                error_msg = self.device.decode_error(err_cp.value, "get_revision_fpga")
+                raise OceanDirectError(err_cp.value, error_msg)
+
+            version = fpga_revision_cp.value.decode()
+            if "." not in version and bytesRead == 3:
+                version = "{0}.{1}.{2}".format(chr(fpga_revision_cp.value[0]), 
+                                               chr(fpga_revision_cp.value[1]), chr(fpga_revision_cp.value[2]))
+            return version
+
+        def get_revision_system(self) -> str:
+            """!
+            Reads out the System revision from the device's internal memory if that feature is supported.
+            @return The system revision.
+            """
+            self.device.oceandirect.odapi_adv_get_revision_system.argtypes = [c_long, POINTER(c_int32), POINTER(c_char), c_int32]
+            self.device.oceandirect.odapi_adv_get_revision_system.restype  = c_int32
+            err_cp          = c_int32(0)
+            sys_revision_cp = create_string_buffer(b'\000' * 100)
+            bytesRead       = self.device.oceandirect.odapi_adv_get_revision_system(self.device.device_id, byref(err_cp), sys_revision_cp, 100)
+
+            if err_cp.value != 0:
+                error_msg = self.device.decode_error(err_cp.value, "get_revision_system")
+                raise OceanDirectError(err_cp.value, error_msg)
+
+            version = sys_revision_cp.value.decode()
+            if "." not in version and bytesRead == 3:
+                version = "{0}.{1}.{2}".format(chr(sys_revision_cp.value[0]), 
+                                               chr(sys_revision_cp.value[1]), chr(sys_revision_cp.value[2]))
+            return version
 
         def ipv4_is_dhcp_enabled(self, ifNum: int) -> bool:
             """!
             Check to see if DHCP (client) is enabled on the specified interface. If DHCP is enabled then the
             device will be able to receive an IP address from a DHCP server in the network it is connected to. See
             device manual if TCP/IP connection is supported.
-            @param[in] ifNum The interface number: 0 for Ethernet, 1 for wi-fi.
+            @see ipv4_set_dhcp_enable()
+            @param ifNum  The interface number: 0 for Ethernet, 1 for wi-fi.
             @return True if DHCP is enabled on the specified interface otherwise it's False.
             """
-
             err_cp = (c_long * 1)(0)
             enable = self.device.oceandirect.odapi_adv_ipv4_is_dhcp_enabled(self.device.device_id, err_cp, c_ubyte(ifNum))
 
@@ -2505,14 +2786,17 @@ class Spectrometer():
                 raise OceanDirectError(err_cp[0], error_msg)
             return bool(c_ubyte(enable))
 
+        def ipv4_is_dhcp_enabled2(self) -> bool:
+            return self.ipv4_is_dhcp_enabled(0)
+
         def ipv4_set_dhcp_enable(self, ifNum: int, enabled: bool) -> None:
             """!
             Turn the DHCP client on or off for the device on the specified interface. See device manual if TCP/IP
             connection is supported.
-            @param[in] ifNum   The interface number: 0 for Ethernet, 1 for wi-fi.
-            @param[in] enabled False turns the DHCP client off. True turns the DHCP client on.
+            @see ipv4_is_dhcp_enabled()
+            @param ifNum   The interface number: 0 for Ethernet, 1 for wi-fi.
+            @param enabled False turns the DHCP client off. True turns the DHCP client on.
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_ipv4_set_dhcp_enable(self.device.device_id, err_cp, ifNum, enabled)
 
@@ -2520,15 +2804,18 @@ class Spectrometer():
                 error_msg = self.device.decode_error(err_cp[0], "ipv4_set_dhcp_enable")
                 raise OceanDirectError(err_cp[0], error_msg)
 
+        def ipv4_set_dhcp_enable2(self, enabled: bool) -> None:
+            self.ipv4_set_dhcp_enable(0, enabled)
+
         def ipv4_get_number_of_ip_addresses(self, ifNum: int) -> int:
             """!
             Get the number of IP addresses available on the specified interface. If DHCP is enabled on the
             specified interface then index 0 represents the DHCP address and the following addresses
             will be any static IP addresses. See device manual if TCP/IP connection is supported.
-            @param[in] ifNum The interface number: 0 for Ethernet, 1 for wi-fi.
+            @see ipv4_add_static_ip_address()
+            @param ifNum The interface number: 0 for Ethernet, 1 for wi-fi.
             @return The number of IP addresses on the specified interface.
             """
-
             err_cp       = (c_long * 1)(0)
             numIpAddress = self.device.oceandirect.odapi_adv_ipv4_get_number_of_ip_addresses(self.device.device_id, err_cp, ifNum)
 
@@ -2537,12 +2824,16 @@ class Spectrometer():
                 raise OceanDirectError(err_cp[0], error_msg)
             return numIpAddress;
 
+        def ipv4_get_number_of_ip_addresses2(self) -> int:
+            return self.ipv4_get_number_of_ip_addresses(0)
+
         def ipv4_read_ip_address(self, ifNum: int, addressIndex: int) -> tuple[list[int], int]:
             """!
             Get the assigned ip address provided by the index of a particular interface. See device manual if
             TCP/IP connection is supported.
-            @param[in]  ifNum        The network interface. 0 for ethernet, 1 for wifi.
-            @param[in]  addressIndex The location of the ip address. Starts with 0.
+            @see ipv4_add_static_ip_address()
+            @param  ifNum        The network interface. 0 for ethernet, 1 for wifi.
+            @param  addressIndex The location of the ip address. Starts with 0.
             @return A tuple of ip address (4-byte) and network mask (int).
             """
             err_cp        = (c_long * 1)(0)
@@ -2561,17 +2852,20 @@ class Spectrometer():
                 outIpAddress.append(int(ip_address_cp[i]))
             return (outIpAddress, outNetmask)
 
+        def ipv4_read_ip_address2(self, addressIndex: int) -> tuple[list[int], int]:
+            return self.ipv4_read_ip_address(0, addressIndex)
+
         def ipv4_add_static_ip_address(self, ifNum: int, ipAddress: list[int], netmask: int) -> None:
             """!
             Add a static IP address to the specified interface. The IP address is specified as 4 bytes in an
             array. The leading part of the IP address must contain the first element of the array, followed by the
             remaining parts in order to the last part of the IP address in the fourth element of the array. See
             device manual if TCP/IP connection is supported.
-            @param[in] ifNum     The interface number: 0 for Ethernet, 1 for wi-fi.
-            @param[in] ipAddress The static IP address to be added. This is 4-byte array data.
-            @param[in] netmask   An 8-bit network mask specifying the subnet of the network the device is on.
+            @see ipv4_delete_static_ip_address()
+            @param ifNum     The interface number: 0 for Ethernet, 1 for wi-fi.
+            @param ipAddress The static IP address to be added. This is 4-byte array data.
+            @param netmask   An 8-bit network mask specifying the subnet of the network the device is on.
             """
-
             err_cp = (c_long * 1)(0)
 
             if len(ipAddress) != 4:
@@ -2588,31 +2882,33 @@ class Spectrometer():
                 error_msg = self.device.decode_error(err_cp[0], "ipv4_add_static_ip_address")
                 raise OceanDirectError(err_cp[0], error_msg)
 
+        def ipv4_add_static_ip_address2(self, ipAddress: list[int], netmask: int) -> None:
+            self.ipv4_add_static_ip_address(0, ipAddress, netmask)
+
         def ipv4_delete_static_ip_address(self, ifNum: int, addressIndex: int) -> None:
             """!
             Delete a static IP address on the specified interface. See device manual if TCP/IP connection is supported.
-            @param[in] ifNum        The interface number: 0 for Ethernet, 1 for wi-fi.
-            @param[in] addressIndex The index of the address to be deleted.
+            @see ipv4_add_static_ip_address()
+            @param ifNum        The interface number: 0 for Ethernet, 1 for wi-fi.
+            @param addressIndex The index of the address to be deleted.
             """
-
             err_cp = (c_long * 1)(0)
-
             self.device.oceandirect.odapi_adv_ipv4_delete_static_ip_address(self.device.device_id, err_cp, c_ubyte(ifNum), c_ubyte(addressIndex))
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "ipv4_delete_static_ip_address")
                 raise OceanDirectError(err_cp[0], error_msg)
 
+        def ipv4_delete_static_ip_address2(self, addressIndex: int) -> None:
+            self.ipv4_delete_static_ip_address(0, addressIndex)
+
         def ipv4_set_default_gateway_ip_address(self, ifNum: int, ipAddress: list[int]) -> None:
             """!
             Set the default gateway IP address to the specified interface. See device manual if TCP/IP connection is supported.
-
-            @param[in] ifNum        The interface number: 0 for Ethernet, 1 for wi-fi.
-            @param[in] addressIndex The index of the address to be deleted.
-            @param[in] ipAddress The static IP address to be added. This is 4-byte array data.
+            @see ipv4_get_default_gateway_ip_address()
+            @param ifNum      The interface number: 0 for Ethernet, 1 for wi-fi.
+            @param ipAddress  The static IP address to be added. This is 4-byte array data.
             """
-
             err_cp = (c_long * 1)(0)
-
             if len(ipAddress) != 4:
                 error_msg = "ipv4_set_default_gateway_ip_address() error:  ipAddress must be an array of 4 bytes long."
                 raise OceanDirectError(err_cp[0], error_msg)
@@ -2627,11 +2923,14 @@ class Spectrometer():
                 error_msg = self.device.decode_error(err_cp[0], "ipv4_set_default_gateway_ip_address")
                 raise OceanDirectError(err_cp[0], error_msg)
 
+        def ipv4_set_default_gateway_ip_address2(self, ipAddress: list[int]) -> None:
+            self.ipv4_set_default_gateway_ip_address(0, ipAddress)
+
         def ipv4_get_default_gateway_ip_address(self, ifNum: int) -> list[int]:
             """!
             Get the default gateway IP address to the specified interface. See device manual if TCP/IP connection is supported.
-
-            @param[in]  ifNum   The network interface. 0 for ethernet, 1 for wifi.
+            @see ipv4_set_default_gateway_ip_address()
+            @param  ifNum   The network interface. 0 for ethernet, 1 for wifi.
             @return The ip address (4-byte).
             """
             err_cp        = (c_long * 1)(0)
@@ -2648,28 +2947,29 @@ class Spectrometer():
                 outIpAddress.append(int(ip_address_cp[i]))
             return outIpAddress
 
+        def ipv4_get_default_gateway_ip_address2(self) -> list[int]:
+            return self.ipv4_get_default_gateway_ip_address(0)
+
         def get_gpio_pin_count(self) -> int:
             """!
             Get GPIO pin count.
             @return The pin count.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp       = (c_long * 1)(0)
             gpioPinCount = self.device.oceandirect.odapi_adv_get_gpio_pin_count(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_gpio_pin_count")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return gpioPinCount
 
         def gpio_set_output_enable1(self, bit: int, isOutput: bool) -> None:
             """!
             Sets the GPIO bit direction to either output or input.
-            @param[in] bit      The bit position.
-            @param[in] isOutput The bit value which could be true(output) or false(input).
+            @see gpio_get_output_enable1()
+            @param bit      The bit position.
+            @param isOutput The bit value which could be true(output) or false(input).
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_gpio_set_output_enable1(self.device.device_id, err_cp, bit, isOutput)
 
@@ -2680,25 +2980,24 @@ class Spectrometer():
         def gpio_get_output_enable1(self, bit: int) -> bool:
             """!
             Get GPIO bit direction.
-            @param[in] bit The bit position.
+            @see gpio_set_output_enable1()
+            @param bit  The bit position.
             @return The bit direction which could be True(out) or False(in)
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp       = (c_long * 1)(0)
             bitDirection = self.device.oceandirect.odapi_adv_gpio_get_output_enable1(self.device.device_id, err_cp, bit)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "gpio_get_output_enable")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return bool(c_ubyte(bitDirection))
 
         def gpio_set_output_enable2(self, bitmask: int) -> None:
             """!
             Set the direction (input/output) of the GPIO pins.
-            @param[in] bitmask  The bit mask specifying the pin directions i.e. the nth bit set to 1 sets the nth pin to output.
+            @see gpio_get_output_enable2()
+            @param bitmask  The bit mask specifying the pin directions i.e. the nth bit set to 1 sets the nth pin to output.
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_gpio_set_output_enable2(self.device.device_id, err_cp, c_int(bitmask))
 
@@ -2709,25 +3008,24 @@ class Spectrometer():
         def gpio_get_output_enable2(self) -> int:
             """!
             Get all GPIO bit direction.
+            @see gpio_set_output_enable2()
             @return All bit (int) direction where each bit could be True(out) or False(in).
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp          = (c_long * 1)(0)
             allBitDirection = self.device.oceandirect.odapi_adv_gpio_get_output_enable2(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "gpio_get_output_enable2")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return allBitDirection
 
         def gpio_set_value1(self, bit: int, isHigh: bool) -> None:
             """!
             Sets the GPIO bit value to either high or low.
-            @param[in] bit    The bit position.
-            @param[in] isHigh The bit value which could be true(high) or false(low).
+            @see gpio_get_value1()
+            @param bit    The bit position.
+            @param isHigh The bit value which could be true(high) or false(low).
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_gpio_set_value1(self.device.device_id, err_cp, bit, isHigh)
 
@@ -2738,25 +3036,24 @@ class Spectrometer():
         def gpio_get_value1(self, bit: int) -> bool:
             """!
             Get the GPIO bit value in whether it's high(true) or low(false).
-            @param[in] bit The bit position.
+            @see gpio_set_value1()
+            @param bit  The bit position.
             @return The bit value. True for high and False for low.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp   = (c_long * 1)(0)
             bitValue = self.device.oceandirect.odapi_adv_gpio_get_value1(self.device.device_id, err_cp, bit)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "gpio_get_value")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return bool(c_ubyte(bitValue))
 
         def gpio_set_value2(self, bitmask: int) -> None:
             """!
             Set the logic value for all GPIO pins.
-            @param[in] bitmask  The bit mask specifying the logic level of each GPIO pin.
+            @see gpio_get_value2()
+            @param bitmask  The bit mask specifying the logic level of each GPIO pin.
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_gpio_set_value2(self.device.device_id, err_cp, c_int(bitmask))
 
@@ -2767,16 +3064,15 @@ class Spectrometer():
         def gpio_get_value2(self) -> int:
             """!
             Get all GPIO bit values.
+            @see gpio_set_value2()
             @return All bit value (int) where each bit could be True(high) or False(low).
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp      = (c_long * 1)(0)
             allBitValue = self.device.oceandirect.odapi_adv_gpio_get_value2(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "gpio_get_value2")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return allBitValue
 
         def gpio_set_output_alternate1(self, bit: int, isAlternate: bool) -> None:
@@ -2784,10 +3080,10 @@ class Spectrometer():
             Set the alternate functionality for the specified pins (bits). Not
             all spectrometers support this functionality.
             @deprecated This function is deprecated starting with release 2.1 and will be removed in the future release.
-            @param[in] bit The GPIO bit or pin to set.
-            @param[in] isAlternate Set true to enable the alternate functionality for the pin, false otherwise (pin is a GPIO pin).
+            @see gpio_get_output_alternate1()
+            @param bit The GPIO bit or pin to set.
+            @param isAlternate Set true to enable the alternate functionality for the pin, false otherwise (pin is a GPIO pin).
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_gpio_set_output_alternate1(self.device.device_id, err_cp, bit, isAlternate)
 
@@ -2800,9 +3096,9 @@ class Spectrometer():
             Set the alternate functionality for the specified pins (bits). Not
             all spectrometers support this functionality.
             @deprecated This function is deprecated starting with release 2.1 and will be removed in the future release.
-            @param[in] bitmask  The bits set to 1 to set enable the alternate functionality, 0 otherwise (pin is a GPIO pin).
+            @see gpio_get_output_alternate2()
+            @param bitmask  The bits set to 1 to set enable the alternate functionality, 0 otherwise (pin is a GPIO pin).
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_gpio_set_output_alternate2(self.device.device_id, err_cp, c_int(bitmask))
 
@@ -2815,17 +3111,16 @@ class Spectrometer():
             Get the setting for alternate functionality on the specified bit (pin). Not
             all spectrometers support this functionality.
             @deprecated This function is deprecated starting with release 2.1 and will be removed in the future release.
-            @param[in] bit The GPIO bit or pin to set.
+            @see gpio_set_output_alternate1()
+            @param bit The GPIO bit or pin to set.
             @return The bit value. True if the pin is set to alternate functionality, false otherwise (pin is a GPIO pin).
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp   = (c_long * 1)(0)
             bitValue = self.device.oceandirect.odapi_adv_gpio_get_output_alternate1(self.device.device_id, err_cp, bit)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "gpio_get_output_alternate1")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return bool(c_ubyte(bitValue))
 
         def gpio_get_output_alternate2(self) -> int:
@@ -2833,24 +3128,23 @@ class Spectrometer():
             Get the settings for alternate functionality on the GPIO pins. Not
             all spectrometers support this functionality.
             @deprecated This function is deprecated starting with release 2.1 and will be removed in the future release.
+            @see gpio_set_output_alternate2()
             @return A bitmask with value 1 where the corresponding pin is set to alternate functionality, 0 otherwise (pin is a GPIO pin).
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp      = (c_long * 1)(0)
             allBitValue = self.device.oceandirect.odapi_adv_gpio_get_output_alternate2(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "gpio_get_output_alternate2")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return allBitValue
 
         def set_led_enable(self, isEnabled: bool) -> None:
             """!
             Enable or disable device LED. If the device don't have an LED then an exception will be thrown.
-            @param[in] isEnabled True to enable LED blinking otherwise it's False.
+            @see get_led_enable()
+            @param isEnabled True to enable LED blinking otherwise it's False.
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_set_led_enable(self.device.device_id, err_cp, isEnabled)
 
@@ -2861,16 +3155,15 @@ class Spectrometer():
         def get_led_enable(self) -> bool:
             """!
             Get device LED state. If the device don't have an LED then an exception will be thrown.
+            @see set_led_enable()
             @return True if LED is enabled otherwise it's False.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp   = (c_long * 1)(0)
             ledState = self.device.oceandirect.odapi_adv_get_led_enable(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_led_enable")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return bool(c_ubyte(ledState))
 
         def get_device_original_vid(self) -> int:
@@ -2878,14 +3171,12 @@ class Spectrometer():
             Get the original vendor id (VID) of the device.
             @return The VID.
             """
-
             err_cp   = (c_long * 1)(0)
             orig_vid = self.device.oceandirect.odapi_adv_get_device_original_vid(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_device_original_vid")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return orig_vid
 
         def get_device_original_pid(self) -> int:
@@ -2893,14 +3184,12 @@ class Spectrometer():
             Get the original product id (PID) of the device.
             @return The PID.
             """
-
             err_cp   = (c_long * 1)(0)
             orig_pid = self.device.oceandirect.odapi_adv_get_device_original_pid(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_device_original_pid")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return orig_pid
 
         def get_device_vid(self) -> int:
@@ -2908,14 +3197,12 @@ class Spectrometer():
             Get the current vendor id (VID) of the device.
             @return The VID.
             """
-
             err_cp = (c_long * 1)(0)
             vid    = self.device.oceandirect.odapi_adv_get_device_vid(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_device_vid")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return vid
 
         def get_device_pid(self) -> int:
@@ -2923,14 +3210,12 @@ class Spectrometer():
             Get the current product id (PID) of the device.
             @return The PID.
             """
-
             err_cp = (c_long * 1)(0)
             pid    = self.device.oceandirect.odapi_adv_get_device_pid(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_device_pid")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return pid
 
         def get_device_original_manufacturer_string(self) -> str:
@@ -2938,7 +3223,6 @@ class Spectrometer():
             Get the original manufacturer string of the device.
             @return The manufacturer string.
             """
-
             orig_manufacturer = create_string_buffer(b'\000'*50)
             err_cp            = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_get_device_original_manufacturer_string(self.device.device_id, err_cp, orig_manufacturer, 50)
@@ -2946,7 +3230,6 @@ class Spectrometer():
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_device_original_manufacturer_string")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return orig_manufacturer.value.decode()
 
         def get_device_original_model_string(self) -> str:
@@ -2954,7 +3237,6 @@ class Spectrometer():
             Get the original model string of the device.
             @return The model string.
             """
-
             orig_model = create_string_buffer(b'\000'*50)
             err_cp     = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_get_device_original_model_string(self.device.device_id, err_cp, orig_model, 50)
@@ -2962,15 +3244,14 @@ class Spectrometer():
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_device_original_model_string")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return orig_model.value.decode()
 
         def get_device_manufacturer_string(self) -> str:
             """!
             Get the current manufacturer string of the device.
+            @see set_device_manufacturer_string()
             @return The manufacturer string.
             """
-
             manufacturer = create_string_buffer(b'\000'*50)
             err_cp       = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_get_device_manufacturer_string(self.device.device_id, err_cp, manufacturer, 50)
@@ -2978,15 +3259,14 @@ class Spectrometer():
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_device_manufacturer_string")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return manufacturer.value.decode()
 
         def get_device_model_string(self) -> str:
             """!
             Get the current model string of the device.
+            @see set_device_model_string()
             @return The model string.
             """
-
             model  = create_string_buffer(b'\000'*50)
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_get_device_model_string(self.device.device_id, err_cp, model, 50)
@@ -2994,15 +3274,14 @@ class Spectrometer():
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_device_original_model_string")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return model.value.decode()
 
         def set_device_manufacturer_string(self, manufacturer: str) -> None:
             """!
             Set the current manufacturer string of the device.
-            @param[in] manufacturer The new manufacturer string.
+            @see get_device_manufacturer_string()
+            @param manufacturer The new manufacturer string.
             """
-
             if not manufacturer:
                 manufacturer = " "
 
@@ -3016,9 +3295,9 @@ class Spectrometer():
         def set_device_model_string(self, model: str) -> None:
             """!
             Set the current model string of the device.
-            @param[in] model The new model string.
+            @see get_device_model_string()
+            @param model The new model string.
             """
-
             if not model:
                 model = " "
 
@@ -3037,7 +3316,7 @@ class Spectrometer():
         #     Use with caution. If the current version of OceanDirect don't have support for the new VID/PID then the
         #     device will not be recognized.
         #
-        #     @param[in] vid The device VID.
+        #     @param vid The device VID.
         #     """
         #
         #     err_cp    = (c_long * 1)(0)
@@ -3055,7 +3334,7 @@ class Spectrometer():
         #     Use with caution. If the current version of OceanDirect don't have support for the new VID/PID then the
         #     device will not be recognized.
         #
-        #     @param[in] pid The device PID.
+        #     @param pid The device PID.
         #     """
         #
         #     err_cp    = (c_long * 1)(0)
@@ -3068,25 +3347,24 @@ class Spectrometer():
         def get_device_alias(self) -> str:
             """!
             Read the device alias from the device. If this field in the device is not yet populated then a non-zero(6) code will be returned.
+            @see set_device_alias()
             @return The device alias.
             """
-
             device_alias  = create_string_buffer(b'\000'*50)
-            err_cp = (c_long * 1)(0)
+            err_cp        = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_get_device_alias(self.device.device_id, err_cp, device_alias, 50)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_device_alias")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return device_alias.value.decode()
 
         def set_device_alias(self, deviceAlias: str) -> None:
             """!
             Set a new device alias to the device.
-            @param[in] deviceAlias The device alias. If value is empty then an exception will be thrown.
+            @see get_device_alias()
+            @param deviceAlias The device alias. If value is empty then an exception will be thrown.
             """
-
             if not deviceAlias:
                 #15 is an error code defined in OceanDirectAPIConstants.c
                 error_msg = self.device.decode_error(15, "set_device_alias")
@@ -3103,7 +3381,6 @@ class Spectrometer():
             """!
             Restarts the device.
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_reset_device(self.device.device_id, err_cp)
 
@@ -3115,26 +3392,25 @@ class Spectrometer():
             """!
             Read the user string from the device. If this field in the device is not yet populated then a
             non-zero(6) code will be returned. This is the command supported for the newer OBP2.0 enabled devices.
+            @see set_user_string()
             @return The user string.
             """
-
             user_string  = create_string_buffer(b'\000'*50)
-            err_cp = (c_long * 1)(0)
+            err_cp       = (c_long * 1)(0)
             self.device.oceandirect.odapi_get_user_string(self.device.device_id, err_cp, user_string, 50)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_user_string")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return user_string.value.decode()
 
         def set_user_string(self, userString: str) -> None:
             """!
             Set a new user string to the device. The maximum string length is 16.  This is the command supported
             for the newer OBP2.0 enabled devices.
-            @param[in] userString The user string. If value is empty then an exception will be thrown.
+            @see get_user_string()
+            @param userString The user string. If value is empty then an exception will be thrown.
             """
-
             if not userString:
                 #15 is an error code defined in OceanDirectAPIConstants.c
                 error_msg = self.device.decode_error(15, "set_user_string")
@@ -3147,48 +3423,46 @@ class Spectrometer():
                 error_msg = self.device.decode_error(err_cp[0],"set_user_string")
                 raise OceanDirectError(err_cp[0], error_msg)
 
-        def get_user_string_count2(self) -> int:
+        def get_user_string_count1(self) -> int:
             """!
             Read the total user string count from the device. If the device don't support this command
             then a non-zero error code will be returned. This command is used by legacy devices.
+            @see set_user_string2()
             @return The string count.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp       = (c_long * 1)(0)
             string_count = self.device.oceandirect.odapi_get_user_string_count1(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_user_string_count")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return string_count
 
-        def get_user_string2(self, index: int) -> str:
+        def get_user_string1(self, index: int) -> str:
             """!
             Read the user string from the device. If this field in the device is not yet populated then a
             non-zero(6) code will be returned. If the device don't support this command then a non-zero
             error code will be returned. This command is used by legacy devices.
+            @see set_user_string2()
             @return The user string.
             """
-
             user_string = create_string_buffer(b'\000'*50)
-            err_cp = (c_long * 1)(0)
+            err_cp      = (c_long * 1)(0)
             self.device.oceandirect.odapi_get_user_string1(self.device.device_id, err_cp, c_int(index), user_string, 50)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_user_string2")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return user_string.value.decode()
 
-        def set_user_string2(self, index: int, userString: str) -> None:
+        def set_user_string1(self, index: int, userString: str) -> None:
             """!
             Write the user string to the device. The maximum string length is 16. If the device don't support this command
             then a non-zero error code will be returned. This command is used by legacy devices.
-            @param[in] index The user string index. If index is less than 0 then an exception will be thrown.
-            @param[in] userString The user string. If value is empty then an exception will be thrown.
+            @see get_user_string2()
+            @param index  The user string index. If index is less than 0 then an exception will be thrown.
+            @param userString The user string. If value is empty then an exception will be thrown.
             """
-
             if index < 0 or not userString:
                 #15 is an error code defined in OceanDirectAPIConstants.c
                 error_msg = self.device.decode_error(15, "set_user_string")
@@ -3206,14 +3480,12 @@ class Spectrometer():
             Read the maximum ADC counts.
             @return The ADC counts.
             """
-
             err_cp   = (c_long * 1)(0)
             adcCount = self.device.oceandirect.odapi_adv_get_autonull_maximum_adc_count(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_autonull_maximum_adc_count")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return adcCount
 
 
@@ -3222,14 +3494,12 @@ class Spectrometer():
             Read the baseline level.
             @return The baseline level.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp   = (c_long * 1)(0)
             baseline = self.device.oceandirect.odapi_adv_get_autonull_baseline_level(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_autonull_baseline_level")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return baseline
 
         def get_autonull_saturation_level(self) -> int:
@@ -3237,37 +3507,105 @@ class Spectrometer():
             Read the saturation level. Most devices returns 65535.
             @return The saturation level.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp     = (c_long * 1)(0)
             saturation = self.device.oceandirect.odapi_adv_get_autonull_saturation_level(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_autonull_saturation_level")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return saturation
+
+        def get_autonull_fpga_digital_gain(self) -> int:
+            """!
+            Read the fpga digital gain value.
+            @return The digital gain value.
+            """
+            self.device.oceandirect.odapi_adv_get_autonull_fpga_digital_gain.restype  = c_int32
+            self.device.oceandirect.odapi_adv_get_autonull_fpga_digital_gain.argtypes = [c_int32, POINTER(c_int32)]
+            err_cp = (c_long * 1)(0)
+            gain   = self.device.oceandirect.odapi_adv_get_autonull_fpga_digital_gain(self.device.device_id, err_cp)
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "get_autonull_fpga_digital_gain")
+                raise OceanDirectError(err_cp[0], error_msg)
+            return gain
+
+        def get_autonull_fpga_digital_offset(self) -> int:
+            """!
+            Read the fpga digital gain offset.
+            @return The digital offset value.
+            """
+            self.device.oceandirect.odapi_adv_get_autonull_fpga_digital_offset.restype  = c_int32
+            self.device.oceandirect.odapi_adv_get_autonull_fpga_digital_offset.argtypes = [c_int32, POINTER(c_int32)]
+            err_cp = (c_long * 1)(0)
+            offset = self.device.oceandirect.odapi_adv_get_autonull_fpga_digital_offset(self.device.device_id, err_cp)
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "get_autonull_fpga_digital_offset")
+                raise OceanDirectError(err_cp[0], error_msg)
+            return offset
+
+
+        def get_autonull_baseline_level_constraints(self) -> tuple[int, int, float, float]:
+            """!
+            Read autonulling constraints value for baseline settings. This command only applies to Ocean FX/HDX units.
+            @return A tuple object containing minimum DAC offset, maximum DAC offset, minimum DAC volts, and maximum DAC volts.
+            """
+            self.device.oceandirect.odapi_adv_get_autonull_baseline_level_constraints.argtypes = [c_int32, POINTER(c_int32), POINTER(c_uint), POINTER(c_uint), POINTER(c_float), POINTER(c_float)]
+
+            err_cp       = (c_long * 1)(0)
+            minDACOffset = c_uint(0)
+            maxDACOffset = c_uint(0)
+            minDACVolts  = c_float(0)
+            maxDACVolts  = c_float(0)
+            self.device.oceandirect.odapi_adv_get_autonull_baseline_level_constraints(self.device.device_id, err_cp, byref(minDACOffset), byref(maxDACOffset), byref(minDACVolts), byref(maxDACVolts))
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "get_autonull_baseline_level_constraints")
+                raise OceanDirectError(err_cp[0], error_msg)
+            return (minDACOffset.value, maxDACOffset.value, minDACVolts.value, maxDACVolts.value)
+
+
+        def get_autonull_saturation_level_constraints(self) ->  tuple[int, int, float, float]:
+            """!
+            Read autonulling constraints value for saturation settings. This command only applies to Ocean FX/HDX units.
+            @return A tuple object containing minimum DAC offset, maximum DAC offset, minimum DAC volts, and maximum DAC volts.
+            """
+            self.device.oceandirect.odapi_adv_get_autonull_saturation_level_constraints.argtypes = [c_int32, POINTER(c_int32), POINTER(c_uint), POINTER(c_uint), POINTER(c_float), POINTER(c_float)]
+
+            err_cp       = (c_long * 1)(0)
+            minDACOffset = c_uint(0)
+            maxDACOffset = c_uint(0)
+            minDACVolts  = c_float(0)
+            maxDACVolts  = c_float(0)
+            self.device.oceandirect.odapi_adv_get_autonull_saturation_level_constraints(self.device.device_id, err_cp, byref(minDACOffset), byref(maxDACOffset), byref(minDACVolts), byref(maxDACVolts))
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "get_autonull_saturation_level_constraints")
+                raise OceanDirectError(err_cp[0], error_msg)
+            return (minDACOffset.value, maxDACOffset.value, minDACVolts.value, maxDACVolts.value)
+
 
         def get_baud_rate(self) -> int:
             """!
             Read the device RS-232 baud rate. Not all devices supported this command.
+            @see set_baud_rate()
             @return The baud rate.
             """
-
-            err_cp = (c_long * 1)(0)
+            err_cp    = (c_long * 1)(0)
             baud_rate = self.device.oceandirect.odapi_adv_get_baud_rate(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_baud_rate")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return baud_rate
 
         def set_baud_rate(self, baudRate: int) -> None:
             """!
             Set a new baud rate for the RS-232 port. Not all devices supported this command.
-            @param[in] baudRate The baud rate value.
+            @see get_baud_rate()
+            @param baudRate The baud rate value.
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_set_baud_rate(self.device.device_id, err_cp, c_int(baudRate))
 
@@ -3279,7 +3617,6 @@ class Spectrometer():
             """!
             Save settings to flash. Not all devices supported this command.
             """
-
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_save_settings_to_flash(self.device.device_id, err_cp)
 
@@ -3293,16 +3630,14 @@ class Spectrometer():
             If the device don't support this command then a non-zero error code will be returned.
             @return A list of active pixel range.
             """
-
-            range  = (c_int * 10)(0)
-            err_cp = (c_long * 1)(0)
-            elementCopied = self.device.oceandirect.odapi_get_active_pixel_range(self.device.device_id, err_cp, range, 10)
+            rangeVal      = (c_int * self.device.get_formatted_spectrum_length())(0)
+            err_cp        = (c_long * 1)(0)
+            elementCopied = self.device.oceandirect.odapi_get_active_pixel_range(self.device.device_id, err_cp, rangeVal, self.device.get_formatted_spectrum_length())
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0],"get_active_pixel_range")
                 raise OceanDirectError(err_cp[0], error_msg)
-
-            return list(range)[0:elementCopied]
+            return list(rangeVal)[0:elementCopied]
 
         def get_optical_dark_pixel_range(self) -> list[int]:
             """!
@@ -3310,16 +3645,14 @@ class Spectrometer():
             If the device don't support this command then a non-zero error code will be returned.
             @return A list of optical dark pixel range.
             """
-
-            range  = (c_int * 10)(0)
-            err_cp = (c_long * 1)(0)
-            elementCopied = self.device.oceandirect.odapi_get_optical_dark_pixel_range(self.device.device_id, err_cp, range, 10)
+            rangeVal      = (c_int * 50)(0)
+            err_cp        = (c_long * 1)(0)
+            elementCopied = self.device.oceandirect.odapi_get_optical_dark_pixel_range(self.device.device_id, err_cp, rangeVal, 50)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0],"get_optical_dark_pixel_range")
                 raise OceanDirectError(err_cp[0], error_msg)
-
-            return list(range)[0:elementCopied]
+            return list(rangeVal)[0:elementCopied]
 
         def get_transition_pixel_range(self) -> list[int]:
             """!
@@ -3327,16 +3660,14 @@ class Spectrometer():
             If the device don't support this command then a non-zero error code will be returned.
             @return A list of transition pixel range.
             """
-
-            range  = (c_int * 10)(0)
-            err_cp = (c_long * 1)(0)
-            elementCopied = self.device.oceandirect.odapi_get_transition_pixel_range(self.device.device_id, err_cp, range, 10)
+            rangeVal      = (c_int * 50)(0)
+            err_cp        = (c_long * 1)(0)
+            elementCopied = self.device.oceandirect.odapi_get_transition_pixel_range(self.device.device_id, err_cp, rangeVal, 50)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0],"get_transition_pixel_range")
                 raise OceanDirectError(err_cp[0], error_msg)
-
-            return list(range)[0:elementCopied]
+            return list(rangeVal)[0:elementCopied]
 
         def get_bad_pixel_indices(self) -> list[int]:
             """!
@@ -3344,67 +3675,93 @@ class Spectrometer():
             If the device don't support this command then a non-zero error code will be returned.
             @return A list of bad pixel indices.
             """
-
-            range  = (c_int * 40)(0)
-            err_cp = (c_long * 1)(0)
-            elementCopied = self.device.oceandirect.odapi_get_bad_pixel_indices(self.device.device_id, err_cp, range, 40)
+            rangeVal      = (c_int * 40)(0)
+            err_cp        = (c_long * 1)(0)
+            elementCopied = self.device.oceandirect.odapi_get_bad_pixel_indices(self.device.device_id, err_cp, rangeVal, 40)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0],"get_bad_pixel_indices")
                 raise OceanDirectError(err_cp[0], error_msg)
+            return list(rangeVal)[0:elementCopied]
 
-            return list(range)[0:elementCopied]
+        def set_bad_pixel_indices(self, badPixelIndices: list[int]) -> None:
+            """!
+            Mark the given pixel indices as bad pixels. This command only supported OceanNR, NIRQuest256, and NIRQuest512.
+            If the device don't support this command then a non-zero error code will be returned.
+            @param badPixelIndices The bad pixel indices data which is an array of int.
+            """
+            err_cp          = (c_long * 1)(0)
+            int_array_count = len(badPixelIndices)
+            int_array       = None
+
+            if int_array_count == 0:
+                int_array = (c_int * 1)(0)
+                int_array[0] = 0
+            else:
+                int_array = (c_int * int_array_count)(0)
+                for x in range(int_array_count):
+                    int_array[x] = badPixelIndices[x]
+
+            byte_write_count = self.device.oceandirect.odapi_set_bad_pixel_indices(self.device.device_id, err_cp, int_array, int_array_count)
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0],"set_bad_pixel_indices")
+                raise OceanDirectError(err_cp[0], error_msg)
+            return byte_write_count
 
         def get_network_interface_count(self) -> int:
             """!
-            Read the number of supported communication interface.
+            Read the number of supported communication interface. This function only applies to HDX/FX devices.
             @return The number of interface.
             """
-            err_cp = (c_long * 1)(0)
+            err_cp   = (c_long * 1)(0)
             if_count = self.device.oceandirect.odapi_adv_network_conf_get_interface_count(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_network_interface_count")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return if_count
 
         def get_network_interface_type(self, interfaceIndex: int) -> int:
             """!
-            Return the interface type of the given interface index.
-            @param interfaceIndex[in] The interface to look at.
+            Return the interface type of the given interface index. This function only applies to HDX/FX devices.
+            @param interfaceIndex  The interface to look at.
             @return The interface type which could be one 0(Loopback), 1(wired ethernet), 2 (WIFI), and 3 (USB - CDC Ethernet). 
             """
-            err_cp = (c_long * 1)(0)
+            err_cp  = (c_long * 1)(0)
             if_type = self.device.oceandirect.odapi_adv_network_conf_get_interface_type(self.device.device_id, err_cp, c_uint(interfaceIndex))
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_network_interface_type")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return if_type
+
+        def get_network_interface_type2(self) -> int:
+            return self.get_network_interface_type(0)
 
         def get_network_interface_status(self, interfaceIndex: int) -> bool:
             """!
-            Return true if the interface is enabled otherwise it's false.
-            @param interfaceIndex[in] The interface to look at.
+            Return true if the interface is enabled otherwise it's false. This function only applies to HDX/FX devices.
+            @see set_network_interface_status()
+            @param interfaceIndex  The interface to look at.
             @return True if the interface if enabled otherwise it's False.
             """
-            err_cp = (c_long * 1)(0)
+            err_cp  = (c_long * 1)(0)
             enabled = self.device.oceandirect.odapi_adv_network_conf_get_interface_status(self.device.device_id, err_cp, c_uint(interfaceIndex))
 
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_network_interface_status")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return bool(c_ubyte(enabled))
+
+        def get_network_interface_status2(self) -> bool:
+            return self.get_network_interface_status(0)
 
         def set_network_interface_status(self, interfaceIndex: int, enable: bool) -> None:
             """!
-            Enable or disable the interface.
-            
-            @param interfaceIndex[in] The interface that will be enabled or disabled.
-            @param enable[in] True will enable the interface. False will disable it.
+            Enable or disable the interface. This function only applies to HDX/FX devices.
+            @see get_network_interface_status()
+            @param interfaceIndex  The interface that will be enabled or disabled.
+            @param enable True will enable the interface. False will disable it.
             """
             err_cp = (c_long * 1)(0)
 
@@ -3417,11 +3774,13 @@ class Spectrometer():
                 error_msg = self.device.decode_error(err_cp[0], "set_network_interface_status")
                 raise OceanDirectError(err_cp[0], error_msg)
 
+        def set_network_interface_status2(self, enable: bool) -> None:
+            self.set_network_interface_status(0, enable)
+
         def save_network_interface_setting(self, interfaceIndex: int) -> None:
             """!
-            Save the network interface settings to the device.
-            
-            @param interfaceIndex[in] The interface to saved to.
+            Save the network interface settings to the device. This function only applies to HDX/FX devices.
+            @param interfaceIndex  The interface to saved to.
             """
             err_cp = (c_long * 1)(0)
             self.device.oceandirect.odapi_adv_network_conf_save_interface_setting(self.device.device_id, err_cp, c_uint(interfaceIndex))
@@ -3430,11 +3789,14 @@ class Spectrometer():
                 error_msg = self.device.decode_error(err_cp[0], "save_network_interface_setting")
                 raise OceanDirectError(err_cp[0], error_msg)
 
+        def save_network_interface_setting2(self) -> None:
+            self.save_network_interface_setting(0)
+
         def get_ethernet_gigabit_enable_status(self, interfaceIndex: int) -> bool:
             """!
-            Return the status on whether the gigabit ethernet is enabled or not.
-            
-            @param interfaceIndex[in] The ethernet interface to look at.
+            Return the status on whether the gigabit ethernet is enabled or not. This function only applies to HDX/FX devices.
+            @see set_ethernet_gigabit_enable_status()
+            @param interfaceIndex  The ethernet interface to look at.
             @return The interface status.
             """
             err_cp = (c_long * 1)(0)
@@ -3443,13 +3805,16 @@ class Spectrometer():
             if err_cp[0] != 0:
                 error_msg = self.device.decode_error(err_cp[0], "get_ethernet_gigabit_enable_status")
                 raise OceanDirectError(err_cp[0], error_msg)
-
             return bool(status)
  
+        def get_ethernet_gigabit_enable_status2(self) -> bool:
+            return self.get_ethernet_gigabit_enable_status(0)
+
         def set_ethernet_gigabit_enable_status(self, interfaceIndex: int, enable: bool) -> None:
             """!
-            Enable or disable the gigabit ethernet the status.
-            @param interfaceIndex[in] The ethernet interface to look at.
+            Enable or disable the gigabit ethernet the status. This function only applies to HDX/FX devices.
+            @see get_ethernet_gigabit_enable_status()
+            @param interfaceIndex  The ethernet interface to look at.
             @param enable True will enable gigabit ethernet.
             """
             err_cp = (c_long * 1)(0)
@@ -3462,11 +3827,176 @@ class Spectrometer():
                 error_msg = self.device.decode_error(err_cp[0], "set_ethernet_gigabit_enable_status")
                 raise OceanDirectError(err_cp[0], error_msg)
 
+        def set_ethernet_gigabit_enable_status2(self, enable: bool) -> None:
+            self.set_ethernet_gigabit_enable_status(0, enable)
+
+        def get_network_interface_count(self) -> int:
+            """!
+            Read the number of supported communication interface. This function only applies to HDX/FX devices.
+            @return The number of interface.
+            """
+            err_cp   = (c_long * 1)(0)
+            if_count = self.device.oceandirect.odapi_adv_network_conf_get_interface_count(self.device.device_id, err_cp)
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "get_network_interface_count")
+                raise OceanDirectError(err_cp[0], error_msg)
+            return if_count
+
+        def get_network_interface_type(self, interfaceIndex: int) -> int:
+            """!
+            Return the interface type of the given interface index. This function only applies to HDX/FX devices.
+            @param interfaceIndex  The interface to look at.
+            @return The interface type which could be one 0(Loopback), 1(wired ethernet), 2 (WIFI), and 3 (USB - CDC Ethernet). 
+            """
+            err_cp  = (c_long * 1)(0)
+            if_type = self.device.oceandirect.odapi_adv_network_conf_get_interface_type(self.device.device_id, err_cp, c_uint(interfaceIndex))
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "get_network_interface_type")
+                raise OceanDirectError(err_cp[0], error_msg)
+            return if_type
+
+        def get_network_interface_type2(self) -> int:
+            return self.get_network_interface_type(0)
+
+        def get_network_interface_status(self, interfaceIndex: int) -> bool:
+            """!
+            Return true if the interface is enabled otherwise it's false. This function only applies to HDX/FX devices.
+            @see set_network_interface_status()
+            @param interfaceIndex  The interface to look at.
+            @return True if the interface if enabled otherwise it's False.
+            """
+            err_cp  = (c_long * 1)(0)
+            enabled = self.device.oceandirect.odapi_adv_network_conf_get_interface_status(self.device.device_id, err_cp, c_uint(interfaceIndex))
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "get_network_interface_status")
+                raise OceanDirectError(err_cp[0], error_msg)
+            return bool(c_ubyte(enabled))
+
+        def get_network_interface_status2(self) -> bool:
+            return self.get_network_interface_status(0)
+
+        def set_network_interface_status(self, interfaceIndex: int, enable: bool) -> None:
+            """!
+            Enable or disable the interface. This function only applies to HDX/FX devices.
+            @see get_network_interface_status()
+            @param interfaceIndex  The interface that will be enabled or disabled.
+            @param enable True will enable the interface. False will disable it.
+            """
+            err_cp = (c_long * 1)(0)
+
+            if enable:
+                self.device.oceandirect.odapi_adv_network_conf_set_interface_status(self.device.device_id, err_cp, c_uint(interfaceIndex), c_ubyte(1))
+            else:
+                self.device.oceandirect.odapi_adv_network_conf_set_interface_status(self.device.device_id, err_cp, c_uint(interfaceIndex), c_ubyte(0))
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "set_network_interface_status")
+                raise OceanDirectError(err_cp[0], error_msg)
+
+        def set_network_interface_status2(self, enable: bool) -> None:
+            self.set_network_interface_status(0, enable)
+
+        def save_network_interface_setting(self, interfaceIndex: int) -> None:
+            """!
+            Save the network interface settings to the device. This function only applies to HDX/FX devices.
+            @param interfaceIndex  The interface to saved to.
+            """
+            err_cp = (c_long * 1)(0)
+            self.device.oceandirect.odapi_adv_network_conf_save_interface_setting(self.device.device_id, err_cp, c_uint(interfaceIndex))
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "save_network_interface_setting")
+                raise OceanDirectError(err_cp[0], error_msg)
+
+        def save_network_interface_setting2(self) -> None:
+            self.save_network_interface_setting(0)
+
+        def get_ethernet_gigabit_enable_status(self, interfaceIndex: int) -> bool:
+            """!
+            Return the status on whether the gigabit ethernet is enabled or not. This function only applies to HDX/FX devices.
+            @see set_ethernet_gigabit_enable_status()
+            @param interfaceIndex  The ethernet interface to look at.
+            @return The interface status.
+            """
+            err_cp = (c_long * 1)(0)
+            status = self.device.oceandirect.odapi_adv_ethernet_get_gigabit_enable_status(self.device.device_id, err_cp, c_uint(interfaceIndex))
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "get_ethernet_gigabit_enable_status")
+                raise OceanDirectError(err_cp[0], error_msg)
+            return bool(status)
+ 
+        def get_ethernet_gigabit_enable_status2(self) -> bool:
+            return self.get_ethernet_gigabit_enable_status(0)
+
+        def set_ethernet_gigabit_enable_status(self, interfaceIndex: int, enable: bool) -> None:
+            """!
+            Enable or disable the gigabit ethernet the status. This function only applies to HDX/FX devices.
+            @see get_ethernet_gigabit_enable_status()
+            @param interfaceIndex  The ethernet interface to look at.
+            @param enable True will enable gigabit ethernet.
+            """
+            err_cp = (c_long * 1)(0)
+            if enable:
+                self.device.oceandirect.odapi_adv_ethernet_set_gigabit_enable_status(self.device.device_id, err_cp, c_uint(interfaceIndex), 1)
+            else:
+                self.device.oceandirect.odapi_adv_ethernet_set_gigabit_enable_status(self.device.device_id, err_cp, c_uint(interfaceIndex), 0)
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "set_ethernet_gigabit_enable_status")
+                raise OceanDirectError(err_cp[0], error_msg)
+
+        def set_ethernet_gigabit_enable_status2(self, enable: bool) -> None:
+            self.set_ethernet_gigabit_enable_status(0, enable)
+
+
+        def get_multicast_group_enabled(self, interfaceIndex: int) -> bool:
+            """!
+            Return true if the multicast group message is enabled otherwise it's false. This function only applies to HDX/FX devices.
+            @see set_multicast_group_enabled()
+            @param interfaceIndex  The ethernet interface to look at.
+            @return The multicast group enable status.
+            """
+            err_cp = (c_long * 1)(0)
+            status = self.device.oceandirect.odapi_adv_network_conf_get_multicast_group_enabled(self.device.device_id, err_cp, c_uint(interfaceIndex))
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "get_multicast_group_enabled")
+                raise OceanDirectError(err_cp[0], error_msg)
+            return bool(status)
+
+        def get_multicast_group_enabled2(self) -> bool:
+            return self.get_multicast_group_enabled(0)
+
+        def set_multicast_group_enabled(self, interfaceIndex: int, enable: bool) -> None:
+            """!
+            Enable or disable the multicast message group. This function only applies to HDX/FX devices.
+            @see get_multicast_group_enabled()
+            @param interfaceIndex  The ethernet interface to look at.
+            @param enable True will enable multicast message group.
+            """
+            err_cp = (c_long * 1)(0)
+            if enable:
+                self.device.oceandirect.odapi_adv_network_conf_set_multicast_group_enabled(self.device.device_id, err_cp, c_uint(interfaceIndex), 1)
+            else:
+                self.device.oceandirect.odapi_adv_network_conf_set_multicast_group_enabled(self.device.device_id, err_cp, c_uint(interfaceIndex), 0)
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "set_multicast_group_enabled")
+                raise OceanDirectError(err_cp[0], error_msg)
+
+        def set_multicast_group_enabled2(self, enable: bool) -> None:
+            self.set_multicast_group_enabled(0, enable)
+
+
         def get_ethernet_mac_address(self, interfaceIndex: int) -> list[int]:
             """!
-            Read the ethernet 6-byte mac address from the spectrometer.
-            
-            @param interfaceIndex[in] The ethernet interface to look at.
+            Read the ethernet 6-byte mac address from the spectrometer. This function only applies to HDX/FX devices.
+            @see set_ethernet_mac_address()
+            @param interfaceIndex  The ethernet interface to look at.
             @return The mac address.
             """
             err_cp         = (c_long * 1)(0)
@@ -3484,13 +4014,16 @@ class Spectrometer():
                 value.append(int(mac_address_cp[i]))
             return value
 
+        def get_ethernet_mac_address2(self) -> list[int]:
+            return self.get_ethernet_mac_address(0)
+
         def set_ethernet_mac_address(self, interfaceIndex: int, macAddress: list[int]) -> None:
             """!
-            Writes a new ethernet 6-byte mac address into the spectrometer.
-            @param interfaceIndex[in] The ethernet interface to look at.
-            @param macAddress[in] The new mac address which is 6-byte long.
+            Writes a new ethernet 6-byte mac address into the spectrometer. This function only applies to HDX/FX devices.
+            @see get_ethernet_mac_address()
+            @param interfaceIndex  The ethernet interface to look at.
+            @param macAddress      The new mac address which is 6-byte long.
             """
-
             err_cp    = (c_long * 1)(0)
             array_len = len(macAddress)
 
@@ -3507,159 +4040,202 @@ class Spectrometer():
                 error_msg = self.device.decode_error(err_cp[0], "set_ethernet_mac_address")
                 raise OceanDirectError(err_cp[0], error_msg)
 
-        def get_network_interface_count(self) -> int:
-            """!
-            Read the number of supported communication interface.
+        def set_ethernet_mac_address2(self, macAddress: list[int]) -> None:
+            self.set_ethernet_mac_address(0, macAddress)
 
-            @return The number of interface.
+        #OBP2 Commands
+        def get_ip_address_assigned_mode(self) -> bool:
+            """!
+            Read the IP address mode from the OBP2 device.
+            @see get_ip_address_assigned_mode()
+            @return  True if the ip address was generated via DHCP. False if the ip address was statically assigned.
             """
             err_cp = (c_long * 1)(0)
-            if_count = self.device.oceandirect.odapi_adv_network_conf_get_interface_count(self.device.device_id, err_cp)
+            status = self.device.oceandirect.odapi_adv_get_ip_address_assigned_mode(self.device.device_id, err_cp)
 
             if err_cp[0] != 0:
-                error_msg = self.device.decode_error(err_cp[0], "get_network_interface_count")
+                error_msg = self.device.decode_error(err_cp[0], "get_ip_address_assigned_mode")
                 raise OceanDirectError(err_cp[0], error_msg)
 
-            return if_count
+            return bool(c_ubyte(status))
 
-        def get_network_interface_type(self, interfaceIndex: int) -> int:
+        def set_ip_address_assigned_mode(self, useDHCP: bool) -> None:
             """!
-            Return the interface type of the given interface index.
-
-            @param interfaceIndex[in] The interface to look at.
-            @return The interface type which could be one 0(Loopback), 1(wired ethernet), 2 (WIFI), and 3 (USB - CDC Ethernet). 
+            Set the IP address mode to the OBP2 device.
+            @see get_ip_address_assigned_mode()
+            @param useDHCP   True will use DHCP server for ip assignment. False will use statically assigned IP address.
             """
             err_cp = (c_long * 1)(0)
-            if_type = self.device.oceandirect.odapi_adv_network_conf_get_interface_type(self.device.device_id, err_cp, c_uint(interfaceIndex))
+            #if useDHCP:
+            #    self.device.oceandirect.odapi_adv_set_ip_address_assigned_mode(self.device.device_id, err_cp, 1)
+            #else:
+            #    self.device.oceandirect.odapi_adv_set_ip_address_assigned_mode(self.device.device_id, err_cp, 0)
+
+            self.device.oceandirect.odapi_adv_set_ip_address_assigned_mode(self.device.device_id, err_cp, c_ubyte(useDHCP))
 
             if err_cp[0] != 0:
-                error_msg = self.device.decode_error(err_cp[0], "get_network_interface_type")
+                error_msg = self.device.decode_error(err_cp[0], "set_ip_address_assigned_mode")
                 raise OceanDirectError(err_cp[0], error_msg)
 
-            return if_type
-
-        def get_network_interface_status(self, interfaceIndex: int) -> bool:
+        def get_network_configuration(self) -> tuple[bool, list[int], list[int], list[int], list[int]]:
             """!
-            Return true if the interface is enabled otherwise it's false.
-
-            @param interfaceIndex[in] The interface to look at.
-            @return True if the interface if enabled otherwise it's False.
+            Read the network configuration parameters from an OBP2 enabled device. This function
+            will return a tuple of 6 objects in this order:
+                address mode - True if it's using a DHCP IP address otherwise its False.
+                list[int] - the static IP address.
+                list[int] - the subnet mask.
+                list[int] - the default gateway IP address.
+                list[int] - the DNS server IP address.
+            @see set_manual_network_configuration()
+            @return A tuple of 5 object objects.
             """
-            err_cp = (c_long * 1)(0)
-            enabled = self.device.oceandirect.odapi_adv_network_conf_get_interface_status(self.device.device_id, err_cp, c_uint(interfaceIndex))
+            err_cp                    = (c_long * 1)(0)
+            outManualAssignment_cp    = c_ubyte(0)
+            ipv4_address_array_len    = 4
+            subnet_mask_array_len     = 4
+            default_gateway_array_len = 4
+            dns_server_array_len      = 4
+            ipv4_address_cp           = (c_ubyte * ipv4_address_array_len)(0)
+            subnet_mask_cp            = (c_ubyte * subnet_mask_array_len)(0)
+            default_gateway_cp        = (c_ubyte * default_gateway_array_len)(0)
+            dns_server_cp             = (c_ubyte * dns_server_array_len)(0)
+
+            self.device.oceandirect.odapi_adv_get_network_configuration(self.device.device_id, err_cp, 
+                                                               byref(outManualAssignment_cp),
+                                                               ipv4_address_cp, ipv4_address_array_len,
+                                                               subnet_mask_cp, subnet_mask_array_len,
+                                                               default_gateway_cp, default_gateway_array_len,
+                                                               dns_server_cp, dns_server_array_len)
 
             if err_cp[0] != 0:
-                error_msg = self.device.decode_error(err_cp[0], "get_network_interface_status")
+                error_msg = self.device.decode_error(err_cp[0], "get_network_configuration")
                 raise OceanDirectError(err_cp[0], error_msg)
 
-            return bool(c_ubyte(enabled))
+            ipv4_address    = []
+            subnet_mask     = []
+            default_gateway = []
+            dns_server      = []
+            for i in range(ipv4_address_array_len):
+                ipv4_address.append(int(ipv4_address_cp[i]))
+                subnet_mask.append(int(subnet_mask_cp[i]))
+                default_gateway.append(int(default_gateway_cp[i]))
+                dns_server.append(int(dns_server_cp[i]))
+            return (bool(outManualAssignment_cp), ipv4_address, subnet_mask, default_gateway, dns_server)
 
-        def set_network_interface_status(self, interfaceIndex: int, enable: bool) -> None:
+
+        def set_manual_network_configuration(self, ipv4Address: list[int], subnetMask: list[int], 
+                                             defaultGateway: list[int], dnsServer: list[int]) -> None:
             """!
-            Enable or disable the interface.
+            Write the network configuration parameters (static ip address) on OBP2 enabled device.
+            @see get_manual_network_configuration()
+            @see get_network_configuration()
+            @param ipv4Address    The static IP address.
+            @param subnetMask     The subnet mask.
+            @param defaultGateway The default gateway IP address.
+            @param dnsServer      The DNS server IP address.
+            """
+            err_cp                   = (c_long * 1)(0)
+            ipv4Address_array_len    = len(ipv4Address)
+            subnetMask_array_len     = len(subnetMask)
+            defaultGateway_array_len = len(defaultGateway)
+            dnsServer_array_len      = len(dnsServer)
+
+            if ipv4Address_array_len != 4 or subnetMask_array_len != 4 or defaultGateway_array_len != 4 or dnsServer_array_len != 4:
+               error_msg = "set_manual_network_configuration() error:  an array must of 4 bytes long."
+               raise OceanDirectError(err_cp[0], error_msg)
+
+            ipv4Address_cp    = (c_ubyte * ipv4Address_array_len)(0)
+            subnetMask_cp     = (c_ubyte * subnetMask_array_len)(0)
+            defaultGateway_cp = (c_ubyte * defaultGateway_array_len)(0)
+            dnsServer_cp      = (c_ubyte * dnsServer_array_len)(0)
+            for i in range(ipv4Address_array_len):
+                ipv4Address_cp[i]    = ipv4Address[i]
+                subnetMask_cp[i]     = subnetMask[i]
+                defaultGateway_cp[i] = defaultGateway[i]
+                dnsServer_cp[i]      = dnsServer[i]
+
+            self.device.oceandirect.odapi_adv_set_manual_network_configuration(self.device.device_id, err_cp,
+                                                               ipv4Address_cp, ipv4Address_array_len, 
+                                                               subnetMask_cp, subnetMask_array_len,
+                                                               defaultGateway_cp, defaultGateway_array_len,
+                                                               dnsServer_cp, dnsServer_array_len)
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "set_manual_network_configuration")
+                raise OceanDirectError(err_cp[0], error_msg)
+
+        def get_manual_network_configuration(self) -> tuple[list[int], list[int], list[int], list[int]]:
+            """!
+            Read the network configuration parameters (static ip address) from an OBP2 enabled device. This
+            function will return a tuple of 4 objects in this order:
+                list[int] - the static IP address.
+                list[int] - the subnet mask.
+                list[int] - the default gateway IP address.
+                list[int] - the DNS server IP address.
+            @see set_manual_network_configuration()
+            @return A tuple of 4 object objects.
+            """
+            err_cp                    = (c_long * 1)(0)
+            ipv4_address_array_len    = 4
+            subnet_mask_array_len     = 4
+            default_gateway_array_len = 4
+            dns_server_array_len      = 4
+            ipv4_address_cp    = (c_ubyte * ipv4_address_array_len)(0)
+            subnet_mask_cp     = (c_ubyte * subnet_mask_array_len)(0)
+            default_gateway_cp = (c_ubyte * default_gateway_array_len)(0)
+            dns_server_cp      = (c_ubyte * dns_server_array_len)(0)
+
+            self.device.oceandirect.odapi_adv_get_manual_network_configuration(self.device.device_id, err_cp, 
+                                                               ipv4_address_cp, ipv4_address_array_len,
+                                                               subnet_mask_cp, subnet_mask_array_len,
+                                                               default_gateway_cp, default_gateway_array_len,
+                                                               dns_server_cp, dns_server_array_len)
+
+            if err_cp[0] != 0:
+                error_msg = self.device.decode_error(err_cp[0], "get_manual_network_configuration")
+                raise OceanDirectError(err_cp[0], error_msg)
+
+            ipv4_address    = []
+            subnet_mask     = []
+            default_gateway = []
+            dns_server      = []
+            for i in range(ipv4_address_array_len):
+                ipv4_address.append(int(ipv4_address_cp[i]))
+                subnet_mask.append(int(subnet_mask_cp[i]))
+                default_gateway.append(int(default_gateway_cp[i]))
+                dns_server.append(int(dns_server_cp[i]))
+
+            return (ipv4_address, subnet_mask, default_gateway, dns_server)
+
+
+        def set_high_gain_mode(self, enableHighGain: bool) -> None:
+            """!
+            Enables/disables the high gain mode of the given device. This function is only supported
+            by NirQuest units.
+            @see get_high_gain_mode()
+            @param enableHighGain True will enable the high gain mode. False will enable the standard gain mode.
+            """
+            err_cp  = c_long(0)
+            self.device.oceandirect.odapi_set_high_gain_mode.argtypes = [c_ulong, POINTER(c_int), c_ubyte]
+            enabled = self.device.oceandirect.odapi_set_high_gain_mode(self.device.device_id, byref(err_cp), c_ubyte(enableHighGain))
+
+            if err_cp.value != 0:
+                error_msg = self.device.decode_error(err_cp.value, "set_high_gain_mode")
+                raise OceanDirectError(err_cp.value, error_msg)
+
+        def get_high_gain_mode(self) -> bool:
+            """!
+            Read the high gain mode status of the given device. This function is only supported
+            by NirQuest and OceanNR units.
+            @see set_high_gain_mode()
+            @return True if the device is in high gain mode state otherwise it's False.
+            """
+            err_cp = c_long(0)
+            self.device.oceandirect.odapi_get_high_gain_mode.argtypes = [c_ulong, POINTER(c_int)]
+            self.device.oceandirect.odapi_get_high_gain_mode.restype  = c_int
             
-            @param interfaceIndex[in] The interface that will be enabled or disabled.
-            @param enable[in] True will enable the interface. False will disable it.
-            """
-            err_cp = (c_long * 1)(0)
-
-            if enable:
-                self.device.oceandirect.odapi_adv_network_conf_set_interface_status(self.device.device_id, err_cp, c_uint(interfaceIndex), c_ubyte(1))
-            else:
-                self.device.oceandirect.odapi_adv_network_conf_set_interface_status(self.device.device_id, err_cp, c_uint(interfaceIndex), c_ubyte(0))
-
-            if err_cp[0] != 0:
-                error_msg = self.device.decode_error(err_cp[0], "set_network_interface_status")
-                raise OceanDirectError(err_cp[0], error_msg)
-
-        def save_network_interface_setting(self, interfaceIndex: int) -> None:
-            """!
-            Save the network interface settings to the device.
-            
-            @param interfaceIndex[in] The interface to saved to.
-            """
-            err_cp = (c_long * 1)(0)
-            self.device.oceandirect.odapi_adv_network_conf_save_interface_setting(self.device.device_id, err_cp, c_uint(interfaceIndex))
-
-            if err_cp[0] != 0:
-                error_msg = self.device.decode_error(err_cp[0], "save_network_interface_setting")
-                raise OceanDirectError(err_cp[0], error_msg)
-
-        def get_ethernet_gigabit_enable_status(self, interfaceIndex: int) -> bool:
-            """!
-            Return the status on whether the gigabit ethernet is enabled or not.
-            
-            @param interfaceIndex[in] The ethernet interface to look at.
-            @return The interface status.
-            """
-            err_cp = (c_long * 1)(0)
-            status = self.device.oceandirect.odapi_adv_ethernet_get_gigabit_enable_status(self.device.device_id, err_cp, c_uint(interfaceIndex))
-
-            if err_cp[0] != 0:
-                error_msg = self.device.decode_error(err_cp[0], "get_ethernet_gigabit_enable_status")
-                raise OceanDirectError(err_cp[0], error_msg)
-
-            return bool(status)
- 
-        def set_ethernet_gigabit_enable_status(self, interfaceIndex: int, enable: bool) -> None:
-            """!
-            Enable or disable the gigabit ethernet the status.
-
-            @param interfaceIndex[in] The ethernet interface to look at.
-            @param enable True will enable gigabit ethernet.
-            """
-            err_cp = (c_long * 1)(0)
-            if enable:
-                self.device.oceandirect.odapi_adv_ethernet_set_gigabit_enable_status(self.device.device_id, err_cp, c_uint(interfaceIndex), 1)
-            else:
-                self.device.oceandirect.odapi_adv_ethernet_set_gigabit_enable_status(self.device.device_id, err_cp, c_uint(interfaceIndex), 0)
-
-            if err_cp[0] != 0:
-                error_msg = self.device.decode_error(err_cp[0], "set_ethernet_gigabit_enable_status")
-                raise OceanDirectError(err_cp[0], error_msg)
-
-        def get_ethernet_mac_address(self, interfaceIndex: int) -> list[int]:
-            """!
-            Read the ethernet 6-byte mac address from the spectrometer.
-            
-            @param interfaceIndex[in] The ethernet interface to look at.
-            @return The mac address.
-            """
-            err_cp         = (c_long * 1)(0)
-            array_len      = 6
-            mac_address_cp = (c_ubyte * array_len)(0)
-
-            self.device.oceandirect.odapi_adv_ethernet_get_mac_address(self.device.device_id, err_cp, c_uint(interfaceIndex), mac_address_cp, array_len)
-
-            if err_cp[0] != 0:
-                error_msg = self.device.decode_error(err_cp[0], "get_ethernet_mac_address")
-                raise OceanDirectError(err_cp[0], error_msg)
-
-            value = []
-            for i in range(array_len):
-                value.append(int(mac_address_cp[i]))
-            return value
-
-        def set_ethernet_mac_address(self, interfaceIndex: int, macAddress: list[int]) -> None:
-            """!
-            Writes a new ethernet 6-byte mac address into the spectrometer.
-
-            @param interfaceIndex[in] The ethernet interface to look at.
-            @param macAddress[in] The new mac address which is 6-byte long.
-            """
-
-            err_cp    = (c_long * 1)(0)
-            array_len = len(macAddress)
-
-            if array_len != 6:
-                error_msg = "set_ethernet_mac_address() error:  macAddress must be an array of 6 bytes long."
-                raise OceanDirectError(err_cp[0], error_msg)
-
-            mac_address_cp = (c_ubyte * array_len)(0)
-            for i in range(array_len):
-                mac_address_cp[i] = macAddress[i]
-
-            self.device.oceandirect.odapi_adv_ethernet_set_mac_address(self.device.device_id, err_cp, c_uint(interfaceIndex), mac_address_cp, array_len)
-            if err_cp[0] != 0:
-                error_msg = self.device.decode_error(err_cp[0], "set_ethernet_mac_address")
-                raise OceanDirectError(err_cp[0], error_msg)
+            value = self.device.oceandirect.odapi_get_high_gain_mode(self.device.device_id, byref(err_cp))
+            if err_cp.value != 0:
+                error_msg = self.device.decode_error(err_cp.value,"get_high_gain_mode")
+                raise OceanDirectError(err_cp.value, error_msg)
+            return bool(c_ubyte(value))
