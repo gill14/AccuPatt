@@ -339,6 +339,7 @@ class StringPass(baseclass):
     @pyqtSlot(str)
     def string_length_units_changed(self, units: str):
         self.passData.string.data_loc_units = units
+        cfg.set_unit_string_data_location(units)
         self.plotWidget.plotItem.setLabel(axis="bottom", text="Location", units=units)
 
     @pyqtSlot()
