@@ -18,6 +18,7 @@ from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
 from accupatt.models.sprayCard import SprayCard
 from accupatt.models.sprayCardComposite import SprayCardComposite
+from accupatt.plotting import pass_card_plotter, series_card_plotter, series_base_plotter, spray_card_composite_plotter
 from accupatt.widgets.mplwidget import MplWidget
 from accupatt.widgets.tabWidgetBase import TabWidgetBase
 from accupatt.windows.cardManager import CardManager
@@ -44,6 +45,10 @@ class TabWidgetCards(TabWidgetBase):
         self.plotWidgetDropDist1: MplWidget = self.ui.plotWidgetDropDist1
         self.plotWidgetDropDist2: MplWidget = self.ui.plotWidgetDropDist2
         self.tableWidgetCompositeStats: QTableWidget = self.ui.tableWidgetCompositeStats
+
+        # Smooth is string-only — hide the controls on the card tab
+        self.checkBoxPassSmooth.hide()
+        self.checkBoxSeriesSmooth.hide()
 
         # Flag for accepting file saved signals
         self.delayed_request_open_edit_pass = False
@@ -196,9 +201,8 @@ class TabWidgetCards(TabWidgetBase):
         self.processCards()
 
     def individuals_triggered(self, passData: Pass):
-        passData.cards.plot(
-            mplWidget=self.plotWidgetPass,
-            loc_units=self.seriesData.info.swath_units,
+        pass_card_plotter.plot(
+            self.plotWidgetPass, passData.cards, self.seriesData.info.swath_units
         )
         model = CardStatTableModel()
         proxyModel = QSortFilterProxyModel()
@@ -214,43 +218,36 @@ class TabWidgetCards(TabWidgetBase):
         model.valueChanged.connect(self.passStatTableValueChanged)
 
     def composites_triggered(self):
-        self.seriesData.cards.plotOverlay(mplWidget=self.plotWidgetOverlay)
-        self.seriesData.cards.plotAverage(
-            mplWidget=self.plotWidgetAverage,
-        )
+        series_card_plotter.plot_overlay(self.plotWidgetOverlay, self.seriesData.cards)
+        series_card_plotter.plot_average(self.plotWidgetAverage, self.seriesData.cards)
 
     def simulations_triggered(self):
-        self.seriesData.cards.plotRacetrack(
-            mplWidget=self.plotWidgetRacetrack,
+        series_card_plotter.plot_racetrack(self.plotWidgetRacetrack, self.seriesData.cards)
+        series_card_plotter.plot_back_and_forth(
+            self.plotWidgetBackAndForth, self.seriesData.cards
         )
-        self.seriesData.cards.plotBackAndForth(
-            mplWidget=self.plotWidgetBackAndForth,
-        )
-        self.seriesData.cards.plotCVTable(self.tableWidgetCV)
+        series_base_plotter.plot_cv_table(self.tableWidgetCV, self.seriesData.cards)
 
     def distributions_triggered(self):
         composite = SprayCardComposite()
         if self.comboBoxDistPass.currentIndex() == 0:
-            # "All (Series-Wise Composite)" option
             composite.buildFromSeries(seriesData=self.seriesData)
         else:
             distPassData = self.getActiveCardPasses()[
                 self.comboBoxDistPass.currentIndex() - 1
             ]
-            # "Pass X" option
             if self.comboBoxDistCard.currentIndex() == 0:
-                # "All (Pass-Wise Composite)" option
                 composite.buildFromPass(passData=distPassData)
             elif self.comboBoxDistCard.currentIndex() > 0:
-                # "Card X" option
                 card = distPassData.cards.card_list[
                     self.comboBoxDistCard.currentIndex() - 1
                 ]
                 composite.buildFromCard(card)
-        composite.plotDistribution(
-            mplWidget1=self.plotWidgetDropDist1,
-            mplWidget2=self.plotWidgetDropDist2,
-            tableWidget=self.tableWidgetCompositeStats,
+        spray_card_composite_plotter.plot_distribution(
+            self.plotWidgetDropDist1,
+            self.plotWidgetDropDist2,
+            self.tableWidgetCompositeStats,
+            composite,
         )
 
     """

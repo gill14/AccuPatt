@@ -7,6 +7,7 @@ from pyqtgraph import PlotWidget
 
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
+from accupatt.plotting import pass_string_plotter, series_string_plotter, series_base_plotter
 from accupatt.widgets.tabWidgetBase import TabWidgetBase
 from accupatt.windows.stringPass import StringPass
 from accupatt.windows.stringPlotOptions import StringPlotOptions
@@ -140,11 +141,9 @@ class TabWidgetString(TabWidgetBase):
         self.seriesData.string.modifyPatterns()
 
     def individuals_triggered(self, passData: Pass):
-        # Plot Individual
-        line_left, line_right, line_vertical = passData.string.plotIndividual(
-            self.plotWidgetIndividual
+        line_left, line_right, line_vertical = pass_string_plotter.plot_individual(
+            self.plotWidgetIndividual, passData.string
         )
-        # Connect Individual trim handle signals to slots for updating
         if (
             line_left is not None
             and line_right is not None
@@ -153,18 +152,17 @@ class TabWidgetString(TabWidgetBase):
             line_left.sigPositionChangeFinished.connect(self._updateTrimL)
             line_right.sigPositionChangeFinished.connect(self._updateTrimR)
             line_vertical.sigPositionChangeFinished.connect(self._updateTrimFloor)
-        # Plot Individual Trim
-        passData.string.plotIndividualTrim(self.plotWidgetIndividualTrim)
+        pass_string_plotter.plot_individual_trim(
+            self.plotWidgetIndividualTrim, passData.string
+        )
 
     def composites_triggered(self):
-        self.seriesData.string.plotOverlay(self.plotWidgetOverlay)
-        self.seriesData.string.plotAverage(self.plotWidgetAverage)
+        series_string_plotter.plot_overlay(self.plotWidgetOverlay, self.seriesData.string)
+        series_string_plotter.plot_average(self.plotWidgetAverage, self.seriesData.string)
 
     def simulations_triggered(self):
-        self.seriesData.string.plotRacetrack(
-            mplWidget=self.plotWidgetRacetrack,
+        series_string_plotter.plot_racetrack(self.plotWidgetRacetrack, self.seriesData.string)
+        series_string_plotter.plot_back_and_forth(
+            self.plotWidgetBackAndForth, self.seriesData.string
         )
-        self.seriesData.string.plotBackAndForth(
-            mplWidget=self.plotWidgetBackAndForth,
-        )
-        self.seriesData.string.plotCVTable(self.tableWidgetCV)
+        series_base_plotter.plot_cv_table(self.tableWidgetCV, self.seriesData.string)

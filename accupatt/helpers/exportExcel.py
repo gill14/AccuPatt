@@ -170,7 +170,7 @@ def export_all_to_excel(series: SeriesData, saveFile: str):
             "center_average",
             "smooth_average",
             "equalize_integrals",
-            "simulated_adjascent_passes",
+            "simulated_adjacent_passes",
         ]
     )
     vals.extend(
@@ -178,7 +178,7 @@ def export_all_to_excel(series: SeriesData, saveFile: str):
             s.string.center_method,
             s.string.smooth,
             s.string.equalize_integrals,
-            s.string.simulated_adjascent_passes,
+            s.string.simulated_adjacent_passes,
         ]
     )
     # plot it

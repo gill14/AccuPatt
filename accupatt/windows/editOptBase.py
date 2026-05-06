@@ -3,7 +3,6 @@ import os
 import accupatt.config as cfg
 from PyQt6 import uic
 from PyQt6.QtWidgets import QDialogButtonBox, QLineEdit, QSpinBox
-from accupatt.models.OptBase import OptBase
 
 Ui_Form, baseclass = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "editOptBase.ui")
@@ -11,12 +10,25 @@ Ui_Form, baseclass = uic.loadUiType(
 
 
 class EditOptBase(baseclass):
-    def __init__(self, optBase: OptBase, window_units: str, parent=None):
+    def __init__(self, optBase, window_units: str, show_smooth: bool = True, parent=None):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         self.opt = optBase
         self.window_units = window_units
+        self.show_smooth = show_smooth
+
+        if not show_smooth:
+            self.ui.lineEditSmoothWindow.hide()
+            self.ui.labelSmoothWindowUnits.hide()
+            self.ui.spinBoxOrder.hide()
+            for widget in [
+                getattr(self.ui, name, None)
+                for name in ("labelSmoothWindow", "labelSmoothOrder")
+            ]:
+                if widget:
+                    widget.hide()
+
         self._populate_fields()
 
         self.ui.buttonBox.button(
@@ -27,11 +39,12 @@ class EditOptBase(baseclass):
 
     def _populate_fields(self):
         self.ui.labelName.setText(self.opt.name)
-        self.lineEditSmoothWindow: QLineEdit = self.ui.lineEditSmoothWindow
-        self.lineEditSmoothWindow.setText(str(self.opt.smooth_window))
-        self.ui.labelSmoothWindowUnits.setText(self.window_units)
-        self.spinBoxOrder: QSpinBox = self.ui.spinBoxOrder
-        self.spinBoxOrder.setValue(self.opt.smooth_order)
+        if self.show_smooth:
+            self.lineEditSmoothWindow: QLineEdit = self.ui.lineEditSmoothWindow
+            self.lineEditSmoothWindow.setText(str(self.opt.smooth_window))
+            self.ui.labelSmoothWindowUnits.setText(self.window_units)
+            self.spinBoxOrder: QSpinBox = self.ui.spinBoxOrder
+            self.spinBoxOrder.setValue(self.opt.smooth_order)
         self.ui.radioButtonCentroid.setChecked(
             self.opt.center_method == cfg.CENTER_METHOD_CENTROID
         )
@@ -41,11 +54,10 @@ class EditOptBase(baseclass):
 
     def _reset_defaults(self):
         self.ui.labelName.setText(self.opt.name)
-        self.lineEditSmoothWindow: QLineEdit = self.ui.lineEditSmoothWindow
-        self.lineEditSmoothWindow.setText(str(cfg.get_smooth_window()))
-        self.ui.labelSmoothWindowUnits.setText(self.window_units)
-        self.spinBoxOrder: QSpinBox = self.ui.spinBoxOrder
-        self.spinBoxOrder.setValue(cfg.get_smooth_order())
+        if self.show_smooth:
+            self.ui.lineEditSmoothWindow.setText(str(cfg.get_smooth_window()))
+            self.ui.labelSmoothWindowUnits.setText(self.window_units)
+            self.ui.spinBoxOrder.setValue(cfg.get_smooth_order())
         self.ui.radioButtonCentroid.setChecked(
             cfg.get_center_method() == cfg.CENTER_METHOD_CENTROID
         )
@@ -54,22 +66,20 @@ class EditOptBase(baseclass):
         )
 
     def accept(self):
-        # Capture/Cast values
-        smooth_window = float(self.lineEditSmoothWindow.text())
-        smooth_order = self.spinBoxOrder.value()
+        if self.show_smooth:
+            self.opt.smooth_window = float(self.ui.lineEditSmoothWindow.text())
+            self.opt.smooth_order = self.ui.spinBoxOrder.value()
         center_method = (
             cfg.CENTER_METHOD_CENTROID
             if self.ui.radioButtonCentroid.isChecked()
             else cfg.CENTER_METHOD_COD
         )
-        self.opt.smooth_window = smooth_window
-        self.opt.smooth_order = smooth_order
         self.opt.center_method = center_method
 
         if self.ui.checkBoxUpdateDefaults.isChecked():
-            # Update Defaults
-            cfg.set_smooth_window(smooth_window)
-            cfg.set_smooth_order(smooth_order)
+            if self.show_smooth:
+                cfg.set_smooth_window(self.opt.smooth_window)
+                cfg.set_smooth_order(self.opt.smooth_order)
             cfg.set_center_method(center_method)
 
         super().accept()

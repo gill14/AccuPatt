@@ -5,249 +5,232 @@ import numpy as np
 from accupatt.models.passDataCard import PassDataCard
 
 from accupatt.models.passDataString import PassDataString
-from accupatt.models.sprayCard import SprayCard
 
 
 class Pass:
     def __init__(self, id_="", number=0, name=""):
-        # Info Stuff
         self.id = id_
         if self.id == "":
             self.id = str(uuid.uuid4())
         self.number = number
-        self.name = name
-        if self.name == "":
-            self.name = "Pass " + str(self.number)
+        self._name = name if name != "" else "Pass " + str(self.number)
         # Pass Info
-        self.ground_speed: float = -1
-        self.ground_speed_units = cfg.get_unit_ground_speed()
-        self.spray_height: float = -1
-        self.spray_height_units = cfg.get_unit_spray_height()
-        self.pass_heading: int = -1
-        self.wind_direction: int = -1
-        self.wind_speed: float = -1
-        self.wind_speed_units = cfg.get_unit_wind_speed()
-        self.temperature: float = -1
-        self.temperature_units = cfg.get_unit_temperature()
-        self.humidity: float = -1
+        self.ground_speed: float | None = None
+        self.ground_speed_units: str = cfg.get_unit_ground_speed()
+        self.spray_height: float | None = None
+        self.spray_height_units: str = cfg.get_unit_spray_height()
+        self.pass_heading: int | None = None
+        self.wind_direction: int | None = None
+        self.wind_speed: float | None = None
+        self.wind_speed_units: str = cfg.get_unit_wind_speed()
+        self.temperature: float | None = None
+        self.temperature_units: str = cfg.get_unit_temperature()
+        self.humidity: float | None = None
         # String Data
-        self.string = PassDataString(name=self.name)
+        self.string = PassDataString(name=self._name)
         # Card Data
-        self.cards = PassDataCard(name=self.name)
+        self.cards = PassDataCard(name=self._name)
 
-    """
-    GET methods return a tuple of (value, units, value_string, value_units_string)
-    """
+    @property
+    def name(self) -> str:
+        return self._name
 
-    def get_airspeed(self, units=None) -> tuple[int, str, str, str]:
-        if (
-            self.ground_speed < 0
-            or self.wind_speed < 0
-            or self.wind_direction < 0
-            or self.pass_heading < 0
-        ):
-            return -1, units if units else self.ground_speed_units, "", ""
-        # Convert gs and ws to mph and save to temp vars
-        gs = self._convert_speed_to_mph(self.ground_speed, self.ground_speed_units)
-        ws = self._convert_speed_to_mph(self.wind_speed, self.wind_speed_units)
-        # Calculate airspeed in mph (inverse of ph to go with convention of flyin collection)
-        airspeed = gs - (
-            ws * np.cos(np.radians(self.wind_direction - (self.pass_heading - 180)))
-        )
-        # Use requested units, default to ground_speed_units
-        units = units if units else self.ground_speed_units
-        # Convert units and round
-        airspeed = round(self._convert_speed_mph_to_requested(airspeed, units))
-        return airspeed, units, f"{airspeed}", f"{airspeed} {units}"
+    @name.setter
+    def name(self, value: str):
+        self._name = value
+        if hasattr(self, "string"):
+            self.string.name = value
+        if hasattr(self, "cards"):
+            self.cards.name = value
 
-    def get_crosswind(self, units=None) -> tuple[float, str, str, str]:
-        if self.wind_speed < 0 or self.wind_direction < 0 or self.pass_heading < 0:
-            return -1, units if units else self.wind_speed_units, "", ""
-        # Convert ws to mph and save to temp var
-        ws = self._convert_speed_to_mph(self.wind_speed, self.wind_speed_units)
-        # Calculate crosswind in mph (inverse of ph to go with convention of flyin collection)
-        crosswind = ws * np.sin(
-            np.radians((self.pass_heading - 180) - self.wind_direction)
-        )
-        # Use requested units, default to ground_speed_units
-        units = units if units else self.wind_speed_units
-        # Convert units
-        crosswind = self._convert_speed_mph_to_requested(crosswind, units)
-        return (
-            crosswind,
-            units,
-            f"{round(crosswind, 1) + 0.:.1f}",
-            f"{round(crosswind, 1) + 0.:.1f} {units}",
-        )
+    # -------------------------------------------------------------------------
+    # Numeric accessors with optional unit conversion  (float | None)
+    # -------------------------------------------------------------------------
 
-    def get_ground_speed(self, units=None) -> tuple[int, str, str, str]:
-        if self.ground_speed < 0:
-            return -1, units if units else self.ground_speed_units, "", ""
-        # Convert gs to mph and save to temp var
-        gs = self._convert_speed_to_mph(self.ground_speed, self.ground_speed_units)
-        # Use requested units, default to ground_speed_units
-        units = units if units else self.ground_speed_units
-        # Convert units and round
-        gs = round(self._convert_speed_mph_to_requested(gs, units))
-        return gs, units, f"{gs}", f"{gs} {units}"
+    def ground_speed_in(self, units: str = None) -> float | None:
+        if self.ground_speed is None:
+            return None
+        gs = self._to_mph(self.ground_speed, self.ground_speed_units)
+        return round(self._from_mph(gs, units or self.ground_speed_units))
 
-    def get_spray_height(self, units=None) -> tuple[float, str, str, str]:
-        if self.spray_height < 0:
-            return -1, units if units else self.spray_height_units, "", ""
-        # Convert sh to ft and save to temp var
+    def spray_height_in(self, units: str = None) -> float | None:
+        if self.spray_height is None:
+            return None
         sh = (
             self.spray_height * cfg.FT_PER_M
             if self.spray_height_units == cfg.UNIT_M
             else self.spray_height
         )
-        # Use requested units, default to spray_height_units
-        units = units if units else self.spray_height_units
-        # Convert units
-        sh = sh / cfg.FT_PER_M if units == cfg.UNIT_M else sh
-        return sh, units, f"{sh:g}", f"{sh:.1f} {units}"
+        units = units or self.spray_height_units
+        return sh / cfg.FT_PER_M if units == cfg.UNIT_M else sh
 
-    def get_pass_heading(self) -> tuple[int, str, str, str]:
-        if self.pass_heading < 0:
-            return -1, cfg.UNIT_DEG, "", ""
-        return (
-            self.pass_heading,
-            cfg.UNIT_DEG,
-            f"{self.pass_heading}",
-            f"{self.pass_heading}{cfg.UNIT_DEG}",
+    def wind_speed_in(self, units: str = None) -> float | None:
+        if self.wind_speed is None:
+            return None
+        ws = self._to_mph(self.wind_speed, self.wind_speed_units)
+        return self._from_mph(ws, units or self.wind_speed_units)
+
+    def temperature_in(self, units: str = None) -> float | None:
+        if self.temperature is None:
+            return None
+        units = units or self.temperature_units
+        if units == self.temperature_units:
+            return self.temperature
+        if units == cfg.UNIT_DEG_F:
+            return self.temperature * (9 / 5) + 32  # °C → °F
+        return (self.temperature - 32) * (5 / 9)    # °F → °C
+
+    def humidity_in(self) -> float | None:
+        return self.humidity
+
+    def airspeed_in(self, units: str = None) -> float | None:
+        if any(
+            v is None
+            for v in (
+                self.ground_speed,
+                self.wind_speed,
+                self.wind_direction,
+                self.pass_heading,
+            )
+        ):
+            return None
+        gs = self._to_mph(self.ground_speed, self.ground_speed_units)
+        ws = self._to_mph(self.wind_speed, self.wind_speed_units)
+        airspeed = gs - ws * np.cos(
+            np.radians(self.wind_direction - (self.pass_heading - 180))
         )
+        return round(self._from_mph(airspeed, units or self.ground_speed_units))
 
-    def get_wind_direction(self) -> tuple[int, str, str, str]:
-        if self.wind_direction < 0:
-            return -1, cfg.UNIT_DEG, "", ""
-        return (
-            self.wind_direction,
-            cfg.UNIT_DEG,
-            f"{self.wind_direction}",
-            f"{self.wind_direction}{cfg.UNIT_DEG}",
+    def crosswind_in(self, units: str = None) -> float | None:
+        if any(
+            v is None for v in (self.wind_speed, self.wind_direction, self.pass_heading)
+        ):
+            return None
+        ws = self._to_mph(self.wind_speed, self.wind_speed_units)
+        crosswind = ws * np.sin(
+            np.radians((self.pass_heading - 180) - self.wind_direction)
         )
+        return self._from_mph(crosswind, units or self.wind_speed_units)
 
-    def get_wind_speed(self, units=None) -> tuple[float, str, str, str]:
-        if self.wind_speed < 0:
-            return -1, units if units else self.wind_speed_units, "", ""
-        # Convert ws to mph and save to temp var
-        ws = self._convert_speed_to_mph(self.wind_speed, self.wind_speed_units)
-        # Use requested units, default to wind_speed_units
-        units = units if units else self.wind_speed_units
-        # Convert units
-        ws = self._convert_speed_mph_to_requested(ws, units)
-        return ws, units, f"{ws:g}", f"{ws:.1f} {units}"
+    # -------------------------------------------------------------------------
+    # Display string properties  (stored unit, "" when not set)
+    # -------------------------------------------------------------------------
 
-    def get_temperature(self, units=None) -> tuple[float, str, str, str]:
-        if self.temperature < 0:
-            return -1, units if units else self.temperature_units, "", ""
-        # Convert t to deg-F and save to temp var
-        t = (
-            (self.temperature * (9 / 5)) + 32
-            if self.temperature_units == cfg.UNIT_DEG_C
-            else self.temperature
-        )
-        # Use requested units, default to spray_height_units
-        units = units if units else self.temperature_units
-        # Convert units
-        t = (self.temperature - 32) * (5 / 9) if units == cfg.UNIT_DEG_C else t
-        return t, units, f"{t:g}", f"{t:.1f} {units}"
+    @property
+    def ground_speed_str(self) -> str:
+        v = self.ground_speed_in()
+        return f"{v}" if v is not None else ""
 
-    def get_humidity(self) -> tuple[float, str, str, str]:
-        if self.humidity < 0:
-            return -1, "%", "", ""
-        return self.humidity, "%", f"{self.humidity:g}", f"{self.humidity:.1f}%"
+    @property
+    def spray_height_str(self) -> str:
+        v = self.spray_height_in()
+        return f"{v:g}" if v is not None else ""
 
-    def _convert_speed_to_mph(self, value, unit) -> float:
-        if unit == cfg.UNIT_KPH:
-            value = value * cfg.MPH_PER_KPH
-        elif unit == cfg.UNIT_KN:
-            value = value * cfg.MPH_PER_KN
-        return value
+    @property
+    def pass_heading_str(self) -> str:
+        return f"{self.pass_heading}" if self.pass_heading is not None else ""
 
-    def _convert_speed_mph_to_requested(self, value, unit) -> float:
-        if unit == cfg.UNIT_KPH:
-            value = value / cfg.MPH_PER_KPH
-        elif unit == cfg.UNIT_KN:
-            value = value / cfg.MPH_PER_KN
-        return value
+    @property
+    def wind_direction_str(self) -> str:
+        return f"{self.wind_direction}" if self.wind_direction is not None else ""
 
-    """
-    The methods below are used to set values as needed
-    """
+    @property
+    def wind_speed_str(self) -> str:
+        v = self.wind_speed_in()
+        return f"{v:g}" if v is not None else ""
+
+    @property
+    def temperature_str(self) -> str:
+        v = self.temperature_in()
+        return f"{v:g}" if v is not None else ""
+
+    @property
+    def humidity_str(self) -> str:
+        return f"{self.humidity:g}" if self.humidity is not None else ""
+
+    # -------------------------------------------------------------------------
+    # Setters  (return False on parse failure; None stored for blank input)
+    # -------------------------------------------------------------------------
 
     def set_ground_speed(self, val, units=None) -> bool:
-        val, isValid = self._resolve_input(val)
-        if isValid:
-            self.ground_speed = val
-        else:
+        val, ok = self._parse(val)
+        if not ok:
             return False
+        self.ground_speed = val
         if units:
             self.ground_speed_units = units
         return True
 
     def set_spray_height(self, val, units=None) -> bool:
-        val, isValid = self._resolve_input(val)
-        if isValid:
-            self.spray_height = val
-        else:
+        val, ok = self._parse(val)
+        if not ok:
             return False
+        self.spray_height = val
         if units:
             self.spray_height_units = units
         return True
 
     def set_pass_heading(self, val) -> bool:
-        val, isValid = self._resolve_input(val, var_type=int)
-        if isValid:
-            self.pass_heading = val
-        else:
+        val, ok = self._parse(val, int)
+        if not ok:
             return False
+        self.pass_heading = val
         return True
 
     def set_wind_direction(self, val) -> bool:
-        val, isValid = self._resolve_input(val, var_type=int)
-        if isValid:
-            self.wind_direction = val
-        else:
+        val, ok = self._parse(val, int)
+        if not ok:
             return False
+        self.wind_direction = val
         return True
 
     def set_wind_speed(self, val, units=None) -> bool:
-        val, isValid = self._resolve_input(val)
-        if isValid:
-            self.wind_speed = val
-        else:
+        val, ok = self._parse(val)
+        if not ok:
             return False
+        self.wind_speed = val
         if units:
             self.wind_speed_units = units
         return True
 
     def set_temperature(self, val, units=None) -> bool:
-        val, isValid = self._resolve_input(val)
-        if isValid:
-            self.temperature = val
-        else:
+        val, ok = self._parse(val)
+        if not ok:
             return False
+        self.temperature = val
         if units:
             self.temperature_units = units
         return True
 
     def set_humidity(self, val) -> bool:
-        val, isValid = self._resolve_input(val)
-        if isValid:
-            self.humidity = val
-        else:
+        val, ok = self._parse(val)
+        if not ok:
             return False
+        self.humidity = val
         return True
 
-    def _resolve_input(self, val, var_type=float) -> tuple():
-        # If blanked, set it to null value, but return OK
-        if val == "":
-            return (-1, True)
-        # Try and set the var value, return NOT OK if error
+    # -------------------------------------------------------------------------
+    # Internal helpers
+    # -------------------------------------------------------------------------
+
+    def _parse(self, val, var_type=float) -> tuple:
+        if val == "" or val is None:
+            return (None, True)
         try:
-            if var_type == int:
-                return (int(val), True)
-            else:
-                return (float(val), True)
-        except ValueError:
-            return (-1, False)
+            return (var_type(val), True)
+        except (ValueError, TypeError):
+            return (None, False)
+
+    def _to_mph(self, value: float, unit: str) -> float:
+        if unit == cfg.UNIT_KPH:
+            return value * cfg.MPH_PER_KPH
+        if unit == cfg.UNIT_KN:
+            return value * cfg.MPH_PER_KN
+        return value
+
+    def _from_mph(self, value: float, unit: str) -> float:
+        if unit == cfg.UNIT_KPH:
+            return value / cfg.MPH_PER_KPH
+        if unit == cfg.UNIT_KN:
+            return value / cfg.MPH_PER_KN
+        return value

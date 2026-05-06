@@ -204,6 +204,7 @@ def set_unit_pressure(value: str):
 
 
 _UNIT_BOOM_WIDTH = "unit_boom_width"
+UNITS_BOOM_WIDTH = UNITS_LENGTH_LARGE + ["%"]
 UNIT_BOOM_WIDTH__DEFAULT = UNIT_FT
 
 
@@ -321,34 +322,35 @@ def set_unit_temperature(value: str):
     QSettings().setValue(_UNIT_TEMPERATURE, value)
 
 
-_UNIT_DATA_LOCATION = "unit_data_location"
-UNIT_DATA_LOCATION__DEFAULT = UNIT_FT
+_UNIT_STRING_DATA_LOCATION = "unit_string_data_location"
+UNITS_STRING_DATA_LOCATION = UNITS_LENGTH_LARGE
+UNIT_STRING_DATA_LOCATION__DEFAULT = UNIT_FT
 
 
-def get_unit_data_location() -> str:
+def get_unit_string_data_location() -> str:
     return QSettings().value(
-        _UNIT_DATA_LOCATION, defaultValue=UNIT_DATA_LOCATION__DEFAULT, type=str
+        _UNIT_STRING_DATA_LOCATION, defaultValue=UNIT_STRING_DATA_LOCATION__DEFAULT, type=str
     )
 
 
-def set_unit_data_location(value: str):
-    QSettings().setValue(_UNIT_DATA_LOCATION, value)
+def set_unit_string_data_location(value: str):
+    QSettings().setValue(_UNIT_STRING_DATA_LOCATION, value)
 
 
-_SIMULATED_ADJASCENT_PASSES = "simulated_adjascent_passes"
-SIMULATED_ADJASCENT_PASSES__DEFAULT = 2
+_SIMULATED_ADJACENT_PASSES = "simulated_adjacent_passes"
+SIMULATED_ADJACENT_PASSES__DEFAULT = 2
 
 
-def get_simulated_adjascent_passes() -> int:
+def get_simulated_adjacent_passes() -> int:
     return QSettings().value(
-        _SIMULATED_ADJASCENT_PASSES,
-        defaultValue=SIMULATED_ADJASCENT_PASSES__DEFAULT,
+        _SIMULATED_ADJACENT_PASSES,
+        defaultValue=SIMULATED_ADJACENT_PASSES__DEFAULT,
         type=int,
     )
 
 
-def set_simulated_adjascent_passes(value: int):
-    QSettings().setValue(_SIMULATED_ADJASCENT_PASSES, value)
+def set_simulated_adjacent_passes(value: int):
+    QSettings().setValue(_SIMULATED_ADJACENT_PASSES, value)
 
 
 # String Pattern Manipulation
@@ -410,7 +412,7 @@ def set_string_plot_average_dash_overlay(value: bool):
 
 
 _STRING_PLOT_AVERAGE_DASH_OVERLAY_METHOD = "string_plot_average_dash_overlay_method"
-DASH_OVERLAY_METHOD_ISHA = "ISHA"
+DASH_OVERLAY_METHOD_ISHA = "Inner-Swath-Half-Average"
 DASH_OVERLAY_METHOD_AVERAGE = "Average"
 STRING_PLOT_AVERAGE_DASH_OVERLAY_METHOD__DEFAULT = DASH_OVERLAY_METHOD_ISHA
 
@@ -428,8 +430,8 @@ def set_string_plot_average_dash_overlay_method(value: str):
 
 
 _STRING_SIMULATION_VIEW_WINDOW = "string_simulation_view_window"
-STRING_SIMULATION_VIEW_WINDOW_ONE = "one"
-STRING_SIMULATION_VIEW_WINDOW_ALL = "all"
+STRING_SIMULATION_VIEW_WINDOW_ONE = "One Swath Width"
+STRING_SIMULATION_VIEW_WINDOW_ALL = "Sum of All Swath Widths"
 
 
 def get_string_simulation_view_window() -> str:
@@ -622,23 +624,6 @@ def get_image_flip_y() -> bool:
 
 def set_image_flip_y(value: bool):
     QSettings().setValue(_IMAGE_FLIP_Y, value)
-
-
-_ROI_DETECTION_METHOD = "roi_detection_on_background"
-ROI_DETECTION_METHODS = ["White Cards", "WSP"]
-ROI_DETECTION_METHOD__DEFAULT = ROI_DETECTION_METHODS[0]
-
-
-def get_image_roi_detection_method() -> str:
-    return QSettings().value(
-        _ROI_DETECTION_METHOD,
-        defaultValue=ROI_DETECTION_METHOD__DEFAULT,
-        type=str,
-    )
-
-
-def set_image_roi_detection_method(value: str):
-    QSettings().setValue(_ROI_DETECTION_METHOD, value)
 
 
 _ROI_ACQUISITION_ORIENTATION = "roi_acquisition_orientation"
@@ -1120,8 +1105,6 @@ def set_card_plot_average_dash_overlay(value: bool):
 
 
 _CARD_PLOT_AVERAGE_DASH_OVERLAY_METHOD = "card_plot_average_dash_overlay_method"
-DASH_OVERLAY_METHOD_ISHA = "ISHA"
-DASH_OVERLAY_METHOD_AVERAGE = "Average"
 CARD_PLOT_AVERAGE_DASH_OVERLAY_METHOD__DEFAULT = DASH_OVERLAY_METHOD_ISHA
 
 

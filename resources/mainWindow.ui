@@ -138,49 +138,16 @@
     <addaction name="action_open"/>
     <addaction name="separator"/>
     <addaction name="action_pass_manager"/>
+    <addaction name="separator"/>
+    <addaction name="action_settings"/>
    </widget>
    <widget class="QMenu" name="menuReport">
     <property name="title">
      <string>Report</string>
     </property>
-    <widget class="QMenu" name="menuReport_Options">
-     <property name="title">
-      <string>Report Options</string>
-     </property>
-     <widget class="QMenu" name="menuCard_Images_per_Page">
-      <property name="title">
-       <string>Card Images per Page</string>
-      </property>
-      <addaction name="action5"/>
-      <addaction name="action7"/>
-      <addaction name="action9"/>
-     </widget>
-     <widget class="QMenu" name="menuCard_Image_Type">
-      <property name="title">
-       <string>Card Image Type</string>
-      </property>
-      <addaction name="actionOriginal"/>
-      <addaction name="actionOutline"/>
-      <addaction name="actionMask"/>
-     </widget>
-     <widget class="QMenu" name="menuLogo">
-      <property name="title">
-       <string>Logo</string>
-      </property>
-      <addaction name="actionInclude_Logo"/>
-      <addaction name="separator"/>
-      <addaction name="actionLogo_File"/>
-      <addaction name="actionSelect_Logo_File"/>
-     </widget>
-     <addaction name="actionInclude_Card_Images"/>
-     <addaction name="action_downsample_card_images"/>
-     <addaction name="menuCard_Image_Type"/>
-     <addaction name="menuCard_Images_per_Page"/>
-     <addaction name="menuLogo"/>
-    </widget>
     <addaction name="actionCreate_Report"/>
     <addaction name="separator"/>
-    <addaction name="menuReport_Options"/>
+    <addaction name="actionReport_Settings"/>
     <addaction name="actionReportManager"/>
    </widget>
    <widget class="QMenu" name="menuExport_to_Excel">
@@ -225,8 +192,6 @@
     <addaction name="separator"/>
     <addaction name="actionShortcutStringDrive"/>
     <addaction name="actionShortcutSpectrometer"/>
-    <addaction name="separator"/>
-    <addaction name="action_reset_defaults"/>
    </widget>
    <addaction name="menu_file"/>
    <addaction name="menuExport_to_Excel"/>
@@ -302,111 +267,22 @@
     <string>Report Manager</string>
    </property>
   </action>
-  <action name="action_reset_defaults">
+  <action name="action_settings">
    <property name="text">
-    <string>Reset All Defaults</string>
+    <string>Settings…</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+,</string>
    </property>
   </action>
-  <action name="actionInclude_Card_Images">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
+  <action name="actionReport_Settings">
    <property name="text">
-    <string>Include Card Images</string>
-   </property>
-  </action>
-  <action name="actionOriginal">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Original</string>
-   </property>
-  </action>
-  <action name="actionOutline">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Outline</string>
-   </property>
-  </action>
-  <action name="actionMask">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Mask</string>
-   </property>
-  </action>
-  <action name="action7">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>7</string>
-   </property>
-  </action>
-  <action name="action9">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>9</string>
-   </property>
-  </action>
-  <action name="action5">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>5</string>
-   </property>
-  </action>
-  <action name="action_downsample_card_images">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Downsample Card Images</string>
+    <string>Report Settings…</string>
    </property>
   </action>
   <action name="actionWRKSpectrometerManual">
    <property name="text">
     <string>WRK Spectrometer Manual</string>
-   </property>
-  </action>
-  <action name="actionInclude_Logo">
-   <property name="text">
-    <string>Include Logo</string>
-   </property>
-  </action>
-  <action name="actionLogo_File">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Logo File</string>
-   </property>
-  </action>
-  <action name="actionSelect_Logo_File">
-   <property name="text">
-    <string>Select Logo File</string>
    </property>
   </action>
   <action name="action_SAFE_log_from_files">

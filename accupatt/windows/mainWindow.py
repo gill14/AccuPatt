@@ -22,6 +22,7 @@ from accupatt.windows.cardPlotOptions import CardPlotOptions
 from .editSpectrometer import EditSpectrometer
 from .editStringDrive import EditStringDrive
 from accupatt.windows.passManager import PassManager
+from accupatt.windows.settings import Settings
 
 from accupatt.widgets import (
     cardtablewidget,
@@ -34,7 +35,7 @@ from accupatt.widgets import (
 )
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QAction, QActionGroup
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
     QFileDialog,
     QLabel,
@@ -99,51 +100,8 @@ class MainWindow(baseclass):
         self.ui.action_detailed_report.triggered.connect(self.exportAllRawData)
         # --> Setup Report Menu
         self.ui.actionCreate_Report.triggered.connect(self.makeReport)
+        self.ui.actionReport_Settings.triggered.connect(self.openReportSettings)
         self.ui.actionReportManager.triggered.connect(self.reportManager)
-        # --> # --> Report Options
-        self.ui.actionInclude_Card_Images.setChecked(
-            cfg.get_report_card_include_images()
-        )
-        self.ui.actionInclude_Card_Images.toggled[bool].connect(
-            self.reportCardImageChanged
-        )
-        # --> # --> # --> SprayCard Image Type
-        self.ui.actionOriginal.setChecked(
-            cfg.get_report_card_image_type() == cfg.REPORT_CARD_IMAGE_TYPE_ORIGINAL
-        )
-        self.ui.actionOutline.setChecked(
-            cfg.get_report_card_image_type() == cfg.REPORT_CARD_IMAGE_TYPE_OUTLINE
-        )
-        self.ui.actionMask.setChecked(
-            cfg.get_report_card_image_type() == cfg.REPORT_CARD_IMAGE_TYPE_MASK
-        )
-        ag_image_type = QActionGroup(self.ui.menuCard_Image_Type)
-        for action in self.ui.menuCard_Image_Type.actions():
-            ag_image_type.addAction(action)
-        ag_image_type.triggered[QAction].connect(self.reportCardImageTypeChanged)
-        # --> # --> # --> SprayCard Image Quantity per Page
-        self.ui.action5.setChecked(cfg.get_report_card_image_per_page() == 5)
-        self.ui.action7.setChecked(cfg.get_report_card_image_per_page() == 7)
-        self.ui.action9.setChecked(cfg.get_report_card_image_per_page() == 9)
-        ag_image_per_page = QActionGroup(self.ui.menuCard_Images_per_Page)
-        for action in self.ui.menuCard_Images_per_Page.actions():
-            ag_image_per_page.addAction(action)
-        ag_image_per_page.triggered[QAction].connect(self.reportCardImagePerPageChanged)
-        self.ui.action_downsample_card_images.setChecked(
-            cfg.get_report_card_image_downsample()
-        )
-        self.ui.action_downsample_card_images.toggled[bool].connect(
-            self.reportCardImageDownsampleChanged
-        )
-        # --> # --> # --> Logo
-        actionLogoEnabled: QAction = self.ui.actionInclude_Logo
-        actionLogoEnabled.setCheckable(True)
-        actionLogoEnabled.setChecked(cfg.get_logo_include_in_report())
-        actionLogoEnabled.toggled[bool].connect(self.logo_enabled_triggered)
-        actionLogoPath: QAction = self.ui.actionLogo_File
-        actionLogoPath.setText(cfg.get_logo_path())
-        actionLogoSelect: QAction = self.ui.actionSelect_Logo_File
-        actionLogoSelect.triggered.connect(self.select_logo_triggered)
 
         # --> Setup Extras Menu
         self.ui.actionWorksheetWRK.triggered.connect(self.openResourceWSWRK)
@@ -156,7 +114,7 @@ class MainWindow(baseclass):
         self.ui.actionShortcutSpectrometer.triggered.connect(
             self.openShortcutSpectrometer
         )
-        self.ui.action_reset_defaults.triggered.connect(self.resetDefaults)
+        self.ui.action_settings.triggered.connect(self.openSettings)
 
         # --> Setup Help Menu
         self.ui.actionAbout.triggered.connect(self.about)
@@ -552,51 +510,12 @@ class MainWindow(baseclass):
             # Redraw plots with defaults
             self.request_repaint.emit()
 
-    @pyqtSlot(bool)
-    def reportCardImageChanged(self, checked: bool):
-        cfg.set_report_card_include_images(checked)
-
-    @pyqtSlot(QAction)
-    def reportCardImageTypeChanged(self, action: QAction):
-        if action == self.ui.actionOutline:
-            cfg.set_report_card_image_type(cfg.REPORT_CARD_IMAGE_TYPE_OUTLINE)
-        elif action == self.ui.actionMask:
-            cfg.set_report_card_image_type(cfg.REPORT_CARD_IMAGE_TYPE_MASK)
-        else:
-            cfg.set_report_card_image_type(cfg.REPORT_CARD_IMAGE_TYPE_ORIGINAL)
-
-    @pyqtSlot(QAction)
-    def reportCardImagePerPageChanged(self, action: QAction):
-        if action == self.ui.action5:
-            cfg.set_report_card_image_per_page(5)
-        elif action == self.ui.action7:
-            cfg.set_report_card_image_per_page(7)
-        else:
-            cfg.set_report_card_image_per_page(9)
-
-    @pyqtSlot(bool)
-    def reportCardImageDownsampleChanged(self, checked: bool):
-        cfg.set_report_card_image_downsample(checked)
-
-    @pyqtSlot(bool)
-    def logo_enabled_triggered(self, enabled: bool):
-        cfg.set_logo_include_in_report(enabled)
-
     @pyqtSlot()
-    def select_logo_triggered(self):
-        prev = cfg.get_logo_path()
-        initial = os.path.dirname(prev) if prev != "" else cfg.get_datafile_dir()
-        file, _ = QFileDialog.getOpenFileName(
-            parent=self,
-            caption="Choose Logo Image",
-            directory=initial,
-            filter="Logo Image (*.png *.jpg)",
-        )
-        if file == "":
-            return
-        if os.path.exists(file):
-            cfg.set_logo_path(file)
-            self.ui.actionLogo_File.setText(file)
+    def openReportSettings(self):
+        e = Settings(parent=self)
+        e.ui.tabWidget.setCurrentWidget(e.ui.tab_report)
+        e.settings_changed.connect(self.request_repaint.emit)
+        e.exec()
 
     @pyqtSlot()
     def reportManager(self):
@@ -638,17 +557,10 @@ class MainWindow(baseclass):
         e.exec()
 
     @pyqtSlot()
-    def resetDefaults(self):
-        msg = QMessageBox.question(
-            self,
-            "Clear All User-Defined Defaults?",
-            "This will permanently erase all user-defined defaults for AccuPatt on this computer and revert all to their originally provided values. This includes all user-defined spray card sets. This cannot be undone. Are you sure you want to do this?",
-        )
-        if msg == QMessageBox.StandardButton.Yes:
-            cfg.clear_all_settings()
-            QMessageBox.information(
-                self, "Success", "All user-defined defaults erased successfully."
-            )
+    def openSettings(self):
+        e = Settings(parent=self)
+        e.settings_changed.connect(self.request_repaint.emit)
+        e.exec()
 
     """
     Help Menu

@@ -93,7 +93,7 @@ def _load_table_series_string(c: sqlite3.Cursor, s: SeriesData):
         ss.smooth_order,
         ss.equalize_integrals,
         ss.swath_adjusted,
-        ss.simulated_adjascent_passes,
+        ss.simulated_adjacent_passes,
     ) = c.fetchone()
 
 
@@ -107,7 +107,7 @@ def _load_table_series_spray_card(c: sqlite3.Cursor, s: SeriesData):
         scd.center,
         scd.center_method,
         scd.swath_adjusted,
-        scd.simulated_adjascent_passes,
+        scd.simulated_adjacent_passes,
     ) = c.fetchone()
 
 
@@ -418,7 +418,7 @@ def _update_table_series_string(c: sqlite3.Cursor, s: SeriesData):
             ss.smooth_order,
             ss.equalize_integrals,
             ss.swath_adjusted,
-            ss.simulated_adjascent_passes,
+            ss.simulated_adjacent_passes,
         ),
     )
 
@@ -434,7 +434,7 @@ def _update_table_series_spray_card(c: sqlite3.Cursor, s: SeriesData):
             scd.center,
             scd.center_method,
             scd.swath_adjusted,
-            scd.simulated_adjascent_passes,
+            scd.simulated_adjacent_passes,
         ),
     )
 

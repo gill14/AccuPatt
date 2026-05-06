@@ -440,7 +440,7 @@
             <enum>QFrame::NoFrame</enum>
            </property>
            <property name="text">
-            <string>Number of Simulated Adjascent Passes
+            <string>Number of Simulated Adjacent Passes
 (Each Side):</string>
            </property>
            <property name="alignment">

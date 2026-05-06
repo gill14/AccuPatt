@@ -554,30 +554,18 @@ class ReportMaker:
             string_included=string_included, cards_included=cards_included
         ):
             row1.append(p.name)
-            row2.append(
-                p.get_airspeed(airspeed_units)[2] if p.get_airspeed()[0] >= 0 else "-"
-            )
-            row3.append(
-                p.get_spray_height(spray_height_units)[2]
-                if p.get_spray_height()[0] >= 0
-                else "-"
-            )
-            row4.append(
-                p.get_wind_speed(wind_speed_units)[2]
-                if p.get_wind_speed()[0] >= 0
-                else "-"
-            )
-            row5.append(
-                p.get_crosswind(crosswind_speed_units)[2]
-                if p.get_crosswind()[0] != 0
-                else "-"
-            )
-            row6.append(
-                p.get_temperature(temperature_units)[2]
-                if p.get_temperature()[0] >= 0
-                else "-"
-            )
-            row7.append(p.get_humidity()[2] if p.get_humidity()[0] >= 0 else "-")
+            v = p.airspeed_in(airspeed_units)
+            row2.append(f"{v}" if v is not None else "-")
+            v = p.spray_height_in(spray_height_units)
+            row3.append(f"{v:.1f}" if v is not None else "-")
+            v = p.wind_speed_in(wind_speed_units)
+            row4.append(f"{v:g}" if v is not None else "-")
+            v = p.crosswind_in(crosswind_speed_units)
+            row5.append(f"{round(v, 1) + 0.:.1f}" if v is not None else "-")
+            v = p.temperature_in(temperature_units)
+            row6.append(f"{v:g}" if v is not None else "-")
+            v = p.humidity_in()
+            row7.append(f"{v:g}" if v is not None else "-")
         row1.append("Average")
         row2.append(airspeed_string)
         row3.append(spray_height_string)

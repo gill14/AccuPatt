@@ -80,11 +80,12 @@ class TabWidgetBase(QWidget):
         # Populate Series Data Mod options silently
         with QSignalBlocker(self.checkBoxSeriesCenter):
             self.checkBoxSeriesCenter.setChecked(self.getSeriesOpt().center)
-        with QSignalBlocker(self.checkBoxSeriesSmooth):
-            self.checkBoxSeriesSmooth.setChecked(self.getSeriesOpt().smooth)
+        if self.subtype == "string":
+            with QSignalBlocker(self.checkBoxSeriesSmooth):
+                self.checkBoxSeriesSmooth.setChecked(self.getSeriesOpt().smooth)
         with QSignalBlocker(self.spinBoxSimulatedPasses):
             self.spinBoxSimulatedPasses.setValue(
-                self.seriesData.string.simulated_adjascent_passes
+                self.seriesData.string.simulated_adjacent_passes
             )
         # Ensure data is processed
         self.updatePlots(process=True, modify=True)
@@ -128,8 +129,9 @@ class TabWidgetBase(QWidget):
         opt = self.getPassOpt(passData)
         with QSignalBlocker(self.checkBoxPassCenter):
             self.checkBoxPassCenter.setChecked(opt.center)
-        with QSignalBlocker(self.checkBoxPassSmooth):
-            self.checkBoxPassSmooth.setChecked(opt.smooth)
+        if self.subtype == "string":
+            with QSignalBlocker(self.checkBoxPassSmooth):
+                self.checkBoxPassSmooth.setChecked(opt.smooth)
         self.updateEditButton(opt.has_data(), passData.name)
         # Update Plots
         self.updatePlots(individuals=True)
@@ -212,7 +214,7 @@ class TabWidgetBase(QWidget):
 
     @pyqtSlot(int)
     def passSmoothChanged(self, checkstate):
-        if self.getCurrentPass():
+        if self.subtype == "string" and self.getCurrentPass():
             self.getPassOpt().smooth = (
                 Qt.CheckState(checkstate) == Qt.CheckState.Checked
             )
@@ -234,6 +236,7 @@ class TabWidgetBase(QWidget):
             e = EditOptBase(
                 optBase=self.getPassOpt(),
                 window_units=self.seriesData.info.swath_units,
+                show_smooth=(self.subtype == "string"),
                 parent=self.parent(),
             )
             e.accepted.connect(self._advancedOptionsPassUpdated)
@@ -254,14 +257,16 @@ class TabWidgetBase(QWidget):
 
     @pyqtSlot(int)
     def seriesSmoothChanged(self, checkstate):
-        self.getSeriesOpt().smooth = Qt.CheckState(checkstate) == Qt.CheckState.Checked
-        self.updatePlots(modify=True, composites=True, simulations=True)
+        if self.subtype == "string":
+            self.getSeriesOpt().smooth = Qt.CheckState(checkstate) == Qt.CheckState.Checked
+            self.updatePlots(modify=True, composites=True, simulations=True)
 
     @pyqtSlot()
     def clickedAdvancedOptionsSeries(self):
         e = EditOptBase(
             optBase=self.getSeriesOpt(),
             window_units=self.seriesData.info.swath_units,
+            show_smooth=(self.subtype == "string"),
             parent=self.parent(),
         )
         e.accepted.connect(self._advancedOptionsSeriesUpdated)
@@ -288,10 +293,10 @@ class TabWidgetBase(QWidget):
     """
 
     @pyqtSlot(int)
-    def simulatedPassesChanged(self, numAdjascentPasses):
-        self.getSeriesOpt().simulated_adjascent_passes = numAdjascentPasses
+    def simulatedPassesChanged(self, numAdjacentPasses):
+        self.getSeriesOpt().simulated_adjacent_passes = numAdjacentPasses
         self.updatePlots(simulations=True)
-        cfg.set_simulated_adjascent_passes(numAdjascentPasses)
+        cfg.set_simulated_adjacent_passes(numAdjacentPasses)
 
     """
     plot triggers

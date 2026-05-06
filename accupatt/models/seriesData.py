@@ -17,8 +17,8 @@ class SeriesData:
             self.id = str(uuid.uuid4())
         self.info = AppInfo()
         self.passes: list[Pass] = []
-        self.string = SeriesDataString(self.passes)
-        self.cards = SeriesDataCard(self.passes)
+        self.string = SeriesDataString(self.passes, self.info.swath, self.info.swath, self.info.swath_units)
+        self.cards = SeriesDataCard(self.passes, self.info.swath, self.info.swath, self.info.swath_units)
 
     """
     Common pass observable sharing
@@ -59,8 +59,7 @@ class SeriesData:
             if units
             else self._get_common_unit([p.ground_speed_units for p in passes])
         )
-        values = np.array([p.get_airspeed(units)[0] for p in passes])
-        values = values[values >= 0]
+        values = np.array([v for p in passes if (v := p.airspeed_in(units)) is not None])
         if values.size == 0:
             return 0, "-", "-"
         value = values.mean()
@@ -75,8 +74,7 @@ class SeriesData:
             if units
             else self._get_common_unit([p.spray_height_units for p in passes])
         )
-        values = np.array([p.get_spray_height(units)[0] for p in passes])
-        values = values[values >= 0]
+        values = np.array([v for p in passes if (v := p.spray_height_in(units)) is not None])
         if values.size == 0:
             return 0, "-", "-"
         value = values.mean()
@@ -91,8 +89,7 @@ class SeriesData:
             if units
             else self._get_common_unit([p.wind_speed_units for p in passes])
         )
-        values = np.array([p.get_wind_speed(units)[0] for p in passes])
-        values = values[values >= 0]
+        values = np.array([v for p in passes if (v := p.wind_speed_in(units)) is not None])
         if values.size == 0:
             return 0, "-", "-"
         value = values.mean()
@@ -107,8 +104,7 @@ class SeriesData:
             if units
             else self._get_common_unit([p.wind_speed_units for p in passes])
         )
-        values = np.array([p.get_crosswind(units)[0] for p in passes])
-        values = values[values != -1]
+        values = np.array([v for p in passes if (v := p.crosswind_in(units)) is not None])
         if values.size == 0:
             return 0, "-", "-"
         value = values.mean()
@@ -123,8 +119,7 @@ class SeriesData:
             if units
             else self._get_common_unit([p.temperature_units for p in passes])
         )
-        values = np.array([p.get_temperature(units)[0] for p in passes])
-        values = values[values >= 0]
+        values = np.array([v for p in passes if (v := p.temperature_in(units)) is not None])
         if values.size == 0:
             return 0, "-", "-"
         value = values.mean()
@@ -134,8 +129,7 @@ class SeriesData:
         self, string_included=False, cards_included=False
     ) -> tuple[float, str, str]:
         passes = self.get_includable_passes(string_included, cards_included)
-        values = np.array([p.get_humidity()[0] for p in passes])
-        values = values[values >= 0]
+        values = np.array([v for p in passes if (v := p.humidity_in()) is not None])
         if values.size == 0:
             return 0, "-", "-"
         value = values.mean()

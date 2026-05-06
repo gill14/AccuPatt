@@ -1,0 +1,1374 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>750</width>
+    <height>640</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Settings</string>
+  </property>
+  <property name="sizeGripEnabled">
+   <bool>true</bool>
+  </property>
+  <layout class="QVBoxLayout" name="main_layout">
+   <item>
+    <widget class="QTabWidget" name="tabWidget">
+
+     <!-- === TAB 1: GENERAL === -->
+     <widget class="QWidget" name="tab_general">
+      <attribute name="title">
+       <string>General</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="vl_general">
+       <item>
+        <widget class="QGroupBox" name="gb_datafile">
+         <property name="title">
+          <string>Data File Directory</string>
+         </property>
+         <layout class="QHBoxLayout">
+          <item>
+           <widget class="QLineEdit" name="le_datafile_dir">
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btn_datafile_dir">
+            <property name="text">
+             <string>Browse…</string>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="gb_flyin">
+         <property name="title">
+          <string>Fly-In Default Values</string>
+         </property>
+         <layout class="QFormLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="lbl_flyin_name">
+            <property name="text">
+             <string>Name</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="le_flyin_name"/>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="lbl_flyin_location">
+            <property name="text">
+             <string>Location</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="le_flyin_location"/>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="lbl_flyin_date">
+            <property name="text">
+             <string>Date</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLineEdit" name="le_flyin_date"/>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="lbl_flyin_analyst">
+            <property name="text">
+             <string>Analyst</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QLineEdit" name="le_flyin_analyst"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="gb_passes">
+         <property name="title">
+          <string>Passes</string>
+         </property>
+         <layout class="QFormLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="lbl_num_passes">
+            <property name="text">
+             <string>Number of Passes</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QSpinBox" name="sb_number_passes">
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>10</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="lbl_sim_adjacent">
+            <property name="text">
+             <string>Simulated Adjacent Passes</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QSpinBox" name="sb_simulated_adjacent_passes">
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>10</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="gb_analysis">
+         <property name="title">
+          <string>Analysis</string>
+         </property>
+         <layout class="QFormLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="lbl_center_method">
+            <property name="text">
+             <string>Center Method</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QComboBox" name="cbb_center_method"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="vs_general">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <layout class="QHBoxLayout">
+         <item>
+          <spacer>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_reset_defaults">
+           <property name="text">
+            <string>Reset All Defaults…</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+
+     <!-- === TAB 2: OBSERVABLES === -->
+     <widget class="QWidget" name="tab_observables">
+      <attribute name="title">
+       <string>Observables</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="vl_observables">
+       <item>
+        <layout class="QHBoxLayout" name="hl_observables">
+         <item>
+          <widget class="QGroupBox" name="groupBox_2">
+           <property name="title">
+            <string>Series Observables</string>
+           </property>
+           <layout class="QVBoxLayout" name="vl_series_obs">
+            <item>
+             <layout class="QFormLayout" name="formLayout">
+              <item row="0" column="0">
+               <widget class="QLabel" name="label">
+                <property name="text">
+                 <string>Wingspan Units</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QComboBox" name="cbb_wingspan_units"/>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_2">
+                <property name="text">
+                 <string>Swath Units</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QComboBox" name="cbb_swath_units"/>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="label_3">
+                <property name="text">
+                 <string>Rate Units</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QComboBox" name="cbb_rate_units"/>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="label_4">
+                <property name="text">
+                 <string>Pressure Units</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QComboBox" name="cbb_pressure_units"/>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLabel" name="label_5">
+                <property name="text">
+                 <string>Boom Width Units</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QComboBox" name="cbb_boom_width_units"/>
+              </item>
+              <item row="5" column="0">
+               <widget class="QLabel" name="label_6">
+                <property name="text">
+                 <string>Boom Drop Units</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <widget class="QComboBox" name="cbb_boom_drop_units"/>
+              </item>
+              <item row="6" column="0">
+               <widget class="QLabel" name="label_7">
+                <property name="text">
+                 <string>Nozzle Spacing Units</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="1">
+               <widget class="QComboBox" name="cbb_nozzle_spacing_units"/>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_3">
+           <property name="title">
+            <string>Pass Observables</string>
+           </property>
+           <layout class="QVBoxLayout" name="vl_pass_obs">
+            <item>
+             <layout class="QFormLayout" name="formLayout_2">
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_8">
+                <property name="text">
+                 <string>Ground Speed Units</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QComboBox" name="cbb_ground_speed_units"/>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_10">
+                <property name="text">
+                 <string>Spray Height Units</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QComboBox" name="cbb_spray_height_units"/>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="label_11">
+                <property name="text">
+                 <string>Wind Speed Units</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QComboBox" name="cbb_wind_speed_units"/>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="label_12">
+                <property name="text">
+                 <string>Temperature Units</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QComboBox" name="cbb_temperature_units"/>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="vs_observables">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+
+     <!-- === TAB 3: STRING === -->
+     <widget class="QWidget" name="tab_string">
+      <attribute name="title">
+       <string>String</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="vl_string">
+       <item>
+        <layout class="QHBoxLayout" name="hl_string">
+         <item>
+          <layout class="QVBoxLayout" name="vl_string_left">
+           <item>
+            <widget class="QGroupBox" name="gb_string_pattern">
+             <property name="title">
+              <string>Pattern Processing</string>
+             </property>
+             <layout class="QFormLayout">
+              <item row="0" column="0">
+               <widget class="QLabel" name="lbl_smooth_window">
+                <property name="text">
+                 <string>Smooth Window</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <layout class="QHBoxLayout">
+                <item>
+                 <widget class="QDoubleSpinBox" name="dsb_smooth_window">
+                  <property name="minimum">
+                   <double>0.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>100.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.500000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="lbl_smooth_window_units">
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="lbl_smooth_order">
+                <property name="text">
+                 <string>Smooth Order</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QSpinBox" name="sb_smooth_order">
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>10</number>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="gb_string_plot">
+             <property name="title">
+              <string>Plot Options</string>
+             </property>
+             <layout class="QFormLayout">
+              <item row="0" column="0">
+               <widget class="QLabel" name="lbl_string_dash_overlay">
+                <property name="text">
+                 <string>Average Overlay</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QCheckBox" name="cb_string_dash_overlay">
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="lbl_string_dash_method">
+                <property name="text">
+                 <string>Overlay Method</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QComboBox" name="cbb_string_dash_method"/>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="lbl_string_simulation_view">
+                <property name="text">
+                 <string>Simulation View</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QComboBox" name="cbb_string_simulation_view"/>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer name="vs_string_left">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="vl_string_right">
+           <item>
+            <widget class="QGroupBox" name="gb_string_drive">
+             <property name="title">
+              <string>String Drive</string>
+             </property>
+             <layout class="QFormLayout">
+              <item row="0" column="0">
+               <widget class="QLabel" name="lbl_string_drive_port">
+                <property name="text">
+                 <string>Serial Port</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QComboBox" name="cbb_string_drive_port"/>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="lbl_string_length">
+                <property name="text">
+                 <string>String Length</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <layout class="QHBoxLayout">
+                <item>
+                 <widget class="QDoubleSpinBox" name="dsb_string_length">
+                  <property name="minimum">
+                   <double>0.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>9999.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>1.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="cbb_string_length_units"/>
+                </item>
+               </layout>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="lbl_string_speed">
+                <property name="text">
+                 <string>String Speed</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <layout class="QHBoxLayout">
+                <item>
+                 <widget class="QDoubleSpinBox" name="dsb_string_speed">
+                  <property name="decimals">
+                   <number>4</number>
+                  </property>
+                  <property name="minimum">
+                   <double>0.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>100.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.010000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="lbl_string_speed_units">
+                  <property name="text">
+                   <string>/sec</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer name="vs_string_right">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+
+     <!-- === TAB 4: SPRAY CARDS === -->
+     <widget class="QWidget" name="tab_spray_cards">
+      <attribute name="title">
+       <string>Spray Cards</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="vl_cards_outer">
+       <item>
+        <widget class="QScrollArea" name="scrollArea_cards">
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+         <widget class="QWidget" name="scrollAreaWidgetContents_cards">
+          <layout class="QHBoxLayout" name="hl_cards_scroll">
+           <item>
+            <layout class="QVBoxLayout" name="vl_cards_left">
+             <item>
+              <widget class="QGroupBox" name="gb_image_loading">
+               <property name="title">
+                <string>Image Loading</string>
+               </property>
+               <layout class="QFormLayout">
+                <item row="0" column="0">
+                 <widget class="QLabel" name="lbl_image_load_method">
+                  <property name="text">
+                   <string>Load Method</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QComboBox" name="cbb_image_load_method"/>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="lbl_flip_x">
+                  <property name="text">
+                   <string>Flip Horizontal</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QCheckBox" name="cb_flip_x">
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="lbl_flip_y">
+                  <property name="text">
+                   <string>Flip Vertical</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QCheckBox" name="cb_flip_y">
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="0">
+                 <widget class="QLabel" name="lbl_image_dpi">
+                  <property name="text">
+                   <string>Scan DPI</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <widget class="QComboBox" name="cbb_image_dpi"/>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QGroupBox" name="gb_roi_detection">
+               <property name="title">
+                <string>ROI Detection</string>
+               </property>
+               <layout class="QFormLayout">
+                <item row="0" column="0">
+                 <widget class="QLabel" name="lbl_roi_orientation">
+                  <property name="text">
+                   <string>Orientation</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QComboBox" name="cbb_roi_orientation"/>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="lbl_roi_order">
+                  <property name="text">
+                   <string>Order</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QComboBox" name="cbb_roi_order"/>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="lbl_roi_scale">
+                  <property name="text">
+                   <string>ROI Scale (%)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QComboBox" name="cbb_roi_scale"/>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QGroupBox" name="gb_thresholding">
+               <property name="title">
+                <string>Thresholding</string>
+               </property>
+               <layout class="QVBoxLayout">
+                <item>
+                 <layout class="QFormLayout">
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="lbl_threshold_type">
+                    <property name="text">
+                     <string>Type</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QComboBox" name="cbb_threshold_type"/>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <widget class="QGroupBox" name="gb_grayscale">
+                  <property name="title">
+                   <string>Grayscale</string>
+                  </property>
+                  <layout class="QFormLayout">
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="lbl_threshold_grayscale">
+                     <property name="text">
+                      <string>Value</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QSpinBox" name="sb_threshold_grayscale">
+                     <property name="maximum">
+                      <number>255</number>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="lbl_threshold_grayscale_method">
+                     <property name="text">
+                      <string>Method</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <widget class="QComboBox" name="cbb_threshold_grayscale_method"/>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QGroupBox" name="gb_hsb">
+                  <property name="title">
+                   <string>HSB</string>
+                  </property>
+                  <layout class="QVBoxLayout">
+                   <item>
+                    <widget class="QGroupBox" name="gb_hsb_hue">
+                     <property name="title">
+                      <string>Hue</string>
+                     </property>
+                     <layout class="QHBoxLayout">
+                      <item>
+                       <widget class="QLabel" name="lbl_hsb_hue_min">
+                        <property name="text">
+                         <string>Min</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QSpinBox" name="sb_hsb_hue_min">
+                        <property name="maximum">
+                         <number>255</number>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLabel" name="lbl_hsb_hue_max">
+                        <property name="text">
+                         <string>Max</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QSpinBox" name="sb_hsb_hue_max">
+                        <property name="maximum">
+                         <number>255</number>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLabel" name="lbl_hsb_hue_pass">
+                        <property name="text">
+                         <string>Pass</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QCheckBox" name="cb_hsb_hue_pass">
+                        <property name="text">
+                         <string/>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QGroupBox" name="gb_hsb_saturation">
+                     <property name="title">
+                      <string>Saturation</string>
+                     </property>
+                     <layout class="QHBoxLayout">
+                      <item>
+                       <widget class="QLabel" name="lbl_hsb_sat_min">
+                        <property name="text">
+                         <string>Min</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QSpinBox" name="sb_hsb_sat_min">
+                        <property name="maximum">
+                         <number>255</number>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLabel" name="lbl_hsb_sat_max">
+                        <property name="text">
+                         <string>Max</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QSpinBox" name="sb_hsb_sat_max">
+                        <property name="maximum">
+                         <number>255</number>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLabel" name="lbl_hsb_sat_pass">
+                        <property name="text">
+                         <string>Pass</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QCheckBox" name="cb_hsb_sat_pass">
+                        <property name="text">
+                         <string/>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QGroupBox" name="gb_hsb_brightness">
+                     <property name="title">
+                      <string>Brightness</string>
+                     </property>
+                     <layout class="QHBoxLayout">
+                      <item>
+                       <widget class="QLabel" name="lbl_hsb_brightness_min">
+                        <property name="text">
+                         <string>Min</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QSpinBox" name="sb_hsb_brightness_min">
+                        <property name="maximum">
+                         <number>255</number>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLabel" name="lbl_hsb_brightness_max">
+                        <property name="text">
+                         <string>Max</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QSpinBox" name="sb_hsb_brightness_max">
+                        <property name="maximum">
+                         <number>255</number>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLabel" name="lbl_hsb_brightness_pass">
+                        <property name="text">
+                         <string>Pass</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QCheckBox" name="cb_hsb_brightness_pass">
+                        <property name="text">
+                         <string/>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <spacer name="vs_cards_left">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="vl_cards_right">
+             <item>
+              <widget class="QGroupBox" name="gb_processing">
+               <property name="title">
+                <string>Processing</string>
+               </property>
+               <layout class="QFormLayout">
+                <item row="0" column="0">
+                 <widget class="QLabel" name="lbl_watershed">
+                  <property name="text">
+                   <string>Watershed</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QCheckBox" name="cb_watershed">
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="lbl_min_stain_area">
+                  <property name="text">
+                   <string>Min Stain Area (px)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QSpinBox" name="sb_min_stain_area">
+                  <property name="minimum">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <number>9999</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="lbl_stain_approximation">
+                  <property name="text">
+                   <string>Stain Approximation</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QComboBox" name="cbb_stain_approximation"/>
+                </item>
+                <item row="3" column="0">
+                 <widget class="QLabel" name="lbl_max_stain_count">
+                  <property name="text">
+                   <string>Max Stain Count</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <widget class="QSpinBox" name="sb_max_stain_count">
+                  <property name="minimum">
+                   <number>100</number>
+                  </property>
+                  <property name="maximum">
+                   <number>99999</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QGroupBox" name="gb_spread_factors">
+               <property name="title">
+                <string>Spread Factors</string>
+               </property>
+               <layout class="QFormLayout">
+                <item row="0" column="0">
+                 <widget class="QLabel" name="lbl_spread_equation">
+                  <property name="text">
+                   <string>Equation</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QComboBox" name="cbb_spread_equation"/>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="lbl_spread_a">
+                  <property name="text">
+                   <string>A</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QDoubleSpinBox" name="dsb_spread_a">
+                  <property name="decimals">
+                   <number>4</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-999.999900000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>999.999900000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.000100000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="lbl_spread_b">
+                  <property name="text">
+                   <string>B</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QDoubleSpinBox" name="dsb_spread_b">
+                  <property name="decimals">
+                   <number>4</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-999.999900000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>999.999900000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.000100000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="0">
+                 <widget class="QLabel" name="lbl_spread_c">
+                  <property name="text">
+                   <string>C</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <widget class="QDoubleSpinBox" name="dsb_spread_c">
+                  <property name="decimals">
+                   <number>4</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-999.999900000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>999.999900000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.000100000000000</double>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QGroupBox" name="gb_card_plot">
+               <property name="title">
+                <string>Plot Options</string>
+               </property>
+               <layout class="QFormLayout">
+                <item row="0" column="0">
+                 <widget class="QLabel" name="lbl_card_plot_y_axis">
+                  <property name="text">
+                   <string>Y-Axis</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QComboBox" name="cbb_card_plot_y_axis"/>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="lbl_card_shading">
+                  <property name="text">
+                   <string>Shading</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QCheckBox" name="cb_card_shading">
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="lbl_card_shading_method">
+                  <property name="text">
+                   <string>Shading Method</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QComboBox" name="cbb_card_shading_method"/>
+                </item>
+                <item row="3" column="0">
+                 <widget class="QLabel" name="lbl_card_shading_interp">
+                  <property name="text">
+                   <string>Interpolate Shading</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <widget class="QCheckBox" name="cb_card_shading_interpolate">
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="0">
+                 <widget class="QLabel" name="lbl_card_dash_overlay">
+                  <property name="text">
+                   <string>Average Overlay</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="1">
+                 <widget class="QCheckBox" name="cb_card_dash_overlay">
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="0">
+                 <widget class="QLabel" name="lbl_card_dash_method">
+                  <property name="text">
+                   <string>Overlay Method</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="1">
+                 <widget class="QComboBox" name="cbb_card_dash_method"/>
+                </item>
+                <item row="6" column="0">
+                 <widget class="QLabel" name="lbl_card_simulation_view">
+                  <property name="text">
+                   <string>Simulation View</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="6" column="1">
+                 <widget class="QComboBox" name="cbb_card_simulation_view"/>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <spacer name="vs_cards_right">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+
+     <!-- === TAB 5: REPORT === -->
+     <widget class="QWidget" name="tab_report">
+      <attribute name="title">
+       <string>Report</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="vl_report">
+       <item>
+        <layout class="QHBoxLayout" name="hl_report">
+         <item>
+          <widget class="QGroupBox" name="gb_logo">
+           <property name="title">
+            <string>Logo</string>
+           </property>
+           <layout class="QVBoxLayout">
+            <item>
+             <widget class="QCheckBox" name="cb_logo_include">
+              <property name="text">
+               <string>Include in Report</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="le_logo_path">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btn_logo_path">
+              <property name="text">
+               <string>Select Logo File…</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer>
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="gb_card_images">
+           <property name="title">
+            <string>Spray Card Images</string>
+           </property>
+           <layout class="QVBoxLayout">
+            <item>
+             <widget class="QCheckBox" name="cb_card_images_include">
+              <property name="text">
+               <string>Include in Report</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QFormLayout">
+              <item row="0" column="0">
+               <widget class="QLabel" name="lbl_card_image_type">
+                <property name="text">
+                 <string>Image Type</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QComboBox" name="cbb_card_image_type"/>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="lbl_card_images_per_page">
+                <property name="text">
+                 <string>Images Per Page</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QSpinBox" name="sb_card_images_per_page">
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>15</number>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="lbl_card_images_downsample">
+                <property name="text">
+                 <string>Downsample</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QCheckBox" name="cb_card_images_downsample">
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer>
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="vs_report">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

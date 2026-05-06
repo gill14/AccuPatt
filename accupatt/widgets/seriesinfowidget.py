@@ -7,7 +7,7 @@ from accupatt.helpers.atomizationModel import AtomizationModel
 from accupatt.helpers.dBBridge import load_from_db
 from accupatt.models.appInfo import AppInfo, Nozzle
 from PyQt6 import uic
-from PyQt6.QtCore import QDate, QDateTime, pyqtSignal, pyqtSlot, QSignalBlocker
+from PyQt6.QtCore import QDate, pyqtSignal, pyqtSlot, QSignalBlocker
 from PyQt6.QtWidgets import QComboBox, QFileDialog, QMessageBox
 
 from accupatt.models.seriesData import SeriesData
@@ -67,14 +67,15 @@ class SeriesInfoWidget(baseclass):
     def init_flyin(self):
         self.ui.lineEditName.editingFinished.connect(self._commit_name)
         self.ui.lineEditLocation.editingFinished.connect(self._commit_location)
-        self.ui.dateEdit.setDateTime(QDateTime.currentDateTime())
-        self.ui.dateEdit.dateChanged[QDate].connect(self._dateEdit_changed)
+        self.ui.dateEdit.dateChanged[QDate].connect(self._commit_date)
         self.ui.lineEditAnalyst.editingFinished.connect(self._commit_analyst)
 
     def fill_flyin(self, info: AppInfo):
         self.ui.lineEditName.setText(info.flyin_name)
         self.ui.lineEditLocation.setText(info.flyin_location)
-        self.ui.lineEditDate.setText(info.flyin_date)
+        with QSignalBlocker(self.ui.dateEdit):
+            date = QDate.fromString(info.flyin_date, "d MMM yyyy")
+            self.ui.dateEdit.setDate(date if date.isValid() else QDate.currentDate())
         self.ui.lineEditAnalyst.setText(info.flyin_analyst)
 
     @pyqtSlot()
@@ -87,12 +88,7 @@ class SeriesInfoWidget(baseclass):
 
     @pyqtSlot()
     def _commit_date(self):
-        self.info.flyin_date = self.ui.lineEditDate.text()
-
-    @pyqtSlot(QDate)
-    def _dateEdit_changed(self, date: QDate):
-        self.ui.lineEditDate.setText(date.toString("d MMM yyyy"))
-        self._commit_date()
+        self.info.flyin_date = self.ui.dateEdit.date().toString("d MMM yyyy")
 
     @pyqtSlot()
     def _commit_analyst(self):
@@ -237,7 +233,7 @@ class SeriesInfoWidget(baseclass):
         self.ui.comboBoxMake.currentTextChanged[str].connect(self._on_make_selected)
 
         self.ui.comboBoxWingspanUnits.addItems(cfg.UNITS_LENGTH_LARGE)
-        self.ui.comboBoxWingspanUnits.setCurrentIndex(-1)
+        self.ui.comboBoxWingspanUnits.setCurrentText(cfg.get_unit_wingspan())
         self.ui.comboBoxWinglets.addItems(["Yes", "No"])
         self.ui.comboBoxWinglets.setCurrentIndex(-1)
         self.ui.comboBoxModel.currentTextChanged[str].connect(self._on_model_selected)
@@ -294,7 +290,6 @@ class SeriesInfoWidget(baseclass):
     @pyqtSlot(str)
     def _commit_wingspan_units(self, text):
         self.info.set_wingspan_units(text)
-        cfg.set_unit_wingspan(text)
 
     @pyqtSlot()
     def _commit_wingspan(self):
@@ -310,18 +305,17 @@ class SeriesInfoWidget(baseclass):
 
     def init_spray_system(self):
         self.ui.comboBoxUnitsSwath.addItems(cfg.UNITS_LENGTH_LARGE)
-        self.ui.comboBoxUnitsSwath.setCurrentIndex(-1)
+        self.ui.comboBoxUnitsSwath.setCurrentText(cfg.get_unit_swath())
         self.ui.comboBoxUnitsRate.addItems(cfg.UNITS_RATE)
-        self.ui.comboBoxUnitsRate.setCurrentIndex(-1)
+        self.ui.comboBoxUnitsRate.setCurrentText(cfg.get_unit_rate())
         self.ui.comboBoxUnitsPressure.addItems(cfg.UNITS_PRESSURE)
-        self.ui.comboBoxUnitsPressure.setCurrentIndex(-1)
-        self.ui.comboBoxUnitsBoomWidth.addItems(cfg.UNITS_LENGTH_LARGE)
-        self.ui.comboBoxUnitsBoomWidth.addItem("%")
-        self.ui.comboBoxUnitsBoomWidth.setCurrentIndex(-1)
+        self.ui.comboBoxUnitsPressure.setCurrentText(cfg.get_unit_pressure())
+        self.ui.comboBoxUnitsBoomWidth.addItems(cfg.UNITS_BOOM_WIDTH)
+        self.ui.comboBoxUnitsBoomWidth.setCurrentText(cfg.get_unit_boom_width())
         self.ui.comboBoxUnitsBoomDrop.addItems(cfg.UNITS_LENGTH_SMALL)
-        self.ui.comboBoxUnitsBoomDrop.setCurrentIndex(-1)
+        self.ui.comboBoxUnitsBoomDrop.setCurrentText(cfg.get_unit_boom_drop())
         self.ui.comboBoxUnitsNozzleSpacing.addItems(cfg.UNITS_LENGTH_SMALL)
-        self.ui.comboBoxUnitsNozzleSpacing.setCurrentIndex(-1)
+        self.ui.comboBoxUnitsNozzleSpacing.setCurrentText(cfg.get_unit_nozzle_spacing())
         self.ui.lineEditSwath.editingFinished.connect(self._commit_swath)
         self.ui.comboBoxUnitsSwath.currentTextChanged[str].connect(
             self._commit_swath_units
@@ -391,7 +385,6 @@ class SeriesInfoWidget(baseclass):
     @pyqtSlot(str)
     def _commit_swath_units(self, text):
         self.info.set_swath_units(text)
-        cfg.set_unit_swath(text)
         self.target_swath_changed.emit()
 
     @pyqtSlot()
@@ -401,7 +394,6 @@ class SeriesInfoWidget(baseclass):
     @pyqtSlot(str)
     def _commit_rate_units(self, text):
         self.info.set_rate_units(text)
-        cfg.set_unit_rate(text)
 
     @pyqtSlot()
     def _commit_pressure(self):
@@ -410,7 +402,6 @@ class SeriesInfoWidget(baseclass):
     @pyqtSlot(str)
     def _commit_pressure_units(self, text):
         self.info.set_pressure_units(text)
-        cfg.set_unit_pressure(text)
 
     @pyqtSlot()
     def _commit_boom_width(self):
@@ -419,7 +410,6 @@ class SeriesInfoWidget(baseclass):
     @pyqtSlot(str)
     def _commit_boom_width_units(self, text):
         self.info.set_boom_width_units(text)
-        cfg.set_unit_boom_width(text)
 
     @pyqtSlot()
     def _commit_boom_drop(self):
@@ -428,7 +418,6 @@ class SeriesInfoWidget(baseclass):
     @pyqtSlot(str)
     def _commit_boom_drop_units(self, text):
         self.info.set_boom_drop_units(text)
-        cfg.set_unit_boom_drop(text)
 
     @pyqtSlot()
     def _commit_nozzle_spacing(self):
@@ -437,7 +426,6 @@ class SeriesInfoWidget(baseclass):
     @pyqtSlot(str)
     def _commit_nozzle_spacing_units(self, text):
         self.info.set_nozzle_spacing_units(text)
-        cfg.set_unit_nozzle_spacing(text)
 
     """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """''
     Nozzles

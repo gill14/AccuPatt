@@ -2,8 +2,6 @@ import accupatt.config as cfg
 import numpy as np
 import pandas as pd
 import scipy.signal as sig
-from pyqtgraph import InfiniteLine, PlotWidget, setConfigOptions
-from pyqtgraph.functions import mkPen
 from accupatt.models.dye import Dye
 
 from accupatt.models.passDataBase import PassDataBase
@@ -17,46 +15,62 @@ class PassDataString(PassDataBase):
         # String Data
         self.data_ex = pd.DataFrame()  # Holds Excitation Data
         self.data = pd.DataFrame()  # Holds original Data
-        self.data_mod = pd.DataFrame()  # Holds data with all requested modifications
-        self.data_loc_units = cfg.get_unit_data_location()
+        # self.data_mod = pd.DataFrame()  # Holds data with all requested modifications
+        self.data_loc_units = cfg.get_unit_string_data_location()
         # String Data Mod Options
         self.trim_l = 0
         self.trim_r = 0
         self.trim_v = 0.0
         self.rebase = False
+        self.equalize_factor = 1.0
+        # Processing options
+        self.center = True
+        self.center_method = cfg.get_center_method()
+        self.smooth = True
+        self.smooth_window = cfg.get_smooth_window()
+        self.smooth_order = cfg.get_smooth_order()
 
-    def modifyData(self, loc_units=None):
-        if self.data.empty:
-            return
-        self.data_mod = self.data.copy()
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @name.setter
+    def name(self, value: str):
+        old = getattr(self, "_name", None)
+        self._name = value
+        if old is not None and old != value:
+            for df in [
+                getattr(self, "data", None),
+                getattr(self, "data_ex", None),
+            ]:
+                if df is not None and not df.empty and old in df.columns:
+                    df.rename(columns={old: value}, inplace=True)
+
+    def get_data_mod(self, data=pd.DataFrame(), loc_units_override=None, center_override=None, smooth_override=None) -> pd.DataFrame:
+        if data.empty:
+            data = self.data.copy()
+        data = data.assign(loc_units=self.data_loc_units)
         # Assert location units if provided
-        self.reLoc(self.data_mod, loc_units)
+        self.adapt_location_units(data, loc_units_override if loc_units_override else self.data_loc_units)
         # Trim it horizontally
-        self.trimLR(self.data_mod, self.trim_l, self.trim_r)
+        self.trimLR(data, self.trim_l, self.trim_r)
         # Rebase it
-        self.data_mod = self.rebaseIt(self.data_mod, self.rebase, self.trim_l, self.trim_r)
+        self.rebaseIt(data, self.rebase, self.trim_l, self.trim_r)
         # Trim it vertically
-        self.trimV(self.data_mod, self.trim_v)
+        self.trimV(data, self.trim_v)
         # Center it
-        self.centerify(self.data_mod, self.center, self.center_method)
+        if center_override or (center_override is None and self.center):
+            self.center_to_zero(data, self.name, self.center, self.center_method)
         # Smooth it
-        self.smoothIt(self.data_mod, self.smooth, self.smooth_window, self.smooth_order)
-
-    def reLoc(self, d: pd.DataFrame, loc_units: str = None):
-        if loc_units is None or loc_units == self.data_loc_units:
-            return
-        if loc_units == cfg.UNIT_FT:
-            # Convert loc from M to FT
-            d["loc"] = d["loc"].multiply(cfg.FT_PER_M)
-        else:
-            # Convert loc from FT to M
-            d["loc"] = d["loc"].divide(cfg.FT_PER_M)
-
+        if smooth_override or (smooth_override is None and self.smooth):
+            self.smoothIt(data, self.smooth, self.smooth_window, self.smooth_order)
+        return data
     def trimLR(self, d: pd.DataFrame, trimL: int = 0, trimR: int = 0):
         # Left trimmed points set to -1
         d.loc[d.index[:trimL], self.name] = -1
         # Right trimmed points set to -1
-        d.loc[d.index[(-1 - trimR) :], self.name] = -1
+        if trimR > 0:
+            d.loc[d.index[(-1 - trimR) :], self.name] = -1
         # Find new min inside untrimmed area
         min_ = self.findMin(d, trimL, trimR)
         # subtract min from all points and clip all negative values (from trimmed areas) to 0
@@ -67,51 +81,21 @@ class PassDataString(PassDataBase):
 
     def rebaseIt(
         self, d: pd.DataFrame, isRebase: bool = False, trimL: int = 0, trimR: int = 0
-    ) -> pd.DataFrame:
+    ):
         if not isRebase:
-            return d
+            return
         # Calculate trimmed/untrimmed distances
         untrimmed_dist = d.at[d.index[-1], "loc"] - d.at[d.index[0], "loc"]
         trimmed_dist = d.at[d.index[-1 - trimR], "loc"] - d.at[d.index[trimL], "loc"]
-        # Drop data points outside trimmed area
-        d = d.drop(d[d.index < trimL].index)
-        d = d.drop(d[d.index > d.index[-1 - trimR]].index)
+        # Drop data points outside trimmed area in place
+        to_drop = d.index[(d.index < trimL) | (d.index > d.index[-1 - trimR])]
+        d.drop(to_drop, inplace=True)
         # Rebase locations according to ratio of untrimmed:trimmed length
         d["loc"] = d["loc"].multiply(untrimmed_dist / trimmed_dist)
-        return d
 
     def trimV(self, d: pd.DataFrame, trimV: float = 0.0):
         # Trim Vertical and clip all negative values (from trimmed areas) to 0
         d[self.name] = d[self.name].sub(trimV).clip(lower=0)
-
-    def centerify(self, d: pd.DataFrame, center, centerMethod):
-        if not center:
-            return
-        if centerMethod == cfg.CENTER_METHOD_CENTROID:
-            # Use Centroid
-            c = self._calcCentroid(d)
-        elif centerMethod == cfg.CENTER_METHOD_COD:
-            # Use Center of Distribution
-            c = self._calcCenterOfDistribution(d)
-        else:
-            # No centering applied
-            c = 0
-        # Subtract the calculated center from the x vals
-        d["loc"] = d["loc"].sub(c)
-
-    def _calcCentroid(self, d: pd.DataFrame):
-        return (d[self.name] * d["loc"]).sum() / d[self.name].sum()
-
-    def _calcCenterOfDistribution(self, d: pd.DataFrame):
-        D = d[self.name].iloc[:-1].to_numpy()
-        Dn = d[self.name].iloc[1:].to_numpy()
-        X = d["loc"].iloc[:-1].to_numpy()
-        Xn = d["loc"].iloc[1:].to_numpy()
-        # Calc Numerator and add to summation
-        sumNumerator = (D * (Xn + X) + (Dn - D) * (2 * Xn + X) / 3).sum()
-        sumDenominator = (Dn + D).sum()
-        # Calc and return CoD
-        return sumNumerator / sumDenominator
 
     def smoothIt(self, d: pd.DataFrame, isSmooth: bool, window: float, order: int):
         if not isSmooth:
@@ -156,113 +140,7 @@ class PassDataString(PassDataBase):
         self.trim_v = float(value - min_y) if min_y < value else 0.0
 
     """
-    Plotting Methods
-    """
-
-    def plotIndividual(
-        self, pyqtplotwidget: PlotWidget
-    ) -> tuple[InfiniteLine, InfiniteLine, InfiniteLine]:
-        # Setup Plotter and clear
-        self._config_pypqt_plotter(pyqtplotwidget)
-        # Only proceed if data exists
-        if self.data.empty:
-            return None, None, None
-        # Calculate min y val for use with trim_vertical handle
-        min_ = self.findMin(self.data, self.trim_l, self.trim_r)
-        # Numpy-ize dataframe columns for plotting
-        x = self.data["loc"].to_numpy(dtype=float)
-        y = self.data[self.name].to_numpy(dtype=float)
-        floor = min_ + self.trim_v
-        # Plot raw data
-        pyqtplotwidget.plotItem.plot(name="Raw", pen="w").setData(x, y)
-        # Create L, R and V trim handles
-        trim_left = InfiniteLine(
-            pos=x[0 + self.trim_l],
-            movable=True,
-            pen="y",
-            hoverPen=mkPen("y", width=3),
-            label="Trim L = {value:0.2f}",
-            labelOpts={"color": "y", "position": 0.9},
-        )
-        trim_right = InfiniteLine(
-            pos=x[-1 - self.trim_r],
-            movable=True,
-            pen="y",
-            hoverPen=mkPen("y", width=3),
-            label="Trim R = {value:0.2f}",
-            labelOpts={"color": "y", "position": 0.9},
-        )
-        trim_vertical = InfiniteLine(
-            pos=floor,
-            angle=0,
-            movable=True,
-            pen="y",
-            hoverPen=mkPen("y", width=3),
-            label="Floor = {value:0.2f}",
-            labelOpts={"color": "y", "position": 0.5},
-        )
-        # Add trim handles to plot
-        pyqtplotwidget.addItem(trim_left)
-        pyqtplotwidget.addItem(trim_right)
-        pyqtplotwidget.addItem(trim_vertical)
-        # Return Trim Handles to parent widget so that user can interact with them
-        return trim_left, trim_right, trim_vertical
-
-    def plotIndividualTrim(self, pyqtplotwidget: PlotWidget):
-        # Setup Plotter and clear
-        self._config_pypqt_plotter(pyqtplotwidget)
-        # Only proceed if data exists
-        if self.data.empty:
-            return
-        # Copy dataframes for non-destructive use
-        data = self.data.copy()
-        data_mod = data.copy()
-        # Trim and Rebase
-        self.trimLR(data_mod, self.trim_l, self.trim_r)
-        self.rebaseIt(data_mod, self.rebase, self.trim_l, self.trim_r)
-        self.trimV(data_mod, self.trim_v)
-        # Numpy-ize dataframe columns for plotting
-        x = data_mod["loc"].to_numpy(dtype=float)
-        y = data_mod[self.name].to_numpy(dtype=float)
-        # Label modifier for if rebasing is utilized
-        rebase_str = ", Rebased" if self.rebase else ""
-        # Plot trimmed/rebased data
-        pyqtplotwidget.plotItem.plot(name=f"Trimmed{rebase_str}", pen="w").setData(
-            x[y != 0], y[y != 0]
-        )
-        # Only plot smoothed version if enabled for pass
-        if self.smooth:
-            self.smoothIt(data_mod, self.smooth, self.smooth_window, self.smooth_order)
-            # Numpy-ize dataframe column for plotting
-            y_smooth = data_mod[self.name].to_numpy(dtype=float).copy()
-            trim_mask = np.nonzero(y_smooth)[0]
-            y_smooth[0 : trim_mask[0]] = np.nan
-            y_smooth[trim_mask[-1] : -1] = np.nan
-            # Plot trimmed/rebased/smoothed data
-            y_smooth_plot = y_smooth[y != 0]
-            pyqtplotwidget.plotItem.plot(
-                name=f"Trimmed{rebase_str}, Smoothed", pen=mkPen("y", width=3)
-            ).setData(x[y != 0], y_smooth_plot)
-            # Scale y-axis to smoothed line
-            valid = y_smooth_plot[~np.isnan(y_smooth_plot)]
-            if valid.size:
-                padding = (valid.max() - valid.min()) * 0.05
-                pyqtplotwidget.plotItem.setYRange(
-                    valid.min() - padding, valid.max() + padding, padding=0
-                )
-
-    def _config_pypqt_plotter(self, pyqtplotwidget: PlotWidget):
-        setConfigOptions(antialias=True, background="k", foreground="w")
-        pyqtplotwidget.plotItem.clear()
-        pyqtplotwidget.plotItem.setLabel(
-            axis="bottom", text="Location", units=self.data_loc_units
-        )
-        pyqtplotwidget.plotItem.setLabel(axis="left", text="Dye Intensity")
-        pyqtplotwidget.plotItem.showGrid(x=True, y=True)
-        pyqtplotwidget.plotItem.addLegend(offset=(5, 5))
-
-    """
-    Conveneince
+    Convenience
     """
 
     def has_data(self) -> bool:
