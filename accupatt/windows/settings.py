@@ -1,9 +1,20 @@
 import os
+import subprocess
+import sys
 
 import accupatt.config as cfg
+
+try:
+    from oceandirect.OceanDirectAPI import OceanDirectAPI, Spectrometer
+    _OCEANDIRECT_AVAILABLE = True
+except ImportError:
+    _OCEANDIRECT_AVAILABLE = False
+from accupatt.windows.calculateStringSpeed import CalculateStringSpeed
 from PyQt6 import uic
 from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QFileDialog, QMessageBox
+from serial import Serial
 from serial.tools import list_ports
 
 Ui_Form, baseclass = uic.loadUiType(
@@ -18,12 +29,32 @@ class Settings(baseclass):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
+        self.ser: Serial | None = None
+        self._port_device: str | None = None
+        self.spec = None
+        self.btn_reverse = self.ui.btn_manual_reverse
+        self.btn_forward = self.ui.btn_manual_advance
         self._populate()
         self.ui.buttonBox.accepted.connect(self._apply)
         self.ui.buttonBox.rejected.connect(self.reject)
         self.ui.btn_datafile_dir.clicked.connect(self._browse_datafile_dir)
         self.ui.btn_logo_path.clicked.connect(self._browse_logo_path)
         self.ui.btn_reset_defaults.clicked.connect(self._reset_defaults)
+        icon_file = os.path.join(os.getcwd(), "resources", "refresh.png")
+        self.ui.btn_refresh_port.setIcon(QIcon(icon_file))
+        self.ui.btn_refresh_port.clicked.connect(self._refresh_port_list)
+        self.ui.btn_refresh_spec.setIcon(QIcon(icon_file))
+        self.ui.btn_refresh_spec.clicked.connect(self._refresh_spectrometer)
+        icon_adjust = os.path.join(os.getcwd(), "resources", "icon_adjust.png")
+        self.ui.btn_dye_manager.setIcon(QIcon(icon_adjust))
+        self.ui.btn_dye_manager.clicked.connect(self._open_dye_manager)
+        self.ui.btn_test_spectrometer.clicked.connect(self._test_spectrometer)
+        self.btn_reverse.clicked.connect(self._manual_reverse)
+        self.btn_forward.clicked.connect(self._manual_advance)
+        self.ui.btn_calibrate_speed.clicked.connect(self._calibrate_speed)
+        self.ui.btn_send_command.clicked.connect(self._send_command)
+        self.ui.btn_help.clicked.connect(self._open_stepper_manual)
+        self.finished.connect(self._close_serial)
 
     def _populate(self):
         # --- General ---
@@ -96,22 +127,19 @@ class Settings(baseclass):
         )
 
         # String Drive
-        for port in list_ports.comports():
-            self.ui.cbb_string_drive_port.addItem(port.device)
-        saved_port = cfg.get_string_drive_port()
-        idx = self.ui.cbb_string_drive_port.findText(saved_port)
-        if idx >= 0:
-            self.ui.cbb_string_drive_port.setCurrentIndex(idx)
-        elif saved_port:
-            self.ui.cbb_string_drive_port.addItem(saved_port)
-            self.ui.cbb_string_drive_port.setCurrentText(saved_port)
-
         self.ui.dsb_string_length.setValue(cfg.get_string_length())
         self.ui.cbb_string_length_units.addItems(cfg.UNITS_STRING_DATA_LOCATION)
         self.ui.cbb_string_length_units.setCurrentText(cfg.get_unit_string_data_location())
         self.ui.cbb_string_length_units.currentTextChanged.connect(self._update_string_length_unit_labels)
         self.ui.dsb_string_speed.setValue(cfg.get_string_speed())
         self._update_string_length_unit_labels(cfg.get_unit_string_data_location())
+        self._refresh_port_list()
+
+        # Spectrometer
+        self.ui.cbb_spec_display_units.addItems(cfg.SPECTROMETER_DISPLAY_UNITS)
+        self.ui.cbb_spec_display_units.setCurrentText(cfg.get_spectrometer_display_unit())
+        self._refresh_dyes()
+        self._refresh_spectrometer()
 
         # --- Spray Cards ---
         self.ui.cbb_image_load_method.addItems(cfg.IMAGE_LOAD_METHODS)
@@ -251,10 +279,12 @@ class Settings(baseclass):
         cfg.set_string_simulation_view_window(
             self.ui.cbb_string_simulation_view.currentText()
         )
-        cfg.set_string_drive_port(self.ui.cbb_string_drive_port.currentText())
+        cfg.set_string_drive_port(self._port_device or "")
         cfg.set_string_length(self.ui.dsb_string_length.value())
         cfg.set_unit_string_data_location(self.ui.cbb_string_length_units.currentText())
         cfg.set_string_speed(self.ui.dsb_string_speed.value())
+        cfg.set_defined_dye(self.ui.cbb_dye.currentText())
+        cfg.set_spectrometer_display_unit(self.ui.cbb_spec_display_units.currentText())
 
         # --- Spray Cards ---
         cfg.set_image_load_method(self.ui.cbb_image_load_method.currentText())
@@ -321,9 +351,165 @@ class Settings(baseclass):
         self.settings_changed.emit()
         self.accept()
 
+    def _refresh_port_list(self):
+        self._close_serial()
+        self._port_device = None
+        ftdi_ports = [
+            p for p in list_ports.comports() if "FTDI" in (p.manufacturer or "")
+        ]
+        if ftdi_ports:
+            port = ftdi_ports[0]
+            self._port_device = port.device
+            self.ui.le_port_display.setText(f"{port.manufacturer} - {port.product}")
+            try:
+                self.ser = Serial(port=port.device, timeout=1)
+            except Exception:
+                pass
+        else:
+            self.ui.le_port_display.clear()
+        self._update_serial_controls()
+
+    def _close_serial(self):
+        if self.ser and self.ser.is_open:
+            self.ser.close()
+
+    def _update_serial_controls(self):
+        connected = bool(self.ser and self.ser.is_open)
+        if connected:
+            self.ui.lbl_port_status.setText("Serial Port: Checks Good")
+            self.ui.lbl_port_status.setStyleSheet(
+                "background-color: green; color: white; padding: 3px;"
+            )
+        else:
+            self.ui.lbl_port_status.setText("Refresh to Connect")
+            self.ui.lbl_port_status.setStyleSheet(
+                "background-color: yellow; color: black; padding: 3px;"
+            )
+        self.btn_reverse.setEnabled(connected)
+        self.btn_forward.setEnabled(connected)
+        self.ui.btn_calibrate_speed.setEnabled(connected)
+        self.ui.btn_send_command.setEnabled(connected)
+        self.ui.le_direct_command.setEnabled(connected)
+
+    def _manual_reverse(self):
+        if not self.btn_reverse.isChecked():
+            self.ser.write(cfg.STRING_DRIVE_REV_STOP.encode())
+            self.btn_reverse.setText("<- Reverse")
+            self._update_serial_controls()
+        else:
+            self.ser.write(cfg.STRING_DRIVE_REV_START.encode())
+            self.btn_reverse.setText("-- STOP --")
+            self._update_serial_controls()
+            self.btn_forward.setEnabled(False)
+
+    def _manual_advance(self):
+        if not self.btn_forward.isChecked():
+            self.ser.write(cfg.STRING_DRIVE_FWD_STOP.encode())
+            self.btn_forward.setText("Forward ->")
+            self._update_serial_controls()
+        else:
+            self.ser.write(cfg.STRING_DRIVE_FWD_START.encode())
+            self.btn_forward.setText("-- STOP --")
+            self._update_serial_controls()
+            self.btn_reverse.setEnabled(False)
+
+    def _calibrate_speed(self):
+        e = CalculateStringSpeed(
+            ser=self.ser,
+            length=str(self.ui.dsb_string_length.value()),
+            length_units=self.ui.cbb_string_length_units.currentText(),
+            parent=self,
+        )
+        e.speed_accepted[str, str].connect(self._update_speed)
+        e.exec()
+
+    def _update_speed(self, text: str, text_units: str):
+        try:
+            self.ui.dsb_string_speed.setValue(float(text))
+        except ValueError:
+            pass
+        self.ui.cbb_string_length_units.setCurrentText(text_units)
+
+    def _send_command(self):
+        if self.ser and self.ser.is_open:
+            command = self.ui.le_direct_command.text() + "\r"
+            self.ser.write(command.encode())
+            self.ui.lbl_command_return.setText(self.ser.readline().decode("utf-8"))
+
+    def _open_stepper_manual(self):
+        file = os.path.join(
+            os.getcwd(), "resources", "documents", "weeder_stepper_driver_manual.pdf"
+        )
+        if sys.platform == "darwin":
+            subprocess.call(["open", file])
+        elif sys.platform == "win32":
+            os.startfile(file)
+
     def _update_string_length_unit_labels(self, units: str):
         self.ui.lbl_smooth_window_units.setText(units)
         self.ui.lbl_string_speed_units.setText(f"{units}/sec")
+
+    def _refresh_spectrometer(self):
+        if not _OCEANDIRECT_AVAILABLE:
+            self._update_spectrometer_status("no_driver")
+            return
+        try:
+            if self.spec is None:
+                od = OceanDirectAPI()
+                od.find_usb_devices()
+                device_ids = od.get_device_ids()
+                if device_ids:
+                    self.spec = od.open_device(device_ids[0])
+        except Exception:
+            self.spec = None
+            self._update_spectrometer_status("error")
+            return
+        self._update_spectrometer_status("connected" if self.spec else "no_device")
+
+    def _update_spectrometer_status(self, state: str):
+        lbl = self.ui.lbl_spec_status
+        model = self.spec.get_model() if self.spec else ""
+        match state:
+            case "no_driver":
+                lbl.setText("OceanDirect Driver Not Installed")
+                lbl.setStyleSheet("background-color: #aaaaaa; color: #444444; padding: 3px;")
+                self.ui.le_spec_display.clear()
+            case "no_device":
+                lbl.setText("No Spectrometer Found")
+                lbl.setStyleSheet("background-color: yellow; color: black; padding: 3px;")
+                self.ui.le_spec_display.clear()
+            case "error":
+                lbl.setText("Connection Error — check driver and USB, then refresh")
+                lbl.setStyleSheet("background-color: orange; color: black; padding: 3px;")
+                self.ui.le_spec_display.clear()
+            case "connected":
+                lbl.setText(f"Connected: {model}")
+                lbl.setStyleSheet("background-color: green; color: white; padding: 3px;")
+                self.ui.le_spec_display.setText(model)
+        self.ui.btn_test_spectrometer.setEnabled(state == "connected")
+
+    def _refresh_dyes(self):
+        from accupatt.models.dye import Dye
+        dye_names = [Dye.fromDict(d).name for d in cfg.get_defined_dyes()]
+        cb = self.ui.cbb_dye
+        current = cfg.get_defined_dye()
+        cb.blockSignals(True)
+        cb.clear()
+        cb.addItems(dye_names)
+        cb.setCurrentText(current if current in dye_names else (dye_names[0] if dye_names else ""))
+        cb.blockSignals(False)
+
+    def _open_dye_manager(self):
+        from accupatt.windows.definedDyeManager import DyeManager
+        e = DyeManager(parent=self)
+        e.finished.connect(self._refresh_dyes)
+        e.exec()
+
+    def _test_spectrometer(self):
+        from accupatt.windows.testSpectrometer import TestSpectrometer
+        from accupatt.models.dye import Dye
+        dye = Dye.fromConfig(name=self.ui.cbb_dye.currentText())
+        TestSpectrometer(spectrometer=self.spec, dye=dye, parent=self).exec()
 
     def _reset_defaults(self):
         msg = QMessageBox.question(

@@ -20,7 +20,7 @@ def plot(
     ax.clear()
     ax.set_xlabel(f"Location ({loc_units})")
     ax.set_ylabel(cfg.get_card_plot_y_axis_label())
-    if not d["loc"].empty:
+    if not d.empty:
         locs_i = np.linspace(d["loc"].iloc[0], d["loc"].iloc[-1], num=d.shape[0] * 10)
         y_i = interpolate.interp1d(
             d["loc"], d[cfg.get_card_plot_y_axis()], kind="slinear"

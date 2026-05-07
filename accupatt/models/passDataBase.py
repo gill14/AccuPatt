@@ -37,6 +37,8 @@ class PassDataBase:
         d["loc"] -= c
 
     def adapt_location_units(self, d: pd.DataFrame, loc_units):
+        if d.empty:
+            return
         mask = d["loc_units"] != loc_units
         ft_mask = mask & (d["loc_units"] == cfg.UNIT_FT)
         d.loc[ft_mask, "loc"] /= cfg.FT_PER_M

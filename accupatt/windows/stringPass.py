@@ -8,7 +8,6 @@ from accupatt.models.dye import Dye
 from accupatt.models.passData import Pass
 from accupatt.widgets.passinfowidget import PassInfoWidget
 from accupatt.windows.editSpectrometer import EditSpectrometer
-from accupatt.windows.editStringDrive import EditStringDrive
 from PyQt6 import uic
 from PyQt6.QtCore import QTimer, pyqtSlot, Qt
 from PyQt6.QtWidgets import QMessageBox, QCheckBox, QLabel, QPushButton
@@ -299,15 +298,20 @@ class StringPass(baseclass):
     # Open String Drive Editor
     @pyqtSlot()
     def editStringDrive(self):
-        e = EditStringDrive(
-            ser=self.ser,
-            string_length_units=self.passData.string.data_loc_units,
-            parent=self,
-        )
-        e.string_drive_connected.connect(self.string_drive_connected_external)
-        e.string_length_units_changed.connect(self.string_length_units_changed)
-        e.accepted.connect(self.setupStringDrive)
+        from accupatt.windows.settings import Settings
+        if self.ser and self.ser.is_open:
+            self.ser.close()
+            self.ser = None
+        e = Settings(parent=self)
+        e.ui.tabWidget.setCurrentWidget(e.ui.tab_string)
+        e.settings_changed.connect(self._on_string_drive_settings_applied)
         e.exec()
+
+    def _on_string_drive_settings_applied(self):
+        units = cfg.get_unit_string_data_location()
+        self.passData.string.data_loc_units = units
+        self.plotWidget.plotItem.setLabel(axis="bottom", text="Location", units=units)
+        self.setupStringDrive()
 
     def setupStringDrive(self):
         # Get a handle to the serial object, else return "Disconnected" status label
@@ -331,10 +335,6 @@ class StringPass(baseclass):
         )
         # Enale/Disable manual drive buttons
         self.enableButtons()
-
-    @pyqtSlot(serial.Serial)
-    def string_drive_connected_external(self, ser: serial.Serial):
-        self.ser = ser
 
     @pyqtSlot(str)
     def string_length_units_changed(self, units: str):

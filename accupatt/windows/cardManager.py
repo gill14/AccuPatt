@@ -17,7 +17,7 @@ from accupatt.windows.editThreshold import EditThreshold
 from accupatt.windows.loadCards import LoadCards, LoadCardsPreBatch
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
-from PyQt6.QtWidgets import QFileDialog, QLabel, QMessageBox, QComboBox, QProgressDialog
+from PyQt6.QtWidgets import QDialogButtonBox, QFileDialog, QLabel, QMessageBox, QComboBox, QProgressDialog
 
 Ui_Form, baseclass = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "cardManager.ui")
@@ -52,6 +52,8 @@ class CardManager(baseclass):
         self.ui.comboBoxLoadMethod.addItems(cfg.IMAGE_LOAD_METHODS)
         self.ui.comboBoxLoadMethod.setCurrentText(cfg.get_image_load_method())
         self.ui.buttonLoad.clicked.connect(self.load_cards)
+
+        self.ui.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setDefault(True)
 
         self.ui.buttonProcessOptions.clicked.connect(self.click_process_options)
         self.ui.buttonSpreadFactors.clicked.connect(self.click_spread_factors)

@@ -49,6 +49,8 @@ class PassDataString(PassDataBase):
     def get_data_mod(self, data=pd.DataFrame(), loc_units_override=None, center_override=None, smooth_override=None) -> pd.DataFrame:
         if data.empty:
             data = self.data.copy()
+        if data.empty:
+            return data
         data = data.assign(loc_units=self.data_loc_units)
         # Assert location units if provided
         self.adapt_location_units(data, loc_units_override if loc_units_override else self.data_loc_units)

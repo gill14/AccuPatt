@@ -19,8 +19,6 @@ from accupatt.widgets.tabWidgetCards import TabWidgetCards
 from accupatt.widgets.seriesinfowidget import SeriesInfoWidget
 from accupatt.widgets.tabWidgetString import TabWidgetString
 from accupatt.windows.cardPlotOptions import CardPlotOptions
-from .editSpectrometer import EditSpectrometer
-from .editStringDrive import EditStringDrive
 from accupatt.windows.passManager import PassManager
 from accupatt.windows.settings import Settings
 
@@ -108,12 +106,6 @@ class MainWindow(baseclass):
         self.ui.actionWorksheetGillColor.triggered.connect(self.openResourceWSGillColor)
         self.ui.actionWorksheetGillBW.triggered.connect(self.openResourceWSGillBW)
         self.ui.actionCPCatalog.triggered.connect(self.openResourceCPCatalog)
-        self.ui.actionShortcutStringDrive.triggered.connect(
-            self.openShortcutStringDrive
-        )
-        self.ui.actionShortcutSpectrometer.triggered.connect(
-            self.openShortcutSpectrometer
-        )
         self.ui.action_settings.triggered.connect(self.openSettings)
 
         # --> Setup Help Menu
@@ -540,21 +532,6 @@ class MainWindow(baseclass):
     @pyqtSlot()
     def openResourceCPCatalog(self):
         self.openResourceDocument("CP_Catalog.pdf")
-
-    @pyqtSlot()
-    def openShortcutStringDrive(self):
-        e = EditStringDrive(
-            ser=None,
-            string_length_units=cfg.get_unit_swath(),
-            disconnect_on_close=True,
-            parent=self,
-        )
-        e.exec()
-
-    @pyqtSlot()
-    def openShortcutSpectrometer(self):
-        e = EditSpectrometer(spectrometer=None, dye=Dye.fromConfig(), parent=None)
-        e.exec()
 
     @pyqtSlot()
     def openSettings(self):

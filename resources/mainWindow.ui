@@ -189,9 +189,6 @@
     <addaction name="menuWorksheets_2"/>
     <addaction name="separator"/>
     <addaction name="actionCPCatalog"/>
-    <addaction name="separator"/>
-    <addaction name="actionShortcutStringDrive"/>
-    <addaction name="actionShortcutSpectrometer"/>
    </widget>
    <addaction name="menu_file"/>
    <addaction name="menuExport_to_Excel"/>

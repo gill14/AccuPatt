@@ -501,6 +501,12 @@
               <string>String Drive</string>
              </property>
              <layout class="QFormLayout">
+              <property name="fieldGrowthPolicy">
+               <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+              </property>
+              <property name="verticalSpacing">
+               <number>4</number>
+              </property>
               <item row="0" column="0">
                <widget class="QLabel" name="lbl_string_drive_port">
                 <property name="text">
@@ -509,16 +515,47 @@
                </widget>
               </item>
               <item row="0" column="1">
-               <widget class="QComboBox" name="cbb_string_drive_port"/>
+               <layout class="QHBoxLayout" stretch="1,0">
+                <item>
+                 <widget class="QLineEdit" name="le_port_display">
+                  <property name="readOnly">
+                   <bool>true</bool>
+                  </property>
+                  <property name="placeholderText">
+                   <string>No FTDI device found</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="btn_refresh_port">
+                  <property name="text">
+                   <string/>
+                  </property>
+                  <property name="flat">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
               </item>
-              <item row="1" column="0">
+              <item row="1" column="1">
+               <widget class="QLabel" name="lbl_port_status">
+                <property name="text">
+                 <string>Refresh to Connect</string>
+                </property>
+                <property name="styleSheet">
+                 <string>background-color: yellow; color: black; padding: 3px;</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
                <widget class="QLabel" name="lbl_string_length">
                 <property name="text">
                  <string>String Length</string>
                 </property>
                </widget>
               </item>
-              <item row="1" column="1">
+              <item row="2" column="1">
                <layout class="QHBoxLayout">
                 <item>
                  <widget class="QDoubleSpinBox" name="dsb_string_length">
@@ -538,14 +575,14 @@
                 </item>
                </layout>
               </item>
-              <item row="2" column="0">
+              <item row="3" column="0">
                <widget class="QLabel" name="lbl_string_speed">
                 <property name="text">
                  <string>String Speed</string>
                 </property>
                </widget>
               </item>
-              <item row="2" column="1">
+              <item row="3" column="1">
                <layout class="QHBoxLayout">
                 <item>
                  <widget class="QDoubleSpinBox" name="dsb_string_speed">
@@ -567,6 +604,212 @@
                  <widget class="QLabel" name="lbl_string_speed_units">
                   <property name="text">
                    <string>/sec</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="btn_calibrate_speed">
+                  <property name="text">
+                   <string>Calibrate</string>
+                  </property>
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLabel" name="lbl_manual_drive">
+                <property name="text">
+                 <string>Manual Drive</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <layout class="QHBoxLayout">
+                <item>
+                 <widget class="QPushButton" name="btn_manual_reverse">
+                  <property name="text">
+                   <string>&lt;- Reverse</string>
+                  </property>
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="btn_manual_advance">
+                  <property name="text">
+                   <string>Forward -&gt;</string>
+                  </property>
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item row="5" column="0">
+               <widget class="QLabel" name="lbl_direct_command">
+                <property name="text">
+                 <string>Command</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <layout class="QHBoxLayout">
+                <item>
+                 <widget class="QLineEdit" name="le_direct_command">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="btn_send_command">
+                  <property name="text">
+                   <string>Send</string>
+                  </property>
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item row="6" column="0">
+               <widget class="QLabel" name="lbl_response">
+                <property name="text">
+                 <string>Response</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="1">
+               <widget class="QLabel" name="lbl_command_return">
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="1">
+               <widget class="QPushButton" name="btn_help">
+                <property name="text">
+                 <string>Open Stepper Manual</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="gb_spectrometer">
+             <property name="title">
+              <string>Spectrometer</string>
+             </property>
+             <layout class="QFormLayout">
+              <property name="fieldGrowthPolicy">
+               <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+              </property>
+              <property name="verticalSpacing">
+               <number>4</number>
+              </property>
+              <item row="0" column="0">
+               <widget class="QLabel" name="lbl_spectrometer">
+                <property name="text">
+                 <string>Spectrometer</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <layout class="QHBoxLayout" stretch="1,0">
+                <item>
+                 <widget class="QLineEdit" name="le_spec_display">
+                  <property name="readOnly">
+                   <bool>true</bool>
+                  </property>
+                  <property name="placeholderText">
+                   <string>No spectrometer found</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="btn_refresh_spec">
+                  <property name="text">
+                   <string/>
+                  </property>
+                  <property name="flat">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLabel" name="lbl_spec_status">
+                <property name="text">
+                 <string>Connecting...</string>
+                </property>
+                <property name="styleSheet">
+                 <string>background-color: #aaaaaa; color: #444444; padding: 3px;</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QPushButton" name="btn_test_spectrometer">
+                <property name="text">
+                 <string>Test Spectrometer</string>
+                </property>
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="lbl_spec_display_units">
+                <property name="text">
+                 <string>Display Units</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QComboBox" name="cbb_spec_display_units"/>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLabel" name="lbl_dye">
+                <property name="text">
+                 <string>Dye</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <layout class="QHBoxLayout">
+                <item>
+                 <widget class="QComboBox" name="cbb_dye">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="sizeAdjustPolicy">
+                   <enum>QComboBox::AdjustToContents</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="btn_dye_manager">
+                  <property name="text">
+                   <string/>
+                  </property>
+                  <property name="flat">
+                   <bool>true</bool>
                   </property>
                  </widget>
                 </item>
@@ -603,6 +846,9 @@
       <layout class="QVBoxLayout" name="vl_cards_outer">
        <item>
         <widget class="QScrollArea" name="scrollArea_cards">
+         <property name="styleSheet">
+          <string>QScrollArea { background: transparent; } QScrollArea > QWidget > QWidget { background: transparent; }</string>
+         </property>
          <property name="widgetResizable">
           <bool>true</bool>
          </property>

@@ -5,7 +5,11 @@ from PyQt6 import uic
 from PyQt6.QtCore import pyqtSignal, pyqtSlot, QSignalBlocker
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QPushButton, QComboBox, QLineEdit, QMessageBox
-from oceandirect.OceanDirectAPI import OceanDirectAPI, Spectrometer
+try:
+    from oceandirect.OceanDirectAPI import OceanDirectAPI, Spectrometer
+    _OCEANDIRECT_AVAILABLE = True
+except ImportError:
+    _OCEANDIRECT_AVAILABLE = False
 
 from accupatt.models.dye import Dye
 import accupatt.config as cfg

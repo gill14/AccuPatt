@@ -2,10 +2,14 @@ import os
 
 import numpy as np
 from PyQt6 import uic
-from PyQt6.QtCore import QTimer
+from PyQt6.QtCore import QObject, QThread, pyqtSignal
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QDialog, QTableWidget, QLabel
-from oceandirect.OceanDirectAPI import OceanDirectAPI, Spectrometer
+try:
+    from oceandirect.OceanDirectAPI import OceanDirectAPI, Spectrometer
+    _OCEANDIRECT_AVAILABLE = True
+except ImportError:
+    _OCEANDIRECT_AVAILABLE = False
 import pyqtgraph
 
 from accupatt.models.dye import Dye
@@ -14,6 +18,30 @@ import accupatt.config as cfg
 Ui_Form, baseclass = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "testSpectrometer.ui")
 )
+
+
+class SpectrometerWorker(QObject):
+    data_ready = pyqtSignal(np.ndarray)
+
+    def __init__(self, spectrometer: "Spectrometer", interval_ms: int):
+        super().__init__()
+        self._spec = spectrometer
+        self._interval_ms = interval_ms
+        self._running = False
+
+    def start(self):
+        self._running = True
+        self._acquire()
+
+    def stop(self):
+        self._running = False
+
+    def _acquire(self):
+        while self._running:
+            raw = self._spec.get_formatted_spectrum()
+            if raw:
+                self.data_ready.emit(np.array(raw, dtype=np.float32))
+            QThread.msleep(self._interval_ms)
 
 
 class TestSpectrometer(baseclass):
@@ -42,9 +70,17 @@ class TestSpectrometer(baseclass):
         self.label_serial: QLabel = self.ui.label_serial_number
         self.label_integration_Time: QLabel = self.ui.label_integration_time
 
+        # Cache table item references to avoid per-frame lookups
+        self._tw_items = {
+            "ex_near": self.tw.item(2, 0),
+            "ex_avg":  self.tw.item(5, 0),
+            "em_near": self.tw.item(2, 1),
+            "em_avg":  self.tw.item(5, 1),
+        }
+        self._use_rel = cfg.get_spectrometer_display_unit() == cfg.SPECTROMETER_DISPLAY_UNIT_RELATIVE
+
         # Init plot
         self.x = np.array(self.spec.get_wavelengths(), dtype=np.float32)
-        self.y = []
         pyqtgraph.setConfigOptions(antialias=True)
         pyqtgraph.setConfigOption("background", "k")
         pyqtgraph.setConfigOption("foreground", "w")
@@ -142,7 +178,6 @@ class TestSpectrometer(baseclass):
         )
         # Call this before show so resizeEvent is proper
         self.tw.resizeRowsToContents()
-        self._plot_frame()
 
         # Labels
         self.label_model.setText(f"Spectrometer Model: {self.spec.get_model()}")
@@ -153,28 +188,23 @@ class TestSpectrometer(baseclass):
             f"Target Integration Time: {self.dye.integration_time_milliseconds} milliseconds"
         )
 
-        # Init timer
-        self.timer = QTimer(self)
-        self.timer.setInterval(int(dye.integration_time_milliseconds))
-        self.timer.timeout.connect(self._plot_frame)
-        self.timer.start()
+        # Start acquisition worker thread
+        self._thread = QThread(self)
+        self._worker = SpectrometerWorker(spectrometer, int(dye.integration_time_milliseconds))
+        self._worker.moveToThread(self._thread)
+        self._thread.started.connect(self._worker.start)
+        self._worker.data_ready.connect(self._on_data_ready)
+        self._thread.start()
 
         self.show()
 
-    def _plot_frame(self):
-        self.y = np.array(self.spec.get_formatted_spectrum(), dtype=np.float32) # correct dark pixels and nonlinearity if supported by device & backend
-        use_rel = (
-            cfg.get_spectrometer_display_unit()
-            == cfg.SPECTROMETER_DISPLAY_UNIT_RELATIVE
-        )
-        _y = self.y / cfg.AU_PER_PERCENT_16_BIT if use_rel else self.y
-        self.plot_item.setData(self.x, _y)
-        self.tw.item(2, 0).setText(str(int(self.y[self.pix_ex])))
-        avg = np.average(self.y[self.boxcar_pix_ex[0] : self.boxcar_pix_ex[-1] + 1])
-        self.tw.item(5, 0).setText(str(int(avg)))
-        self.tw.item(2, 1).setText(str(int(self.y[self.pix_em])))
-        avg = np.average(self.y[self.boxcar_pix_em[0] : self.boxcar_pix_em[-1] + 1])
-        self.tw.item(5, 1).setText(str(int(avg)))
+    def _on_data_ready(self, y: np.ndarray):
+        _y = y / cfg.AU_PER_PERCENT_16_BIT if self._use_rel else y
+        self.plot_item.setData(self.x, _y, skipFiniteCheck=True)
+        self._tw_items["ex_near"].setText(str(int(y[self.pix_ex])))
+        self._tw_items["ex_avg"].setText(str(int(np.mean(y[self.boxcar_pix_ex[0]:self.boxcar_pix_ex[-1] + 1]))))
+        self._tw_items["em_near"].setText(str(int(y[self.pix_em])))
+        self._tw_items["em_avg"].setText(str(int(np.mean(y[self.boxcar_pix_em[0]:self.boxcar_pix_em[-1] + 1]))))
 
     def _get_rgb_from_wavelength(self, wavelength) -> list[int, int, int]:
         w = wavelength
@@ -210,7 +240,9 @@ class TestSpectrometer(baseclass):
         return rgb_int
 
     def done(self, r):
-        self.timer.stop()
+        self._worker.stop()
+        self._thread.quit()
+        self._thread.wait()
         super().done(QDialog.DialogCode.Rejected)
 
     def resizeEvent(self, event):
