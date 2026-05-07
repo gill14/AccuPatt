@@ -4,14 +4,14 @@ import accupatt.config as cfg
 import numpy as np
 import pyqtgraph
 import serial
+from serial.tools import list_ports
 from accupatt.models.dye import Dye
 from accupatt.models.passData import Pass
 from accupatt.widgets.passinfowidget import PassInfoWidget
-from accupatt.windows.editSpectrometer import EditSpectrometer
 from PyQt6 import uic
 from PyQt6.QtCore import QTimer, pyqtSlot, Qt
 from PyQt6.QtWidgets import QMessageBox, QCheckBox, QLabel, QPushButton
-from oceandirect.OceanDirectAPI import OceanDirectAPI, Spectrometer
+from oceandirect.OceanDirectAPI import OceanDirectAPI
 
 Ui_Form, baseclass = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "readString.ui")
@@ -302,24 +302,33 @@ class StringPass(baseclass):
         if self.ser and self.ser.is_open:
             self.ser.close()
             self.ser = None
+        if self.spec:
+            self.spec.close_device()
+            self.spec = None
         e = Settings(parent=self)
         e.ui.tabWidget.setCurrentWidget(e.ui.tab_string)
-        e.settings_changed.connect(self._on_string_drive_settings_applied)
+        e.settings_changed.connect(self._on_settings_applied)
         e.exec()
 
-    def _on_string_drive_settings_applied(self):
+    def _on_settings_applied(self):
         units = cfg.get_unit_string_data_location()
         self.passData.string.data_loc_units = units
         self.plotWidget.plotItem.setLabel(axis="bottom", text="Location", units=units)
+        self.passData.string.dye = Dye.fromConfig(cfg.get_defined_dye())
         self.setupStringDrive()
+        self.setupSpectrometer()
+        self.populate_plot()
 
     def setupStringDrive(self):
         # Get a handle to the serial object, else return "Disconnected" status label
         if self.ser is None:
             try:
-                self.ser = serial.Serial(
-                    cfg.get_string_drive_port(), baudrate=9600, timeout=1
-                )
+                ftdi_ports = [
+                    p for p in list_ports.comports() if "FTDI" in (p.manufacturer or "")
+                ]
+                if not ftdi_ports:
+                    raise Exception("No FTDI device found")
+                self.ser = serial.Serial(ftdi_ports[0].device, baudrate=9600, timeout=1)
             except:
                 self.cb_string_drive.setText("Offline")
                 self.cb_string_drive.setEnabled(False)
@@ -335,12 +344,6 @@ class StringPass(baseclass):
         )
         # Enale/Disable manual drive buttons
         self.enableButtons()
-
-    @pyqtSlot(str)
-    def string_length_units_changed(self, units: str):
-        self.passData.string.data_loc_units = units
-        cfg.set_unit_string_data_location(units)
-        self.plotWidget.plotItem.setLabel(axis="bottom", text="Location", units=units)
 
     @pyqtSlot()
     def string_drive_manual_reverse(self):
@@ -375,15 +378,16 @@ class StringPass(baseclass):
     # Open Spectrometer Editor
     @pyqtSlot()
     def editSpectrometer(self):
-        e = EditSpectrometer(self.spec, self.passData.string.dye, parent=self)
-        e.dye_changed[str].connect(self.dye_changed)
-        e.spectrometer_connected[Spectrometer].connect(
-            self.spectrometer_connected_externally
-        )
-        e.spectrometer_display_unit_changed.connect(
-            self.spectrometer_display_unit_changed
-        )
-        e.accepted.connect(self.setupSpectrometer)
+        from accupatt.windows.settings import Settings
+        if self.ser and self.ser.is_open:
+            self.ser.close()
+            self.ser = None
+        if self.spec:
+            self.spec.close_device()
+            self.spec = None
+        e = Settings(parent=self)
+        e.ui.tabWidget.setCurrentWidget(e.ui.tab_string)
+        e.settings_changed.connect(self._on_settings_applied)
         e.exec()
 
     def setupSpectrometer(self):
@@ -419,15 +423,3 @@ class StringPass(baseclass):
         )
         self.enableButtons()
 
-    @pyqtSlot(Spectrometer)
-    def spectrometer_connected_externally(self, spec: Spectrometer):
-        self.spec = spec
-
-    @pyqtSlot(str)
-    def dye_changed(self, dye_name: str):
-        self.passData.string.dye = Dye.fromConfig(dye_name)
-        # self.setupSpectrometer()
-
-    @pyqtSlot()
-    def spectrometer_display_unit_changed(self):
-        self.populate_plot()

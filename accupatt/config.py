@@ -453,20 +453,6 @@ STRING_DRIVE_FWD_STOP = "AD\r"
 STRING_DRIVE_REV_START = "BD-\r"
 STRING_DRIVE_REV_STOP = "BD\r"
 
-_STRING_DRIVE_PORT = "string_drive_port"
-STRING_DRIVE_PORT__DEFAULT = ""
-
-
-def get_string_drive_port() -> str:
-    return QSettings().value(
-        _STRING_DRIVE_PORT, defaultValue=STRING_DRIVE_PORT__DEFAULT, type=str
-    )
-
-
-def set_string_drive_port(value: str):
-    QSettings().setValue(_STRING_DRIVE_PORT, value)
-
-
 _STRING_LENGTH = "string_length"
 STRING_LENGTH__DEFAULT = 150.0
 

@@ -55,6 +55,7 @@ class Settings(baseclass):
         self.ui.btn_send_command.clicked.connect(self._send_command)
         self.ui.btn_help.clicked.connect(self._open_stepper_manual)
         self.finished.connect(self._close_serial)
+        self.finished.connect(self._close_spectrometer)
 
     def _populate(self):
         # --- General ---
@@ -279,7 +280,6 @@ class Settings(baseclass):
         cfg.set_string_simulation_view_window(
             self.ui.cbb_string_simulation_view.currentText()
         )
-        cfg.set_string_drive_port(self._port_device or "")
         cfg.set_string_length(self.ui.dsb_string_length.value())
         cfg.set_unit_string_data_location(self.ui.cbb_string_length_units.currentText())
         cfg.set_string_speed(self.ui.dsb_string_speed.value())
@@ -372,6 +372,11 @@ class Settings(baseclass):
     def _close_serial(self):
         if self.ser and self.ser.is_open:
             self.ser.close()
+
+    def _close_spectrometer(self):
+        if self.spec:
+            self.spec.close_device()
+            self.spec = None
 
     def _update_serial_controls(self):
         connected = bool(self.ser and self.ser.is_open)
