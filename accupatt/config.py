@@ -999,6 +999,21 @@ def set_spread_factor_equation(value: str):
     QSettings().setValue(_SPREAD_METHOD, value)
 
 
+# Flatbed Scanner
+
+SCANNER_PREVIEW_DPI = 75  # fixed low-res for preview scan; not user-configurable
+
+_SCANNER_DEVICE = "scanner_device"
+
+
+def get_scanner_device() -> str:
+    return QSettings().value(_SCANNER_DEVICE, defaultValue="", type=str)
+
+
+def set_scanner_device(value: str):
+    QSettings().setValue(_SCANNER_DEVICE, value)
+
+
 # SprayCard Plot Options
 
 _CARD_PLOT_Y_AXIS = "card_plot_y_axis"

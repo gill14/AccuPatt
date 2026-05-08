@@ -21,7 +21,7 @@ OPTIONS = {
     'plist': {'CFBundleShortVersionString':VERSION,
               'CFBundleIdentifier':'org.agaviation.accupatt',},
     'excludes': ["PyInstaller"],
-    'includes': ["PyWavelets", "pywt", "imageio", "networkx"],
+    'includes': ["PyWavelets", "pywt", "imageio", "networkx", "objc", "Foundation", "ImageCaptureCore"],
 }
 
 if sys.platform == 'darwin':

@@ -15,6 +15,7 @@ from accupatt.windows.definedSetManager import (
 from accupatt.windows.editSpreadFactors import EditSpreadFactors
 from accupatt.windows.editThreshold import EditThreshold
 from accupatt.windows.loadCards import LoadCards, LoadCardsPreBatch
+from accupatt.windows.scanCards import ScanCards
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import QDialogButtonBox, QFileDialog, QLabel, QMessageBox, QComboBox, QProgressDialog
@@ -52,6 +53,7 @@ class CardManager(baseclass):
         self.ui.comboBoxLoadMethod.addItems(cfg.IMAGE_LOAD_METHODS)
         self.ui.comboBoxLoadMethod.setCurrentText(cfg.get_image_load_method())
         self.ui.buttonLoad.clicked.connect(self.load_cards)
+        self.ui.buttonScan.clicked.connect(self.scan_cards)
 
         self.ui.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setDefault(True)
 
@@ -72,6 +74,7 @@ class CardManager(baseclass):
     def selection_changed(self, has_selection: bool):
         self.ui.buttonLoad.setEnabled(has_selection)
         self.ui.comboBoxLoadMethod.setEnabled(has_selection)
+        self.ui.buttonScan.setEnabled(has_selection)
         self._update_image_widgets()
 
     @pyqtSlot()
@@ -246,6 +249,31 @@ class CardManager(baseclass):
             return
         cfg.set_image_load_dir(os.path.dirname(fname))
         e = LoadCards(image_file=fname, card_list=card_list, parent=self)
+        e.accepted.connect(self.passDataChanged.emit)
+        e.resize(self.size())
+        e.exec()
+
+    @pyqtSlot()
+    def scan_cards(self):
+        selected_rows = [
+            index.row() for index in self.cardTable.tv.selectionModel().selectedRows()
+        ]
+        selected_cards: list[SprayCard] = [
+            self.cardTable.tm.card_list[i] for i in selected_rows
+        ]
+        if any([c.has_image for c in selected_cards]):
+            cards_with_images = ", ".join(
+                [c.name for c in selected_cards if c.has_image]
+            )
+            s = "s" if len(selected_cards) == 1 else ""
+            msg = QMessageBox.question(
+                self,
+                "Are You Sure?",
+                f"{cards_with_images} contain{s} image data, overwrite?",
+            )
+            if msg == QMessageBox.StandardButton.No:
+                return
+        e = ScanCards(card_list=selected_cards, parent=self)
         e.accepted.connect(self.passDataChanged.emit)
         e.resize(self.size())
         e.exec()
