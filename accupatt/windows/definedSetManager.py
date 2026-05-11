@@ -121,8 +121,26 @@ class DefinedSet:
             c: SprayCard = SprayCard(name=card.name)
             c.location = card.location
             c.location_units = card.location_units
-            c.threshold_type = card.threshold_type
             c.dpi = card.dpi
+            c.threshold_type = card.threshold_type
+            c.threshold_method_grayscale = card.threshold_method_grayscale
+            c.threshold_grayscale = card.threshold_grayscale
+            c.threshold_color_hue_min = card.threshold_color_hue_min
+            c.threshold_color_hue_max = card.threshold_color_hue_max
+            c.threshold_color_hue_pass = card.threshold_color_hue_pass
+            c.threshold_color_saturation_min = card.threshold_color_saturation_min
+            c.threshold_color_saturation_max = card.threshold_color_saturation_max
+            c.threshold_color_saturation_pass = card.threshold_color_saturation_pass
+            c.threshold_color_brightness_min = card.threshold_color_brightness_min
+            c.threshold_color_brightness_max = card.threshold_color_brightness_max
+            c.threshold_color_brightness_pass = card.threshold_color_brightness_pass
+            c.watershed = card.watershed
+            c.min_stain_area_px = card.min_stain_area_px
+            c.stain_approximation_method = card.stain_approximation_method
+            c.spread_method = card.spread_method
+            c.spread_factor_a = card.spread_factor_a
+            c.spread_factor_b = card.spread_factor_b
+            c.spread_factor_c = card.spread_factor_c
             _cards.append(c)
         return _cards
 
@@ -157,7 +175,7 @@ class DefinedSet:
                 cfg._THRESHOLD_HSB_BRIGHTNESS_PASS
             ][i]
             c.watershed = set_dict[cfg._WATERSHED][i]
-            c.min_stain_area_px = set_dict[cfg._WATERSHED][i]
+            c.min_stain_area_px = set_dict[cfg._MIN_STAIN_AREA_PX][i]
             c.stain_approximation_method = set_dict[cfg._STAIN_APPROXIMATION_METHOD][i]
             c.spread_method = set_dict[cfg._SPREAD_METHOD][i]
             c.spread_factor_a = set_dict[cfg._SPREAD_FACTOR_A][i]
