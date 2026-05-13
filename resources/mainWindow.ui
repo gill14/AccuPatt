@@ -189,6 +189,8 @@
     <addaction name="menuWorksheets_2"/>
     <addaction name="separator"/>
     <addaction name="actionCPCatalog"/>
+    <addaction name="separator"/>
+    <addaction name="actionAtomizationModel"/>
    </widget>
    <addaction name="menu_file"/>
    <addaction name="menuExport_to_Excel"/>
@@ -315,6 +317,11 @@
   <action name="actionShortcutSpectrometer">
    <property name="text">
     <string>Shortcut - Spectrometer</string>
+   </property>
+  </action>
+  <action name="actionAtomizationModel">
+   <property name="text">
+    <string>Atomization Model…</string>
    </property>
   </action>
  </widget>

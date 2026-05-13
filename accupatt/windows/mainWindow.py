@@ -18,6 +18,7 @@ from accupatt.models.seriesData import SeriesData
 from accupatt.widgets.tabWidgetCards import TabWidgetCards
 from accupatt.widgets.seriesinfowidget import SeriesInfoWidget
 from accupatt.widgets.tabWidgetString import TabWidgetString
+from accupatt.windows.atomizationModelWindow import AtomizationModelWindow
 from accupatt.windows.cardPlotOptions import CardPlotOptions
 from accupatt.windows.passManager import PassManager
 from accupatt.windows.settings import Settings
@@ -106,6 +107,7 @@ class MainWindow(baseclass):
         self.ui.actionWorksheetGillColor.triggered.connect(self.openResourceWSGillColor)
         self.ui.actionWorksheetGillBW.triggered.connect(self.openResourceWSGillBW)
         self.ui.actionCPCatalog.triggered.connect(self.openResourceCPCatalog)
+        self.ui.actionAtomizationModel.triggered.connect(self.openAtomizationModel)
         self.ui.action_settings.triggered.connect(self.openSettings)
 
         # --> Setup Help Menu
@@ -532,6 +534,10 @@ class MainWindow(baseclass):
     @pyqtSlot()
     def openResourceCPCatalog(self):
         self.openResourceDocument("CP_Catalog.pdf")
+
+    @pyqtSlot()
+    def openAtomizationModel(self):
+        AtomizationModelWindow(parent=self, series=self.seriesData).exec()
 
     @pyqtSlot()
     def openSettings(self):
