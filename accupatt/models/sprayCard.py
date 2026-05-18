@@ -207,7 +207,8 @@ class SprayCardStats:
             return 0
         # Calculate coverage as percent of pixel area
         cov = (
-            sum(stain["area"] for stain in stains) / self.sprayCard.area_px2
+            sum(stain.get("area_px", stain["area"]) for stain in stains)
+            / self.sprayCard.area_px2
         ) * 100.0
         if text:
             return f"{cov:.2f}%"
@@ -438,6 +439,7 @@ class SprayCardImageProcessor:
                     "index": p_label[i],
                     "contour": c,
                     "area": area,
+                    "area_px": p_area[i],
                     "is_too_small": is_too_small,
                     "is_edge": is_edge,
                     "is_include": is_include,
