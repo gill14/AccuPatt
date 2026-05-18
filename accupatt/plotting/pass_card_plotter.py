@@ -3,7 +3,7 @@ import pandas as pd
 from scipy import interpolate
 
 import accupatt.config as cfg
-from accupatt.helpers.atomizationModel import AtomizationModel
+from aerial_spray_nozzle_models import AtomizationModel
 from accupatt.models.passDataCard import PassDataCard
 from accupatt.widgets.mplwidget import MplWidget
 

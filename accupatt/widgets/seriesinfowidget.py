@@ -3,7 +3,7 @@ import os
 import accupatt.config as cfg
 import numpy as np
 import pandas as pd
-from accupatt.helpers.atomizationModel import AtomizationModel
+from aerial_spray_nozzle_models import AtomizationModel
 from accupatt.helpers.dBBridge import load_from_db
 from accupatt.models.appInfo import AppInfo, Nozzle
 from PyQt6 import uic

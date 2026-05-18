@@ -1,7 +1,7 @@
 import uuid
 import accupatt.config as cfg
 import numpy as np
-from accupatt.helpers.atomizationModel import AtomizationModelMulti
+from aerial_spray_nozzle_models import AtomizationModelMulti
 from accupatt.models.appInfo import AppInfo
 from accupatt.models.passData import Pass
 from accupatt.models.seriesDataCard import SeriesDataCard

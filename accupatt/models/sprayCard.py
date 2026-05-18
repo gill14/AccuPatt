@@ -10,7 +10,7 @@ from skimage.measure import find_contours, label as sklabel, regionprops_table
 from skimage.segmentation import watershed
 from scipy import ndimage
 import numpy as np
-from accupatt.helpers.atomizationModel import AtomizationModel
+from aerial_spray_nozzle_models import AtomizationModel
 
 
 class SprayCard:

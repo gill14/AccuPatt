@@ -18,7 +18,6 @@ from accupatt.models.seriesData import SeriesData
 from accupatt.widgets.tabWidgetCards import TabWidgetCards
 from accupatt.widgets.seriesinfowidget import SeriesInfoWidget
 from accupatt.widgets.tabWidgetString import TabWidgetString
-from accupatt.windows.atomizationModelWindow import AtomizationModelWindow
 from accupatt.windows.cardPlotOptions import CardPlotOptions
 from accupatt.windows.passManager import PassManager
 from accupatt.windows.settings import Settings
@@ -32,6 +31,9 @@ from accupatt.widgets import (
     tabWidgetString,
     tabWidgetCards,
 )
+
+from aerial_spray_nozzle_models.gui.atomizationModelWindow import AtomizationModelWindow
+
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QAction
@@ -537,7 +539,47 @@ class MainWindow(baseclass):
 
     @pyqtSlot()
     def openAtomizationModel(self):
-        AtomizationModelWindow(parent=self, series=self.seriesData).exec()
+        kwargs: dict = {}
+        s = getattr(self, "seriesData", None)
+        if s is not None:
+            info = s.info
+            nozzles = [n for n in info.nozzles if n.type]
+            if len(nozzles) >= 1:
+                kwargs.update(
+                    nozzle1_type=nozzles[0].type,
+                    nozzle1_size=nozzles[0].size,
+                    nozzle1_deflection=nozzles[0].deflection,
+                    nozzle1_quantity=nozzles[0].quantity,
+                )
+            if len(nozzles) >= 2:
+                kwargs.update(
+                    nozzle2_type=nozzles[1].type,
+                    nozzle2_size=nozzles[1].size,
+                    nozzle2_deflection=nozzles[1].deflection,
+                    nozzle2_quantity=nozzles[1].quantity,
+                )
+            pressure_psi = info.get_pressure(units=cfg.UNIT_PSI)
+            if pressure_psi and pressure_psi > 0:
+                kwargs["pressure_psi"] = float(pressure_psi)
+            try:
+                airspeed_mph, _, _ = s.get_airspeed_mean(
+                    units=cfg.UNIT_MPH, string_included=True, cards_included=True,
+                )
+                if airspeed_mph and airspeed_mph > 0:
+                    kwargs["airspeed_mph"] = float(airspeed_mph)
+            except Exception:
+                pass
+            if info.swath and info.swath > 0:
+                if info.swath_units == cfg.UNIT_FT:
+                    kwargs["swath_ft"] = float(info.swath)
+                elif info.swath_units == cfg.UNIT_M:
+                    kwargs["swath_ft"] = float(info.swath) * cfg.FT_PER_M
+            if info.rate and info.rate > 0:
+                if info.rate_units == cfg.UNIT_GPA:
+                    kwargs["gpa"] = float(info.rate)
+                elif info.rate_units == cfg.UNIT_LPHA:
+                    kwargs["gpa"] = float(info.rate) / (cfg.L_PER_GAL * 2.47105)
+        AtomizationModelWindow(parent=self, **kwargs).exec()
 
     @pyqtSlot()
     def openSettings(self):
