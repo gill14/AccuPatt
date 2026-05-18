@@ -25,7 +25,7 @@ class PassManager(baseclass):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
-        self.tm = PassTable(seriesData.passes, self)
+        self.tm = PassTable(seriesData.passes, self, filler_mode=filler_mode)
         self.tv: QTableView = self.ui.tableView
         self.tv.setModel(self.tm)
         self.tv.setItemDelegateForRow(6, ComboBoxDelegate(self, cfg.UNITS_GROUND_SPEED))
@@ -40,13 +40,12 @@ class PassManager(baseclass):
         self.ui.button_shift_up.clicked.connect(self.shift_up)
         self.ui.button_shift_down.clicked.connect(self.shift_down)
 
+        self.ui.checkBoxQuickFillMode.setChecked(filler_mode)
+        self.ui.checkBoxQuickFillMode.toggled.connect(self._apply_filler_mode)
+
         self.show()
 
-        if filler_mode:
-            hidden_rows = [1, 2, 3, 4, 6, 8, 12, 14]
-            for row in hidden_rows:
-                self.tv.hideRow(row)
-            self.resize(700, 400)
+        self._apply_filler_mode(filler_mode)
 
     def newPass(self):
         self.tm.addPass()
@@ -79,11 +78,23 @@ class PassManager(baseclass):
     def shift_down(self):
         self.tm.shiftRowsDown(self.tv.selectionModel().selectedColumns())
 
+    @pyqtSlot(bool)
+    def _apply_filler_mode(self, enabled: bool):
+        hidden_rows = [1, 2, 3, 4, 6, 8, 12, 14]
+        for row in hidden_rows:
+            if enabled:
+                self.tv.hideRow(row)
+            else:
+                self.tv.showRow(row)
+        self.resize(700, 400 if enabled else 594)
+        self.tm.filler_mode = enabled
+        self.tm.layoutChanged.emit()
+
+    @property
+    def filler_mode(self) -> bool:
+        return self.ui.checkBoxQuickFillMode.isChecked()
+
     def accept(self):
-        # Update default if requested
-        if self.ui.checkBoxUpdateDefaultNumberOfPasses.isChecked():
-            cfg.set_number_of_passes(len(self.tm.pass_list))
-        # Notify Requestor
         super().accept()
 
 
@@ -112,7 +123,7 @@ class ComboBoxDelegate(QStyledItemDelegate):
 
 
 class PassTable(QAbstractTableModel):
-    def __init__(self, pass_list, parent=None, *args):
+    def __init__(self, pass_list, parent=None, filler_mode=False, *args):
         super(PassTable, self).__init__()
         self.headers = [
             "Name",
@@ -132,6 +143,7 @@ class PassTable(QAbstractTableModel):
             "Units",
             "Humidity",
         ]
+        self.filler_mode = filler_mode
         self.pass_list = None
         if pass_list is not None:
             self.beginResetModel()
@@ -204,37 +216,51 @@ class PassTable(QAbstractTableModel):
             elif role == Qt.ItemDataRole.EditRole:
                 return p.cards.include_in_composite
         elif row == 5:
-            if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
+            if role == Qt.ItemDataRole.DisplayRole:
+                return p.ground_speed_str + " " + p.ground_speed_units if self.filler_mode else p.ground_speed_str
+            elif role == Qt.ItemDataRole.EditRole:
                 return p.ground_speed_str
         elif row == 6:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
                 return p.ground_speed_units
         elif row == 7:
-            if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
+            if role == Qt.ItemDataRole.DisplayRole:
+                return p.spray_height_str + " " + p.spray_height_units if self.filler_mode else p.spray_height_str
+            elif role == Qt.ItemDataRole.EditRole:
                 return p.spray_height_str
         elif row == 8:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
                 return p.spray_height_units
         elif row == 9:
-            if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
+            if role == Qt.ItemDataRole.DisplayRole:
+                return p.pass_heading_str + "°"
+            elif role == Qt.ItemDataRole.EditRole:
                 return p.pass_heading_str
         elif row == 10:
-            if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
+            if role == Qt.ItemDataRole.DisplayRole:
+                return p.wind_direction_str + "°"
+            elif role == Qt.ItemDataRole.EditRole:
                 return p.wind_direction_str
         elif row == 11:
-            if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
+            if role == Qt.ItemDataRole.DisplayRole:
+                return p.wind_speed_str + " " + p.wind_speed_units if self.filler_mode else p.wind_speed_str
+            elif role == Qt.ItemDataRole.EditRole:
                 return p.wind_speed_str
         elif row == 12:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
                 return p.wind_speed_units
         elif row == 13:
-            if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
+            if role == Qt.ItemDataRole.DisplayRole:
+                return p.temperature_str + " " + p.temperature_units if self.filler_mode else p.temperature_str
+            elif role == Qt.ItemDataRole.EditRole:
                 return p.temperature_str
         elif row == 14:
             if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
                 return p.temperature_units
         elif row == 15:
-            if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
+            if role == Qt.ItemDataRole.DisplayRole:
+                return p.humidity_str + " %"
+            elif role == Qt.ItemDataRole.EditRole:
                 return p.humidity_str
         else:
             return None

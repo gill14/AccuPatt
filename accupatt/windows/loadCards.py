@@ -253,6 +253,8 @@ class _CardImageBase(QDialog):
             sprayCard: SprayCard = self.card_list[i]
             sprayCard.save_image_to_file(buffer)
             sprayCard.has_image = True
+            sprayCard.current = False
+            sprayCard.stats.current = False
             sprayCard.include_in_composite = True
             sprayCard.dpi = self.dpi
             if i == len(self.rois) - 1:
@@ -454,6 +456,8 @@ class LoadCardsPreBatch(baseclass_pre):
                         binary_data = file.read()
                     c = self.cards[i]
                     c.has_image = True
+                    c.current = False
+                    c.stats.current = False
                     c.include_in_composite = True
                     if self.cbd.currentIndex() == 0:
                         c.dpi = round(

@@ -105,9 +105,9 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
-      <widget class="QCheckBox" name="checkBoxUpdateDefaultNumberOfPasses">
+      <widget class="QCheckBox" name="checkBoxQuickFillMode">
        <property name="text">
-        <string>Update default number of passes</string>
+        <string>Quick Fill Mode</string>
        </property>
       </widget>
      </item>

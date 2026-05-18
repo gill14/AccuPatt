@@ -1,3 +1,4 @@
+import copy
 from datetime import datetime
 import os
 import subprocess
@@ -342,14 +343,16 @@ class MainWindow(baseclass):
 
     @pyqtSlot()
     def openPassManager(self, filler_mode=False):
-        # Save before opening to have a reversion point
+        # Save before opening for crash recovery
         if not self.saveFile():
             return
+        # Snapshot pass list so rejection can restore without a disk reload
+        passes_snapshot = copy.deepcopy(self.seriesData.passes)
         # Create popup and send current appInfo vals to popup
         e = PassManager(self.seriesData, filler_mode=filler_mode, parent=self)
         # Connect Slot to retrieve Vals back from popup
         e.accepted.connect(self.onPassManagerAccepted)
-        e.rejected.connect(self.onPassManagerRejected)
+        e.rejected.connect(lambda: self.onPassManagerRejected(passes_snapshot))
         # Start Loop
         e.exec()
 
@@ -359,9 +362,12 @@ class MainWindow(baseclass):
         # Sync datafile with object
         self.saveFile()
 
-    def onPassManagerRejected(self):
-        # Reload datafile, abandoning changes made
-        self.openFile(file=self.currentFile)
+    def onPassManagerRejected(self, passes_snapshot):
+        # Restore pass list in-place to preserve references held by SeriesDataString/Card
+        self.seriesData.passes.clear()
+        self.seriesData.passes.extend(passes_snapshot)
+        # Refresh pass list UI — card currency flags are untouched, no reprocessing triggered
+        self.pass_list_changed.emit()
 
     @pyqtSlot()
     def openPassFiller(self):
