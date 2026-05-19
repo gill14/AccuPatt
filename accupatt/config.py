@@ -554,7 +554,7 @@ def set_image_load_dir(value: str):
 
 
 _IMAGE_LOAD_METHOD = "image_load_method"
-IMAGE_LOAD_METHODS = ["One File Per Card", "One File, Multiple Cards"]
+IMAGE_LOAD_METHODS = ["One File Per Card", "One File, Multiple Cards", "From ZIP"]
 IMAGE_LOAD_METHOD__DEFAULT = IMAGE_LOAD_METHODS[1]
 
 

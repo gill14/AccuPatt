@@ -438,6 +438,9 @@ class LoadCardsPreBatch(baseclass_pre):
         self.cbc: QCheckBox = self.ui.checkBoxCrop
         self.cbd: QComboBox = self.ui.comboBoxDpi
 
+        self.lwc.verticalScrollBar().valueChanged.connect(self.lwf.verticalScrollBar().setValue)
+        self.lwf.verticalScrollBar().valueChanged.connect(self.lwc.verticalScrollBar().setValue)
+
         self.lwc.addItems([c.name for c in self.cards])
         self.lwf.addItems(self.files)
         self.cbd.addItem("Auto")

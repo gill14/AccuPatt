@@ -1,4 +1,7 @@
 import os
+import sys
+import tempfile
+import zipfile
 
 import accupatt.config as cfg
 from accupatt.models.passData import Pass
@@ -57,6 +60,10 @@ class CardManager(baseclass):
 
         self.ui.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setDefault(True)
 
+        if sys.platform != "darwin":
+            self.ui.buttonScan.setText("Scan Cards (macOS only)")
+            self.ui.buttonScan.setEnabled(False)
+
         self.ui.buttonProcessOptions.clicked.connect(self.click_process_options)
         self.ui.buttonSpreadFactors.clicked.connect(self.click_spread_factors)
 
@@ -68,13 +75,22 @@ class CardManager(baseclass):
         # self.cardTable.editCardSpreadFactors.connect(self.edit_card_spread_factors)
         self.cardTable.assign_card_list(passData.cards.card_list, filepath)
 
+        self.ui.groupBoxAddImages.setTitle("Select Cards to Add Images")
         self.show()
 
     @pyqtSlot(bool)
     def selection_changed(self, has_selection: bool):
         self.ui.buttonLoad.setEnabled(has_selection)
         self.ui.comboBoxLoadMethod.setEnabled(has_selection)
-        self.ui.buttonScan.setEnabled(has_selection)
+        self.ui.buttonScan.setEnabled(has_selection and sys.platform == "darwin")
+        n = len(self.cardTable.tv.selectionModel().selectedRows())
+        if n == 0:
+            title = "Select Cards to Add Images"
+        elif n == 1:
+            title = "Add Image to 1 Selected Card"
+        else:
+            title = f"Add Images to {n} Selected Cards"
+        self.ui.groupBoxAddImages.setTitle(title)
         self._update_image_widgets()
 
     @pyqtSlot()
@@ -180,6 +196,9 @@ class CardManager(baseclass):
         if self.ui.comboBoxLoadMethod.currentText() == cfg.IMAGE_LOAD_METHODS[0]:
             # Single Images, Single Cards
             self._load_cards_singles(selected_cards)
+        elif self.ui.comboBoxLoadMethod.currentText() == cfg.IMAGE_LOAD_METHODS[2]:
+            # Images from ZIP
+            self._load_cards_from_zip(selected_cards)
         else:
             # Single Image, Multiple Cards
             if len(selected_cards) == 1:
@@ -237,6 +256,40 @@ class CardManager(baseclass):
         e = LoadCardsPreBatch(image_files=fnames, card_list=selected_cards, parent=self)
         e.accepted.connect(self.passDataChanged.emit)
         e.exec()
+
+    def _load_cards_from_zip(self, selected_cards):
+        fname, _ = QFileDialog.getOpenFileName(
+            self,
+            "Open ZIP",
+            cfg.get_image_load_dir(),
+            "ZIP files (*.zip)",
+        )
+        if not fname:
+            return
+        cfg.set_image_load_dir(os.path.dirname(fname))
+        image_exts = {".png", ".tif", ".tiff"}
+        with zipfile.ZipFile(fname) as zf:
+            image_names = sorted(
+                (
+                    n
+                    for n in zf.namelist()
+                    if os.path.splitext(n.lower())[1] in image_exts
+                    and not os.path.basename(n).startswith(".")
+                ),
+                key=lambda n: os.path.basename(n).lower(),
+            )
+            if not image_names:
+                QMessageBox.warning(
+                    self, "No Images", "No image files found in the selected ZIP."
+                )
+                return
+            with tempfile.TemporaryDirectory() as tmpdir:
+                extracted = [zf.extract(n, tmpdir) for n in image_names]
+                e = LoadCardsPreBatch(
+                    image_files=extracted, card_list=selected_cards, parent=self
+                )
+                e.accepted.connect(self.passDataChanged.emit)
+                e.exec()
 
     def _load_cards_multi(self, card_list):
         fname, _ = QFileDialog.getOpenFileName(
