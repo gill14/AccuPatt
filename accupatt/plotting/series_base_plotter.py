@@ -24,17 +24,19 @@ def plot_simulation(
             average_y_label=average_y_label,
             mirrorAdjacent=mirrorAdjacent,
         )
+        n_adj = (len(labels) - 1) // 2
+        collapse = n_adj > 3
         y_fill_cum = np.zeros(xfill.size)
         for i, y_fill in enumerate(y_fills):
             widget.canvas.ax.fill_between(
                 xfill,
                 y_fill_cum,
                 y_fill_cum + y_fill,
-                label=labels[i],
+                label=labels[i] if (not collapse or i <= 6) else "_nolegend_",
                 alpha=0.8,
             )
             y_fill_cum = y_fill_cum + y_fill
-        widget.canvas.ax.plot(xfill, y_fill_cum, color="black")
+        widget.canvas.ax.plot(xfill, y_fill_cum, color="black", label="Cumulative")
         avg = np.mean(
             y_fill_cum[np.where(((xfill >= -_sw / 2) & (xfill <= _sw / 2)))]
         )
@@ -45,6 +47,19 @@ def plot_simulation(
             dashes=[5, 5],
             label="Mean Dep.",
         )
+        if collapse:
+            total_passes = 2 * n_adj + 1
+            widget.canvas.ax.annotate(
+                f"{total_passes} total passes, including {n_adj} simulated each side",
+                xy=(0.5, 0),
+                xycoords="axes fraction",
+                xytext=(0, 4),
+                textcoords="offset points",
+                ha="center",
+                va="bottom",
+                color="white",
+                fontsize=8,
+            )
         widget.canvas.ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
         widget.canvas.ax.set_ylabel(
             "Back & Forth" if mirrorAdjacent else "Racetrack"

@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import pandas as pd
 import accupatt.config as cfg
@@ -22,7 +23,6 @@ class SeriesDataBase:
         self.swath = swath
         self.swath_adjusted = swath_adjusted
         self.swath_units = swath_units or cfg.get_unit_string_data_location()
-        self.simulated_adjacent_passes = cfg.get_simulated_adjacent_passes()
 
     def get_average_mod(self):
         """
@@ -81,16 +81,18 @@ class SeriesDataBase:
         # create a shifted x array for each simulated pass with labels
         x_arrays = [x0]
         y_arrays = [y0]
-        labels = ["Center"]
-        for i in range(1, self.simulated_adjacent_passes + 1):
+        labels = ["Measured"]
+        half_width = (x0[-1] - x0[0]) / 2 if x0.size > 1 else 0
+        n = min(math.ceil(half_width / swath_width) if swath_width > 0 else 1, 50)
+        for i in range(1, n + 1):
             x = (x0 * -1)[::-1] if mirrorAdjacent and i % 2 != 0 else x0
             y = y0[::-1] if mirrorAdjacent and i % 2 != 0 else y0
             x_arrays.append(x - (i * swath_width))
             y_arrays.append(y)
-            labels.append(f"Left {i}")
+            labels.append(f"{i} SW Left")
             x_arrays.append(x + (i * swath_width))
             y_arrays.append(y)
-            labels.append(f"Right {i}")
+            labels.append(f"{i} SW Right")
         # Unify the x-domain
         xfill = np.sort(np.concatenate(x_arrays))
         # Interpolate the original y-values to the new x-domain

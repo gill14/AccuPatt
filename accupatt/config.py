@@ -337,22 +337,6 @@ def set_unit_string_data_location(value: str):
     QSettings().setValue(_UNIT_STRING_DATA_LOCATION, value)
 
 
-_SIMULATED_ADJACENT_PASSES = "simulated_adjacent_passes"
-SIMULATED_ADJACENT_PASSES__DEFAULT = 2
-
-
-def get_simulated_adjacent_passes() -> int:
-    return QSettings().value(
-        _SIMULATED_ADJACENT_PASSES,
-        defaultValue=SIMULATED_ADJACENT_PASSES__DEFAULT,
-        type=int,
-    )
-
-
-def set_simulated_adjacent_passes(value: int):
-    QSettings().setValue(_SIMULATED_ADJACENT_PASSES, value)
-
-
 # String Pattern Manipulation
 
 _CENTER_METHOD = "center_method"

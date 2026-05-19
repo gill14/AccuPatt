@@ -65,10 +65,6 @@ class TabWidgetBase(QWidget):
         self.plotWidgetAverage: MplWidget = self.ui.plotWidgetAverage
         self.plotWidgetRacetrack: MplWidget = self.ui.plotWidgetRacetrack
         self.plotWidgetBackAndForth: MplWidget = self.ui.plotWidgetBackAndForth
-        self.spinBoxSimulatedPasses: QSpinBox = self.ui.spinBoxSimulatedPasses
-        self.spinBoxSimulatedPasses.valueChanged[int].connect(
-            self.simulatedPassesChanged
-        )
         self.tableWidgetCV: QTableWidget = self.ui.tableWidgetCV
 
     """
@@ -83,10 +79,6 @@ class TabWidgetBase(QWidget):
         if self.subtype == "string":
             with QSignalBlocker(self.checkBoxSeriesSmooth):
                 self.checkBoxSeriesSmooth.setChecked(self.getSeriesOpt().smooth)
-        with QSignalBlocker(self.spinBoxSimulatedPasses):
-            self.spinBoxSimulatedPasses.setValue(
-                self.seriesData.string.simulated_adjacent_passes
-            )
         # Ensure data is processed
         self.updatePlots(process=True, modify=True)
         # Silently populate pass list ui
@@ -287,16 +279,6 @@ class TabWidgetBase(QWidget):
     def clickedPlotOptions(self):
         # Should override in inherited_class
         pass
-
-    """
-    Simulations Tab
-    """
-
-    @pyqtSlot(int)
-    def simulatedPassesChanged(self, numAdjacentPasses):
-        self.getSeriesOpt().simulated_adjacent_passes = numAdjacentPasses
-        self.updatePlots(simulations=True)
-        cfg.set_simulated_adjacent_passes(numAdjacentPasses)
 
     """
     plot triggers

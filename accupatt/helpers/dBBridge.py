@@ -82,7 +82,7 @@ def _load_table_series(c: sqlite3.Cursor, s: SeriesData):
 def _load_table_series_string(c: sqlite3.Cursor, s: SeriesData):
     ss: SeriesDataString = s.string
     c.execute(
-        """SELECT average_center, average_center_method, average_smooth, average_smooth_window, average_smooth_order, equalize_integrals, swath_adjusted, simulated_adjascent_passes FROM series_string WHERE series_id = ?""",
+        """SELECT average_center, average_center_method, average_smooth, average_smooth_window, average_smooth_order, equalize_integrals, swath_adjusted FROM series_string WHERE series_id = ?""",
         (s.id,),
     )
     (
@@ -93,21 +93,19 @@ def _load_table_series_string(c: sqlite3.Cursor, s: SeriesData):
         ss.smooth_order,
         ss.equalize_integrals,
         ss.swath_adjusted,
-        ss.simulated_adjacent_passes,
     ) = c.fetchone()
 
 
 def _load_table_series_spray_card(c: sqlite3.Cursor, s: SeriesData):
     scd: SeriesDataCard = s.cards
     c.execute(
-        """SELECT average_center, average_center_method, swath_adjusted, simulated_adjascent_passes FROM series_spray_card WHERE series_id = ?""",
+        """SELECT average_center, average_center_method, swath_adjusted FROM series_spray_card WHERE series_id = ?""",
         (s.id,),
     )
     (
         scd.center,
         scd.center_method,
         scd.swath_adjusted,
-        scd.simulated_adjacent_passes,
     ) = c.fetchone()
 
 
@@ -406,9 +404,9 @@ def _update_table_series(c: sqlite3.Cursor, s: SeriesData):
 def _update_table_series_string(c: sqlite3.Cursor, s: SeriesData):
     ss: SeriesDataString = s.string
     c.execute(
-        """INSERT INTO series_string (series_id, average_center, average_center_method, average_smooth, average_smooth_window, average_smooth_order, equalize_integrals, swath_adjusted, simulated_adjascent_passes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """INSERT INTO series_string (series_id, average_center, average_center_method, average_smooth, average_smooth_window, average_smooth_order, equalize_integrals, swath_adjusted) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(series_id) DO UPDATE SET
-                    average_center = excluded.average_center, average_center_method = excluded.average_center_method, average_smooth = excluded.average_smooth, average_smooth_window = excluded.average_smooth_window, average_smooth_order = excluded.average_smooth_window, equalize_integrals = excluded.equalize_integrals, swath_adjusted = excluded.swath_adjusted, simulated_adjascent_passes = excluded.simulated_adjascent_passes""",
+                    average_center = excluded.average_center, average_center_method = excluded.average_center_method, average_smooth = excluded.average_smooth, average_smooth_window = excluded.average_smooth_window, average_smooth_order = excluded.average_smooth_window, equalize_integrals = excluded.equalize_integrals, swath_adjusted = excluded.swath_adjusted""",
         (
             s.id,
             ss.center,
@@ -418,7 +416,6 @@ def _update_table_series_string(c: sqlite3.Cursor, s: SeriesData):
             ss.smooth_order,
             ss.equalize_integrals,
             ss.swath_adjusted,
-            ss.simulated_adjacent_passes,
         ),
     )
 
@@ -426,15 +423,14 @@ def _update_table_series_string(c: sqlite3.Cursor, s: SeriesData):
 def _update_table_series_spray_card(c: sqlite3.Cursor, s: SeriesData):
     scd: SeriesDataCard = s.cards
     c.execute(
-        """INSERT INTO series_spray_card (series_id, average_center, average_center_method, swath_adjusted, simulated_adjascent_passes) VALUES (?, ?, ?, ?, ?)
+        """INSERT INTO series_spray_card (series_id, average_center, average_center_method, swath_adjusted) VALUES (?, ?, ?, ?)
                     ON CONFLICT(series_id) DO UPDATE SET
-                    average_center = excluded.average_center, average_center_method = excluded.average_center_method, swath_adjusted = excluded.swath_adjusted, simulated_adjascent_passes = excluded.simulated_adjascent_passes""",
+                    average_center = excluded.average_center, average_center_method = excluded.average_center_method, swath_adjusted = excluded.swath_adjusted""",
         (
             s.id,
             scd.center,
             scd.center_method,
             scd.swath_adjusted,
-            scd.simulated_adjacent_passes,
         ),
     )
 

@@ -65,9 +65,6 @@ class Settings(baseclass):
         self.ui.le_flyin_date.setText(cfg.get_flyin_date())
         self.ui.le_flyin_analyst.setText(cfg.get_flyin_analyst())
         self.ui.sb_number_passes.setValue(cfg.get_number_of_passes())
-        self.ui.sb_simulated_adjacent_passes.setValue(
-            cfg.get_simulated_adjacent_passes()
-        )
         self.ui.cbb_center_method.addItems(
             [cfg.CENTER_METHOD_CENTROID, cfg.CENTER_METHOD_COD]
         )
@@ -250,9 +247,6 @@ class Settings(baseclass):
         cfg.set_flyin_date(self.ui.le_flyin_date.text())
         cfg.set_flyin_analyst(self.ui.le_flyin_analyst.text())
         cfg.set_number_of_passes(self.ui.sb_number_passes.value())
-        cfg.set_simulated_adjacent_passes(
-            self.ui.sb_simulated_adjacent_passes.value()
-        )
         cfg.set_center_method(self.ui.cbb_center_method.currentText())
 
         # --- Observables ---
