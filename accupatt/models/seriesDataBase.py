@@ -65,6 +65,41 @@ class SeriesDataBase:
         ]
         return round(variation(y_fill_cum_center, axis=0) * 100)
 
+    def _calc_cv_coverage_stats(
+        self,
+        average_df: pd.DataFrame,
+        coverage_y_label: str,
+        swath_width: float,
+        mirrorAdjacent: bool = False,
+        compound: bool = False,
+    ) -> tuple[float, float, float, float]:
+        """Returns (cv%, min_coverage%, mean_coverage%, max_coverage%) for the given swath width."""
+        xfill, y_fills, _ = self._get_fill_arrays(
+            swath_width=swath_width,
+            average_df=average_df,
+            average_y_label=coverage_y_label,
+            mirrorAdjacent=mirrorAdjacent,
+        )
+        if compound:
+            p_uncovered = np.ones(xfill.size)
+            for y_fill in y_fills:
+                p_uncovered *= 1.0 - np.clip(y_fill, 0.0, 100.0) / 100.0
+            y_cum = (1.0 - p_uncovered) * 100.0
+        else:
+            y_cum = np.zeros(xfill.size)
+            for y_fill in y_fills:
+                y_cum += y_fill
+        mask = (xfill >= -swath_width / 2) & (xfill <= swath_width / 2)
+        y_center = y_cum[mask]
+        if y_center.size == 0:
+            return 0, 0.0, 0.0, 0.0
+        return (
+            round(variation(y_center, axis=0) * 100),
+            float(np.min(y_center)),
+            float(np.mean(y_center)),
+            float(np.max(y_center)),
+        )
+
     def _get_fill_arrays(
         self,
         swath_width: float,
@@ -95,9 +130,15 @@ class SeriesDataBase:
             x_arrays.append(x + (i * swath_width))
             y_arrays.append(y)
             labels.append(f"{arrow} {i} SW Right")
-        # Unify the x-domain
-        xfill = np.sort(np.concatenate(x_arrays))
-        # Interpolate the original y-values to the new x-domain
+        # Regular grid spanning full extent of all passes.
+        # Grid spacing matches the input data's native resolution so dense string
+        # data retains fidelity; left=0/right=0 in interp fills zero for regions
+        # outside each pass's data extent.
+        x_spacing = (x0[-1] - x0[0]) / max(len(x0) - 1, 1)
+        x_min = min(x[0] for x in x_arrays)
+        x_max = max(x[-1] for x in x_arrays)
+        n_points = min(10_000, max(500, int((x_max - x_min) / x_spacing) + 1))
+        xfill = np.linspace(x_min, x_max, n_points)
         y_fills = []
         for x, y in zip(x_arrays, y_arrays):
             y_fills.append(np.interp(xfill, x, y, left=0, right=0))

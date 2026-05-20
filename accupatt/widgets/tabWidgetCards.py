@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
     QHeaderView,
     QMessageBox,
     QProgressDialog,
+    QPushButton,
     QTableWidget,
     QTableView,
 )
@@ -45,6 +46,9 @@ class TabWidgetCards(TabWidgetBase):
         self.plotWidgetDropDist1: MplWidget = self.ui.plotWidgetDropDist1
         self.plotWidgetDropDist2: MplWidget = self.ui.plotWidgetDropDist2
         self.tableWidgetCompositeStats: QTableWidget = self.ui.tableWidgetCompositeStats
+
+        self.pushButtonExtendedCV: QPushButton = self.ui.pushButtonExtendedCV
+        self.pushButtonExtendedCV.clicked.connect(self._open_extended_cv_window)
 
         # Smooth is string-only — hide the controls on the card tab
         self.checkBoxPassSmooth.hide()
@@ -249,6 +253,16 @@ class TabWidgetCards(TabWidgetBase):
             self.tableWidgetCompositeStats,
             composite,
         )
+
+    """
+    Extended Simulations
+    """
+
+    @pyqtSlot()
+    def _open_extended_cv_window(self):
+        from accupatt.windows.extendedCVCoverageWindow import ExtendedCVCoverageWindow
+        w = ExtendedCVCoverageWindow(series=self.seriesData.cards, parent=self)
+        w.show()
 
     """
     Convenience Accessors

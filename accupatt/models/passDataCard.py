@@ -43,13 +43,14 @@ class PassDataCard(PassDataBase):
             for card in scs
         ])
 
-    def get_data_mod(self, loc_units, data=pd.DataFrame(), doUnits=True, doCenter=True) -> pd.DataFrame:
+    def get_data_mod(self, loc_units, data=pd.DataFrame(), doUnits=True, doCenter=True, y_label: str = None) -> pd.DataFrame:
         if data.empty:
             data = self._get_data_from_card_list()
         if doUnits:
             self.adapt_location_units(data, loc_units)
         if doCenter:
-            self.center_to_zero(data, cfg.get_card_plot_y_axis(), center=self.center, centerMethod=self.center_method)
+            center_col = y_label if y_label is not None else cfg.get_card_plot_y_axis()
+            self.center_to_zero(data, center_col, center=self.center, centerMethod=self.center_method)
         # Do more things potentially...
         return data
 

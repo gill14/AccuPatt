@@ -17,12 +17,12 @@ class SeriesDataCard(SeriesDataBase):
                 activePasses.append(p)
         return activePasses
 
-    def _get_average(self) -> pd.DataFrame:
+    def _get_average(self, y_label: str = None) -> pd.DataFrame:
         active_passes = self._get_active_passes()
         if not active_passes:
             return pd.DataFrame()
 
-        y_axis = cfg.get_card_plot_y_axis()
+        y_axis = y_label if y_label is not None else cfg.get_card_plot_y_axis()
         cols = [
             "loc",
             cfg.CARD_PLOT_Y_AXIS_COVERAGE,
@@ -54,12 +54,12 @@ class SeriesDataCard(SeriesDataBase):
 
     # Overrides for superclass
 
-    def get_average_mod(self):
-        avg = self._get_average()
+    def get_average_mod(self, y_label: str = None):
+        avg = self._get_average(y_label=y_label)
         avgPass = PassDataCard(name="average")
         avgPass.center = self.center
         avgPass.center_method = self.center_method
-        return avgPass.get_data_mod(loc_units=self.swath_units, data=avg)
+        return avgPass.get_data_mod(loc_units=self.swath_units, data=avg, y_label=y_label)
     
     def get_average_y_label(self):
         return cfg.get_card_plot_y_axis()
