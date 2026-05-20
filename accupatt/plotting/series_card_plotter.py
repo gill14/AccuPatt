@@ -62,7 +62,10 @@ def plot_racetrack(widget: MplWidget, series: SeriesDataCard):
     showEntireWindow = (
         cfg.get_card_simulation_view_window() == cfg.CARD_SIMULATION_VIEW_WINDOW_ALL
     )
-    series_base_plotter.plot_simulation(widget, series, showEntireWindow=showEntireWindow)
+    series_base_plotter.plot_simulation(
+        widget, series, showEntireWindow=showEntireWindow,
+        y_axis_label=cfg.get_card_plot_y_axis_label()
+    )
 
 
 def plot_back_and_forth(widget: MplWidget, series: SeriesDataCard):
@@ -70,5 +73,6 @@ def plot_back_and_forth(widget: MplWidget, series: SeriesDataCard):
         cfg.get_card_simulation_view_window() == cfg.CARD_SIMULATION_VIEW_WINDOW_ALL
     )
     series_base_plotter.plot_simulation(
-        widget, series, showEntireWindow=showEntireWindow, mirrorAdjacent=True
+        widget, series, showEntireWindow=showEntireWindow, mirrorAdjacent=True,
+        y_axis_label=cfg.get_card_plot_y_axis_label()
     )

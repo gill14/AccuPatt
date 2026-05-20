@@ -12,6 +12,7 @@ def plot_simulation(
     showEntireWindow: bool = False,
     mirrorAdjacent: bool = False,
     suppress_yticks: bool = False,
+    y_axis_label: str = "",
 ):
     _configure(widget, series.swath_units, suppress_yticks=suppress_yticks)
     average_df = series.get_average_mod()
@@ -61,8 +62,9 @@ def plot_simulation(
                 fontsize=8,
             )
         widget.canvas.ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+        sim_label = "Back & Forth" if mirrorAdjacent else "Racetrack"
         widget.canvas.ax.set_ylabel(
-            "Back & Forth" if mirrorAdjacent else "Racetrack"
+            f"{sim_label}, {y_axis_label}" if y_axis_label else sim_label
         )
         if not showEntireWindow:
             widget.canvas.ax.set_xlim(-_sw / 2, _sw / 2)

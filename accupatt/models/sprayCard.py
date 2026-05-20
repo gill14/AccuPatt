@@ -229,6 +229,13 @@ class SprayCardStats:
         else:
             return area_in2
 
+    def get_card_area_cm2(self, text=False):
+        area_cm2 = self._px2_to_cm2(self.sprayCard.area_px2)
+        if text:
+            return f"{area_cm2:.2f} cm\u00B2"
+        else:
+            return area_cm2
+
     def get_stains_per_in2(self, text=False):
         if self.sprayCard.area_px2 == 0:
             return 0
@@ -237,6 +244,15 @@ class SprayCardStats:
             return str(spsi)
         else:
             return spsi
+
+    def get_stains_per_cm2(self, text=False):
+        if self.sprayCard.area_px2 == 0:
+            return 0
+        spcm2 = round(self.get_number_of_stains() / self.get_card_area_cm2())
+        if text:
+            return str(spcm2)
+        else:
+            return spcm2
 
     def get_minimum_detectable_droplet_diameter(self):
         min_stain_area = self._px2_to_um2(self.sprayCard.min_stain_area_px)
@@ -300,6 +316,9 @@ class SprayCardStats:
 
     def _px2_to_in2(self, area_px2):
         return area_px2 / (self.sprayCard.dpi**2)
+
+    def _px2_to_cm2(self, area_px2):
+        return self._px2_to_in2(area_px2) * cfg.CM2_PER_IN2
 
     def _stain_dia_to_drop_dia(self, stain_dia):
         if self.sprayCard.spread_method == cfg.SPREAD_METHOD_DIRECT:

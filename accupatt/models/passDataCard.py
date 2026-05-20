@@ -34,6 +34,8 @@ class PassDataCard(PassDataBase):
                 "loc_units": card.location_units,
                 cfg.CARD_PLOT_Y_AXIS_COVERAGE: card.stats.get_percent_coverage(),
                 cfg.CARD_PLOT_Y_AXIS_DEPOSITION: card.stats.get_deposition(),
+                cfg.CARD_PLOT_Y_AXIS_DROPS_PER_IN2: card.stats.get_stains_per_in2(),
+                cfg.CARD_PLOT_Y_AXIS_DROPS_PER_CM2: card.stats.get_stains_per_cm2(),
                 "dv01": card.stats.get_dv01(),
                 "dv05": card.stats.get_dv05(),
                 "dv09": card.stats.get_dv09(),

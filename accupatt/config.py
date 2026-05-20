@@ -45,6 +45,7 @@ UNITS_PRESSURE = [UNIT_PSI, UNIT_BAR, UNIT_KPA]
 
 # Math Conversion Constants
 UM_PER_IN = 25400.0
+CM2_PER_IN2 = 6.4516
 FT_PER_M = 3.28084
 MPH_PER_KPH = 0.621371
 MPH_PER_KN = 1.15078
@@ -1003,6 +1004,8 @@ def set_scanner_device(value: str):
 _CARD_PLOT_Y_AXIS = "card_plot_y_axis"
 CARD_PLOT_Y_AXIS_COVERAGE = "coverage"
 CARD_PLOT_Y_AXIS_DEPOSITION = "deposition"
+CARD_PLOT_Y_AXIS_DROPS_PER_IN2 = "drops per in\u00B2"
+CARD_PLOT_Y_AXIS_DROPS_PER_CM2 = "drops per cm\u00B2"
 CARD_PLOT_Y_AXIS__DEFAULT = CARD_PLOT_Y_AXIS_COVERAGE
 
 
@@ -1017,6 +1020,10 @@ def get_card_plot_y_axis_label() -> str:
         return f"{y_axis.capitalize()} (%)"
     elif y_axis == CARD_PLOT_Y_AXIS_DEPOSITION:
         return f"{y_axis.capitalize()} ({get_unit_rate()})"
+    elif y_axis == CARD_PLOT_Y_AXIS_DROPS_PER_IN2:
+        return f"{y_axis.capitalize()}"
+    elif y_axis == CARD_PLOT_Y_AXIS_DROPS_PER_CM2:
+        return f"{y_axis.capitalize()}"
     else:
         return ""
 

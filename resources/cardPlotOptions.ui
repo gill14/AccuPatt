@@ -25,8 +25,8 @@
      <property name="title">
       <string>Y-Axis</string>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <item>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="0">
        <widget class="QRadioButton" name="rb_coverage">
         <property name="text">
          <string>Coverage</string>
@@ -36,28 +36,26 @@
         </property>
        </widget>
       </item>
-      <item>
+      <item row="0" column="1">
        <widget class="QRadioButton" name="rb_deposition">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
         <property name="text">
          <string>Deposition</string>
         </property>
        </widget>
       </item>
-      <item>
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+      <item row="1" column="0">
+       <widget class="QRadioButton" name="rb_drops_per_in2">
+        <property name="text">
+         <string>Drops per in²</string>
         </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QRadioButton" name="rb_drops_per_cm2">
+        <property name="text">
+         <string>Drops per cm²</string>
         </property>
-       </spacer>
+       </widget>
       </item>
      </layout>
     </widget>

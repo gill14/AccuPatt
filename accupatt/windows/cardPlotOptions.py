@@ -22,11 +22,17 @@ class CardPlotOptions(baseclass):
         self.gb_y_axis: QGroupBox = self.ui.gb_y_axis
         self.rb_coverage: QRadioButton = self.ui.rb_coverage
         self.rb_deposition: QRadioButton = self.ui.rb_deposition
+        self.rb_drops_per_in2: QRadioButton = self.ui.rb_drops_per_in2
+        self.rb_drops_per_cm2: QRadioButton = self.ui.rb_drops_per_cm2
         y_axis = cfg.get_card_plot_y_axis()
         self.rb_coverage.setChecked(y_axis == cfg.CARD_PLOT_Y_AXIS_COVERAGE)
         self.rb_deposition.setChecked(y_axis == cfg.CARD_PLOT_Y_AXIS_DEPOSITION)
+        self.rb_drops_per_in2.setChecked(y_axis == cfg.CARD_PLOT_Y_AXIS_DROPS_PER_IN2)
+        self.rb_drops_per_cm2.setChecked(y_axis == cfg.CARD_PLOT_Y_AXIS_DROPS_PER_CM2)
         self.rb_coverage.toggled[bool].connect(self._rb_coverage)
         self.rb_deposition.toggled[bool].connect(self._rb_deposition)
+        self.rb_drops_per_in2.toggled[bool].connect(self._rb_drops_per_in2)
+        self.rb_drops_per_cm2.toggled[bool].connect(self._rb_drops_per_cm2)
 
         self.gb_shading: QGroupBox = self.ui.gb_shading
         self.gb_shading.setChecked(cfg.get_card_plot_shading())
@@ -89,6 +95,16 @@ class CardPlotOptions(baseclass):
     def _rb_deposition(self, checked):
         if checked:
             self._set_y_axis(cfg.CARD_PLOT_Y_AXIS_DEPOSITION)
+
+    @pyqtSlot(bool)
+    def _rb_drops_per_in2(self, checked):
+        if checked:
+            self._set_y_axis(cfg.CARD_PLOT_Y_AXIS_DROPS_PER_IN2)
+
+    @pyqtSlot(bool)
+    def _rb_drops_per_cm2(self, checked):
+        if checked:
+            self._set_y_axis(cfg.CARD_PLOT_Y_AXIS_DROPS_PER_CM2)
 
     def _set_y_axis(self, option: str):
         cfg.set_card_plot_y_axis(option)

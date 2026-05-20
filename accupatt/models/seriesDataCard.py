@@ -23,7 +23,15 @@ class SeriesDataCard(SeriesDataBase):
             return pd.DataFrame()
 
         y_axis = cfg.get_card_plot_y_axis()
-        cols = ["loc", cfg.CARD_PLOT_Y_AXIS_COVERAGE, cfg.CARD_PLOT_Y_AXIS_DEPOSITION, "dv01", "dv05"]
+        cols = [
+            "loc",
+            cfg.CARD_PLOT_Y_AXIS_COVERAGE,
+            cfg.CARD_PLOT_Y_AXIS_DEPOSITION,
+            cfg.CARD_PLOT_Y_AXIS_DROPS_PER_IN2,
+            cfg.CARD_PLOT_Y_AXIS_DROPS_PER_CM2,
+            "dv01",
+            "dv05",
+        ]
         dfs = [
             p.cards.get_data_mod(loc_units=self.swath_units)[cols]
             .set_index("loc")
