@@ -4,13 +4,34 @@ import accupatt.config as cfg
 import numpy as np
 import pandas as pd
 from aerial_spray_nozzle_models import AtomizationModel
+from aerial_spray_nozzle_models.nozzles import NOZZLES
 from accupatt.helpers.dBBridge import load_from_db
 from accupatt.models.appInfo import AppInfo, Nozzle
+from accupatt.widgets.passObservablesWidget import PassObservablesWidget
 from PyQt6 import uic
 from PyQt6.QtCore import QDate, pyqtSignal, pyqtSlot, QSignalBlocker
-from PyQt6.QtWidgets import QComboBox, QFileDialog, QMessageBox
+from PyQt6.QtWidgets import QComboBox, QFileDialog, QMessageBox, QWidget
 
 from accupatt.models.seriesData import SeriesData
+
+_NOZZLE_PARSED_NAMES: dict[str, list[str]] = {
+    "CP09":         ["CP09 SS", "CP09 Deflection"],
+    "Davidon TriSet": ["Davidon TriSet SS", "Davidon TriSet Deflection"],
+    "CAS LF-5":     ["CAS LF-5 SS", "CAS LF-5 Deflection"],
+    "CP-07-3E":     ["CP-07-3E SS", "CP-07-3E Deflection"],
+}
+
+def _angle_descriptor(nozzle: str) -> str:
+    internals = _NOZZLE_PARSED_NAMES.get(nozzle, [nozzle])
+    for name in internals:
+        nz = NOZZLES.get(name)
+        if nz and nz.angle_description.lower() not in {"no deflection", ""}:
+            return nz.angle_description
+    for name in internals:
+        nz = NOZZLES.get(name)
+        if nz:
+            return nz.angle_description
+    return "Angle"
 
 Ui_Form, baseclass = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "seriesInfo.ui")
@@ -21,7 +42,7 @@ class SeriesInfoWidget(baseclass):
     aircraftFile = os.path.join(os.getcwd(), "resources", "AgAircraftData.xlsx")
 
     target_swath_changed = pyqtSignal()
-    request_open_pass_filler = pyqtSignal()
+    request_open_pass_manager = pyqtSignal()
     request_open_string_tab = pyqtSignal()
     request_open_card_tab = pyqtSignal()
 
@@ -37,9 +58,15 @@ class SeriesInfoWidget(baseclass):
         self.init_aircraft()
         self.init_spray_system()
         self.init_nozzles()
-        self.ui.buttonPassObservables.clicked.connect(self._openPassDataFiller)
+        self._loading_nozzle = False
+        self._pass_obs = PassObservablesWidget(parent=self)
+        self.ui.groupBoxPassObservables.layout().addWidget(self._pass_obs)
+        self._pass_obs.request_open_pass_manager.connect(self.request_open_pass_manager)
         self.ui.buttonString.clicked.connect(self._openStringTab)
         self.ui.buttonCards.clicked.connect(self._openCardTab)
+        # Insert pass observables table into the tab chain: NQ → table → Notes
+        QWidget.setTabOrder(self.ui.lineEditNQ, self._pass_obs._table_view)
+        QWidget.setTabOrder(self._pass_obs._table_view, self.ui.plainTextEditNotesSetup)
 
     def fill_from_info(self, info: AppInfo):
         self.info = info
@@ -51,8 +78,11 @@ class SeriesInfoWidget(baseclass):
         self.fill_spray_system(info)
         self.fill_nozzles(info)
 
-    def _openPassDataFiller(self):
-        self.request_open_pass_filler.emit()
+    def set_series_data(self, series_data: SeriesData):
+        self._pass_obs.set_pass_list(series_data.passes)
+
+    def refresh_passes(self):
+        self._pass_obs.refresh()
 
     def _openStringTab(self):
         self.request_open_string_tab.emit()
@@ -105,14 +135,25 @@ class SeriesInfoWidget(baseclass):
     def fill_series(self, info: AppInfo):
         self.ui.lineEditRegNum.setText(info.regnum)
         self.ui.lineEditSeriesNum.setText(str(info.series))
+        self._update_identifier_label()
+
+    def _update_identifier_label(self):
+        reg = self.ui.lineEditRegNum.text().strip()
+        try:
+            series_str = f"{int(self.ui.lineEditSeriesNum.text()):02d}"
+        except ValueError:
+            series_str = self.ui.lineEditSeriesNum.text().strip()
+        self.ui.labelIdentifierValue.setText(f"{reg} {series_str}".strip())
 
     @pyqtSlot()
     def _commit_regnum(self):
         self.info.regnum = self.ui.lineEditRegNum.text()
+        self._update_identifier_label()
 
     @pyqtSlot()
     def _commit_seriesnum(self):
         self.info.series = int(self.ui.lineEditSeriesNum.text())
+        self._update_identifier_label()
 
     """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """''
     Applicator
@@ -173,7 +214,6 @@ class SeriesInfoWidget(baseclass):
 
     @pyqtSlot()
     def _load_business_from_file(self):
-        print("triggered")
         file, _ = QFileDialog.getOpenFileName(
             parent=self,
             caption="Choose File",
@@ -456,7 +496,7 @@ class SeriesInfoWidget(baseclass):
             info.nozzles.append(Nozzle())
         # Populate Nozzle Set ComboBox Items
         for n in info.nozzles:
-            cb_set.addItem(f"Nozzle Set {n.id}")
+            cb_set.addItem(f"Set {n.id}")
 
         cb_set.setCurrentIndex(0)
         self._on_nozzle_set_changed(0)
@@ -466,7 +506,7 @@ class SeriesInfoWidget(baseclass):
         cb_set: QComboBox = self.ui.comboBoxNozzleSet
         new_num = cb_set.count() + 1
         self.info.nozzles.append(Nozzle(id=new_num))
-        cb_set.addItem(f"Nozzle Set {new_num}")
+        cb_set.addItem(f"Set {new_num}")
         cb_set.setCurrentIndex(cb_set.count() - 1)
 
     @pyqtSlot()
@@ -478,7 +518,7 @@ class SeriesInfoWidget(baseclass):
             self.info.nozzles.pop(index)
         for i, n in enumerate(self.info.nozzles):
             n.id = i + 1
-            cb_set.setItemText(i, f"Nozzle Set {n.id}")
+            cb_set.setItemText(i, f"Set {n.id}")
         self._on_nozzle_set_changed(index - 1)
 
     @pyqtSlot(int)
@@ -505,7 +545,9 @@ class SeriesInfoWidget(baseclass):
         # remove selection
         cBSize.setCurrentIndex(-1)
         cBDef.setCurrentIndex(-1)
-        # Commmit signal
+        # Update deflection label to reflect nozzle's angle descriptor
+        self.ui.label_20.setText(f"{_angle_descriptor(nozzle)}:")
+        # Commit signal
         if self.info is not None:
             self._commit_nozzle_type(nozzle)
 
@@ -546,7 +588,3 @@ class SeriesInfoWidget(baseclass):
         if result == QMessageBox.StandardButton.Ok:
             self.raise_()
             self.activateWindow()
-
-    """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """''
-    Validation
-    """ """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""

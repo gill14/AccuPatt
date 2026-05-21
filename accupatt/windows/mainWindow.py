@@ -127,7 +127,7 @@ class MainWindow(baseclass):
         self.seriesInfoWidget.target_swath_changed.connect(
             lambda: self.target_swath_changed.emit()
         )
-        self.seriesInfoWidget.request_open_pass_filler.connect(self.openPassFiller)
+        self.seriesInfoWidget.request_open_pass_manager.connect(self.openPassManager)
         self.seriesInfoWidget.request_open_string_tab.connect(self.activateStringTab)
         self.seriesInfoWidget.request_open_card_tab.connect(self.activateCardTab)
         self.stringWidget: TabWidgetString = self.ui.stringMainWidget
@@ -148,6 +148,7 @@ class MainWindow(baseclass):
             lambda: self.stringWidget.updatePassListWidget(-1)
         )
         self.pass_list_changed.connect(lambda: self.cardWidget.updatePassListWidget(-1))
+        self.pass_list_changed.connect(self.seriesInfoWidget.refresh_passes)
         self.request_repaint.connect(self.stringWidget.repaint)
 
         # Set current file init
@@ -335,6 +336,7 @@ class MainWindow(baseclass):
 
     def update_all_ui(self):
         # Populate AppInfo tab
+        self.seriesInfoWidget.set_series_data(self.seriesData)
         self.seriesInfoWidget.fill_from_info(self.seriesData.info)
         # Update String UI
         self.stringWidget.setData(self.seriesData)
@@ -342,14 +344,13 @@ class MainWindow(baseclass):
         self.cardWidget.setData(self.seriesData)
 
     @pyqtSlot()
-    def openPassManager(self, filler_mode=False):
+    def openPassManager(self):
         # Save before opening for crash recovery
         if not self.saveFile():
             return
         # Snapshot pass list so rejection can restore without a disk reload
         passes_snapshot = copy.deepcopy(self.seriesData.passes)
-        # Create popup and send current appInfo vals to popup
-        e = PassManager(self.seriesData, filler_mode=filler_mode, parent=self)
+        e = PassManager(self.seriesData, parent=self)
         # Connect Slot to retrieve Vals back from popup
         e.accepted.connect(self.onPassManagerAccepted)
         e.rejected.connect(lambda: self.onPassManagerRejected(passes_snapshot))
@@ -368,10 +369,6 @@ class MainWindow(baseclass):
         self.seriesData.passes.extend(passes_snapshot)
         # Refresh pass list UI — card currency flags are untouched, no reprocessing triggered
         self.pass_list_changed.emit()
-
-    @pyqtSlot()
-    def openPassFiller(self):
-        self.openPassManager(filler_mode=True)
 
     @pyqtSlot()
     def activateStringTab(self):
