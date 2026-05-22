@@ -139,6 +139,7 @@
     <addaction name="separator"/>
     <addaction name="action_save"/>
     <addaction name="action_open"/>
+    <addaction name="actionDatabaseBrowser"/>
     <addaction name="separator"/>
     <addaction name="action_pass_manager"/>
     <addaction name="separator"/>
@@ -325,6 +326,11 @@
   <action name="actionAtomizationModel">
    <property name="text">
     <string>Atomization Model…</string>
+   </property>
+  </action>
+  <action name="actionDatabaseBrowser">
+   <property name="text">
+    <string>Database Browser…</string>
    </property>
   </action>
  </widget>

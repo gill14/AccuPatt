@@ -49,6 +49,7 @@ from PyQt6.QtWidgets import (
 
 from send2trash import send2trash
 
+from accupatt.windows.databaseBrowser import DatabaseBrowserWindow
 from accupatt.windows.reportManager import ReportManager
 from accupatt.windows.stringPlotOptions import StringPlotOptions
 
@@ -111,6 +112,7 @@ class MainWindow(baseclass):
         self.ui.actionWorksheetGillBW.triggered.connect(self.openResourceWSGillBW)
         self.ui.actionCPCatalog.triggered.connect(self.openResourceCPCatalog)
         self.ui.actionAtomizationModel.triggered.connect(self.openAtomizationModel)
+        self.ui.actionDatabaseBrowser.triggered.connect(self.openDatabaseBrowser)
         self.ui.action_settings.triggered.connect(self.openSettings)
 
         # --> Setup Help Menu
@@ -153,6 +155,7 @@ class MainWindow(baseclass):
 
         # Set current file init
         self.currentFile = ""
+        self.browser_window: DatabaseBrowserWindow = None
 
         # Setup Statusbar
         self.status_label_file = QLabel("No Current Datafile")
@@ -583,6 +586,13 @@ class MainWindow(baseclass):
                 elif info.rate_units == cfg.UNIT_LPHA:
                     kwargs["gpa"] = float(info.rate) / (cfg.L_PER_GAL * 2.47105)
         AtomizationModelWindow(parent=self, **kwargs).exec()
+
+    @pyqtSlot()
+    def openDatabaseBrowser(self):
+        self.browser_window = DatabaseBrowserWindow(parent=self)
+        self.browser_window.open_requested.connect(
+            lambda path: self.openFile(file=path)
+        )
 
     @pyqtSlot()
     def openSettings(self):
