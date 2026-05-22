@@ -1,8 +1,10 @@
 import numpy as np
-from pyqtgraph import InfiniteLine, LinearRegionItem, PlotWidget, setConfigOptions
+from pyqtgraph import InfiniteLine, LinearRegionItem, PlotWidget, TextItem, setConfigOptions
 from pyqtgraph.functions import mkBrush, mkPen
 
 from accupatt.models.passDataString import PassDataString
+
+_SAT_LEVEL = 65535.0  # 16-bit spectrometer ceiling (AU)
 
 
 def plot_individual(
@@ -20,6 +22,7 @@ def plot_individual(
         N_rms, y_bar, noise_x_start, noise_x_end = string.snr_result
         _plot_snr_overlay(widget, x, y, N_rms, y_bar, noise_x_start, noise_x_end)
     widget.plotItem.plot(name="Raw", pen="w").setData(x, y)
+    _plot_saturation_warning(widget, x, y)
     trim_left = InfiniteLine(
         pos=x[0 + string.trim_l],
         movable=True,
@@ -115,6 +118,23 @@ def _plot_snr_overlay(
         widget.plotItem.plot(
             name="Noise Floor", pen=mkPen("r", width=3)
         ).setData(x[mask], y[mask])
+
+
+def _plot_saturation_warning(widget: PlotWidget, x: np.ndarray, y: np.ndarray):
+    sat_mask = y >= _SAT_LEVEL
+    if not sat_mask.any():
+        return
+    _sat_color = (255, 140, 0)
+    widget.plotItem.plot(
+        name="Saturated", pen=mkPen(_sat_color, width=3)
+    ).setData(x[sat_mask], y[sat_mask])
+    warning = TextItem(
+        text="⚠ Saturation Detected",
+        color=_sat_color,
+        anchor=(1, 0),
+    )
+    widget.addItem(warning)
+    warning.setPos(x[-1], float(y.max()))
 
 
 def plot_individual_trim(widget: PlotWidget, string: PassDataString):
