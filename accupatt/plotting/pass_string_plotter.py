@@ -1,6 +1,6 @@
 import numpy as np
-from pyqtgraph import InfiniteLine, PlotWidget, setConfigOptions
-from pyqtgraph.functions import mkPen
+from pyqtgraph import InfiniteLine, LinearRegionItem, PlotWidget, setConfigOptions
+from pyqtgraph.functions import mkBrush, mkPen
 
 from accupatt.models.passDataString import PassDataString
 
@@ -15,6 +15,10 @@ def plot_individual(
     x = string.data["loc"].to_numpy(dtype=float)
     y = string.data[string.name].to_numpy(dtype=float)
     floor = min_ + string.trim_v
+    # Draw SNR overlay first so data and trim lines render on top
+    if string.snr_result is not None:
+        N_rms, y_bar, noise_x_start, noise_x_end = string.snr_result
+        _plot_snr_overlay(widget, x, y, N_rms, y_bar, noise_x_start, noise_x_end)
     widget.plotItem.plot(name="Raw", pen="w").setData(x, y)
     trim_left = InfiniteLine(
         pos=x[0 + string.trim_l],
@@ -45,6 +49,72 @@ def plot_individual(
     widget.addItem(trim_right)
     widget.addItem(trim_vertical)
     return trim_left, trim_right, trim_vertical
+
+
+def compute_snr(string: PassDataString) -> tuple | None:
+    """Find noise floor via min contiguous 5% window; return (N_rms, y_bar, x_start, x_end)."""
+    if string.data.empty:
+        return None
+    x = string.data["loc"].to_numpy(dtype=float)
+    y = string.data[string.name].to_numpy(dtype=float)
+    trim_l, trim_r = string.trim_l, string.trim_r
+    end_idx = len(y) - trim_r if trim_r > 0 else len(y)
+    x_trim = x[trim_l:end_idx]
+    y_trim = y[trim_l:end_idx]
+    if len(y_trim) < 20:
+        return None
+    min_ = float(y_trim.min())
+    y_base = y_trim - min_
+    window = max(2, int(len(y_base) * 0.05))
+    best_start, best_sum = 0, float("inf")
+    for i in range(len(y_base) - window + 1):
+        s = float(np.sum(y_base[i : i + window]))
+        if s < best_sum:
+            best_sum, best_start = s, i
+    noise_region = y_base[best_start : best_start + window]
+    N_rms = float(np.std(noise_region, ddof=1))
+    if N_rms < 1e-9:
+        return None
+    # y_bar in raw y-space: mean of the noise window above the absolute minimum
+    y_bar = min_ + float(np.mean(noise_region))
+    return N_rms, y_bar, float(x_trim[best_start]), float(x_trim[best_start + window - 1])
+
+
+def _plot_snr_overlay(
+    widget: PlotWidget,
+    x: np.ndarray,
+    y: np.ndarray,
+    N_rms: float,
+    y_bar: float,
+    noise_x_start: float,
+    noise_x_end: float,
+):
+    snr3_y = y_bar + 3 * N_rms
+    snr10_y = y_bar + 10 * N_rms
+    large_y = max(y.max() * 10, snr10_y * 100, 1e9)
+
+    _no_line = mkPen(None)
+    for values, color in [
+        ((y_bar, snr3_y), (220, 50, 50, 50)),
+        ((snr3_y, snr10_y), (220, 180, 0, 50)),
+        ((snr10_y, large_y), (50, 200, 50, 50)),
+    ]:
+        region = LinearRegionItem(
+            values=values,
+            orientation="horizontal",
+            brush=mkBrush(*color),
+            movable=False,
+        )
+        region.lines[0].setPen(_no_line)
+        region.lines[1].setPen(_no_line)
+        widget.addItem(region, ignoreBounds=True)
+
+    # Highlight noise floor region with a bold red line
+    mask = (x >= noise_x_start) & (x <= noise_x_end)
+    if mask.any():
+        widget.plotItem.plot(
+            name="Noise Floor", pen=mkPen("r", width=3)
+        ).setData(x[mask], y[mask])
 
 
 def plot_individual_trim(widget: PlotWidget, string: PassDataString):

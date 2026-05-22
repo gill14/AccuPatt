@@ -29,6 +29,8 @@ class PassDataString(PassDataBase):
         self.smooth = True
         self.smooth_window = cfg.get_smooth_window()
         self.smooth_order = cfg.get_smooth_order()
+        # SNR test result: (N_rms, y_bar, noise_x_start, noise_x_end) or None
+        self.snr_result: tuple | None = None
 
     @property
     def name(self) -> str:
@@ -120,20 +122,25 @@ class PassDataString(PassDataBase):
         self.data_ex = pd.DataFrame(
             data=list(zip(x_data, y_ex_data)), columns=["loc", self.name]
         )
+        self.snr_result = None
 
     """
     Methods to convert ui-set trim values to object values and set them to this object
     """
 
     def user_set_trim_left(self, value: float):
-        # Takes a location domained trim value and converts it to an integer number of points
+        old_floor = self.findMin(self.data, self.trim_l, self.trim_r) + self.trim_v
         self.trim_l = int(self.data["loc"].sub(value).abs().idxmin())
+        new_min = self.findMin(self.data, self.trim_l, self.trim_r)
+        self.trim_v = max(0.0, old_floor - new_min)
 
     def user_set_trim_right(self, value: float):
-        # Takes a location domained trim value and converts it to an integer number of points
+        old_floor = self.findMin(self.data, self.trim_l, self.trim_r) + self.trim_v
         self.trim_r = int(
             self.data["loc"].shape[0] - self.data["loc"].sub(value).abs().idxmin()
         )
+        new_min = self.findMin(self.data, self.trim_l, self.trim_r)
+        self.trim_v = max(0.0, old_floor - new_min)
 
     def user_set_trim_floor(self, value: float):
         # Find minimum y value

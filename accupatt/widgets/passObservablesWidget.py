@@ -2,8 +2,8 @@ import accupatt.config as cfg
 from accupatt.models.passData import Pass
 from accupatt.models.passTable import FILLER_HIDDEN_ROWS, ComboBoxDelegate, PassTable
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QColor
-from PyQt6.QtWidgets import QHeaderView, QPushButton, QTableView, QVBoxLayout, QWidget
+from PyQt6.QtGui import QPalette
+from PyQt6.QtWidgets import QApplication, QHeaderView, QPushButton, QTableView, QVBoxLayout, QWidget
 # Minimum acceptable column width (px) before switching to scroll mode
 _MIN_COL_WIDTH = 70
 
@@ -33,7 +33,7 @@ class _ObservablesPassTable(PassTable):
 
     def data(self, index, role):
         if role == Qt.ItemDataRole.BackgroundRole and index.row() != 0:
-            return QColor('white')
+            return QApplication.palette().color(QPalette.ColorRole.Base)
         return super().data(index, role)
 
     def flags(self, index):
@@ -63,7 +63,6 @@ class PassObservablesWidget(QWidget):
             " QHeaderView { background: transparent; }"
         )
         layout.addWidget(self._table_view)
-        layout.addStretch()
 
         self._btn_manage = QPushButton("Manage Passes...")
         self._btn_manage.clicked.connect(self.request_open_pass_manager)
