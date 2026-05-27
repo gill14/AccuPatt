@@ -1,10 +1,11 @@
 import os
+import time
 
 import numpy as np
 from PyQt6 import uic
 from PyQt6.QtCore import QObject, QThread, pyqtSignal
 from PyQt6.QtGui import QColor
-from PyQt6.QtWidgets import QDialog, QTableWidget, QLabel
+from PyQt6.QtWidgets import QDialog
 try:
     from oceandirect.OceanDirectAPI import OceanDirectAPI, Spectrometer
     _OCEANDIRECT_AVAILABLE = True
@@ -54,139 +55,116 @@ class TestSpectrometer(baseclass):
         self.spec.set_integration_time(dye.integration_time_milliseconds * 1000)
         self.spec.set_nonlinearity_correction_usage(True)
         self.spec.set_electric_dark_correction_usage(True)
-        self.spec.set_boxcar_width(1)
         self.dye = dye
 
-        self.tw: QTableWidget = self.ui.tableWidget
-        height = self.tw.horizontalHeader().height()
-        for row in range(self.tw.model().rowCount()):
-            height += self.tw.rowHeight(row)
-
-        if self.tw.horizontalScrollBar().isVisible():
-            height += self.tw.horizontalScrollBar().height()
-        self.tw.setMaximumHeight(height + 2)
         self.pw: pyqtgraph.PlotWidget = self.ui.plotWidget
-        self.label_model: QLabel = self.ui.label_model
-        self.label_serial: QLabel = self.ui.label_serial_number
-        self.label_integration_Time: QLabel = self.ui.label_integration_time
-
-        # Cache table item references to avoid per-frame lookups
-        self._tw_items = {
-            "ex_near": self.tw.item(2, 0),
-            "ex_avg":  self.tw.item(5, 0),
-            "em_near": self.tw.item(2, 1),
-            "em_avg":  self.tw.item(5, 1),
-        }
         self._use_rel = cfg.get_spectrometer_display_unit() == cfg.SPECTROMETER_DISPLAY_UNIT_RELATIVE
+        self._unit_str = "%" if self._use_rel else "AU"
 
         # Init plot
         self.x = np.array(self.spec.get_wavelengths(), dtype=np.float32)
+        nm_per_pixel = float(self.x[-1] - self.x[0]) / (len(self.x) - 1)
+        hw_boxcar = max(0, round(dye.boxcar_width / 2 / nm_per_pixel))
+        self.spec.set_boxcar_width(hw_boxcar)
         pyqtgraph.setConfigOptions(antialias=True)
         pyqtgraph.setConfigOption("background", "k")
         pyqtgraph.setConfigOption("foreground", "w")
         self.plot_item = self.pw.plotItem.plot(
             name="Measured", pen=pyqtgraph.mkPen("w", width=1.5)
         )
+        self.plot_item.setDownsampling(auto=True, method="subsample")
+        self.plot_item.setClipToView(True)
         self.pw.plotItem.setLabel(axis="bottom", text="Wavelength (nm)")
         self.pw.plotItem.setLabel(
-            axis="left", text=f"Intensity, {cfg.get_spectrometer_display_unit()}"
+            axis="left", text="Intensity (%)" if self._use_rel else "Intensity (AU)"
         )
+        self.pw.getAxis("left").enableAutoSIPrefix(False)
         self.pw.plotItem.showGrid(x=True, y=True)
-        self.pw.setXRange(self.x[0], self.x[-1], padding=0.0)
+        x_min = float(self.x[0])
+        x_max = float(self.x[-1])
+        self.pw.setXRange(x_min, x_max, padding=0.0)
         if (
             cfg.get_spectrometer_display_unit()
             == cfg.SPECTROMETER_DISPLAY_UNIT_RELATIVE
         ):
-            y_max = 100
+            y_max = 100.0
         else:
-            y_max = 65535
-        self.pw.setYRange(0, y_max, padding=0.0)
-        # self.pw.plotItem.getViewBox().autoRange()
-        # self.pw.plotItem.getViewBox().disableAutoRange()
+            y_max = 65535.0
+        self.pw.setYRange(0.0, y_max, padding=0.0)
         self.pw.plotItem.getViewBox().setLimits(
-            minXRange=self.x[0],
-            maxXRange=self.x[-1],
-            minYRange=0,
+            minXRange=x_min,
+            maxXRange=x_max,
+            minYRange=0.0,
             maxYRange=y_max,
-            xMin=self.x[0],
-            xMax=self.x[-1],
-            yMin=0,
+            xMin=x_min,
+            xMax=x_max,
+            yMin=0.0,
         )
 
         # Init cursors
         self.pix_ex = np.abs(self.x - self.dye.wavelength_excitation).argmin()
-        self.boxcar_pix_ex = [
-            np.abs(
-                self.x - (self.dye.wavelength_excitation - (self.dye.boxcar_width / 2))
-            ).argmin(),
-            np.abs(
-                self.x - (self.dye.wavelength_excitation + (self.dye.boxcar_width / 2))
-            ).argmin(),
-        ]
-        self.tw.item(0, 0).setText(str(self.dye.wavelength_excitation))
-        self.tw.item(1, 0).setText(f"{self.x[self.pix_ex]:.1f}")
-        self.tw.item(3, 0).setText(
-            f"[{self.x[self.boxcar_pix_ex[0]]:.1f},\n{self.x[self.boxcar_pix_ex[-1]]:.1f}]"
-        )
-        self.tw.item(4, 0).setText(
-            str(self.boxcar_pix_ex[-1] - self.boxcar_pix_ex[0] + 1)
-        )
+        self._ex_nm_str = f"{float(self.x[self.pix_ex]):.1f} nm"
         ex_rgb = self._get_rgb_from_wavelength(self.dye.wavelength_excitation)
-        self.pw.addItem(
-            pyqtgraph.InfiniteLine(
-                pos=self.x[self.pix_ex],
-                pen=pyqtgraph.mkPen(QColor(ex_rgb[0], ex_rgb[1], ex_rgb[2])),
-                label="Excitation = {value:.1f}",
-                labelOpts={
-                    "color": QColor(ex_rgb[0], ex_rgb[1], ex_rgb[2]),
-                    "position": 0.9,
-                    "anchors": [(1, 0.9), (1, 0.9)],
-                },
-            )
+        self._line_ex = pyqtgraph.InfiniteLine(
+            pos=float(self.x[self.pix_ex]),
+            pen=pyqtgraph.mkPen(QColor(ex_rgb[0], ex_rgb[1], ex_rgb[2])),
+            label=f"Excitation\n{self._ex_nm_str}\n- {self._unit_str}",
+            labelOpts={
+                "color": QColor(ex_rgb[0], ex_rgb[1], ex_rgb[2]),
+                "position": 0.9,
+                "anchors": [(1, 0.9), (1, 0.9)],
+            },
         )
+        self.pw.addItem(self._line_ex)
 
         self.pix_em = np.abs(self.x - self.dye.wavelength_emission).argmin()
-        self.boxcar_pix_em = [
-            np.abs(
-                self.x - (self.dye.wavelength_emission - (self.dye.boxcar_width / 2))
-            ).argmin(),
-            np.abs(
-                self.x - (self.dye.wavelength_emission + (self.dye.boxcar_width / 2))
-            ).argmin(),
-        ]
-        self.tw.item(0, 1).setText(str(self.dye.wavelength_emission))
-        self.tw.item(1, 1).setText(f"{self.x[self.pix_em]:.1f}")
-        self.tw.item(3, 1).setText(
-            f"[{self.x[self.boxcar_pix_em[0]]:.1f},\n{self.x[self.boxcar_pix_em[-1]]:.1f}]"
-        )
-        self.tw.item(4, 1).setText(
-            str(self.boxcar_pix_em[-1] - self.boxcar_pix_em[0] + 1)
-        )
+        self._em_nm_str = f"{float(self.x[self.pix_em]):.1f} nm"
         em_rgb = self._get_rgb_from_wavelength(self.dye.wavelength_emission)
+        self._line_em = pyqtgraph.InfiniteLine(
+            pos=float(self.x[self.pix_em]),
+            pen=pyqtgraph.mkPen(QColor(em_rgb[0], em_rgb[1], em_rgb[2])),
+            label=f"Emission\n{self._em_nm_str}\n- {self._unit_str}",
+            labelOpts={
+                "color": QColor(em_rgb[0], em_rgb[1], em_rgb[2]),
+                "position": 0.9,
+                "anchors": [(0, 0.9), (0, 0.9)],
+            },
+        )
+        self.pw.addItem(self._line_em)
 
-        self.pw.addItem(
-            pyqtgraph.InfiniteLine(
-                pos=self.x[self.pix_em],
-                pen=pyqtgraph.mkPen(QColor(em_rgb[0], em_rgb[1], em_rgb[2])),
-                label="Emission = {value:.1f}",
-                labelOpts={
-                    "color": QColor(em_rgb[0], em_rgb[1], em_rgb[2]),
-                    "position": 0.9,
-                    "anchors": [(0, 0.9), (0, 0.9)],
-                },
-            )
-        )
-        # Call this before show so resizeEvent is proper
-        self.tw.resizeRowsToContents()
+        # Hardware Properties
+        self.ui.lbl_hw_model.setText(self.spec.get_model())
+        self.ui.lbl_hw_serial.setText(self.spec.get_serial_number())
+        self.ui.lbl_hw_pixels.setText(f"{self.spec.get_spectrum_length()} px")
+        self.ui.lbl_hw_wl_range.setText(f"{x_min:.1f} – {x_max:.1f} nm")
+        self.ui.lbl_hw_max_intensity.setText(f"{int(self.spec.get_max_intensity())} AU")
+        int_min_ms = self.spec.get_minimum_integration_time() / 1000
+        int_max_ms = self.spec.get_maximum_integration_time() / 1000
+        self.ui.lbl_hw_int_range.setText(f"{int_min_ms:.3f} – {int_max_ms:.0f} ms")
+        self.ui.lbl_hw_int_increment.setText(f"{self.spec.get_integration_time_increment()} µs")
 
-        # Labels
-        self.label_model.setText(f"Spectrometer Model: {self.spec.get_model()}")
-        self.label_serial.setText(
-            f"Spectrometer Serial Number: {self.spec.get_serial_number()}"
+        # Acquisition Settings (Global)
+        self.ui.lbl_acq_dark_corr.setText("Enabled")
+        self.ui.lbl_acq_nonlin_corr.setText("Enabled")
+
+        # Dye / Acquisition Settings per dye
+        self.ui.gb_dye.setTitle(f"Acquisition Settings: {self.dye.name}")
+        self.ui.lbl_acq_int_time.setText(f"{dye.integration_time_milliseconds} ms")
+        self.ui.lbl_dye_boxcar.setText(
+            f"{self.dye.boxcar_width} nm → {2 * hw_boxcar + 1} px ({hw_boxcar} each side)"
         )
-        self.label_integration_Time.setText(
-            f"Target Integration Time: {self.dye.integration_time_milliseconds} milliseconds"
+        lo_ex = max(0, self.pix_ex - hw_boxcar)
+        hi_ex = min(len(self.x) - 1, self.pix_ex + hw_boxcar)
+        self.ui.lbl_ex_wavelength.setText(
+            f"{self.dye.wavelength_excitation} nm → [{self.x[lo_ex]:.1f} – {self.x[hi_ex]:.1f} nm]"
         )
+        lo_em = max(0, self.pix_em - hw_boxcar)
+        hi_em = min(len(self.x) - 1, self.pix_em + hw_boxcar)
+        self.ui.lbl_em_wavelength.setText(
+            f"{self.dye.wavelength_emission} nm → [{self.x[lo_em]:.1f} – {self.x[hi_em]:.1f} nm]"
+        )
+
+        self._last_plot_time = 0.0
 
         # Start acquisition worker thread
         self._thread = QThread(self)
@@ -199,12 +177,18 @@ class TestSpectrometer(baseclass):
         self.show()
 
     def _on_data_ready(self, y: np.ndarray):
-        _y = y / cfg.AU_PER_PERCENT_16_BIT if self._use_rel else y
+        now = time.monotonic()
+        if now - self._last_plot_time < 0.033:  # cap at ~30 FPS
+            return
+        self._last_plot_time = now
+
+        y64 = y.astype(np.float64)
+        _y = y64 / cfg.AU_PER_PERCENT_16_BIT if self._use_rel else y64
         self.plot_item.setData(self.x, _y, skipFiniteCheck=True)
-        self._tw_items["ex_near"].setText(str(int(y[self.pix_ex])))
-        self._tw_items["ex_avg"].setText(str(int(np.mean(y[self.boxcar_pix_ex[0]:self.boxcar_pix_ex[-1] + 1]))))
-        self._tw_items["em_near"].setText(str(int(y[self.pix_em])))
-        self._tw_items["em_avg"].setText(str(int(np.mean(y[self.boxcar_pix_em[0]:self.boxcar_pix_em[-1] + 1]))))
+        self._line_ex.label.format = f"Excitation\n{self._ex_nm_str}\n{int(y64[self.pix_ex])} {self._unit_str}"
+        self._line_ex.label.valueChanged()
+        self._line_em.label.format = f"Emission\n{self._em_nm_str}\n{int(y64[self.pix_em])} {self._unit_str}"
+        self._line_em.label.valueChanged()
 
     def _get_rgb_from_wavelength(self, wavelength) -> list[int, int, int]:
         w = wavelength
@@ -244,20 +228,3 @@ class TestSpectrometer(baseclass):
         self._thread.quit()
         self._thread.wait()
         super().done(QDialog.DialogCode.Rejected)
-
-    def resizeEvent(self, event):
-        super(TestSpectrometer, self).resizeEvent(event)
-        height = self.tw.horizontalHeader().height()
-        for row in range(self.tw.model().rowCount()):
-            height += self.tw.rowHeight(row)
-
-        if self.tw.horizontalScrollBar().isVisible():
-            height += self.tw.horizontalScrollBar().height()
-        self.tw.setMaximumHeight(height + 2)
-        width = self.tw.verticalHeader().width()
-        for row in range(self.tw.model().columnCount()):
-            width += self.tw.columnWidth(row)
-
-        if self.tw.verticalScrollBar().isVisible():
-            width += self.tw.verticalScrollBar().width()
-        self.tw.setMaximumWidth(width + 2)

@@ -229,6 +229,7 @@ class TabWidgetBase(QWidget):
                 optBase=self.getPassOpt(),
                 window_units=self.seriesData.info.swath_units,
                 show_smooth=(self.subtype == "string"),
+                is_string=(self.subtype == "string"),
                 parent=self.parent(),
             )
             e.accepted.connect(self._advancedOptionsPassUpdated)
@@ -259,6 +260,7 @@ class TabWidgetBase(QWidget):
             optBase=self.getSeriesOpt(),
             window_units=self.seriesData.info.swath_units,
             show_smooth=(self.subtype == "string"),
+            is_string=(self.subtype == "string"),
             parent=self.parent(),
         )
         e.accepted.connect(self._advancedOptionsSeriesUpdated)

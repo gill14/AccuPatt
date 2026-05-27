@@ -15,7 +15,11 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <layout class="QFormLayout" name="formLayout">
+    <widget class="QGroupBox" name="groupBoxObservables">
+     <property name="title">
+      <string>Pass Observables</string>
+     </property>
+     <layout class="QFormLayout" name="formLayout">
      <item row="0" column="0">
       <widget class="QLabel" name="label">
        <property name="text">
@@ -408,6 +412,7 @@
       </layout>
      </item>
     </layout>
+    </widget>
    </item>
   </layout>
  </widget>

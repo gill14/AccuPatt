@@ -39,19 +39,8 @@ class CardPlotOptions(baseclass):
         self.gb_shading.toggled[bool].connect(self._gb_shading)
         self.gb_shading_method: QGroupBox = self.ui.gb_shading_method
         self.rb_dsc: QRadioButton = self.ui.rb_dsc
-        self.rb_deposition_average: QRadioButton = self.ui.rb_deposition_average
-        self.rb_deposition_target: QRadioButton = self.ui.rb_deposition_target
-        shade_method = cfg.get_card_plot_shading_method()
-        self.rb_dsc.setChecked(shade_method == cfg.CARD_PLOT_SHADING_METHOD_DSC)
-        self.rb_deposition_average.setChecked(
-            shade_method == cfg.CARD_PLOT_SHADING_METHOD_DEPOSITION_AVERAGE
-        )
-        self.rb_deposition_target.setChecked(
-            shade_method == cfg.CARD_PLOT_SHADING_METHOD_DEPOSITION_TARGET
-        )
+        self.rb_dsc.setChecked(True)
         self.rb_dsc.toggled[bool].connect(self._rb_dsc)
-        self.rb_deposition_average.toggled[bool].connect(self._rb_deposition_average)
-        self.rb_deposition_target.toggled[bool].connect(self._rb_deposition_target)
         self.gb_shading_interp: QGroupBox = self.ui.gb_shading_interp
         self.rb_linear: QRadioButton = self.ui.rb_linear
         self.rb_nearest: QRadioButton = self.ui.rb_nearest
@@ -123,16 +112,6 @@ class CardPlotOptions(baseclass):
     def _rb_dsc(self, checked):
         if checked:
             self._set_shading_method(cfg.CARD_PLOT_SHADING_METHOD_DSC)
-
-    @pyqtSlot(bool)
-    def _rb_deposition_average(self, checked):
-        if checked:
-            self._set_shading_method(cfg.CARD_PLOT_SHADING_METHOD_DEPOSITION_AVERAGE)
-
-    @pyqtSlot(bool)
-    def _rb_deposition_target(self, checked):
-        if checked:
-            self._set_shading_method(cfg.CARD_PLOT_SHADING_METHOD_DEPOSITION_TARGET)
 
     def _set_shading_method(self, option: str):
         cfg.set_card_plot_shading_method(option)

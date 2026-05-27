@@ -88,26 +88,6 @@
            </property>
           </widget>
          </item>
-         <item>
-          <widget class="QRadioButton" name="rb_deposition_average">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="text">
-            <string>Average Deposition</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QRadioButton" name="rb_deposition_target">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="text">
-            <string>Target Deposition</string>
-           </property>
-          </widget>
-         </item>
         </layout>
        </widget>
       </item>

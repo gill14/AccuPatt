@@ -45,9 +45,8 @@ class Settings(baseclass):
         self.ui.btn_refresh_port.clicked.connect(self._refresh_port_list)
         self.ui.btn_refresh_spec.setIcon(QIcon(icon_file))
         self.ui.btn_refresh_spec.clicked.connect(self._refresh_spectrometer)
-        icon_adjust = os.path.join(os.getcwd(), "resources", "icon_adjust.png")
-        self.ui.btn_dye_manager.setIcon(QIcon(icon_adjust))
         self.ui.btn_dye_manager.clicked.connect(self._open_dye_manager)
+        self.ui.cbb_dye.currentTextChanged.connect(self._update_dye_params_display)
         self.ui.btn_test_spectrometer.clicked.connect(self._test_spectrometer)
         self.btn_reverse.clicked.connect(self._manual_reverse)
         self.btn_forward.clicked.connect(self._manual_advance)
@@ -65,10 +64,6 @@ class Settings(baseclass):
         self.ui.le_flyin_date.setText(cfg.get_flyin_date())
         self.ui.le_flyin_analyst.setText(cfg.get_flyin_analyst())
         self.ui.sb_number_passes.setValue(cfg.get_number_of_passes())
-        self.ui.cbb_center_method.addItems(
-            [cfg.CENTER_METHOD_CENTROID, cfg.CENTER_METHOD_COD]
-        )
-        self.ui.cbb_center_method.setCurrentText(cfg.get_center_method())
 
         # --- Observables ---
         self.ui.cbb_wingspan_units.addItems(cfg.UNITS_LENGTH_LARGE)
@@ -107,15 +102,18 @@ class Settings(baseclass):
         # --- String ---
         self.ui.dsb_smooth_window.setValue(cfg.get_smooth_window())
         self.ui.sb_smooth_order.setValue(cfg.get_smooth_order())
+        self.ui.cbb_center_method_string.addItems(
+            [cfg.CENTER_METHOD_CENTROID, cfg.CENTER_METHOD_COD]
+        )
+        self.ui.cbb_center_method_string.setCurrentText(cfg.get_center_method_string())
 
-        self.ui.cb_string_dash_overlay.setChecked(
-            cfg.get_string_plot_average_dash_overlay()
+        self.ui.cbb_string_dash_overlay.addItems(
+            [cfg.DASH_OVERLAY_METHOD_ISHA, cfg.DASH_OVERLAY_METHOD_AVERAGE, "None"]
         )
-        self.ui.cbb_string_dash_method.addItems(
-            [cfg.DASH_OVERLAY_METHOD_ISHA, cfg.DASH_OVERLAY_METHOD_AVERAGE]
-        )
-        self.ui.cbb_string_dash_method.setCurrentText(
+        self.ui.cbb_string_dash_overlay.setCurrentText(
             cfg.get_string_plot_average_dash_overlay_method()
+            if cfg.get_string_plot_average_dash_overlay()
+            else "None"
         )
         self.ui.cbb_string_simulation_view.addItems(
             [cfg.STRING_SIMULATION_VIEW_WINDOW_ONE, cfg.STRING_SIMULATION_VIEW_WINDOW_ALL]
@@ -195,30 +193,31 @@ class Settings(baseclass):
         self.ui.dsb_spread_c.setValue(cfg.get_spread_factor_c())
 
         self.ui.cbb_card_plot_y_axis.addItems(
-            [cfg.CARD_PLOT_Y_AXIS_COVERAGE, cfg.CARD_PLOT_Y_AXIS_DEPOSITION]
+            [
+                cfg.CARD_PLOT_Y_AXIS_COVERAGE,
+                cfg.CARD_PLOT_Y_AXIS_DEPOSITION,
+                cfg.CARD_PLOT_Y_AXIS_DROPS_PER_IN2,
+                cfg.CARD_PLOT_Y_AXIS_DROPS_PER_CM2,
+            ]
         )
         self.ui.cbb_card_plot_y_axis.setCurrentText(cfg.get_card_plot_y_axis())
 
-        self.ui.cb_card_shading.setChecked(cfg.get_card_plot_shading())
-        self.ui.cbb_card_shading_method.addItems(
-            [
-                cfg.CARD_PLOT_SHADING_METHOD_DSC,
-                cfg.CARD_PLOT_SHADING_METHOD_DEPOSITION_AVERAGE,
-                cfg.CARD_PLOT_SHADING_METHOD_DEPOSITION_TARGET,
-            ]
-        )
-        self.ui.cbb_card_shading_method.setCurrentText(
+        self.ui.cbb_card_shading.addItems([cfg.CARD_PLOT_SHADING_METHOD_DSC, "None"])
+        self.ui.cbb_card_shading.setCurrentText(
             cfg.get_card_plot_shading_method()
+            if cfg.get_card_plot_shading()
+            else "None"
         )
         self.ui.cb_card_shading_interpolate.setChecked(
             cfg.get_card_plot_shading_interpolate()
         )
-        self.ui.cb_card_dash_overlay.setChecked(cfg.get_card_plot_average_dash_overlay())
-        self.ui.cbb_card_dash_method.addItems(
-            [cfg.DASH_OVERLAY_METHOD_ISHA, cfg.DASH_OVERLAY_METHOD_AVERAGE]
+        self.ui.cbb_card_dash_overlay.addItems(
+            [cfg.DASH_OVERLAY_METHOD_ISHA, cfg.DASH_OVERLAY_METHOD_AVERAGE, "None"]
         )
-        self.ui.cbb_card_dash_method.setCurrentText(
+        self.ui.cbb_card_dash_overlay.setCurrentText(
             cfg.get_card_plot_average_dash_overlay_method()
+            if cfg.get_card_plot_average_dash_overlay()
+            else "None"
         )
         self.ui.cbb_card_simulation_view.addItems(
             [cfg.CARD_SIMULATION_VIEW_WINDOW_ONE, cfg.CARD_SIMULATION_VIEW_WINDOW_ALL]
@@ -226,6 +225,10 @@ class Settings(baseclass):
         self.ui.cbb_card_simulation_view.setCurrentText(
             cfg.get_card_simulation_view_window()
         )
+        self.ui.cbb_center_method_card.addItems(
+            [cfg.CENTER_METHOD_CENTROID, cfg.CENTER_METHOD_COD]
+        )
+        self.ui.cbb_center_method_card.setCurrentText(cfg.get_center_method_card())
 
         # --- Report ---
         self.ui.cb_logo_include.setChecked(cfg.get_logo_include_in_report())
@@ -247,7 +250,6 @@ class Settings(baseclass):
         cfg.set_flyin_date(self.ui.le_flyin_date.text())
         cfg.set_flyin_analyst(self.ui.le_flyin_analyst.text())
         cfg.set_number_of_passes(self.ui.sb_number_passes.value())
-        cfg.set_center_method(self.ui.cbb_center_method.currentText())
 
         # --- Observables ---
         cfg.set_unit_wingspan(self.ui.cbb_wingspan_units.currentText())
@@ -265,12 +267,11 @@ class Settings(baseclass):
         # --- String ---
         cfg.set_smooth_window(self.ui.dsb_smooth_window.value())
         cfg.set_smooth_order(self.ui.sb_smooth_order.value())
-        cfg.set_string_plot_average_dash_overlay(
-            self.ui.cb_string_dash_overlay.isChecked()
-        )
-        cfg.set_string_plot_average_dash_overlay_method(
-            self.ui.cbb_string_dash_method.currentText()
-        )
+        cfg.set_center_method_string(self.ui.cbb_center_method_string.currentText())
+        _string_overlay = self.ui.cbb_string_dash_overlay.currentText()
+        cfg.set_string_plot_average_dash_overlay(_string_overlay != "None")
+        if _string_overlay != "None":
+            cfg.set_string_plot_average_dash_overlay_method(_string_overlay)
         cfg.set_string_simulation_view_window(
             self.ui.cbb_string_simulation_view.currentText()
         )
@@ -317,20 +318,21 @@ class Settings(baseclass):
         cfg.set_spread_factor_b(self.ui.dsb_spread_b.value())
         cfg.set_spread_factor_c(self.ui.dsb_spread_c.value())
         cfg.set_card_plot_y_axis(self.ui.cbb_card_plot_y_axis.currentText())
-        cfg.set_card_plot_shading(self.ui.cb_card_shading.isChecked())
-        cfg.set_card_plot_shading_method(self.ui.cbb_card_shading_method.currentText())
+        _card_shading = self.ui.cbb_card_shading.currentText()
+        cfg.set_card_plot_shading(_card_shading != "None")
+        if _card_shading != "None":
+            cfg.set_card_plot_shading_method(_card_shading)
         cfg.set_card_plot_shading_interpolate(
             self.ui.cb_card_shading_interpolate.isChecked()
         )
-        cfg.set_card_plot_average_dash_overlay(
-            self.ui.cb_card_dash_overlay.isChecked()
-        )
-        cfg.set_card_plot_average_dash_overlay_method(
-            self.ui.cbb_card_dash_method.currentText()
-        )
+        _card_overlay = self.ui.cbb_card_dash_overlay.currentText()
+        cfg.set_card_plot_average_dash_overlay(_card_overlay != "None")
+        if _card_overlay != "None":
+            cfg.set_card_plot_average_dash_overlay_method(_card_overlay)
         cfg.set_card_simulation_view_window(
             self.ui.cbb_card_simulation_view.currentText()
         )
+        cfg.set_center_method_card(self.ui.cbb_center_method_card.currentText())
 
         # --- Report ---
         cfg.set_logo_include_in_report(self.ui.cb_logo_include.isChecked())
@@ -342,6 +344,8 @@ class Settings(baseclass):
             self.ui.cb_card_images_downsample.isChecked()
         )
 
+        self._close_serial()
+        self._close_spectrometer()
         self.settings_changed.emit()
         self.accept()
 
@@ -375,7 +379,7 @@ class Settings(baseclass):
     def _update_serial_controls(self):
         connected = bool(self.ser and self.ser.is_open)
         if connected:
-            self.ui.lbl_port_status.setText("Serial Port: Checks Good")
+            self.ui.lbl_port_status.setText("Connected: Checks Good")
             self.ui.lbl_port_status.setStyleSheet(
                 "background-color: green; color: white; padding: 3px;"
             )
@@ -474,7 +478,7 @@ class Settings(baseclass):
                 lbl.setStyleSheet("background-color: #aaaaaa; color: #444444; padding: 3px;")
                 self.ui.le_spec_display.clear()
             case "no_device":
-                lbl.setText("No Spectrometer Found")
+                lbl.setText("Refresh to Connect")
                 lbl.setStyleSheet("background-color: yellow; color: black; padding: 3px;")
                 self.ui.le_spec_display.clear()
             case "error":
@@ -482,7 +486,7 @@ class Settings(baseclass):
                 lbl.setStyleSheet("background-color: orange; color: black; padding: 3px;")
                 self.ui.le_spec_display.clear()
             case "connected":
-                lbl.setText(f"Connected: {model}")
+                lbl.setText("Connected: Checks Good")
                 lbl.setStyleSheet("background-color: green; color: white; padding: 3px;")
                 self.ui.le_spec_display.setText(model)
         self.ui.btn_test_spectrometer.setEnabled(state == "connected")
@@ -497,6 +501,22 @@ class Settings(baseclass):
         cb.addItems(dye_names)
         cb.setCurrentText(current if current in dye_names else (dye_names[0] if dye_names else ""))
         cb.blockSignals(False)
+        self._update_dye_params_display(cb.currentText())
+
+    def _update_dye_params_display(self, name: str):
+        from accupatt.models.dye import Dye
+        match = next((d for d in cfg.get_defined_dyes() if d["name"] == name), None)
+        if match:
+            dye = Dye.fromDict(match)
+            self.ui.lbl_dye_excitation.setText(f"{dye.wavelength_excitation} nm")
+            self.ui.lbl_dye_emission.setText(f"{dye.wavelength_emission} nm")
+            self.ui.lbl_dye_integration.setText(f"{dye.integration_time_milliseconds} ms")
+            self.ui.lbl_dye_boxcar.setText(str(dye.boxcar_width))
+        else:
+            self.ui.lbl_dye_excitation.clear()
+            self.ui.lbl_dye_emission.clear()
+            self.ui.lbl_dye_integration.clear()
+            self.ui.lbl_dye_boxcar.clear()
 
     def _open_dye_manager(self):
         from accupatt.windows.definedDyeManager import DyeManager

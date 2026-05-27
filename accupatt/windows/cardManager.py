@@ -42,7 +42,6 @@ class CardManager(baseclass):
         # Pass Info Fields
         self.seriesData = seriesData
         self.passData = passData
-        self.ui.labelPass.setText(passData.name)
         self.passInfoWidget: PassInfoWidget = self.ui.passInfoWidget
         self.passInfoWidget.fill_from_pass(passData)
 

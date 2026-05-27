@@ -10,13 +10,14 @@ Ui_Form, baseclass = uic.loadUiType(
 
 
 class EditOptBase(baseclass):
-    def __init__(self, optBase, window_units: str, show_smooth: bool = True, parent=None):
+    def __init__(self, optBase, window_units: str, show_smooth: bool = True, is_string: bool = True, parent=None):
         super().__init__(parent=parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         self.opt = optBase
         self.window_units = window_units
         self.show_smooth = show_smooth
+        self.is_string = is_string
 
         if not show_smooth:
             self.ui.lineEditSmoothWindow.hide()
@@ -58,12 +59,9 @@ class EditOptBase(baseclass):
             self.ui.lineEditSmoothWindow.setText(str(cfg.get_smooth_window()))
             self.ui.labelSmoothWindowUnits.setText(self.window_units)
             self.ui.spinBoxOrder.setValue(cfg.get_smooth_order())
-        self.ui.radioButtonCentroid.setChecked(
-            cfg.get_center_method() == cfg.CENTER_METHOD_CENTROID
-        )
-        self.ui.radioButtonCOD.setChecked(
-            cfg.get_center_method() == cfg.CENTER_METHOD_COD
-        )
+        _default = cfg.get_center_method_string() if self.is_string else cfg.get_center_method_card()
+        self.ui.radioButtonCentroid.setChecked(_default == cfg.CENTER_METHOD_CENTROID)
+        self.ui.radioButtonCOD.setChecked(_default == cfg.CENTER_METHOD_COD)
 
     def accept(self):
         if self.show_smooth:
@@ -80,6 +78,9 @@ class EditOptBase(baseclass):
             if self.show_smooth:
                 cfg.set_smooth_window(self.opt.smooth_window)
                 cfg.set_smooth_order(self.opt.smooth_order)
-            cfg.set_center_method(center_method)
+            if self.is_string:
+                cfg.set_center_method_string(center_method)
+            else:
+                cfg.set_center_method_card(center_method)
 
         super().accept()

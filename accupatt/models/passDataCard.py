@@ -11,7 +11,7 @@ class PassDataCard(PassDataBase):
         super().__init__(name=name)
         # Processing options
         self.center = True
-        self.center_method = cfg.get_center_method()
+        self.center_method = cfg.get_center_method_card()
         # Card Data
         self.card_list: list[SprayCard] = []
 

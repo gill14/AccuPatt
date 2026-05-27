@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1057</width>
-    <height>367</height>
+    <width>1150</width>
+    <height>560</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -30,143 +30,160 @@
    <item>
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <widget class="QTableWidget" name="tableWidget">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
+      <widget class="QGroupBox" name="gb_hardware">
+       <property name="title">
+        <string>Hardware Properties</string>
        </property>
-       <property name="lineWidth">
-        <number>0</number>
-       </property>
-       <property name="sizeAdjustPolicy">
-        <enum>QAbstractScrollArea::AdjustToContents</enum>
-       </property>
-       <property name="editTriggers">
-        <set>QAbstractItemView::NoEditTriggers</set>
-       </property>
-       <row>
-        <property name="text">
-         <string>Target Wavelength (nm)</string>
-        </property>
-       </row>
-       <row>
-        <property name="text">
-         <string>Nearest Wavelength (nm)</string>
-        </property>
-       </row>
-       <row>
-        <property name="text">
-         <string>Nearest Intensity</string>
-        </property>
-       </row>
-       <row>
-        <property name="text">
-         <string>Boxcar Range (nm)</string>
-        </property>
-       </row>
-       <row>
-        <property name="text">
-         <string>Boxcar Pixel Count</string>
-        </property>
-       </row>
-       <row>
-        <property name="text">
-         <string>Boxcar Intensity</string>
-        </property>
-       </row>
-       <column>
-        <property name="text">
-         <string>Excitation</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Emission</string>
-        </property>
-       </column>
-       <item row="0" column="0">
-        <property name="text">
-         <string>-</string>
-        </property>
-       </item>
-       <item row="0" column="1">
-        <property name="text">
-         <string>-</string>
-        </property>
-       </item>
-       <item row="1" column="0">
-        <property name="text">
-         <string>-</string>
-        </property>
-       </item>
-       <item row="1" column="1">
-        <property name="text">
-         <string>-</string>
-        </property>
-       </item>
-       <item row="2" column="0">
-        <property name="text">
-         <string>-</string>
-        </property>
-       </item>
-       <item row="2" column="1">
-        <property name="text">
-         <string>-</string>
-        </property>
-       </item>
-       <item row="3" column="0">
-        <property name="text">
-         <string>-</string>
-        </property>
-       </item>
-       <item row="3" column="1">
-        <property name="text">
-         <string>-</string>
-        </property>
-       </item>
-       <item row="4" column="0">
-        <property name="text">
-         <string>-</string>
-        </property>
-       </item>
-       <item row="4" column="1">
-        <property name="text">
-         <string>-</string>
-        </property>
-       </item>
-       <item row="5" column="0">
-        <property name="text">
-         <string>-</string>
-        </property>
-       </item>
-       <item row="5" column="1">
-        <property name="text">
-         <string>-</string>
-        </property>
-       </item>
+       <layout class="QFormLayout" name="fl_hardware">
+        <item row="0" column="0">
+         <widget class="QLabel">
+          <property name="text"><string>Model</string></property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLabel" name="lbl_hw_model">
+          <property name="text"><string>-</string></property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel">
+          <property name="text"><string>Serial Number</string></property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLabel" name="lbl_hw_serial">
+          <property name="text"><string>-</string></property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel">
+          <property name="text"><string>Pixel Count</string></property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLabel" name="lbl_hw_pixels">
+          <property name="text"><string>-</string></property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel">
+          <property name="text"><string>Wavelength Range</string></property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QLabel" name="lbl_hw_wl_range">
+          <property name="text"><string>-</string></property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel">
+          <property name="text"><string>Max Intensity</string></property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QLabel" name="lbl_hw_max_intensity">
+          <property name="text"><string>-</string></property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QLabel">
+          <property name="text"><string>Integration Time Range</string></property>
+         </widget>
+        </item>
+        <item row="5" column="1">
+         <widget class="QLabel" name="lbl_hw_int_range">
+          <property name="text"><string>-</string></property>
+         </widget>
+        </item>
+        <item row="6" column="0">
+         <widget class="QLabel">
+          <property name="text"><string>Integration Time Increment</string></property>
+         </widget>
+        </item>
+        <item row="6" column="1">
+         <widget class="QLabel" name="lbl_hw_int_increment">
+          <property name="text"><string>-</string></property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="label_model">
-       <property name="text">
-        <string>Spectrometer Model:</string>
+      <widget class="QGroupBox" name="gb_acquisition">
+       <property name="title">
+        <string>Acquisition Settings: Global</string>
        </property>
+       <layout class="QFormLayout" name="fl_acquisition">
+        <item row="0" column="0">
+         <widget class="QLabel">
+          <property name="text"><string>Electric Dark Correction</string></property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLabel" name="lbl_acq_dark_corr">
+          <property name="text"><string>-</string></property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel">
+          <property name="text"><string>Nonlinearity Correction</string></property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLabel" name="lbl_acq_nonlin_corr">
+          <property name="text"><string>-</string></property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="label_serial_number">
-       <property name="text">
-        <string>Spectrometer Serial Number:</string>
+      <widget class="QGroupBox" name="gb_dye">
+       <property name="title">
+        <string>Dye</string>
        </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="label_integration_time">
-       <property name="text">
-        <string>Self-Reported Integration Time:</string>
-       </property>
+       <layout class="QFormLayout" name="fl_dye">
+        <item row="0" column="0">
+         <widget class="QLabel">
+          <property name="text"><string>Integration Time</string></property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLabel" name="lbl_acq_int_time">
+          <property name="text"><string>-</string></property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel">
+          <property name="text"><string>Boxcar Width</string></property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLabel" name="lbl_dye_boxcar">
+          <property name="text"><string>-</string></property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel">
+          <property name="text"><string>Excitation Wavelength</string></property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLabel" name="lbl_ex_wavelength">
+          <property name="text"><string>-</string></property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel">
+          <property name="text"><string>Emission Wavelength</string></property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QLabel" name="lbl_em_wavelength">
+          <property name="text"><string>-</string></property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </item>
      <item>

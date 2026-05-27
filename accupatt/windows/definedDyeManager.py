@@ -113,8 +113,11 @@ class DyeManager(baseclass):
         self.lm.dyes[self.lv.currentIndex().row()].boxcar_width = int(self.le_bx.text())
 
     def accept(self):
-        # Check all inputs
-        # for dye in self.lm.dyes:
+        # Commit any pending line edit changes (editingFinished won't fire if OK clicked directly)
+        self.excitation_changed()
+        self.emission_changed()
+        self.integration_time_changed()
+        self.boxcar_width_changed()
 
         # Update saved Defined Dyes in Settings
         cfg.set_defined_dyes(json.dumps([dye.toDict() for dye in self.lm.dyes]))

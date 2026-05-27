@@ -18,7 +18,7 @@ class SeriesDataBase:
         self.name = "series"
         # Processing options
         self.center = True
-        self.center_method = cfg.get_center_method()
+        self.center_method = cfg.CENTER_METHOD__DEFAULT
         # Options
         self.swath = swath
         self.swath_adjusted = swath_adjusted

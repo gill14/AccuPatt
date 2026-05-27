@@ -131,25 +131,6 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="gb_analysis">
-         <property name="title">
-          <string>Analysis</string>
-         </property>
-         <layout class="QFormLayout">
-          <item row="0" column="0">
-           <widget class="QLabel" name="lbl_center_method">
-            <property name="text">
-             <string>Center Method</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QComboBox" name="cbb_center_method"/>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
         <spacer name="vs_general">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -362,6 +343,98 @@
          <item>
           <layout class="QVBoxLayout" name="vl_string_left">
            <item>
+            <widget class="QGroupBox" name="gb_fluorescent_dye">
+             <property name="title">
+              <string>Fluorescent Dye</string>
+             </property>
+             <layout class="QFormLayout">
+              <item row="0" column="0">
+               <widget class="QLabel" name="lbl_dye">
+                <property name="text">
+                 <string>Dye</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QComboBox" name="cbb_dye">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="sizeAdjustPolicy">
+                 <enum>QComboBox::AdjustToContents</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="lbl_dye_excitation_header">
+                <property name="text">
+                 <string>Excitation</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLabel" name="lbl_dye_excitation">
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="lbl_dye_emission_header">
+                <property name="text">
+                 <string>Emission</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QLabel" name="lbl_dye_emission">
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="lbl_dye_integration_header">
+                <property name="text">
+                 <string>Integration Time</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QLabel" name="lbl_dye_integration">
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLabel" name="lbl_dye_boxcar_header">
+                <property name="text">
+                 <string>Boxcar Width</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QLabel" name="lbl_dye_boxcar">
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <widget class="QPushButton" name="btn_dye_manager">
+                <property name="text">
+                 <string>Define/Edit Dyes</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
             <widget class="QGroupBox" name="gb_string_pattern">
              <property name="title">
               <string>Pattern Processing</string>
@@ -415,6 +488,16 @@
                 </property>
                </widget>
               </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="lbl_center_method_string">
+                <property name="text">
+                 <string>Center Method</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QComboBox" name="cbb_center_method_string"/>
+              </item>
              </layout>
             </widget>
            </item>
@@ -425,28 +508,24 @@
              </property>
              <layout class="QFormLayout">
               <item row="0" column="0">
+               <widget class="QLabel" name="lbl_spec_display_units">
+                <property name="text">
+                 <string>Intensity Units</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QComboBox" name="cbb_spec_display_units"/>
+              </item>
+              <item row="1" column="0">
                <widget class="QLabel" name="lbl_string_dash_overlay">
                 <property name="text">
                  <string>Average Overlay</string>
                 </property>
                </widget>
               </item>
-              <item row="0" column="1">
-               <widget class="QCheckBox" name="cb_string_dash_overlay">
-                <property name="text">
-                 <string/>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="lbl_string_dash_method">
-                <property name="text">
-                 <string>Overlay Method</string>
-                </property>
-               </widget>
-              </item>
               <item row="1" column="1">
-               <widget class="QComboBox" name="cbb_string_dash_method"/>
+               <widget class="QComboBox" name="cbb_string_dash_overlay"/>
               </item>
               <item row="2" column="0">
                <widget class="QLabel" name="lbl_string_simulation_view">
@@ -745,6 +824,22 @@
                </widget>
               </item>
               <item row="2" column="1">
+               <spacer>
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Fixed</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>8</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="3" column="1">
                <widget class="QPushButton" name="btn_test_spectrometer">
                 <property name="text">
                  <string>Test Spectrometer</string>
@@ -753,50 +848,6 @@
                  <bool>false</bool>
                 </property>
                </widget>
-              </item>
-              <item row="3" column="0">
-               <widget class="QLabel" name="lbl_spec_display_units">
-                <property name="text">
-                 <string>Display Units</string>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="1">
-               <widget class="QComboBox" name="cbb_spec_display_units"/>
-              </item>
-              <item row="4" column="0">
-               <widget class="QLabel" name="lbl_dye">
-                <property name="text">
-                 <string>Dye</string>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="1">
-               <layout class="QHBoxLayout">
-                <item>
-                 <widget class="QComboBox" name="cbb_dye">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="sizeAdjustPolicy">
-                   <enum>QComboBox::AdjustToContents</enum>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="btn_dye_manager">
-                  <property name="text">
-                   <string/>
-                  </property>
-                  <property name="flat">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
               </item>
              </layout>
             </widget>
@@ -1352,69 +1403,51 @@
                  </widget>
                 </item>
                 <item row="1" column="1">
-                 <widget class="QCheckBox" name="cb_card_shading">
-                  <property name="text">
-                   <string/>
-                  </property>
-                 </widget>
+                 <widget class="QComboBox" name="cbb_card_shading"/>
                 </item>
                 <item row="2" column="0">
-                 <widget class="QLabel" name="lbl_card_shading_method">
-                  <property name="text">
-                   <string>Shading Method</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="1">
-                 <widget class="QComboBox" name="cbb_card_shading_method"/>
-                </item>
-                <item row="3" column="0">
                  <widget class="QLabel" name="lbl_card_shading_interp">
                   <property name="text">
                    <string>Interpolate Shading</string>
                   </property>
                  </widget>
                 </item>
-                <item row="3" column="1">
+                <item row="2" column="1">
                  <widget class="QCheckBox" name="cb_card_shading_interpolate">
                   <property name="text">
                    <string/>
                   </property>
                  </widget>
                 </item>
-                <item row="4" column="0">
+                <item row="3" column="0">
                  <widget class="QLabel" name="lbl_card_dash_overlay">
                   <property name="text">
                    <string>Average Overlay</string>
                   </property>
                  </widget>
                 </item>
-                <item row="4" column="1">
-                 <widget class="QCheckBox" name="cb_card_dash_overlay">
-                  <property name="text">
-                   <string/>
-                  </property>
-                 </widget>
+                <item row="3" column="1">
+                 <widget class="QComboBox" name="cbb_card_dash_overlay"/>
                 </item>
-                <item row="5" column="0">
-                 <widget class="QLabel" name="lbl_card_dash_method">
-                  <property name="text">
-                   <string>Overlay Method</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="5" column="1">
-                 <widget class="QComboBox" name="cbb_card_dash_method"/>
-                </item>
-                <item row="6" column="0">
+                <item row="4" column="0">
                  <widget class="QLabel" name="lbl_card_simulation_view">
                   <property name="text">
                    <string>Simulation View</string>
                   </property>
                  </widget>
                 </item>
-                <item row="6" column="1">
+                <item row="4" column="1">
                  <widget class="QComboBox" name="cbb_card_simulation_view"/>
+                </item>
+                <item row="5" column="0">
+                 <widget class="QLabel" name="lbl_center_method_card">
+                  <property name="text">
+                   <string>Center Method</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="1">
+                 <widget class="QComboBox" name="cbb_center_method_card"/>
                 </item>
                </layout>
               </widget>

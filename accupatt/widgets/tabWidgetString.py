@@ -128,7 +128,10 @@ class TabWidgetString(TabWidgetBase):
 
     @pyqtSlot(object)
     def _updateTrimFloor(self, object):
-        self.getCurrentPass().string.user_set_trim_floor(object.value())
+        val = object.value()
+        if cfg.get_spectrometer_display_unit() == cfg.SPECTROMETER_DISPLAY_UNIT_RELATIVE:
+            val *= cfg.AU_PER_PERCENT_16_BIT
+        self.getCurrentPass().string.user_set_trim_floor(val)
         self.updatePlots(
             modify=True, individuals=True, composites=True, simulations=True
         )

@@ -9,8 +9,8 @@ from accupatt.models.dye import Dye
 from accupatt.models.passData import Pass
 from accupatt.widgets.passinfowidget import PassInfoWidget
 from PyQt6 import uic
-from PyQt6.QtCore import QTimer, pyqtSlot, Qt
-from PyQt6.QtWidgets import QMessageBox, QCheckBox, QLabel, QPushButton
+from PyQt6.QtCore import QTimer, pyqtSlot
+from PyQt6.QtWidgets import QMessageBox, QLabel, QPushButton
 from oceandirect.OceanDirectAPI import OceanDirectAPI
 
 Ui_Form, baseclass = uic.loadUiType(
@@ -43,18 +43,23 @@ class StringPass(baseclass):
         self.button_abort.clicked.connect(self.click_abort)
         self.button_clear: QPushButton = self.ui.buttonClear
         self.button_clear.clicked.connect(self.click_clear)
-        self.label_spec: QLabel = self.ui.labelSpec
-        self.cb_spec: QCheckBox = self.ui.checkBoxSpectrometer
-        self.cb_spec.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-        self.button_spec: QPushButton = self.ui.buttonEditSpectrometer
-        self.button_spec.clicked.connect(self.editSpectrometer)
-        self.label_string_drive: QLabel = self.ui.labelStringDrive
-        self.cb_string_drive: QCheckBox = self.ui.checkBoxStringDrive
-        self.cb_string_drive.setAttribute(
-            Qt.WidgetAttribute.WA_TransparentForMouseEvents
+        self.pill_drive: QLabel = self.ui.pillDrive
+        self.pill_spec: QLabel = self.ui.pillSpec
+        self.pill_dye: QLabel = self.ui.pillDye
+        self.pill_resolution: QLabel = self.ui.pillResolution
+        self.button_settings: QPushButton = self.ui.buttonStringSettings
+        self.button_settings.clicked.connect(self.editStringSettings)
+
+        # Init pill labels
+        _PILL_BASE = (
+            "border-radius: 8px; padding: 3px 10px; color: black;"
         )
-        self.button_string_drive: QPushButton = self.ui.buttonEditStringDrive
-        self.button_string_drive.clicked.connect(self.editStringDrive)
+        self._pill_ready_style = f"background-color: #888888; {_PILL_BASE}"
+        self._pill_not_ready_style = f"background-color: #FFD700; {_PILL_BASE}"
+        self._set_pill(self.pill_drive, "Drive Motors: Not Ready", ready=False)
+        self._set_pill(self.pill_spec, "Spectrometer: Not Ready", ready=False)
+        self._update_dye_pill()
+        self._update_resolution_pill()
 
         # Setup plot and init data vars
         self.setup_and_clear_plot(showPopup=False)
@@ -91,10 +96,10 @@ class StringPass(baseclass):
             _y = self.y / cfg.AU_PER_PERCENT_16_BIT if use_rel else self.y
             self.plot_emission.setData(self.x, _y)
             # Disable Edit if data already present to prevent overwrite of origination info
-            self.button_spec.setEnabled(False)
-            self.button_string_drive.setEnabled(False)
-        y_label = f"Intensity, {cfg.get_spectrometer_display_unit()}"
-        self.plotWidget.plotItem.setLabel(axis="left", text=y_label)
+            self.button_settings.setEnabled(False)
+        _use_rel = cfg.get_spectrometer_display_unit() == cfg.SPECTROMETER_DISPLAY_UNIT_RELATIVE
+        self.plotWidget.plotItem.setLabel(axis="left", text="Intensity (%)" if _use_rel else "Intensity (AU)")
+        self.plotWidget.plotItem.getAxis("left").enableAutoSIPrefix(False)
 
     def setup_and_clear_plot(self, showPopup=True):
         # Optionally prompt to proceed
@@ -125,14 +130,15 @@ class StringPass(baseclass):
         self.plotWidget.plotItem.setLabel(
             axis="bottom", text="Location", units=self.passData.string.data_loc_units
         )
-        # self.plotWidget.plotItem.setLabel(axis="left", text="Relative Dye Intensity")
+        _use_rel = cfg.get_spectrometer_display_unit() == cfg.SPECTROMETER_DISPLAY_UNIT_RELATIVE
+        self.plotWidget.plotItem.setLabel(axis="left", text="Intensity (%)" if _use_rel else "Intensity (AU)")
+        self.plotWidget.plotItem.getAxis("left").enableAutoSIPrefix(False)
         self.plotWidget.plotItem.showGrid(x=True, y=True)
         self.plotWidget.setXRange(
             -cfg.get_string_length() / 2, cfg.get_string_length() / 2
         )
         # Ensure Edit is enabled (disabled after has_data)
-        self.button_spec.setEnabled(True)
-        self.button_string_drive.setEnabled(True)
+        self.button_settings.setEnabled(True)
         return True
 
     def plotFrame(self):
@@ -149,7 +155,7 @@ class StringPass(baseclass):
         intensities = np.array(self.spec.get_formatted_spectrum(), dtype=np.float32)
         # record y_val (emission amplitute) and request plot update
         self.y = np.append(
-            self.y, np.average(intensities[self.pix_em[0] : self.pix_em[1] + 1])
+            self.y, intensities[self.pix_em]
         )
         use_rel = (
             cfg.get_spectrometer_display_unit()
@@ -165,9 +171,8 @@ class StringPass(baseclass):
         self.timer_trigger.stop()
         self.ser.write(cfg.STRING_DRIVE_FWD_STOP.encode())
         self.enableButtons(start=False, abort=False)
-        # Disable Edit spec to preserve origination params
-        self.button_spec.setEnabled(False)
-        self.button_string_drive.setEnabled(False)
+        # Disable Edit to preserve origination params
+        self.button_settings.setEnabled(False)
 
     @pyqtSlot()
     def click_start(self):
@@ -186,18 +191,11 @@ class StringPass(baseclass):
             self.speed_per_milli = cfg.get_string_speed() / 1000.0
             # Get a handle on pixels for chosen wavelengths
             wavelengths = np.array(self.spec.get_wavelengths(), np.float32)
+            nm_per_pixel = float(wavelengths[-1] - wavelengths[0]) / (len(wavelengths) - 1)
+            hw_boxcar = max(0, round(self.passData.string.dye.boxcar_width / 2 / nm_per_pixel))
+            self.spec.set_boxcar_width(hw_boxcar)
             self.pix_ex, _wav = self.spec.get_index_at_wavelength(self.passData.string.dye.wavelength_excitation)
-            bw = self.passData.string.dye.boxcar_width
-            self.pix_em = [
-                np.abs(
-                    wavelengths
-                    - (self.passData.string.dye.wavelength_emission - (bw / 2))
-                ).argmin(),
-                np.abs(
-                    wavelengths
-                    - (self.passData.string.dye.wavelength_emission + (bw / 2))
-                ).argmin(),
-            ]
+            self.pix_em = np.abs(wavelengths - self.passData.string.dye.wavelength_emission).argmin()
             # Set the intervals and timeouts
             self.timer.setSingleShot(True)
             self.timer.setInterval(
@@ -287,24 +285,43 @@ class StringPass(baseclass):
         self.button_clear.setEnabled(clear)
         self.button_reverse.setEnabled(reverse)
         self.button_forward.setEnabled(advance)
-        self.button_string_drive.setEnabled(window)
-        self.button_spec.setEnabled(window)
+        self.button_settings.setEnabled(window)
         self.ui.buttonBox.setEnabled(window)
+
+    def _set_pill(self, label: QLabel, text: str, ready: bool):
+        label.setText(text)
+        label.setStyleSheet(
+            self._pill_ready_style if ready else self._pill_not_ready_style
+        )
+
+    def _update_dye_pill(self):
+        dye = self.passData.string.dye
+        self.pill_dye.setText(f"Dye: {dye.name} | {dye.wavelength_excitation} nm")
+        self.pill_dye.setStyleSheet(self._pill_ready_style)
+
+    def _update_resolution_pill(self):
+        dye = self.passData.string.dye
+        speed = cfg.get_string_speed()
+        resolution = dye.integration_time_milliseconds * speed / 1000
+        units = self.passData.string.data_loc_units
+        self.pill_resolution.setText(f"Spatial Resolution: ~{resolution:.2f} {units}")
+        self.pill_resolution.setStyleSheet(self._pill_ready_style)
 
     """
     String Drive Hook-Ups
     """
 
-    # Open String Drive Editor
     @pyqtSlot()
-    def editStringDrive(self):
+    def editStringSettings(self):
         from accupatt.windows.settings import Settings
         if self.ser and self.ser.is_open:
             self.ser.close()
             self.ser = None
+        self.ser_connected = False
         if self.spec:
             self.spec.close_device()
             self.spec = None
+        self.spec_connected = False
         e = Settings(parent=self)
         e.ui.tabWidget.setCurrentWidget(e.ui.tab_string)
         e.settings_changed.connect(self._on_settings_applied)
@@ -315,6 +332,8 @@ class StringPass(baseclass):
         self.passData.string.data_loc_units = units
         self.plotWidget.plotItem.setLabel(axis="bottom", text="Location", units=units)
         self.passData.string.dye = Dye.fromConfig(cfg.get_defined_dye())
+        self._update_dye_pill()
+        self._update_resolution_pill()
         self.setupStringDrive()
         self.setupSpectrometer()
         self.populate_plot()
@@ -330,19 +349,19 @@ class StringPass(baseclass):
                     raise Exception("No FTDI device found")
                 self.ser = serial.Serial(ftdi_ports[0].device, baudrate=9600, timeout=1)
             except:
-                self.cb_string_drive.setText("Offline")
-                self.cb_string_drive.setEnabled(False)
-                self.cb_string_drive.setChecked(False)
+                self._set_pill(self.pill_drive, "Drive Motors: Not Ready", ready=False)
                 self.ser_connected = False
                 return
-        self.cb_string_drive.setText("Ready")
-        self.cb_string_drive.setEnabled(True)
-        self.cb_string_drive.setChecked(True)
-        self.ser_connected = True
-        self.label_string_drive.setToolTip(
-            f"Flightline Length: {cfg.get_string_length()} {self.passData.string.data_loc_units}\nSpeed: {cfg.get_string_speed()} {self.passData.string.data_loc_units}/s"
+        units = self.passData.string.data_loc_units
+        length = cfg.get_string_length()
+        speed = cfg.get_string_speed()
+        self._set_pill(
+            self.pill_drive,
+            f"Drive Motors: Ready | {length} {units} @ {speed} {units}/s",
+            ready=True,
         )
-        # Enale/Disable manual drive buttons
+        self.ser_connected = True
+        # Enable/Disable manual drive buttons
         self.enableButtons()
 
     @pyqtSlot()
@@ -375,24 +394,8 @@ class StringPass(baseclass):
     Spectrometer Hook-Ups
     """
 
-    # Open Spectrometer Editor
-    @pyqtSlot()
-    def editSpectrometer(self):
-        from accupatt.windows.settings import Settings
-        if self.ser and self.ser.is_open:
-            self.ser.close()
-            self.ser = None
-        if self.spec:
-            self.spec.close_device()
-            self.spec = None
-        e = Settings(parent=self)
-        e.ui.tabWidget.setCurrentWidget(e.ui.tab_string)
-        e.settings_changed.connect(self._on_settings_applied)
-        e.exec()
-
     def setupSpectrometer(self):
         # Get a handle to the spec object, else return "Disconnected" status
-
         if self.spec is None:
             try:
                 od = OceanDirectAPI()
@@ -400,10 +403,10 @@ class StringPass(baseclass):
                 device_ids = od.get_device_ids()
                 if len(device_ids) > 0:
                     self.spec = od.open_device(device_ids[0])
+                else:
+                    raise Exception("No spectrometer found")
             except:
-                self.cb_spec.setText("Offline")
-                self.cb_spec.setEnabled(False)
-                self.cb_spec.setCheckState(Qt.CheckState.Unchecked)
+                self._set_pill(self.pill_spec, "Spectrometer: Not Ready", ready=False)
                 self.spec_connected = False
                 return
         # Inform spectrometer of new int time
@@ -414,12 +417,12 @@ class StringPass(baseclass):
         except:
             print("Unable to set Spectrometer Integration Time")
             return
-        self.cb_spec.setText("Ready")
-        self.cb_spec.setEnabled(True)
-        self.cb_spec.setCheckState(Qt.CheckState.Checked)
-        self.spec_connected = True
-        self.label_spec.setToolTip(
-            f"Dye: {self.passData.string.dye.name}\nExcitation: {self.passData.string.dye.wavelength_excitation} nm\nEmission: {self.passData.string.dye.wavelength_emission} nm"
+        int_ms = self.passData.string.dye.integration_time_milliseconds
+        self._set_pill(
+            self.pill_spec,
+            f"Spectrometer: Ready | {int_ms} ms",
+            ready=True,
         )
+        self.spec_connected = True
         self.enableButtons()
 

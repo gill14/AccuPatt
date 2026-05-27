@@ -338,22 +338,34 @@ def set_unit_string_data_location(value: str):
     QSettings().setValue(_UNIT_STRING_DATA_LOCATION, value)
 
 
-# String Pattern Manipulation
+# String/Card Pattern Manipulation
 
-_CENTER_METHOD = "center_method"
 CENTER_METHOD_CENTROID = "Centroid"
 CENTER_METHOD_COD = "Center of Distribution"
 CENTER_METHOD__DEFAULT = CENTER_METHOD_CENTROID
 
+_CENTER_METHOD_STRING = "center_method_string"
+_CENTER_METHOD_CARD = "center_method_card"
 
-def get_center_method() -> str:
+
+def get_center_method_string() -> str:
     return QSettings().value(
-        _CENTER_METHOD, defaultValue=CENTER_METHOD__DEFAULT, type=str
+        _CENTER_METHOD_STRING, defaultValue=CENTER_METHOD__DEFAULT, type=str
     )
 
 
-def set_center_method(value: str):
-    QSettings().setValue(_CENTER_METHOD, value)
+def set_center_method_string(value: str):
+    QSettings().setValue(_CENTER_METHOD_STRING, value)
+
+
+def get_center_method_card() -> str:
+    return QSettings().value(
+        _CENTER_METHOD_CARD, defaultValue=CENTER_METHOD__DEFAULT, type=str
+    )
+
+
+def set_center_method_card(value: str):
+    QSettings().setValue(_CENTER_METHOD_CARD, value)
 
 
 _SMOOTH_WINDOW = "smooth_window"
@@ -416,7 +428,7 @@ def set_string_plot_average_dash_overlay_method(value: str):
 
 _STRING_SIMULATION_VIEW_WINDOW = "string_simulation_view_window"
 STRING_SIMULATION_VIEW_WINDOW_ONE = "One Swath Width"
-STRING_SIMULATION_VIEW_WINDOW_ALL = "Sum of All Swath Widths"
+STRING_SIMULATION_VIEW_WINDOW_ALL = "All Swaths"
 
 
 def get_string_simulation_view_window() -> str:
@@ -1047,8 +1059,6 @@ def set_card_plot_shading(value: bool):
 
 _CARD_PLOT_SHADING_METHOD = "card_plot_shading_method"
 CARD_PLOT_SHADING_METHOD_DSC = "DSC"
-CARD_PLOT_SHADING_METHOD_DEPOSITION_AVERAGE = "Average Deposition"
-CARD_PLOT_SHADING_METHOD_DEPOSITION_TARGET = "Target Deposition"
 CARD_PLOT_SHADING_METHOD__DEFAULT = CARD_PLOT_SHADING_METHOD_DSC
 
 
@@ -1113,8 +1123,8 @@ def set_card_plot_average_dash_overlay_method(value: str):
 
 
 _CARD_SIMULATION_VIEW_WINDOW = "card_simulation_view_window"
-CARD_SIMULATION_VIEW_WINDOW_ONE = "one"
-CARD_SIMULATION_VIEW_WINDOW_ALL = "all"
+CARD_SIMULATION_VIEW_WINDOW_ONE = "One Swath Width"
+CARD_SIMULATION_VIEW_WINDOW_ALL = "All Swaths"
 
 
 def get_card_simulation_view_window() -> str:

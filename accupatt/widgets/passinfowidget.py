@@ -18,6 +18,7 @@ class PassInfoWidget(baseclass):
 
     def fill_from_pass(self, passData: Pass):
         self.passData = passData
+        self.ui.groupBoxObservables.setTitle(f"{passData.name} Observables")
         self.ui.lineEditGS.setText(passData.ground_speed_str)
         self.ui.comboBoxUnitsGS.addItems(cfg.UNITS_GROUND_SPEED)
         self.ui.comboBoxUnitsGS.setCurrentText(passData.ground_speed_units)

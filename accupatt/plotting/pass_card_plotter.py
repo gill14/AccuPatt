@@ -65,10 +65,6 @@ def plot(
                     fill_mask[diff < 0] = y_i[diff < 0]
                     ax.fill_between(locs_i, fill_mask, color=color, alpha=0.7, label=category)
                 ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-            elif method == cfg.CARD_PLOT_SHADING_METHOD_DEPOSITION_AVERAGE:
-                pass
-            elif method == cfg.CARD_PLOT_SHADING_METHOD_DEPOSITION_TARGET:
-                pass
         else:
             ax.fill_between(locs_i, 0, y_i, alpha=0.7)
         ax.plot(locs_i, y_i, color="black")

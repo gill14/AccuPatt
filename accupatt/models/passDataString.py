@@ -25,7 +25,7 @@ class PassDataString(PassDataBase):
         self.equalize_factor = 1.0
         # Processing options
         self.center = True
-        self.center_method = cfg.get_center_method()
+        self.center_method = cfg.get_center_method_string()
         self.smooth = True
         self.smooth_window = cfg.get_smooth_window()
         self.smooth_order = cfg.get_smooth_order()
