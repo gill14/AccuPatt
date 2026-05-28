@@ -187,8 +187,12 @@ class StringPass(baseclass):
             self.timer = QTimer(self)
             self.timer_trigger = QTimer(self)
             # Set local vars from config
-            self.location_start = -cfg.get_string_length() / 2
-            self.speed_per_milli = cfg.get_string_speed() / 1000.0
+            if cfg.get_string_collect_from() == cfg.STRING_COLLECT_FROM_RTL:
+                self.location_start = +cfg.get_string_length() / 2
+                self.speed_per_milli = -cfg.get_string_speed() / 1000.0
+            else:
+                self.location_start = -cfg.get_string_length() / 2
+                self.speed_per_milli = cfg.get_string_speed() / 1000.0
             # Get a handle on pixels for chosen wavelengths
             wavelengths = np.array(self.spec.get_wavelengths(), np.float32)
             nm_per_pixel = float(wavelengths[-1] - wavelengths[0]) / (len(wavelengths) - 1)

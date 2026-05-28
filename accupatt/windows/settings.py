@@ -128,6 +128,8 @@ class Settings(baseclass):
         self.ui.cbb_string_length_units.setCurrentText(cfg.get_unit_string_data_location())
         self.ui.cbb_string_length_units.currentTextChanged.connect(self._update_string_length_unit_labels)
         self.ui.dsb_string_speed.setValue(cfg.get_string_speed())
+        self.ui.cbb_string_collect_from.addItems(cfg.STRING_COLLECT_FROM_OPTIONS)
+        self.ui.cbb_string_collect_from.setCurrentText(cfg.get_string_collect_from())
         self._update_string_length_unit_labels(cfg.get_unit_string_data_location())
         self._refresh_port_list()
 
@@ -278,6 +280,7 @@ class Settings(baseclass):
         cfg.set_string_length(self.ui.dsb_string_length.value())
         cfg.set_unit_string_data_location(self.ui.cbb_string_length_units.currentText())
         cfg.set_string_speed(self.ui.dsb_string_speed.value())
+        cfg.set_string_collect_from(self.ui.cbb_string_collect_from.currentText())
         cfg.set_defined_dye(self.ui.cbb_dye.currentText())
         cfg.set_spectrometer_display_unit(self.ui.cbb_spec_display_units.currentText())
 

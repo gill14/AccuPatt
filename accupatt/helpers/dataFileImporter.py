@@ -379,14 +379,18 @@ def load_from_usda_file(file: str, s: SeriesData):
         lines = []
         with open(file) as ffile:
             lines = ffile.readlines()
+        is_right = lines[0].strip().split("\t")[-1] == "Right"
         d_ex = []
         d_em = []
         for i, line in enumerate(lines):
             if i < 2:
                 continue
             line_item = line.strip().split("\t")
-            d_ex.append({"loc": float(line_item[1]), p.name: float(line_item[3])})
-            d_em.append({"loc": float(line_item[1]), p.name: float(line_item[2])})
+            loc = float(line_item[1])
+            if is_right:
+                loc = -loc
+            d_ex.append({"loc": loc, p.name: float(line_item[3])})
+            d_em.append({"loc": loc, p.name: float(line_item[2])})
         p.string.data_ex = pd.DataFrame(d_ex)
         p.string.data = pd.DataFrame(d_em)
 

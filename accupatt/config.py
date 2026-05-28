@@ -478,6 +478,26 @@ def set_string_speed(value: float):
     QSettings().setValue(_STRING_SPEED, value)
 
 
+STRING_COLLECT_FROM_LTR = "Left → Right"
+STRING_COLLECT_FROM_RTL = "Right → Left"
+STRING_COLLECT_FROM_OPTIONS = [STRING_COLLECT_FROM_LTR, STRING_COLLECT_FROM_RTL]
+
+_STRING_COLLECT_FROM = "string_collect_from"
+STRING_COLLECT_FROM__DEFAULT = STRING_COLLECT_FROM_LTR
+
+
+def get_string_collect_from() -> str:
+    return QSettings().value(
+        _STRING_COLLECT_FROM,
+        defaultValue=STRING_COLLECT_FROM__DEFAULT,
+        type=str,
+    )
+
+
+def set_string_collect_from(value: str):
+    QSettings().setValue(_STRING_COLLECT_FROM, value)
+
+
 # Spectrometer
 
 _DEFINED_DYES = "defined_dyes"
