@@ -27,6 +27,12 @@ class CalculateStringSpeed(baseclass):
         self.ui.labelUnitsSpeed.setText(f"{length_units}/sec")
         self.ui.button.pressed.connect(self.button_pressed)
 
+        # Disable OK until a speed has been measured
+        self.ui.buttonBox.button(
+            self.ui.buttonBox.StandardButton.Ok
+        ).setEnabled(False)
+        self._set_button_start()
+
         # Serial Port
         self.serialPort = ser
         if not self.serialPort.is_open:
@@ -35,6 +41,22 @@ class CalculateStringSpeed(baseclass):
         self.state = False
 
         self.show()
+
+    def _set_button_start(self):
+        self.ui.button.setText("Start")
+        self.ui.button.setStyleSheet(
+            "QPushButton { background-color: #4CAF50; color: white; font-weight: bold; border-radius: 4px; }"
+            "QPushButton:hover { background-color: #45a049; }"
+            "QPushButton:pressed { background-color: #388e3c; }"
+        )
+
+    def _set_button_stop(self):
+        self.ui.button.setText("Stop")
+        self.ui.button.setStyleSheet(
+            "QPushButton { background-color: #f44336; color: white; font-weight: bold; border-radius: 4px; }"
+            "QPushButton:hover { background-color: #e53935; }"
+            "QPushButton:pressed { background-color: #c62828; }"
+        )
 
     @pyqtSlot(str)
     def length_units_changed(self, text):
@@ -64,7 +86,7 @@ class CalculateStringSpeed(baseclass):
         self.timer.timeout.connect(self.update_elapsed_time)
         self.timer.start(1000)
         # Change Button Text and State
-        self.ui.button.setText("Stop")
+        self._set_button_stop()
         self.state = True
 
     def stopCalc(self):
@@ -72,11 +94,15 @@ class CalculateStringSpeed(baseclass):
         self.timer.stop()
         self.serialPort.write(cfg.STRING_DRIVE_FWD_STOP.encode())
         # Change Button Text
-        self.ui.button.setText("Start")
+        self._set_button_start()
         # Calc and show new speed
         length = float(self.ui.lineEditLength.text())
         time = float(self.ui.lineEditTime.text())
         self.ui.lineEditSpeed.setText(f"{length/time:.2f}")
+        # Enable OK now that a speed has been calculated
+        self.ui.buttonBox.button(
+            self.ui.buttonBox.StandardButton.Ok
+        ).setEnabled(True)
 
     def accept(self):
         # Send back new speed val as str
