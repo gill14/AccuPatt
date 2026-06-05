@@ -11,7 +11,7 @@ except ImportError:
     _OCEANDIRECT_AVAILABLE = False
 from accupatt.windows.calculateStringSpeed import CalculateStringSpeed
 from PyQt6 import uic
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import QDate, QSignalBlocker, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QFileDialog, QMessageBox
 from serial import Serial
@@ -46,6 +46,7 @@ class Settings(baseclass):
         self.ui.btn_refresh_spec.setIcon(QIcon(icon_file))
         self.ui.btn_refresh_spec.clicked.connect(self._refresh_spectrometer)
         self.ui.btn_dye_manager.clicked.connect(self._open_dye_manager)
+        self.ui.btn_defined_sets.clicked.connect(self._open_defined_set_manager)
         self.ui.cbb_dye.currentTextChanged.connect(self._update_dye_params_display)
         self.ui.btn_test_spectrometer.clicked.connect(self._test_spectrometer)
         self.btn_reverse.clicked.connect(self._manual_reverse)
@@ -61,7 +62,9 @@ class Settings(baseclass):
         self.ui.le_datafile_dir.setText(cfg.get_datafile_dir())
         self.ui.le_flyin_name.setText(cfg.get_flyin_name())
         self.ui.le_flyin_location.setText(cfg.get_flyin_location())
-        self.ui.le_flyin_date.setText(cfg.get_flyin_date())
+        with QSignalBlocker(self.ui.de_flyin_date):
+            date = QDate.fromString(cfg.get_flyin_date(), "d MMM yyyy")
+            self.ui.de_flyin_date.setDate(date if date.isValid() else QDate.currentDate())
         self.ui.le_flyin_analyst.setText(cfg.get_flyin_analyst())
         self.ui.sb_number_passes.setValue(cfg.get_number_of_passes())
 
@@ -249,7 +252,7 @@ class Settings(baseclass):
         cfg.set_datafile_dir(self.ui.le_datafile_dir.text())
         cfg.set_flyin_name(self.ui.le_flyin_name.text())
         cfg.set_flyin_location(self.ui.le_flyin_location.text())
-        cfg.set_flyin_date(self.ui.le_flyin_date.text())
+        cfg.set_flyin_date(self.ui.de_flyin_date.date().toString("d MMM yyyy"))
         cfg.set_flyin_analyst(self.ui.le_flyin_analyst.text())
         cfg.set_number_of_passes(self.ui.sb_number_passes.value())
 
@@ -514,7 +517,7 @@ class Settings(baseclass):
             self.ui.lbl_dye_excitation.setText(f"{dye.wavelength_excitation} nm")
             self.ui.lbl_dye_emission.setText(f"{dye.wavelength_emission} nm")
             self.ui.lbl_dye_integration.setText(f"{dye.integration_time_milliseconds} ms")
-            self.ui.lbl_dye_boxcar.setText(str(dye.boxcar_width))
+            self.ui.lbl_dye_boxcar.setText(f"{dye.boxcar_width} nm")
         else:
             self.ui.lbl_dye_excitation.clear()
             self.ui.lbl_dye_emission.clear()
@@ -526,6 +529,10 @@ class Settings(baseclass):
         e = DyeManager(parent=self)
         e.finished.connect(self._refresh_dyes)
         e.exec()
+
+    def _open_defined_set_manager(self):
+        from accupatt.windows.definedSetManager import DefinedSetManager
+        DefinedSetManager(parent=self).exec()
 
     def _test_spectrometer(self):
         from accupatt.windows.testSpectrometer import TestSpectrometer

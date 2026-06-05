@@ -69,7 +69,11 @@
            </widget>
           </item>
           <item row="0" column="1">
-           <widget class="QLineEdit" name="le_flyin_name"/>
+           <widget class="QLineEdit" name="le_flyin_name">
+            <property name="minimumWidth">
+             <number>200</number>
+            </property>
+           </widget>
           </item>
           <item row="1" column="0">
            <widget class="QLabel" name="lbl_flyin_location">
@@ -79,7 +83,11 @@
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QLineEdit" name="le_flyin_location"/>
+           <widget class="QLineEdit" name="le_flyin_location">
+            <property name="minimumWidth">
+             <number>200</number>
+            </property>
+           </widget>
           </item>
           <item row="2" column="0">
            <widget class="QLabel" name="lbl_flyin_date">
@@ -89,7 +97,14 @@
            </widget>
           </item>
           <item row="2" column="1">
-           <widget class="QLineEdit" name="le_flyin_date"/>
+           <widget class="QDateEdit" name="de_flyin_date">
+            <property name="displayFormat">
+             <string>d MMM yyyy</string>
+            </property>
+            <property name="calendarPopup">
+             <bool>true</bool>
+            </property>
+           </widget>
           </item>
           <item row="3" column="0">
            <widget class="QLabel" name="lbl_flyin_analyst">
@@ -99,7 +114,11 @@
            </widget>
           </item>
           <item row="3" column="1">
-           <widget class="QLineEdit" name="le_flyin_analyst"/>
+           <widget class="QLineEdit" name="le_flyin_analyst">
+            <property name="minimumWidth">
+             <number>200</number>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -1383,6 +1402,22 @@
                   </property>
                   <property name="singleStep">
                    <double>0.000100000000000</double>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QGroupBox" name="gb_defined_sets">
+               <property name="title">
+                <string>Defined Sets</string>
+               </property>
+               <layout class="QVBoxLayout">
+                <item>
+                 <widget class="QPushButton" name="btn_defined_sets">
+                  <property name="text">
+                   <string>Edit Defined Sets</string>
                   </property>
                  </widget>
                 </item>

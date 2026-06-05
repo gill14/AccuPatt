@@ -550,7 +550,7 @@ def set_defined_dye(value: str):
 
 _SPECTROMETER_DISPLAY_UNIT = "spectrometer_display_units"
 SPECTROMETER_DISPLAY_UNIT_RELATIVE = "Relative (%)"
-SPECTROMETER_DISPLAY_UNIT_ABSOLUTE = "Absolute"
+SPECTROMETER_DISPLAY_UNIT_ABSOLUTE = "Absolute (AU)"
 SPECTROMETER_DISPLAY_UNITS = [
     SPECTROMETER_DISPLAY_UNIT_RELATIVE,
     SPECTROMETER_DISPLAY_UNIT_ABSOLUTE,
@@ -1248,6 +1248,19 @@ def get_card_defined_sets() -> str:
             defaultValue=json.dumps(CARD_DEFINED_SETS__DEFAULT),
             type=str,
         )
+        sets_list = json.loads(sets)
+    if any(
+        isinstance(v, bool)
+        for s in sets_list
+        for v in s.get(_MIN_STAIN_AREA_PX, [])
+    ):
+        for s in sets_list:
+            s[_MIN_STAIN_AREA_PX] = [
+                MIN_STAIN_AREA_PX if isinstance(v, bool) else v
+                for v in s[_MIN_STAIN_AREA_PX]
+            ]
+        sets = json.dumps(sets_list)
+        set_card_defined_sets(sets)
     return sets
 
 
