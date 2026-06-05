@@ -646,7 +646,7 @@ class ReportMaker:
         dv01, dv05, dv09, dsc, rs = self.s.calc_droplet_stats(cards_included=True)
         model_values = {0: dsc, 1: dv01, 2: dv05, 3: dv09, 4: rs}
         data = [
-            ["", "", "Measured \u00B9\u22C5\u00B2", "USDA Model \u00B3"],
+            ["", "", "Measured \u00B9 \u00B2", "USDA Model \u00B3"],
             *[
                 [
                     "",
@@ -670,21 +670,21 @@ class ReportMaker:
             Paragraph(
                 f"Based on inputs, minimum detectable droplet diameter is {sc.stats.get_minimum_detectable_droplet_diameter()} μm.",
                 style=self.style,
-                bulletText="•",
+                bulletText="\u00B9",
             )
         )
         disclaimers.append(
             Paragraph(
                 "Measured Droplet Spectrum Category is calculated with reference nozzle data, and should not be considered absolute.",
                 style=self.style,
-                bulletText="•",
+                bulletText="\u00B2",
             )
         )
         disclaimers.append(
             Paragraph(
                 "USDA Model flow-weighted and interpolated composite calculation based on stated nozzle configuration and quantities.",
                 style=self.style,
-                bulletText="•",
+                bulletText="\u00B3",
             )
         )
         return disclaimers

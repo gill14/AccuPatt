@@ -42,6 +42,7 @@ class SeriesInfoWidget(baseclass):
     aircraftFile = os.path.join(os.getcwd(), "resources", "AgAircraftData.xlsx")
 
     target_swath_changed = pyqtSignal()
+    request_file_save = pyqtSignal()
     request_open_pass_manager = pyqtSignal()
     request_open_string_tab = pyqtSignal()
     request_open_card_tab = pyqtSignal()
@@ -85,9 +86,11 @@ class SeriesInfoWidget(baseclass):
         self._pass_obs.refresh()
 
     def _openStringTab(self):
+        self.request_file_save.emit()
         self.request_open_string_tab.emit()
 
     def _openCardTab(self):
+        self.request_file_save.emit()
         self.request_open_card_tab.emit()
 
     """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """''

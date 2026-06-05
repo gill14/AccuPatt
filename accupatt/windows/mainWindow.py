@@ -129,6 +129,7 @@ class MainWindow(baseclass):
         self.seriesInfoWidget.target_swath_changed.connect(
             lambda: self.target_swath_changed.emit()
         )
+        self.seriesInfoWidget.request_file_save.connect(self.saveFile)
         self.seriesInfoWidget.request_open_pass_manager.connect(self.openPassManager)
         self.seriesInfoWidget.request_open_string_tab.connect(self.activateStringTab)
         self.seriesInfoWidget.request_open_card_tab.connect(self.activateCardTab)
@@ -450,6 +451,7 @@ class MainWindow(baseclass):
 
     @pyqtSlot()
     def makeReport(self):
+        self.saveFile()
         savefile, _ = QFileDialog.getSaveFileName(
             parent=self,
             caption="Save As",
