@@ -87,10 +87,12 @@ def _parse_leading_float(value: str) -> Optional[float]:
 
 
 def _parse_date(value: str) -> Optional[date]:
-    try:
-        return datetime.strptime(value.strip(), "%Y-%m-%d").date()
-    except (ValueError, AttributeError):
-        return None
+    for fmt in ("%Y-%m-%d", "%d %b %Y"):
+        try:
+            return datetime.strptime(value.strip(), fmt).date()
+        except (ValueError, AttributeError):
+            continue
+    return None
 
 
 def _to_mph(value, units: str) -> Optional[float]:
