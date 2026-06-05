@@ -205,18 +205,18 @@
         </widget>
        </item>
        <item>
-        <widget class="QSpinBox" name="spinBoxSwathAdjusted">
+        <widget class="QDoubleSpinBox" name="spinBoxSwathAdjusted">
          <property name="specialValueText">
           <string/>
          </property>
          <property name="minimum">
-          <number>0</number>
+          <double>0.000000000000000</double>
          </property>
          <property name="maximum">
-          <number>500</number>
+          <double>500.000000000000000</double>
          </property>
          <property name="value">
-          <number>0</number>
+          <double>0.000000000000000</double>
          </property>
         </widget>
        </item>

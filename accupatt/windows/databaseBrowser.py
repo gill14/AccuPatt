@@ -773,7 +773,7 @@ class DatabaseScanner(QObject):
             ss_row = cur.fetchone()
             if not ss_row or not ss_row["swath_adjusted"]:
                 return "", ""
-            swath_adj = int(ss_row["swath_adjusted"])
+            swath_adj = float(ss_row["swath_adjusted"])
             if swath_adj <= 0:
                 return "", ""
 

@@ -457,7 +457,7 @@ def load_from_wrk_file(file, s: SeriesData):
 
     i.pressure = int(lines[26])
     i.rate = float(lines[27])
-    i.swath = int(lines[28])
+    i.swath = float(lines[28])
 
     # Get a sorted list of pass files for this series
     dir = os.path.dirname(file)

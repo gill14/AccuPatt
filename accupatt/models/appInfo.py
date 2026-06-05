@@ -51,7 +51,7 @@ class AppInfo:
     wingspan_units: str = field(default_factory=cfg.get_unit_wingspan)
     winglets: str = "No"
 
-    swath: int = 0
+    swath: float = 0
     swath_units: str = field(default_factory=cfg.get_unit_swath)
     rate: float = 0
     rate_units: str = field(default_factory=cfg.get_unit_rate)
@@ -219,10 +219,10 @@ class AppInfo:
 
     def set_swath(self, string) -> bool:
         try:
-            int(float(string))
+            float(string)
         except ValueError:
             return False
-        self.swath = int(float(string))
+        self.swath = float(string)
         return True
 
     def set_swath_units(self, string):

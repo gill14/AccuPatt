@@ -10,8 +10,8 @@ class SeriesDataBase:
     def __init__(
         self,
         passes: list[Pass],
-        swath: int = 0,
-        swath_adjusted: int = 0,
+        swath: float = 0,
+        swath_adjusted: float = 0,
         swath_units: str = None,
     ):
         self.passes = passes
@@ -37,10 +37,10 @@ class SeriesDataBase:
 
     def set_swath_adjusted(self, string) -> bool:
         try:
-            int(float(string))
+            float(string)
         except ValueError:
             return False
-        self.swath_adjusted = int(float(string))
+        self.swath_adjusted = float(string)
         return True
 
     def _calcCV(

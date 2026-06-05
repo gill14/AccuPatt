@@ -7,7 +7,7 @@ from accupatt.models.seriesDataBase import SeriesDataBase
 
 
 class SeriesDataCard(SeriesDataBase):
-    def __init__(self, passes: list[Pass], swath: int = 0, swath_adjusted: int = 0, swath_units: str = None):
+    def __init__(self, passes: list[Pass], swath: float = 0, swath_adjusted: float = 0, swath_units: str = None):
         super().__init__(passes, swath, swath_adjusted, swath_units)
         self.center_method = cfg.get_center_method_card()
 

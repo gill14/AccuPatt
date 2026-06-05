@@ -3,10 +3,10 @@ from PyQt6.QtCore import pyqtSignal, pyqtSlot, QSignalBlocker, Qt
 from PyQt6.QtWidgets import (
     QPushButton,
     QCheckBox,
+    QDoubleSpinBox,
     QListWidget,
     QListWidgetItem,
     QSlider,
-    QSpinBox,
     QTableWidget,
     QTabWidget,
     QWidget,
@@ -54,10 +54,10 @@ class TabWidgetBase(QWidget):
         self.buttonAdvancedOptionsSeries.clicked.connect(
             self.clickedAdvancedOptionsSeries
         )
-        self.spinBoxSwathAdjusted: QSpinBox = self.ui.spinBoxSwathAdjusted
-        self.spinBoxSwathAdjusted.valueChanged[int].connect(self.swathAdjustedChanged)
+        self.spinBoxSwathAdjusted: QDoubleSpinBox = self.ui.spinBoxSwathAdjusted
+        self.spinBoxSwathAdjusted.valueChanged[float].connect(self.swathAdjustedChanged)
         self.sliderSimulatedSwath: QSlider = self.ui.sliderSimulatedSwath
-        self.sliderSimulatedSwath.valueChanged[int].connect(self.swathAdjustedChanged)
+        self.sliderSimulatedSwath.valueChanged[int].connect(lambda v: self.swathAdjustedChanged(float(v)))
         self.buttonPlotOptions: QPushButton = self.ui.buttonPlotOptions
         self.buttonPlotOptions.clicked.connect(self.clickedPlotOptions)
         self.tabWidget: QTabWidget = self.ui.tabWidget
@@ -103,8 +103,11 @@ class TabWidgetBase(QWidget):
         with QSignalBlocker(self.sliderSimulatedSwath):
             self.sliderSimulatedSwath.setMinimum(round(0.5 * float(opt.swath_adjusted)))
             self.sliderSimulatedSwath.setMaximum(round(1.5 * float(opt.swath_adjusted)))
-            self.sliderSimulatedSwath.setValue(opt.swath_adjusted)
+            self.sliderSimulatedSwath.setValue(round(opt.swath_adjusted))
         with QSignalBlocker(self.spinBoxSwathAdjusted):
+            is_metric = opt.swath_units == cfg.UNIT_M
+            self.spinBoxSwathAdjusted.setSingleStep(0.5 if is_metric else 1.0)
+            self.spinBoxSwathAdjusted.setDecimals(1 if is_metric else 0)
             self.spinBoxSwathAdjusted.setValue(opt.swath_adjusted)
             self.spinBoxSwathAdjusted.setSuffix(" " + opt.swath_units)
         if update_plots:
@@ -268,13 +271,13 @@ class TabWidgetBase(QWidget):
     def _advancedOptionsSeriesUpdated(self):
         self.updatePlots(modify=True, composites=True, simulations=True)
 
-    @pyqtSlot(int)
-    def swathAdjustedChanged(self, swath: int):
+    @pyqtSlot(float)
+    def swathAdjustedChanged(self, swath: float):
         self.getSeriesOpt().swath_adjusted = swath
         with QSignalBlocker(self.spinBoxSwathAdjusted):
             self.spinBoxSwathAdjusted.setValue(swath)
         with QSignalBlocker(self.sliderSimulatedSwath):
-            self.sliderSimulatedSwath.setValue(swath)
+            self.sliderSimulatedSwath.setValue(round(swath))
         self.updatePlots(composites=True, simulations=True)
 
     @pyqtSlot()
