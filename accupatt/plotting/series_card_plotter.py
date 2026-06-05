@@ -2,6 +2,7 @@ import numpy as np
 import accupatt.config as cfg
 
 from accupatt.models.passDataCard import PassDataCard
+from accupatt.models.passTable import _MPL_COLORS
 from accupatt.models.seriesDataCard import SeriesDataCard
 from accupatt.widgets.mplwidget import MplWidget
 from accupatt.plotting import pass_card_plotter, series_base_plotter
@@ -12,10 +13,11 @@ def plot_overlay(widget: MplWidget, series: SeriesDataCard):
     widget.canvas.ax.set_ylabel(cfg.get_card_plot_y_axis_label())
     active_passes = series._get_active_passes()
     for p in active_passes:
+        color = _MPL_COLORS[series.passes.index(p) % len(_MPL_COLORS)]
         data = p.cards.get_data_mod(loc_units=series.swath_units)
         x = np.array(data["loc"], dtype=float)
         y = np.array(data[cfg.get_card_plot_y_axis()], dtype=float)
-        widget.canvas.ax.plot(x[y != 0], y[y != 0], linewidth=1, label=p.name)
+        widget.canvas.ax.plot(x[y != 0], y[y != 0], color=color, linewidth=1, label=p.name)
     if len(active_passes) > 1:
         widget.canvas.ax.legend()
     widget.canvas.ax.set_ylim(bottom=0, auto=None)

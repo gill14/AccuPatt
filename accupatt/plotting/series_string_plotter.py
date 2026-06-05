@@ -1,6 +1,7 @@
 import numpy as np
 import accupatt.config as cfg
 
+from accupatt.models.passTable import _MPL_COLORS
 from accupatt.models.seriesDataString import SeriesDataString
 from accupatt.widgets.mplwidget import MplWidget
 from accupatt.plotting import series_base_plotter
@@ -10,10 +11,11 @@ def plot_overlay(widget: MplWidget, series: SeriesDataString):
     series_base_plotter._configure(widget, series.swath_units, suppress_yticks=True)
     active_passes = [p for p in series.passes if p.string.is_active()]
     for p in active_passes:
+        color = _MPL_COLORS[series.passes.index(p) % len(_MPL_COLORS)]
         d = p.string.get_data_mod(loc_units_override=series.swath_units)
         x = np.array(d["loc"], dtype=float)
         y = np.array(d[p.name], dtype=float) * p.string.equalize_factor
-        widget.canvas.ax.plot(x[y != 0], y[y != 0], linewidth=1, label=p.name)
+        widget.canvas.ax.plot(x[y != 0], y[y != 0], color=color, linewidth=1, label=p.name)
     if len(active_passes) > 1:
         widget.canvas.ax.legend()
     widget.canvas.ax.set_ylim(bottom=0, auto=None)

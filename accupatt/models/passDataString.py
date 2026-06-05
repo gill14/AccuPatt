@@ -20,7 +20,7 @@ class PassDataString(PassDataBase):
         # String Data Mod Options
         self.trim_l = 0
         self.trim_r = 0
-        self.trim_v = 0.0
+        self.trim_v: float | None = None
         self.rebase = False
         self.equalize_factor = 1.0
         # Processing options
@@ -97,9 +97,9 @@ class PassDataString(PassDataBase):
         # Rebase locations according to ratio of untrimmed:trimmed length
         d["loc"] = d["loc"].multiply(untrimmed_dist / trimmed_dist)
 
-    def trimV(self, d: pd.DataFrame, trimV: float = 0.0):
-        # Trim Vertical and clip all negative values (from trimmed areas) to 0
-        d[self.name] = d[self.name].sub(trimV).clip(lower=0)
+    def trimV(self, d: pd.DataFrame, trimV: float | None = None):
+        if trimV:
+            d[self.name] = d[self.name].sub(trimV).clip(lower=0)
 
     def smoothIt(self, d: pd.DataFrame, isSmooth: bool, window: float, order: int):
         if not isSmooth:
@@ -129,13 +129,13 @@ class PassDataString(PassDataBase):
     """
 
     def user_set_trim_left(self, value: float):
-        old_floor = self.findMin(self.data, self.trim_l, self.trim_r) + self.trim_v
+        old_floor = self.findMin(self.data, self.trim_l, self.trim_r) + (self.trim_v or 0.0)
         self.trim_l = int(self.data["loc"].sub(value).abs().idxmin())
         new_min = self.findMin(self.data, self.trim_l, self.trim_r)
         self.trim_v = max(0.0, old_floor - new_min)
 
     def user_set_trim_right(self, value: float):
-        old_floor = self.findMin(self.data, self.trim_l, self.trim_r) + self.trim_v
+        old_floor = self.findMin(self.data, self.trim_l, self.trim_r) + (self.trim_v or 0.0)
         self.trim_r = int(
             self.data["loc"].shape[0] - self.data["loc"].sub(value).abs().idxmin()
         )
@@ -151,6 +151,14 @@ class PassDataString(PassDataBase):
     """
     Convenience
     """
+
+    def snr3_trim_v(self) -> float | None:
+        if self.snr_result is None or self.data.empty:
+            return None
+        N_rms, y_bar, *_ = self.snr_result
+        floor = y_bar + 3 * N_rms
+        min_y = self.findMin(self.data, self.trim_l, self.trim_r)
+        return float(floor - min_y) if min_y < floor else 0.0
 
     def has_data(self) -> bool:
         return not self.data.empty

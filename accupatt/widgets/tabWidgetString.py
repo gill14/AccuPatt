@@ -150,6 +150,13 @@ class TabWidgetString(TabWidgetBase):
     def individuals_triggered(self, passData: Pass):
         self._remove_snr_button()
         passData.string.snr_result = pass_string_plotter.compute_snr(passData.string)
+        if passData.string.trim_v is None and passData.string.snr_result is not None:
+            N_rms, y_bar, *_ = passData.string.snr_result
+            passData.string.user_set_trim_floor(y_bar + 3 * N_rms)
+            QTimer.singleShot(
+                0,
+                lambda: self.updatePlots(modify=True, composites=True, simulations=True),
+            )
         line_left, line_right, line_vertical = pass_string_plotter.plot_individual(
             self.plotWidgetIndividual, passData.string
         )
@@ -161,7 +168,7 @@ class TabWidgetString(TabWidgetBase):
             line_left.sigPositionChangeFinished.connect(self._updateTrimL)
             line_right.sigPositionChangeFinished.connect(self._updateTrimR)
             line_vertical.sigPositionChangeFinished.connect(self._updateTrimFloor)
-            self._add_snr_button(line_vertical)
+            self._add_snr_button(line_vertical, passData)
         pass_string_plotter.plot_individual_trim(
             self.plotWidgetIndividualTrim, passData.string
         )
@@ -170,7 +177,7 @@ class TabWidgetString(TabWidgetBase):
     SNR Snap Button
     """
 
-    def _add_snr_button(self, floor_line):
+    def _add_snr_button(self, floor_line, passData):
         self._floor_line_ref = floor_line
         btn = QPushButton("Snap to SNR=3")
         btn.setStyleSheet("""
@@ -194,6 +201,13 @@ class TabWidgetString(TabWidgetBase):
         btn.setMinimumWidth(
             QFontMetrics(bold_font).horizontalAdvance(btn.text()) + 32
         )
+        snr3_tv = passData.string.snr3_trim_v()
+        at_snr3 = (
+            snr3_tv is not None
+            and passData.string.trim_v is not None
+            and abs(passData.string.trim_v - snr3_tv) < 1e-6
+        )
+        btn.setVisible(not at_snr3)
         self._snr_proxy = QGraphicsProxyWidget()
         self._snr_proxy.setWidget(btn)
         self.plotWidgetIndividual.scene().addItem(self._snr_proxy)
