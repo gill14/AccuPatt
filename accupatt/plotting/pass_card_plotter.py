@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from matplotlib.patches import Patch
 from scipy import interpolate
 
 import accupatt.config as cfg
@@ -58,13 +59,17 @@ def plot(
                 ]
                 for category, color in zip(categories, colors):
                     fill_mask = np.ma.masked_where(dsc_i != category, y_i)
-                    if not np.any(np.ma.getmask(fill_mask)):
+                    if not fill_mask.count():
                         continue
-                    diff = np.diff(np.asarray(np.ma.getmask(fill_mask), dtype=int))
+                    diff = np.diff(np.asarray(np.ma.getmaskarray(fill_mask), dtype=int))
                     diff = np.append(diff, 0)
                     fill_mask[diff < 0] = y_i[diff < 0]
-                    ax.fill_between(locs_i, fill_mask, color=color, alpha=0.7, label=category)
-                ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+                    ax.fill_between(locs_i, fill_mask, color=color, alpha=0.7)
+                legend_elements = [
+                    Patch(facecolor=color, alpha=0.7, label=category)
+                    for category, color in zip(categories, colors)
+                ]
+                ax.legend(handles=legend_elements, loc="center left", bbox_to_anchor=(1, 0.5))
         else:
             ax.fill_between(locs_i, 0, y_i, alpha=0.7)
         ax.plot(locs_i, y_i, color="black")
