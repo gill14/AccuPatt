@@ -287,8 +287,9 @@ class SeriesInfoWidget(baseclass):
         self.ui.comboBoxWinglets.currentTextChanged[str].connect(self._commit_winglets)
 
     def fill_aircraft(self, info: AppInfo):
+        model = info.model
         self.ui.comboBoxMake.setCurrentText(info.make)
-        self.ui.comboBoxModel.setCurrentText(info.model)
+        self.ui.comboBoxModel.setCurrentText(model)
         with QSignalBlocker(self.ui.comboBoxWingspanUnits):
             self.ui.comboBoxWingspanUnits.setCurrentIndex(-1)
             self.ui.comboBoxWingspanUnits.setCurrentText(info.wingspan_units)
