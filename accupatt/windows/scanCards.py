@@ -62,6 +62,7 @@ class _BrowserSignals(QObject):
 
 class _ScannerSignals(QObject):
     session_opened = pyqtSignal(object)  # NSError or None
+    session_closed = pyqtSignal(object)  # NSError or None
     fu_selected = pyqtSignal(object)     # NSError or None (functional unit selected)
     scan_done = pyqtSignal(str)          # path to TIFF file
     scan_failed = pyqtSignal(str)        # error description
@@ -113,6 +114,10 @@ if _ICA_AVAILABLE:
                     self._signals.scan_done.emit(path)
                 else:
                     self._signals.scan_failed.emit("Scan produced no output file.")
+
+        def device_didCloseSessionWithError_(self, _device, error):
+            if self._signals:
+                self._signals.session_closed.emit(error)
 
         def device_didEncounterError_(self, device, error):
             if self._signals:
@@ -291,11 +296,17 @@ class ScanCards(_CardImageBase):
         loop.exec()
 
         if timed_out[0]:
-            self._set_status("Timed out waiting for scanner session.")
+            self._set_status(
+                "Could not open scanner session — it may be in use by another app "
+                "(e.g., macOS Image Capture). Close other scanner apps and try again."
+            )
             return False
         if session_error[0] is not None:
             msg = str(session_error[0].localizedDescription())
-            self._set_status(f"Could not open scanner session: {msg}")
+            self._set_status(
+                f"Could not open scanner session: {msg} — "
+                "if another app (e.g., Image Capture) is using the scanner, close it and retry."
+            )
             return False
 
         # Step 2: select the flatbed functional unit
@@ -328,9 +339,17 @@ class ScanCards(_CardImageBase):
         return True
 
     def _close_session(self, device):
-        if self._session_open and device is not None:
-            device.requestCloseSession()
-            self._session_open = False
+        if not self._session_open or device is None:
+            return
+        signals = _ScannerSignals()
+        if self._scanner_delegate is not None:
+            self._scanner_delegate._signals = signals
+        loop = QEventLoop()
+        signals.session_closed.connect(lambda _: loop.quit())
+        QTimer.singleShot(2_000, loop.quit)
+        device.requestCloseSession()
+        self._session_open = False
+        loop.exec()
 
     # ------------------------------------------------------------------
     # Scan acquisition
@@ -412,7 +431,9 @@ class ScanCards(_CardImageBase):
             return None
 
         pil_img = Image.open(tiff_path[0]).convert("RGB")
-        return cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+        img_bgr = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+        pil_img.close()
+        return img_bgr
 
     @staticmethod
     def _nearest_resolution(fu, requested_dpi: int) -> int:
@@ -626,9 +647,7 @@ class ScanCards(_CardImageBase):
 
     @pyqtSlot()
     def _cleanup(self):
-        self._ica_pump_timer.stop()
-        # Detach delegates before any teardown so ICA has no Python objects to
-        # call back into when the session closes and the browser stops.
+        # Keep pump running so ICA callbacks are delivered during teardown.
         device = self._current_device()
         if device is not None:
             self._close_session(device)
@@ -643,6 +662,7 @@ class ScanCards(_CardImageBase):
                 pass
             self._browser.stop()
             self._browser = None
+        self._ica_pump_timer.stop()
 
     # ------------------------------------------------------------------
     # Helpers
