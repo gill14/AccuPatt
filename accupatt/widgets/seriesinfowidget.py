@@ -106,9 +106,12 @@ class SeriesInfoWidget(baseclass):
     def fill_flyin(self, info: AppInfo):
         self.ui.lineEditName.setText(info.flyin_name)
         self.ui.lineEditLocation.setText(info.flyin_location)
+        date = QDate.fromString(info.flyin_date, "d MMM yyyy")
+        if not date.isValid():
+            date = QDate.currentDate()
+            info.flyin_date = date.toString("d MMM yyyy")
         with QSignalBlocker(self.ui.dateEdit):
-            date = QDate.fromString(info.flyin_date, "d MMM yyyy")
-            self.ui.dateEdit.setDate(date if date.isValid() else QDate.currentDate())
+            self.ui.dateEdit.setDate(date)
         self.ui.lineEditAnalyst.setText(info.flyin_analyst)
 
     @pyqtSlot()
