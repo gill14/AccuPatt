@@ -149,8 +149,8 @@ class Settings(baseclass):
         self.ui.cb_flip_x.setChecked(cfg.get_image_flip_x())
         self.ui.cb_flip_y.setChecked(cfg.get_image_flip_y())
 
-        self.ui.cbb_image_dpi.addItems([str(d) for d in cfg.IMAGE_DPI_OPTIONS])
-        self.ui.cbb_image_dpi.setCurrentText(str(cfg.get_image_dpi()))
+        self.ui.cbb_image_dpi.addItems([f"{d} DPI" for d in cfg.IMAGE_DPI_OPTIONS])
+        self.ui.cbb_image_dpi.setCurrentText(f"{cfg.get_image_dpi()} DPI")
 
         self.ui.cbb_roi_orientation.addItems(cfg.ROI_ACQUISITION_ORIENTATIONS)
         self.ui.cbb_roi_orientation.setCurrentText(
@@ -159,8 +159,8 @@ class Settings(baseclass):
         self.ui.cbb_roi_order.addItems(cfg.ROI_ACQUISITION_ORDERS)
         self.ui.cbb_roi_order.setCurrentText(cfg.get_image_roi_acquisition_order())
 
-        self.ui.cbb_roi_scale.addItems([str(s) for s in cfg.ROI_SCALES])
-        self.ui.cbb_roi_scale.setCurrentText(str(cfg.get_image_roi_scale()))
+        self.ui.cbb_roi_scale.addItems([f"{s}%" for s in cfg.ROI_SCALES])
+        self.ui.cbb_roi_scale.setCurrentText(f"{cfg.get_image_roi_scale()}%")
 
         self.ui.cbb_threshold_type.addItems(cfg.THRESHOLD_TYPES)
         self.ui.cbb_threshold_type.setCurrentText(cfg.get_threshold_type())
@@ -196,6 +196,13 @@ class Settings(baseclass):
         self.ui.dsb_spread_a.setValue(cfg.get_spread_factor_a())
         self.ui.dsb_spread_b.setValue(cfg.get_spread_factor_b())
         self.ui.dsb_spread_c.setValue(cfg.get_spread_factor_c())
+        self.ui.cbb_spread_equation.currentTextChanged.connect(
+            self._update_spread_equation_preview
+        )
+        self.ui.dsb_spread_a.valueChanged.connect(self._update_spread_equation_preview)
+        self.ui.dsb_spread_b.valueChanged.connect(self._update_spread_equation_preview)
+        self.ui.dsb_spread_c.valueChanged.connect(self._update_spread_equation_preview)
+        self._update_spread_equation_preview()
 
         self.ui.cbb_card_plot_y_axis.addItems(
             [
@@ -291,12 +298,12 @@ class Settings(baseclass):
         cfg.set_image_load_method(self.ui.cbb_image_load_method.currentText())
         cfg.set_image_flip_x(self.ui.cb_flip_x.isChecked())
         cfg.set_image_flip_y(self.ui.cb_flip_y.isChecked())
-        cfg.set_image_dpi(int(self.ui.cbb_image_dpi.currentText()))
+        cfg.set_image_dpi(int(self.ui.cbb_image_dpi.currentText().split()[0]))
         cfg.set_image_roi_acquisition_orientation(
             self.ui.cbb_roi_orientation.currentText()
         )
         cfg.set_image_roi_acquisition_order(self.ui.cbb_roi_order.currentText())
-        cfg.set_image_roi_scale(int(self.ui.cbb_roi_scale.currentText()))
+        cfg.set_image_roi_scale(int(self.ui.cbb_roi_scale.currentText().rstrip("%")))
         cfg.set_threshold_type(self.ui.cbb_threshold_type.currentText())
         cfg.set_threshold_grayscale(self.ui.sb_threshold_grayscale.value())
         cfg.set_threshold_grayscale_method(
@@ -523,6 +530,21 @@ class Settings(baseclass):
             self.ui.lbl_dye_emission.clear()
             self.ui.lbl_dye_integration.clear()
             self.ui.lbl_dye_boxcar.clear()
+
+    def _update_spread_equation_preview(self):
+        a = self.ui.dsb_spread_a.value()
+        b = self.ui.dsb_spread_b.value()
+        c = self.ui.dsb_spread_c.value()
+        method = self.ui.cbb_spread_equation.currentText()
+        if method == cfg.SPREAD_METHOD_DIRECT:
+            eqn = f"DD = {a:g}(DS)² + {b:g}(DS) + {c:g}"
+        elif method == cfg.SPREAD_METHOD_ADAPTIVE:
+            eqn = f"DD = DS / ({a:g}(DS)² + {b:g}(DS) + {c:g})"
+        elif method == cfg.SPREAD_METHOD_LN:
+            eqn = f"DD = {a:g}·ln(DS) + {b:g}(DS) + {c:g}"
+        else:
+            eqn = "DD = DS"
+        self.ui.lbl_spread_equation_value.setText(eqn)
 
     def _open_dye_manager(self):
         from accupatt.windows.definedDyeManager import DyeManager

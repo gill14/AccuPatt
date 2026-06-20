@@ -587,7 +587,7 @@ def set_image_load_dir(value: str):
 
 
 _IMAGE_LOAD_METHOD = "image_load_method"
-IMAGE_LOAD_METHODS = ["One File Per Card", "One File, Multiple Cards", "From ZIP"]
+IMAGE_LOAD_METHODS = ["One Card per File", "Multiple Cards per File", "From ZIP"]
 IMAGE_LOAD_METHOD__DEFAULT = IMAGE_LOAD_METHODS[1]
 
 
@@ -910,7 +910,7 @@ def set_min_stain_area_px(value: int):
 
 _STAIN_APPROXIMATION_METHOD = "stain_approximation_method"
 STAIN_APPROXIMATION_NONE = "None"
-STAIN_APPROXIMATION_MIN_CIRCLE = "Minimum Enclosing Circle"
+STAIN_APPROXIMATION_MIN_CIRCLE = "Enclosing Circle"
 STAIN_APPROXIMATION_ELLIPSE = "Fit Ellipse"
 STAIN_APPROXIMATION_CONVEX_HULL = "Convex Hull"
 STAIN_APPROXIMATION_METHODS = [

@@ -1,5 +1,7 @@
 \documentclass[10pt,letterpaper,titlepage]{article}
 \usepackage[latin1]{inputenc}
+\usepackage{parskip}
+\usepackage{float}
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
@@ -8,10 +10,57 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{placeins}
+\usepackage{caption}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{suffix}
+\usepackage{subcaption}
+
+\setlength{\fboxsep}{0pt} % Removes padding
+%\setlength{\fboxrule}{2pt}  % Sets thickness
+
+\definecolor{sectionColor}{RGB}{31, 78, 121}
+\definecolor{subsectionColor}{RGB}{0, 112, 112}
+\definecolor{subsubsectionColor}{RGB}{96, 60, 120}
+
+\newsavebox{\titlebox}
+\newcommand{\makesecbox}[2]{%
+  \savebox{\titlebox}{%
+    \parbox{\dimexpr\linewidth-2\fboxsep\relax}{\strut\color{white}#2\strut}%
+  }%
+  \colorbox{#1}{\usebox{\titlebox}}%
+}
+
+\let\orgsection\section
+\let\orgsubsection\subsection
+\let\orgsubsubsection\subsubsection
+
+\renewcommand{\section}[1]{%
+  \refstepcounter{section}%
+  \orgsection*{\makesecbox{sectionColor}{\enspace\Large\bfseries\thesection\quad #1}}%
+  \addcontentsline{toc}{section}{\protect\numberline{\thesection}#1}%
+}
+\WithSuffix\newcommand\section*[1]{\orgsection*{#1}}
+
+\renewcommand{\subsection}[1]{%
+  \refstepcounter{subsection}%
+  \orgsubsection*{\makesecbox{subsectionColor}{\enspace\large\bfseries\thesubsection\quad #1}}%
+  \addcontentsline{toc}{subsection}{\protect\numberline{\thesubsection}#1}%
+}
+\WithSuffix\newcommand\subsection*[1]{\orgsubsection*{#1}}
+
+\renewcommand{\subsubsection}[1]{%
+  \refstepcounter{subsubsection}%
+  \orgsubsubsection*{\makesecbox{subsubsectionColor}{\enspace\normalsize\bfseries\thesubsubsection\quad #1}}%
+  \addcontentsline{toc}{subsubsection}{\protect\numberline{\thesubsubsection}#1}%
+}
+\WithSuffix\newcommand\subsubsection*[1]{\orgsubsubsection*{#1}}
+
 \geometry{letterpaper, portrait, margin=1.25in}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
 \graphicspath{{images/}}
 \author{Matt Gill}
+\setcounter{secnumdepth}{4}
 \begin{document}
 	\begin{titlepage}
 		\begin{center}
@@ -19,7 +68,7 @@
             \includegraphics[width=0.8\textwidth]{accupatt_logo.png}\\
 			\vspace{0.5cm}
 			\textbf{Aircraft Spray Pattern Testing Software}\\
-			User Manual - Version 2.0.x
+			User Manual - Version 2.2
 			\vfill
 			\textbf{Developed By:}\\
 			Matt Gill - National Agricultural Aviation Association\\
@@ -27,10 +76,11 @@
 			\textbf{Based on Previous Work By:}\\
 			Dr. Richard Whitney - WRK of Oklahoma\\
 			Phil Jank - USDA Aerial Application Technology Research Unit\\
+            Mark Ledebuhr - Application Insight, LLC\\
             \vspace{0.5cm}
 			\textbf{Aided Significantly by the Technical Expertise Of:}\\
 			Dr. Scott Bretthauer - National Agricultural Aviation Association\\
-            Dr. Brad Fritz - USDA Aerial Application Technology Research Unit\\
+            Dr. Brad Fritz - USDA-ARS Aerial Application Technology Research Unit\\
             Dr. Dennis Gardisser - WRK of Arkansas\\
 		\end{center}
 	\end{titlepage}
@@ -43,263 +93,739 @@
         \item Maximize flexibility through parameterization to provide broad utility
         \item Wherever possible, simplify; The best tools don't need user manuals (And yet here we are)
     \end{itemize}
+    \subsection{Measuring Deposition with String}
+    The use of string for assessing aircraft spray patterns is a longstanding methodology. As a small, continuous collector, it offers both high collection efficiency for smaller droplets and high spatial resolution across a swath. The tradeoffs include a lower collection efficiency for larger droplets and its limit to measuring only relative deposition.\par
+    By using a fluorescent tracer dye in the spray solution, the relative deposition along the string can be measured by exciting the dye with a light source of the appropriate wavelength and measuring the intensity of emitted light at another wavelength.\par
+    This method is particularly useful for rapidly assessing pattern shape and uniformity, but it lacks the ability to provide quantifiable deposition data. It also offers no insight into droplet size distribution.
+
+    \subsection{Measuring Deposition with Spray Cards}
+    Spray cards (or paper) are another method for assessing aircraft spray patterns. By capturing droplet stains on a flat surface, they can be scanned and processed to provide quantifiable deposition data as well as insight into droplet size distribution. The tradeoffs include lower spatial resolution across the swath (unless continuous paper is used) and lower collection efficiency for smaller droplets.\par
+    Spray cards can be used as a standalone method for assessing spray patterns, but they are often used in conjunction with string to provide a more complete picture of the pattern. For example, string can be used to rapidly assess pattern shape and uniformity while spray cards can be used to provide quantifiable deposition data and insight into droplet size distribution.\par
+    There are three basic types of paper typically used for pattern testing:
+    \begin{itemize}
+        \item Water-Sensitive Paper (WSP) is a discrete sampler that changes color when it comes into contact with water; this allows it to be used without the need for a dye in the spray solution. 
+        \item Cast-Coat Paper (Kromekote, etc.) is a discrete sampler that has a uniform, glossy finish which permits acquisition of smaller stains than WSP when scanned at higher resolutions. However, it requires the use of a dye in the spray solution for the stains to be visible.
+        \item Bond Paper (Receipt Paper, etc.) is a continuous sampler (available in rolls) that can be deployed rapidly. It also requires the use of a dye in the spray solution for the stains to be visible. 
+    \end{itemize}
+    The major caveat to all spray card/paper analysis is that, while droplet density and relative coverage can be measured, the translation of stain size to droplet size is not straightforward. This is because the stain size is a function of both the droplet size and the spread factor, which is influenced by various factors such as spray solution properties, humidity, and paper properties. Therefore, while spray card analysis can provide insight into droplet size distribution, it should be interpreted with extreme caution and an understanding of its limitations.
+
 
     \newpage
 
     \section{Compatible Hardware}
 
     \subsection{String Hardware}
-    To collect relative fluorescence deposition data from a linear (string) collector, special hardware is required. Specifically: 
-    \begin{itemize}
-        \item A light source of the excitation wavelength for the intended tracer dye
-        \item A means to measure intensity of the emitted wavelength for the intended tracer dye
-        \item A controlled means of moving the string through the excitation/emission point
-    \end{itemize}
-    Currently there are two systems available to accomplish this:
-    \begin{itemize}
-        \item{\textit{WRK System:}} The \textit{WRK of Oklahoma} String Spectrometer System is commercially available for purchase and is the system that this software was originally built for. It uses a combination wavelength-specific LED and Band-Pass filter as the excitation source and a commercial USB Spectrometer (Ocean Optics, USB2000+, Flame or similiar) as the emission wavelength measurement device. It utilizes a set of serially controlled stepper motors in conjunction with various clutches and pulleys to move the string at a constant speed. Any questions on the \textit{WRK of Oklahoma} system should be directed to its creator, Dr. Richard Whitney (\href{mailto:whitney3451@att.net}{whitney3451@att.net})
-        \item{\textit{USDA-ARS AATRU System:}} The \textit{USDA} String Spectrometer System is not commercially available, however, build specifications, a parts list and build instructions are freely available. It uses a combination wavelength-specific LED and Band-Pass filter as the excitation source and a commercial USB Spectrometer (Ocean Optics, USB2000+, Flame or similar) as the emission wavelength measurement device. It utilizes a variable-speed controller to drive a lightly-modified portable drill, with a rotary encoder providing feedback for PID control. Any questions on the \textit{USDA} system should be directed to its creator, Phil Jank (\href{mailto:phil.jank@usda.gov}{phil.jank@usda.gov}).
-    \end{itemize}
-    \textbf{\color{red}Note: Currently, only the WRK System is operationally supported within AccuPatt. However, data files generated by the USDA system may be imported for analysis.\color{black}}
+    \textit{AccuPatt} was designed around the \textit{WRK of Oklahoma} String Spectrometer System, and thus is fully compatible with that system. It uses a combination wavelength-specific LED and Band-Pass filter as the excitation source and a commercial USB Spectrometer (Ocean Optics, USB2000+, Flame or similar) as the emission wavelength measurement device. It utilizes a set of serially controlled stepper motors in conjunction with various clutches and pulleys to move the string at a constant speed. Any questions on the \textit{WRK of Oklahoma} system should be directed to its creator, Dr. Richard Whitney (\href{mailto:whitney3451@att.net}{whitney3451@att.net})\par
 
     \subsection{Spray-Card Hardware}
-    To process spray-cards, they must first be scanned with a flatbed scanner. It is recommended to use a dedicated scanner (not a combination printer/scanner) for the highest quality. A supported resolution of at least 1200 dpi is recommended for most applications. \textit{AccuPatt} does not communicate with the scanner. Instead, images are scanned using the software of your choice (typically that which comes with the scanner itself) and those images can be uploaded to \textit{AccuPatt} for processing.
+    To process spray-cards, they must first be scanned with a flatbed scanner. It is recommended to use a dedicated scanner (not a combination printer/scanner) for the highest quality. A supported resolution of at least 1200 dpi is recommended for most applications. \textit{AccuPatt} can communicate with the scanner directly (MacOS Only) or images can be scanned externally using the software of your choice and uploaded to \textit{AccuPatt} for processing.
     
     \newpage
 
     \section{Installation}
 
     \subsection{Windows}
-    After downloading the installer, double click it to launch the install wizard. You will have the option to create a desktop shortcut if desired.\\
-    \\\textbf{\color{red}Note: Windows 10 or newer required.\color{black}}\\\\
-    The \textit{WRK System} requires the following drivers to be installed:
-    \begin{itemize}
-        \item Install the \textit{OmniDriver} Spectrometer hardware driver provided by the manufacturer. When prompted in the install process, choose the Redistributable (free) version. \url{https://www.oceaninsight.com/support/software-downloads/omnidriver-and-spam/}
-        \item Install the \textit{FTDI (VCP)} Stepper Motor hardware driver provided by the manufarcturer. \url{https://ftdichip.com/drivers/vcp-drivers/}
-    \end{itemize}
+    Windows 10 or newer is required.
+    \begin{enumerate}
+        \item Download and install the \textit{OceanDirect} spectrometer driver \href{https://www.oceanoptics.com/software/oceandirect/}{provided by the manufacturer here}.
+        \item Download and install the \textit{FTDI (VCP)} Stepper Motor driver \href{https://ftdichip.com/drivers/vcp-drivers/}{provided by the manufarcturer here}.
+        \item Download and install \textit{AccuPatt} from \href{https://github.com/gill14/AccuPatt/releases}{its GitHub repository here}. (You just need the \textit{Install.AccuPatt.exe} file)
+    \end{enumerate}
+
     \subsection{MacOS}
-    After downloading the .dmg file, double click it to open it as a volume. Drag the \textit{AccuPatt} icon to the \textbf{Applications} shortcut icon. Depending on how you acquired the file, you may be required to right click on the app and choose \textit{Open} to bypass MacOS Gatekeeper settings.\\ 
-    \\\textbf{\color{red}Note: MacOS 11 or newer, running on ARM64 (Apple Silicon), required.\color{black}}\\\\
-    The \textit{WRK System} requires no additional drivers.
+    MacOS 11 or newer, running on ARM64 (Apple Silicon), required.
+    \begin{enumerate}
+        \item Download \textit{AccuPatt} from \href{https://github.com/gill14/AccuPatt/releases}{its GitHub repository here} (You just need the \textit{AccuPatt.dmg} file).
+        \item Install \textit{AccuPatt} by opening the downloaded .dmg as a volume. Drag the \textit{AccuPatt} icon to the \textit{Applications} shortcut icon. Since this app isn't registered with Apple, you will need to right click on the app and choose \textit{Open}. You can find more detail on this process from \href{https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac}{Apple's support page}.
+    \end{enumerate}
+
     \newpage
 
-    \section{Operational Overview}
+    \section{Settings \& Configuration}
+    Choosing \textbf{File $\rightarrow$ Settings} from the menu will open the \textbf{Settings} window, which contains several tabs for configuring various aspects of the application. These are saved persistently and applied to all newly created series. Some settings, such as plot preferences which do not affect pattern/data processing, will also apply to previously created series which are opened subsequently.\par
+    \subsection{General Settings}
+    \begin{itemize}
+        \item \textbf{Data File Directory:} This is the directory which data files will be saved into by default, as well as where the application will look for data files when using the \textbf{New Series $\rightarrow$ File Aircraft} option.
+        \item \textbf{Fly-In Default Values:} The Name, Location, Date and Analyst(s) fields automatically applied to new series.
+        \item \textbf{Passes:} The number of passes to be used in new series.
+    \end{itemize}
+
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{settings_general.png}}
+        \caption{Settings - General Tab}
+        \label{fig:settings_general}
+    \end{figure}
+   
+    \subsection{Observables Settings}
+    \begin{itemize}
+        \item \textbf{Series Observables:} The default units for new series observables.
+        \item \textbf{Pass Observables:} The default units for pass observables in a new series.
+    \end{itemize}
+
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{settings_observables.png}}
+        \caption{Settings - Observables Tab}
+        \label{fig:settings_observables}
+    \end{figure}
+
+    \subsection{String Settings}
+    \label{sec:string_settings}
+
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{settings_string.png}}
+        \caption{Settings - String Tab}
+        \label{fig:settings_string}
+    \end{figure}
+
+    \subsubsection{Fluorescent Dye}
+    \label{sec:settings_string_dye}
+    The default dye for new series. The listed parameters associated with the dye are used for configuring and acquiring data from the spectrometer. Several pre-loaded dyes are included, but new dyes can be added via the \textbf{Define/Edit Dyes} button which opens an edit window (\autoref{fig:settings_dye_manager}).\par
+    The dye parameters are as follows:
+    \begin{itemize}
+        \item \textbf{Excitation Wavelength (nm):} The target wavelength of the excitation light source (LED + Band-Pass filter). Changing this value will NOT automatically adjust the excitation source; the proper LED and Band-Pass filter must be physically installed. While excitation data is stored in the datafile, \textit{AccuPatt} only utilizes it as a reference point in the \textbf{Test Spectrometer} window.
+        \item \textbf{Emission Wavelength (nm):} The target wavelength of light emitted by the dye when excited. This is the wavelength at which intensity is captured as the relative dye deposition.
+        \item \textbf{Integration Time (ms):} Time to collect light for a spectrometer reading. Think of this as the exposure on a camera; longer times correspond with more detail incorporated in each data frame, but a lower quantity of data frames per unit length of string.
+        \item \textbf{Boxcar Width (nm):} The cross-spectrum wavelength width to average for each spectrometer reading. A value of 0 means to take a reading only from the spectrometer pixel nearest the target emission wavelength. A value of 5, for example, would have each spectrometer reading be an average of every pixel within 5 nm (+/-2.5 nm) of the target emission wavelength.
+    \end{itemize}
+
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{settings_dye_manager.png}}
+        \caption{Settings - String Tab - Define/Edit Dyes}
+        \label{fig:settings_dye_manager}
+    \end{figure}
+
+    \subsubsection{Pattern Processing}
+    \label{sec:settings_string_process}
+    The default smoothing and centering applied to new series; both for individual passes and the average pattern. These settings can be adjusted on a per-pass or per-series basis from the \textbf{String Analysis} tab as well.
+    \begin{itemize}
+        \item \textbf{Smooth Window:} X-domain based distance over which the sliding smoothing filter is fit and applied
+        \item \textbf{Smooth Order:} Polynomial order for smoothing filter
+        \item \textbf{Center Method:} The pattern is horizontally shifted so either the centroid or center of distribution is the new zero. (These are equivalent for evenly spaced data, so it typically doesn't matter for regularly spaced string data)
+    \end{itemize}
+
+    \subsubsection{Plot Options}
+    \label{sec:settings_string_plot}
+    The visual-only settings for string plots; these are not saved with datafiles and do not affect computations of CV.
+    \begin{itemize}
+        \item \textbf{Intensity Units:} The y-axis units for emission data intensity. These are always stored in Absolute Units (AU) but may optionally be displayed as a Relative (\%) of the spectrometer's 16-bit saturation value (65535 AU).
+        \item \textbf{Average Overlay:} The dashed line optionally displayed as an overlay to the average pattern as one of:
+        \begin{itemize}
+            \item \textbf{Inner-Swath-Half-Average:} Computes one-half the average y-value within the \textbf{Adjusted Swath Width} range and draws a horizontal line at that value bounded by vertical lines at the bounds of the \textbf{Adjusted Swath Width}. This is sometimes referred to as the "old-school" way of determining effective swath width, where the intersection points of the horizontal and vertical lines should approximately touch the plotted pattern.
+            \item \textbf{Average:} Computes the average y-value of the entire pattern and draws a horizontal line at that value.
+        \end{itemize}
+        \item \textbf{Simulation View:} Set the x-bounds of the overlap simulation plots as one of:
+        \begin{itemize}
+            \item \textbf{One Swath Width:} Only the mathematically relevant portion of the simulated overlap will be shown, specifically datapoints between -swathwidth/2 and swathwidth/2.
+            \item \textbf{All Swaths:} All selected simulated adjacent passes will be shown. Can be useful for illustrating the big picture of in-field overlap.
+        \end{itemize}
+    \end{itemize}
+
+    \subsubsection{String Drive}
+    The settings for controlling the stepper motors in capturing string data; not saved to the datafile.
+    \begin{itemize}
+        \item \textbf{Serial Port:} Searches for and automatically connects to an FTDI device if found. A refresh button allows a manual connection attempt. A colored status readout shows green if the device is ready and yellow if it is not.
+        \item \textbf{String Length:} The length and units (ft or m) of string to process for a single pass.
+        \item \textbf{String Speed:} The calibrated velocity of the string as it is processed. This is used to determine the location of each data point and duration of data capture for each pass. A \textbf{Calibrate} button opens an interactive calibration window (\autoref{fig:string_drive_speed}) to use a known length of string (defaults to flightline length but any length may be used) to calculate the speed.
+        \item \textbf{Collect From:} The orientation Left to Right or Right to Left in which the data should be collected. This is typically Left to Right (unwinding string spools previously collected in the field) but should be set as Right to Left if processing string directly in the field from the aircraft's right side.
+        \item \textbf{Manual Drive:} Buttons to activate the forward or reverse motors for testing or ad-hoc needs.
+        \item \textbf{Command:} Facilitates direct querying and setting string drive stepper motor parameters to onboard nonvolatile memory. The Take-Up Reel corresponds to address \textbf{A} and the Supply Reel corresponds to address \textbf{B}. With a command typed into the text field, clicking the \textbf{Send} button will append a carriage return, encode the message and send it to the stepper motor driver. A string of return text is normally received, and is displayed when available. This return text may simply be an echo of your command, or it may contain parameter information. See the stepper motor driver documentation by clicking the \textbf{Open Stepper Manual} button for specific commands.
+    \end{itemize}
     
-    \subsection{New Series}
-    All data and operations in \textit{AccuPatt} require a series. To acquire new data, a new series must be created. From the menu bar, use \textbf{File $\rightarrow$ New Series} to view options available (Figure~\ref{fig:new_series}). A series is created with the user-defined default number of passes.
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=1\textwidth]{settings_string_calibrate.png}}
+        \caption{Settings - String Tab - Calibrate Speed}
+        \label{fig:string_drive_speed}
+    \end{figure}
+
+    \subsubsection{Spectrometer}
+    An automatic search and connection (if available) for a connected spectrometer. A refresh button allows for a manual connection attempt. A colored status readout shows green if the device is ready, yellow if it is not and orange if there is a driver issue.\par
+    The \textbf{Test Spectrometer} button opens a window with a live readout of the entire measured spectrum (\autoref{fig:spectrometer_test}). The previously selected dye is used to set target excitation and emission wavelengths as well as integration time and boxcar width.
+
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=0.95\textwidth]{settings_string_test_spectrometer.png}}
+        \caption{Settings - String Tab - Test Spectrometer (With Emission Filter)}
+        \label{fig:spectrometer_test}
+    \end{figure}
+
+    Some installations do not include an emission filter. In this case the plot will show the excitation source maxing out the scale and an emission "hump" where data is measured. \autoref{fig:spectrometer_test_alt} is provided below to show what that should look like for a typical Rhodamine setup with a 525nm band-pass excitation filter and no emission filter.
+
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=0.70\textwidth]{settings_string_test_spectrometer_alt.png}}
+        \caption{Settings - String Tab - Test Spectrometer (No Emission Filter)}
+        \label{fig:spectrometer_test_alt}
+    \end{figure}
+
+    \subsection{Spray Cards}
+
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{settings_spray_cards.png}}
+        \caption{Settings - Spray Cards Tab}
+        \label{fig:settings_spray_cards}
+    \end{figure}
+
+    \subsubsection{Image Acquisition}
+    \label{sec:settings_card_image_acquisition}
+    \textit{These settings are persistent but are not saved to the datafile since they do not affect the processing of the spray card data itself.}\par
+    Acquiring spray card images to save to the datafile can be done via uploading externally scanned images or through direct scanning in \textit{AccuPatt} (MacOS Only).
+    \begin{itemize}
+        \item \textbf{Load Method:} If scanned externally, select the method to load these images into \textit{AccuPatt} as either:
+        \begin{itemize}
+            \item \textbf{One Card per File:} Each card is externally scanned and saved as a separate image file. When loading, the user will be prompted to select each individual image file for each card. No flipping, cropping or other image manipulations will be performed.
+            \item \textbf{Multiple Cards per File:} Multiple cards are externally scanned together in a single image file. When loading, the user will be prompted to select the single image file. The user will then be able to crop each card from the image, with initial automatic selection determined by:
+            \begin{itemize}
+                \item \textbf{Flip:} Whether to flip the image horizontally and/or vertically as the first step of automatic selection. This accommodates the various image orientations returned by different scanners and scanning software.
+                \item \textbf{Card Order:} The order in which cards are arranged in the image file, which determines the initial automatic selection of each card. For example, if there are 4 cards scanned together in a 2x2 grid, and the order is set to \textit{Increasing} and \textit{Horizontal}, then the initial automatic selection for card 1 will be the top left quadrant of the image, card 2 will be the top right quadrant, card 3 will be the bottom left quadrant and card 4 will be the bottom right quadrant.
+                \item \textbf{Card Crop:} The percentage of the automatically detected card width and height to crop. While it is best to capture as much of the card as possible, there are sometimes edge defects or slight misalignments in card placement that make it more practicable to set the crop to a value less than 100\%.
+            \end{itemize}
+            \item \textbf{From ZIP:} Multiple cards are externally scanned and saved individually into a ZIP archive file. When loading, the user will be prompted to select the ZIP file. Each card image will be extracted and loaded into \textit{AccuPatt} without any flipping, cropping or other image manipulations. This option is targeted primarily for use with Swath Gobbler\textsuperscript{TM} data sets, which are provided in this format.
+        \end{itemize}
+    \end{itemize}
+
+    \subsubsection{Thresholding}
+    \label{sec:settings_card_threshold}
+    \textit{These settings are persistent but apply only to new cards; \textit{Defined Sets} have their own threshold settings on a per-card basis. Moreover, every individual card has its own threshold method and values which will override these default settings for that card. These settings are saved to the datafile on a per-card basis.}\par
+    Scanned/Loaded card images must be converted to a binary format to distinguish stain pixels from background pixels. Thresholds are set to make this determination for each pixel of the image. \textit{AccuPatt} provides two threshold methods as follows:
+    \begin{itemize}
+        \item \textbf{Grayscale:} The image is converted to 8-bit grayscale (0-255 where 0 is white and 255 is black)and a threshold is set based on pixel intensity. This is the more traditional method for processing spray cards, and is typically more effective for cards with darker stains such as WSP.
+        \begin{itemize}
+            \item \textbf{Value:} The minimum intensity value for a pixel to be considered a stain pixel. This is typically set based on the intensity histogram of the image, where the goal is to set the threshold at a value that effectively distinguishes the stain pixels from the background pixels.
+            \item \textbf{Method:} The method for determining the threshold value. The \textbf{Manual} method uses the user-defined value as the threshold. The \textbf{Auto} method uses an algorithm (Otsu's Method) to automatically determine the optimal threshold value based on the intensity histogram of the image. 
+        \end{itemize}
+        \item \textbf{HSB:} The image is converted to Hue, Saturation and Brightness (HSB) color space and a threshold is set based on the Hue, Saturation and Brightness values (8-bit, 0-255) of each pixel. This method can be more effective for cards with lighter stains such as Cast-Coat, where the Hue and Saturation values can be more effective at distinguishing stains from the background than pixel intensity alone. Minimum and Maximum bands can be set for each of the three HSB parameters. If \textbf{Pass} is selected for the parameter, a pixel must fall within the defined range for that parameter to be considered a stain pixel (i.e. a band-pass filter is set); if \textbf{Pass} is NOT selected, a pixel must fall outside the defined range for that parameter to be considered a stain pixel (i.e. a band-reject filter is set). Note that all three parameters are applied simultaneously, so a pixel must meet the criteria for all three parameters to be considered a stain pixel.
+    \end{itemize}
+
+    \subsubsection{Stain Processing}
+    \label{sec:settings_card_stain}
+    \textit{These settings are persistent but apply only to new cards; \textit{Defined Sets} have their own stain processing settings on a per-card basis. Moreover, every individual card has its own stain processing settings which will override these default settings for that card. These settings are saved to the datafile on a per-card basis.}\par
+    Once a card image is thresholded to a binary format, the resulting stain pixels are processed to determine the location and size of each individual stain. This is done through a connected components analysis, where adjacent stain pixels are grouped together into individual stains. The parameters for this process are as follows:
+    \begin{itemize}
+        \item \textbf{Watershed:} Whether to apply a watershed algorithm to separate adjacent stains that may be touching or slightly overlapping. \textit{AccuPatt} uses a marker-controlled watershed algorithm, where the distance transform of the binary image is used to identify the centers of stains as markers, and the watershed algorithm is applied to the distance transform to separate adjacent stains. \textit{It is generally NOT recommended to utilize the watershed algorithm for pattern testing data, as it can introduce more errors than it resolves. Visual verification (via the Outline image where stain borders are drawn on the original image) should always be performed if this option is used.}
+        \item \textbf{Min Area:} The minimum area (in pixels) for a group of connected stain pixels to be considered a valid stain. This is typically set to exclude small specks of noise that may be misidentified as stains.
+        \item \textbf{Approximation:} Whether to apply a contour approximation algorithm to the detected stains. This will alter stain size and should be used with caution. There approximation methods are as follows:
+        \begin{itemize}
+            \item \textbf{None:} No contour approximation is applied; the stain size is determined solely by the number of connected stain pixels.
+            \item \textbf{Enclosing Circle:} The stain is approximated as a circle, where the radius of the circle is determined by the distance from the center of the stain to the farthest connected stain pixel. This method can be effective for stains that are roughly circular in shape, but can overestimate the size of irregularly shaped stains.
+            \item \textbf{Fit Ellipse:} The stain is approximated as an ellipse, where the major and minor axes of the ellipse are determined by fitting an ellipse to the connected stain pixels. This method can be effective for stains that are elliptical in shape, but can also overestimate the size of irregularly shaped stains.
+            \item \textbf{Convex Hull:} The stain is approximated as a convex hull, which is the smallest convex shape that can enclose all of the connected stain pixels. This method can be effective for stains of all shapes, but can overestimate the size of stains with concave features.
+        \end{itemize}
+        \item \textbf{Max Count:} The maximum number of stains to be detected on a single card. If the number of detected stains exceeds this value, \textit{AccuPatt} will cease processing the image. This is essentially a computational fail-safe for improperly thresholded images that are returning an excessive number of stains, which can cause the application to freeze or crash.
+    \end{itemize}
+
+    \subsubsection{Spread Factor}
+    \label{sec:settings_card_spread}
+    \textit{These settings are persistent but apply only to new cards; \textit{Defined Sets} have their own spread factor settings on a per-card basis. Moreover, every individual card has its own spread factor settings which will override these default settings for that card. These settings are saved to the datafile on a per-card basis.}\par
+    Determination of originating droplet size from stain size is not straightforward, as the stain size is a function of both the droplet size and the spread factor, which is influenced by various factors such as spray solution properties, humidity, and paper properties. However, if a spread factor can be determined for the specific conditions of the pattern testing, it can be applied to the stain size to provide an estimate of droplet size.\par
+    \textit{AccuPatt} provides a simplistic approach based upon longstanding industry practice wherein the stain diameter ($D_S$) is determined from a circle of equal projection area of the stain and the originating droplet diameter ($D_D$) is determined via one of the following equations:
+    \begin{itemize}
+        \item \textbf{None:} $D_D = D_S$
+        \item \textbf{Adaptive:} $D_D = D_S / (aD_S^2+bD_S+cD_S)$
+        \item \textbf{Direct:} $D_D = aD_S^2+bD_S+cD_S$
+        \item \textbf{Logarithmic:} $D_D = a\ln(D_S)+bD_S+c$
+    \end{itemize}
+    Where $a$, $b$ and $c$ are user-defined coefficients. The \textbf{Adaptive} method is the most commonly used, where the stain diameter is divided by the spread factor to determine droplet diameter; for context, this was the method used by \textit{DropletScan}. The \textbf{Direct} method has previous documented use in \textit{DepositScan}. The \textbf{Logarithmic} method is used in \textit{DropFlight}. The coefficients for the various methods can be found in the associated application's literature or can be determined experimentally for the specific conditions of the pattern testing.\par
+    It is important to note that these equations are simplifications and may not accurately capture the complex relationship between droplet size, stain size and spread factor under all conditions. Therefore, any estimates of droplet size derived from stain size should be interpreted with caution and an understanding of the limitations of this approach.
+
+    \subsubsection{Defined Sets}
+    \label{sec:settings_card_defined_sets}
+    \textit{Defined Sets are persistent.}\par
+    These are user-defined sets of spray cards, including (for each card) the name, location, threshold settings, stain processing settings and spread factor settings. These are intended to facilitate the processing of pattern testing data by allowing users to save and apply specific settings for different types of cards or testing conditions. For example, a user may have one defined set for processing 9 WSP cards at 8 foot spacing (traditional pattern testing alongside string) with specific threshold, stain processing and spread factor settings, and another defined set for processing 75 Cast-Coat cards at 2 foot spacing with different settings.\par
+    Clicking \textbf{Edit Defined Sets} will open a window where these sets can be created, edited and deleted (\autoref{fig:settings_spray_cards_defined_sets}). Clicking \textbf{Add Set} will insert it into the list of locally defined card sets; double clicking the auto-generated title will allow editing of the name. Individual cards can be added to the set with the \textbf{Add Card} button, which appends a card to the set with the default threshold, stain processing and spread factor settings. These can all be edited on a per-card basis by double clicking the applicable fields in the table.\par
+
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{settings_spray_cards_defined_sets.png}}
+        \caption{Settings - Spray Cards - Defined Sets}
+        \label{fig:settings_spray_cards_defined_sets}
+    \end{figure}
+
+    Clicking \textbf{Add Regularly Spaced Cards to Set} will open a window where an initial location, quantity of cards and either a step (spacing) or final location can be defined to automatically generate a set of regularly spaced cards (\autoref{fig:settings_spray_cards_defined_set_batch}). For example, if the initial location is set to 0 feet, the quantity is set to 5 and the step is set to 10 feet, then 5 cards will be generated at locations 0, 10, 20, 30 and 40 feet. Alternatively, if the initial location is set to 0 feet, the quantity is set to 5 and the final location is set to 40 feet, then 5 cards will be generated at locations 0, 10, 20, 30 and 40 feet.\par
+    Before clicking \textbf{OK} to create the generate the regularly spaced cards, clicking \textbf{Select Process Options} will open a window where the threshold settings and stain processing settings for all of the generated cards can be defined. Similarly, clicking \textbf{Select Spread Factors} will open a window where the spread factor method and coefficients for all of the generated cards can be defined.
+
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{settings_spray_cards_defined_set_batch.png}}
+        \caption{Settings - Spray Cards - Defined Set - Add Regularly Spaced Cards to Set}
+        \label{fig:settings_spray_cards_defined_set_batch}
+    \end{figure}
+
+    \subsubsection{Pattern Processing}
+    \label{sec:settings_card_pattern}
+    \textit{The settings are persistent and apply to new spray card Passes and Series, but can be overridden on a per-Pass or per-Series basis. Only Center Method is saved to the datafile.}\par
+    These settings affect the processing of spray card data for Pass patterns, Series average pattern and CV calculations. The parameters are as follows:
+    \begin{itemize}
+        \item \textbf{Y-Axis:} The y-axis units for all spray card plots and the basis for swath/uniformity calculations. Available options are:
+        \begin{itemize}
+            \item \textbf{Coverage:} The percent of the card area covered by stain pixels. This calculation is independent of the spread factor and is therefore the most direct measure of the pattern as captured on the card itself.
+            \item \textbf{Deposition:} The calculated volume per unit area of spray solution deposited on the card, which is derived from the stain size and spread factor. This calculation is dependent on the spread factor and is therefore a more indirect measure of the pattern, but it can be more informative for understanding droplet size distribution and potential efficacy of the application. The units will be either gal/acre or l/ha depending on the Rate Units selected in Series Observables Settings.
+            \item \textbf{Drops per $cm^2$:} The number of detected stains per unit area of the card. This calculation is independent of the spread factor and is therefore a direct measure of the droplet density on the card, but it does not account for the size of the stains or droplets.
+            \item \textbf{Drops per $in^2$:} The number of detected stains per unit area of the card. This calculation is independent of the spread factor and is therefore a direct measure of the droplet density on the card, but it does not account for the size of the stains or droplets.
+        \end{itemize}
+        \item \textbf{Center Method:} The method for determining the center of the pattern, which is used as the reference point to horizontally shift (center) a Pass pattern and Series average pattern for swath and uniformity calculations. The options are:
+        \begin{itemize}
+            \item \textbf{Centroid:} The x value (location) of the geometric center of the pattern. This is equivalent to the center of distribution (mass) if the space between all cards is uniform.
+            \item \textbf{Center of Distribution:} The x value (location) where the pattern is balanced on either side via weighted averaging. This is useful for patterns where the space between cards is not uniform, as it accounts for the varying distances between cards in determining the center of the pattern.
+        \end{itemize}
+    \end{itemize}
+
+    \subsubsection{Plot Options}
+    \label{sec:settings_card_plot}
+    \textit{These settings are persistent but are not saved to the datafile since they do not affect computations of CV.}\par
+    The visual-only settings for spray card plots.
+    \begin{itemize}
+        \item \textbf{Shading:} Whether to shade the area under the pattern curve on Pass and Series average pattern plots. The only option is \textbf{DSC}, which stands for Droplet Spectrum Category, and will use ASABE-standard colors for \textit{Medium}, \textit{Course}, etc. for each card. The shading for each card will extend half the distance to neighboring cards on either side unless \textbf{Interpolate} is checked, in which case the shading will be interpolated between cards to create a continuous gradient.
+        \item \textbf{Average Overlay:} The dashed line optionally displayed as an overlay to the average pattern as one of:
+        \begin{itemize}
+            \item \textbf{Inner-Swath-Half-Average:} Computes one-half the average y-value within the \textbf{Adjusted Swath Width} range and draws a horizontal line at that value bounded by vertical lines at the bounds of the \textbf{Adjusted Swath Width}. This is sometimes referred to as the "old-school" way of determining effective swath width, where the intersection points of the horizontal and vertical lines should approximately touch the plotted pattern.
+            \item \textbf{Average:} Computes the average y-value of the entire pattern and draws a horizontal line at that value.
+        \end{itemize}
+        \item \textbf{Simulation View:} Set the x-bounds of the overlap simulation plots as one of:
+        \begin{itemize}
+            \item \textbf{One Swath Width:} Only the mathematically relevant portion of the simulated overlap will be shown, specifically datapoints between -swathwidth/2 and swathwidth/2.
+            \item \textbf{All Swaths:} All selected simulated adjacent passes will be shown. Can be useful for illustrating the big picture of in-field overlap.
+        \end{itemize}
+    \end{itemize}
+
+    \subsection{Report}
+    \label{sec:settings_report}
+    \textit{These settings are persistent but are not saved to the datafile}
+    The visual-only settings for the PDF report generated from the \textbf{Report} tab. These settings do not affect the content of the report, only the formatting and styling.
+
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{settings_report.png}}
+        \caption{Settings - Report}
+        \label{fig:settings_report}
+    \end{figure}
+
+    \begin{itemize}
+        \item \textbf{Logo:} A logo image can optionally be included in the report header. Clicking the \textbf{Select Logo} button will open a File Chooser to select an image file from anywhere on your computer. The image will be resized to fit a 2-inch wide and 1-inch tall area.
+        \item \textbf{Spray Card Images:} The images of the spray cards can optionally be included on dedicated pages in the report. If \textbf{Include Spray Card Images} is checked, the user can further configure these as follows:
+        \begin{itemize}
+            \item \textbf{Image Type:} The type of image to print for each card (\autoref{fig:settings_report_card_image}):
+            \begin{itemize}
+                \item \textbf{Original:} The original scanned image of the card.
+                \item \textbf{Outline:} The original scanned image of the card with detected stain borders outlined in red.
+                \item \textbf{Mask:} A representation of the binary mask used to identify stain pixels, where background pixels are shown in white and stain pixels are shown in blue (if used in coverage AND droplet spectrum analysis), pink (if used in coverage analysis only (such as edge-stains)), or red (if fully excluded from analysis for being under the min stain size).
+            \end{itemize}
+            \item \textbf{Images per Page:} The number of card images to include on each page of the report.
+            \item \textbf{Downsample:} If checked, the card images will be downsampled to 72 dpi to reduce file size. If left unchecked, the original resolution of the card images will be included in the report, which can result in a very large file size. 
+        \end{itemize}
+    \end{itemize}
+
+    \begin{figure}[H]
+    \centering
+    
+    \begin{subfigure}[b]{0.30\textwidth}
+        \fbox{\includegraphics[width=\linewidth]{card_image_original.png}}
+        \caption{Original}
+        \label{fig:card_image_original}
+    \end{subfigure}
+    \hfill % Adds horizontal spacing between the images
+    \begin{subfigure}[b]{0.30\textwidth}
+        \fbox{\includegraphics[width=\linewidth]{card_image_outline.png}}
+        \caption{Outline}
+        \label{fig:card_image_outline}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.30\textwidth}
+        \fbox{\includegraphics[width=\linewidth]{card_image_mask.png}}
+        \caption{Mask}
+        \label{fig:card_image_mask}
+    \end{subfigure}
+
+    \caption{Settings - Report - Spray Card Image Type}
+    \label{fig:settings_report_card_image}
+    \end{figure}
+
+    \newpage
+    
+    \section{Creating a New Series}
+    All data and operations in \textit{AccuPatt} require a series. To acquire new data, a new series must be created. From the menu bar, use \textbf{File $\rightarrow$ New Series} to view options available (\autoref{fig:new_series}). A series is created with the user-defined default number of passes.
     \begin{itemize}
         \item \textbf{New Series $\rightarrow$ New Aircraft:} Create an empty series with required parameters set to default values.
         \item \textbf{New Series $\rightarrow$ File Aircraft:} Create a series, copying all application info from a previous data file. Increments the series number by 1. A list of previous data files in your current working directory will appear in the menu for you to select from. Alternatively, choosing \textbf{Select File Aircraft} will open a File Chooser allowing you to select a datafile from anywhere.
     \end{itemize}
     \begin{figure}[hb]
         \centering
-        \includegraphics[width=0.6\textwidth]{new_series}
+        \includegraphics[width=0.8\textwidth]{new_series}
         \caption{New Series}
         \label{fig:new_series}
     \end{figure}
     
-    \subsection{Application Info}
-    It is generally desirable, but not required, to enter in some amount of information about the aircraft, spray system configuration, and/or applicator information to accompany pattern testing data. The \textbf{Application Info} tab provides fields to facilitate this (Figure~\ref{fig:application_info}). See the \hyperref[sec:data]{Data Structure} section for more details on specific fields.
-    \\\\
-    The text entered in \textbf{Fly-In Info} fields is stored persistently.
-    \\\\
-    There is button to the right of the \textbf{Pilot} field which, if hovered over, reads \textbf{Load Business Info from File}. Clicking this will prompt you to select a previous datafile, from which all fields within the \textbf{Applicator Info} section (excluding Pilot) will be filled.
-    \\\\
-    When an aircraft make and model are selected, the wingspan field is automatically populated if available.
-    \\\\
-    For fields which contain a unit dropdown selector, the chosen units are stored persistently.
-    \\\\
-    The \textbf{Nozzle Info} section allows adding any number of unique nozzle sets. 
+    \newpage
 
-    \begin{figure}[hb]
+    \section{Application Info}
+    It is generally desirable, but not required, to enter in some amount of information about the aircraft, spray system configuration, and/or applicator information to accompany pattern testing data. The \textbf{Application Info} tab provides fields to facilitate this (\autoref{fig:application_info}). See the \hyperref[sec:data]{Data Structure} section for more details on specific fields.\par
+    Here are a few helpful notes regarding the \textbf{Application Info} tab:
+    \begin{itemize}
+        \item The \textbf{Fly-In Info} fields are stored persistently.
+        \item There is button to the right of the \textbf{Pilot} field which, if hovered over, reads \textbf{Load Business Info from File}. Clicking this will prompt you to select a previous datafile, from which all fields within the \textbf{Applicator Info} section (excluding Pilot) will be filled.
+        \item When an aircraft make and model are selected, the wingspan field is automatically populated if available.
+        \item The Target Swath units dropdown directs the location (x-axis) units for all string and card plots.
+        \item The \textbf{Nozzle Info} section allows adding any number of unique nozzle sets. 
+    \end{itemize}
+
+    \begin{figure}[H]
         \centering
         \makebox[\textwidth]{\includegraphics[width=\textwidth]{application_info.png}}
         \caption{Application Info Tab}
         \label{fig:application_info}
     \end{figure}
-    \FloatBarrier
+    %\FloatBarrier
 
-    \subsubsection{Pass Observables}
+    \subsection{Pass Observables}
     In addition to \textbf{Application Info}, which is collected on a per-series basis, there is some observable data which is typically collected on a per-pass basis. These are frequently referred to here and, in the program as \textbf{Pass Observables} since they consist solely of measured values obtained at the time of the application.\par
-    These values can be entered in several locations for the convenience of the analyst. They are entered by use of the \textbf{Pass Observables} button on the \textbf{Application Info} tab or alternately from either the \textbf{Capture/Edit String} window or the \textbf{Card Manager} window for any individual pass. Choosing \textbf{File $\rightarrow$ Pass Manager} from the menu will open the \textbf{Pass Manager} window (Figure~\ref{fig:pass_manager}) which contains a table with rows for each pass and columns for each pass observable parameter. In addition to the editable fields for pass observables, the pass name itself may be changed here. There are also checkboxes to facilitate the inclusion/exclusion of string and/or card data from series-wise calculations and plots.\par
-    The \textbf{Pass Manager} window also provides buttons to add or remove passes from the series. There is no functional limit to the number of passes per series. A checkbox is provided which, if checked, will update the default number of passes to add to all future series.
-    \begin{figure}[hb]
+    These values can be entered in several locations for the convenience of the analyst. They are typically entered in the applicable area of the \textbf{Application Info} tab or alternately from either the \textbf{Capture/Edit String} window or the \textbf{Card Manager} window for any individual pass. Choosing \textbf{File $\rightarrow$ Pass Manager} from the menu will open the \textbf{Pass Manager} window (\autoref{fig:pass_manager}) which contains a table with rows for each pass and columns for each pass observable parameter. In addition to the editable fields for pass observables, the pass name itself may be changed here. There are also checkboxes to facilitate the inclusion/exclusion of string and/or card data from series-wise calculations and plots.\par
+    The \textbf{Pass Manager} window also provides buttons to add or remove passes from the series. There is no functional limit to the number of passes per series.
+
+    \begin{figure}[H]
         \centering
         \makebox[\textwidth]{\includegraphics[width=\textwidth]{pass_manager.png}}
         \caption{Pass Manager}
         \label{fig:pass_manager}
     \end{figure}
+    
     \newpage
 
-    \subsection{String Analysis}
+    \section{String Analysis}
     String data is collected on a per-pass basis but may be analyzed on a per-series basis. The \textbf{String Analysis} tab provides a list of passes in the series and pass/series processing options. This tab also contains sub-tabs for viewing/modifying data as discussed below.
     
-    \subsubsection{Capture Pass}
-    Choose the pass to be collected from the list of passes, then click the \textbf{Capture Pass} button. This will open the \textbf{Capture/Edit Pass} window (Figure~\ref{fig:capture_edit_pass}).\par
-    This window provides indicators for the connection status of the string drive and spectrometer, with access to modify their settings (see the \hyperref[sec:string_hardware_settings]{String Hardware System Settings} section for more details). You can also hover over the \textbf{String Drive} and \textbf{Spectrometer} labels to view a configuration summary.\par
-    This window also provides optional data entry fields for observables specific to the applicable pass.\par
-    If both the string drive and spectrometer are connected, clicking the \textbf{Start} button will engage the string drive, advancing the string, and simultaneously will change its text to \textbf{Mark}. Clicking the \textbf{Mark} button will begin the collection of spectrometer data at intervals specified by the set \textbf{integration time}. Data will continue to be collected until the set \textbf{string length} is reached. At any time after data collection is begun, clicking the \textbf{Abort} button will stop the string drive and clear all data collected up to that point.\par
-    The \textbf{Clear} button may be used to clear the pass collected string data whenever data collection is not in progress. If string data exists for the current pass, it will ask for confirmation first.
-    \begin{figure}[h]
+    \subsection{Capture Pass}
+    Choose the pass to be collected from the list of passes, then click the \textbf{Capture Pass} button. This will open the \textbf{Capture/Edit Pass} window (\autoref{fig:capture_edit_pass}).\par
+    Indicators for the connection status of the string drive motors and spectromter are provided along with the selected Dye and calculated spatial resolution (based on string speed and integration time). A shortcut to \textbf{String Settings} is also provided for convenience (See \autoref{sec:string_settings}).\par
+    If both the string drive motors and spectrometer are connected, clicking the \textbf{Start} button will engage the string drive, advancing the string, and simultaneously will change its text to \textbf{Mark}. Clicking the \textbf{Mark} button will begin the collection of spectrometer data at intervals specified by the set \textbf{integration time}. Data will continue to be collected until the set \textbf{string length} is reached. At any time after data collection is begun, clicking the \textbf{Abort} button will stop the string drive and clear all data collected up to that point.\par
+    The \textbf{Clear} button may be used to clear the pass collected string data whenever data collection is not in progress. If string data exists for the current pass, it will ask for confirmation first.\par
+    Pass Observables can be entered at the right at any time if not already recorded in the \textbf{Application Info} tab.
+    
+    \begin{figure}[H]
         \centering
         \makebox[\textwidth]{\includegraphics[width=\textwidth]{string_edit_pass.png}}
         \caption{Capture/Edit Pass Window}
         \label{fig:capture_edit_pass}
     \end{figure}
+
     \newpage
 
-    \subsubsection{View \& Trim Pass}
-    Once string data for a pass is collected, the pass will have a check next to it in the pass list on the \textbf{String Analysis} tab. When a pass with string data is selected from the pass list, the \textbf{Individual Passes} sub-tab will show two plots (Figure~\ref{fig:string_individual}): 
-    \begin{itemize}
-        \item \textbf{Raw Data:} [Upper Plot] Plots data exactly as acquired. \textbf{Trim L} and \textbf{Trim R} (yellow) handles can be moved to exclude data outside their limits. The \textbf{Floor} handle will automatically be set to the lowest non-excluded data point; however, it may be further raised to pull up lower data points to a new level. This is typically done for subjectively removing background noise.
-        \item \textbf{Modified Data:} [Lower Plot] Plots trimmed and rebased data (white) and overlays that with a copy which has had a smoothing filter applied (yellow). Rebasing and smoothing are only shown when applicable (see \hyperref[sec:string_options]{String Options})
-    \end{itemize}
-    \begin{figure}[h]
+    \subsection{Individual Passes Tab \& Pass Processing}
+    Once string data for a pass is collected, the pass will have a check next to it in the pass list on the \textbf{String Analysis} tab. When a pass with string data is selected from the pass list, the \textbf{Individual Passes} sub-tab (\autoref{fig:string_individual})will show two plots discussed below.\par
+
+    \begin{figure}[H]
         \centering
         \makebox[\textwidth]{\includegraphics[width=\textwidth]{string_individual.png}}
         \caption{String Analysis - Individual Passes}
         \label{fig:string_individual}
     \end{figure}
+
+    The \textbf{Interactive Trim Plot} [Upper Plot] shows the data exactly as acquired. There are two vertical yellow lines (\textbf{Trim L} and \textbf{Trim R}) which can be dragged horizontally into the pattern to set the left and right boundaries, respectively, of data to be eligible for analysis. This is useful to exclude edge spikes/dips from artifacts such as green/red marks from data collection. The yellow horizontal \textbf{Floor} line can be dragged vertically to set the lower bound for data to be eligible for analysis. This is useful to exclude background noise (i.e. blank string variation) from the pattern.\par
+    By default, the \textbf{Floor} is algorithmically set to remove background noise from blank string using a Signal-to-Noise Ratio (SNR) where data points with $SNR<3$ are excluded (\autoref{sec:string_denoising}).\par
+    As an additional assistance to the analyst in determining the strength of a pattern, background highlighting is provided based on SNR. Where $SNR<3$, the background is red to represent great uncertainty of whether data points are signal or noise. Where $3 \le SNR<10$, the background is yellow to represent mild uncertainty of whether data points are signal or noise. Where $SNR \ge 10$, the background is green to represent certainty that data points are signal and not noise.\par
+    The \textbf{Processed Preview Plot} [Lower Plot] shows the result of applying trim/floor from the \textbf{Interactive Trim Plot} to the raw data. Additionally, it shows the smoothed version of this data in yellow. The only difference between the smoothed version here and what is shown in subsequent plots is the application of horizontal centering. See \autoref{sec:string_options} for details on individual pass settings.
+
+    \subsubsection{Automated Pattern Isolation \& Denoising}
+    \label{sec:string_denoising}
+    After trimming edge anomalies, it is necessary to raise the \textbf{Floor} of the pattern to exclude data subjectively perceived to be blank string. This step is critical to ensuring that this background noise is not included in the patterns used for interpretation and uniformity calculations. This is really no different to adjusting physical filters on the fluorometers of the bad-old days, except that this step is now software post-processing instead of hardware pre-processing.\par
+    To counter the subjective nature of this step and combat its inadvertent omission by less-experienced users, \textit{AccuPatt} automatically sets the initial \textbf{Floor} to a Signal-to-Noise Ratio (SNR) of 3. Because every pattern is different and the algorithm isn't perfect, the \textbf{Floor} may still be adjusted freely after it is initially set.\par
+    
+    \paragraph{Identifying a Segment of Blank String}
+    The lowest contiguous 5\% of raw pattern data (after excluding data outside the \textbf{Trim L} and \textbf{Trim R} bounds) is found and used as a representation of blank string. This is graphically represented to the user by highlighting that segment of data points in red. \textit{Note: This depends upon and assumes the string actually having a segment of string without dye deposit; if this is not the case, do not rely upon this algorithm.}
+
+    \paragraph{Compute the Baseline}
+    The baseline for SNR is the y-value to which all data points will be compared to.
+    \begin{equation}
+        {SNR}_{base}=\bar{y}
+    \end{equation}
+    where:\\
+    \begin{tabular}{r l}
+        $\bar{y}$  & is the mean value of the data points in the blank string segment.
+    \end{tabular}
+
+    \paragraph{Compute the Noise of Blank String}
+    We can determine the noise as the standard deviation of the blank string data by:
+    \begin{equation}
+        N_{RMS}=\sqrt{\frac{\sum_{i=1}^{n}(y_i-\bar{y})^2}{n-1}}
+    \end{equation}
+    where:\\
+    \begin{tabular}{r l}
+        $y_i$   & are the individual data points in the blank string segment, and\\
+        $n$  & is the number of data points in the blank string segment.
+    \end{tabular}
+
+    \paragraph{Set the Floor to a SNR=3}
+    The SNR is computed as:
+    \begin{equation}
+        SNR=\frac{Y-{SNR}_{base}}{N_{RMS}}
+    \end{equation}
+    where:\\
+    \begin{tabular}{r l}
+        $Y$ & is any given y-value.\\
+    \end{tabular}\par
+    So, using an SNR=3, the floor is computed as:
+    \begin{equation}
+        Floor=3N_{RMS}+{SNR}_{base}
+    \end{equation}
+
+    \subsubsection{Assessing Quality of Pattern Data}
+    Before a pattern is interpreted, its data should be assessed for quality. Specifically, the goal should be to have reasonable certainty that the deposited pattern has been isolated from the noise of blank string. Below are some examples of what to look for. The main takeaway is to question the validity of the data before you question the shape/width of the resultant pattern.
+
+    \paragraph{Good Isolation}
+    A pattern with good isolation from blank string is easy to spot (\autoref{fig:string_snr_good}). The segments of blank string are visible as fairly flat compared to the pattern with the vertical scale of the plot squeezing the vertical variation in the blank string segments to appear as barely perceptible. Note also that a majority of the pattern is in the green zone ($SNR\ge 10$), meaning that the pattern signal is very clearly differentiated from the variation in blank string noise.
+
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{string_snr_good.png}}
+        \caption{String Analysis - Quality of Pattern Data - Good Isolation}
+        \label{fig:string_snr_good}
+    \end{figure}
+
+    \paragraph{Marginal Isolation}
+    A pattern with marginal isolation from blank string can be difficult to spot (\autoref{fig:string_snr_marginal}). The segments of blank string are somewhat visible, but are not quite visibly differentiable from the pattern; in other words it is difficult to visibly determine the point at which the pattern begins on at least one side (left or right). The vertical variation in what \textit{AccuPatt} has determined to be the blank segment is very perceptible. Note also that a majority of the pattern is in the yellow zone ($3\le SNR<10$), meaning that there is mild uncertainty that the pattern is isolated from the blank string segment.\par
+    The reasons for marginal isolation are myriad and include, but are not limited to:
+    \begin{itemize}
+        \item Insufficient dye loading
+        \item Degraded or improperly mixed dye
+        \item Testing exceedingly large droplet spectra, such as AccuFlo nozzles where the string collection efficiency is low.
+        \item Insufficient sampling width; if dye actually deposits onto the entire extent of the string, there is no blank string to reference from.
+    \end{itemize}
+    In the case of the provided example in \autoref{fig:string_snr_marginal}, it was determined that there actually was deposition across the entire extent of the string. This determination was made based on an observed $SNR_{base}\approxeq7400$ for other passes in the same series. Thus, in this case, the noise isolation algorithm's suggested \textbf{Floor} was not appropriate and could have been overrode. However, because the pattern could not be isolated it was excluded from analysis.
+
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{string_snr_marginal.png}}
+        \caption{String Analysis - Quality of Pattern Data - Marginal Isolation}
+        \label{fig:string_snr_marginal}
+    \end{figure}
+
+    \paragraph{Insufficient Isolation}
+    A pattern with insufficient isolation will have little to no visually distinguishable transition point between itself and blank string (\autoref{fig:string_snr_bad}). The majority of the string's extent will have similar vertical variation and will appear exaggerated due to the scaling of the plot in absence of a pattern rising out from it. Note that a majority of the data points do not even survive the $SNR\ge 3$ \textbf{Floor}.\par
+    It may seem obvious, but these "patterns" can and have been interpreted as actual deposition by experienced folks who simply failed to question the data.\par
+    The reasons for insufficient resolution are typically:
+    \begin{itemize}
+        \item No dye loading
+        \item Incorrect or severely degraded dye
+        \item Incorrect excitation light source and filter
+        \item Incorrect target emission wavelength or integration time set (see \autoref{sec:settings_string_dye})
+    \end{itemize}
+
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{string_snr_bad.png}}
+        \caption{String Analysis - Quality of Pattern Data - No Isolation}
+        \label{fig:string_snr_bad}
+    \end{figure}
+
     \newpage
 
-    \subsubsection{Composite}
-    The \textbf{Composite} sub-tab contains two plots (Figure~\ref{fig:string_composite}):
+    \subsection{Composite}
+    The \textbf{Composite} sub-tab contains two plots (\autoref{fig:string_composite}):
     \begin{itemize}
         \item \textbf{Overlay:} [Upper Plot] Each individual (non-excluded) pass is plotted together. 
-        \item \textbf{Average:} [Lower Plot] Each individual (non-excluded) pass is used to generate an average pattern. A dashed overlay can be optionally plotted based on the respective option in the String \textbf{Plot Options} window.
+        \item \textbf{Average:} [Lower Plot] Each individual (non-excluded) pass is used to generate an average pattern. A dashed overlay can be optionally included based on the \textbf{Average Overlay} setting (See \autoref{sec:settings_string_plot}).
     \end{itemize}
-    \begin{figure}[hb]
+    
+    \begin{figure}[H]
         \centering
         \makebox[\textwidth]{\includegraphics[width=\textwidth]{string_composite.png}}
         \caption{String Analysis - Composite}
         \label{fig:string_composite}
     \end{figure}
+    
     \newpage
 
-    \subsubsection{Simulations}
-    The \textbf{Simulations} sub-tab contains two plots (Figure~\ref{fig:string_simulations}). Both plots simulate additively overlapping the measured pattern at intervals of the adjusted swath width. The bold black line represents the resultant summed pattern, and is interpreted here as projected in-field uniformity. The dashed horizontal line represents the mean value, about which standard deviations are computed for coefficient of variation (CV) calculations. In other words, the further a data point on the bold black line is (vertically) from the dashed line, the more it contributes to the CV.
+    \subsection{Simulations}
+    The \textbf{Simulations} sub-tab contains two plots (\autoref{fig:string_simulations}). Both plots simulate additively overlapping the measured pattern at intervals of the adjusted swath width. The bold black line represents the resultant summed pattern, and is interpreted here as projected in-field uniformity. The dashed horizontal line represents the mean value, about which standard deviations are computed for coefficient of variation (CV) calculations. In other words, the further a data point on the bold black line is (vertically) from the dashed line, the more it contributes to the CV.
     \begin{itemize}
         \item \textbf{Racetrack:} [Uppper Plot] Each simulated pass is plotted going the same direction (into the screen/paper)
         \item \textbf{Back \& Forth:} [Lower Plot] Every odd simulated pass is mirrored about the center. \color{red} The back \& forth simulation will not accurately represent in-field uniformity if the base pattern is obtained in a crosswind. \color{black}
     \end{itemize}
-    The number of \textbf{simulated adjacent passes} (each side) can be set to any non-negative integer. The plots may be generated either with only the mathematically relevant portion or with all simulated passes shown based on the respective setting in the String \textbf{Plot Options} window.
-    \\\\
+    The number of simulated adjacent passes is determined automatically based on the adjusted swath width and pattern width. The plots will denote the number used when it exceeds the legend's available area.\par
+    The visible x-value range of the plot windows can be set to show only the mathematically relevant range (single swath width) or all simulated passes (see \autoref{sec:settings_string_plot}).\par
     A table is included which calculates the CV for select swath widths near the set adjusted swath width.
-    \begin{figure}[hb]
+    
+    \begin{figure}[H]
         \centering
         \makebox[\textwidth]{\includegraphics[width=\textwidth]{string_simulations.png}}
         \caption{String Analysis - Simulations}
         \label{fig:string_simulations}
     \end{figure}
+    
     \newpage
 
-    \subsubsection{Options}
+    \subsection{Pattern Processing Options}
     \label{sec:string_options}
-    The \textbf{String Analysis} tab contains \textbf{Pass Options} which affect only the selected pass:
+    \textbf{Pass Options} affect only the selected pass:
     \begin{itemize}
         \item \textbf{Include In Composite:} Once a pass is recorded, a checkmark will appear adjacent to it in the pass list. This indicates that it is recorded and included in composite (series-wise) calculations and plots. Clicking the checkmark will turn it into a dash, indicating that it is recorded, but excluded from composite calculations and plots.
-        \item \textbf{Smooth:} Apply smoothing filter to pass
-        \item \textbf{Align Center:} Shift pattern left/right using chosen center method.
-        \item \textbf{Rebase to X-Trim:} Recalculate each data point location such that the trimmed length is equal to the captured string length. If string speed is slightly faster than originally calibrated, this facilitates post-process correction to ensure accurate swath measurement.
-        \item \textbf{Advanced Options:} Opens a popup with the following options:
+        \item \textbf{Smooth:} Apply smoothing filter to pass. Checked by default.
+        \item \textbf{Align Center:} Shift pattern left/right using chosen center method. Checked by default.
+        \item \textbf{Rebase to X-Trim:} Recalculate each data point location such that the trimmed length is equal to the captured string length. If string speed is slightly faster than originally calibrated, this facilitates post-process correction to ensure accurate swath measurement. Unchecked by default.
+        \item \textbf{Advanced Options:} Opens a popup with the following options (defaults as set in Settings/String (\autoref{sec:settings_string_process})):
         \begin{itemize}
             \item \textbf{Smoothing Window:} X-domain based distance over which the sliding smoothing filter is fit and applied
             \item \textbf{Smoothing Order:} Polynomial order for smoothing filter
             \item \textbf{Center Method:} Choose whether to center the pattern with the centroid or Center of Distribution.
         \end{itemize}
     \end{itemize}
-    The \textbf{String Analysis} tab also contains \textbf{Series Options} which can apply to all passes and/or the average pattern:
+    \textbf{Series Options} can apply to all passes and/or the average pattern:
     \begin{itemize}
-        \item \textbf{Smooth Average:} Apply smoothing filter to average pattern
-        \item \textbf{Align Center Average:} Shift average pattern left/right using chosen center method.
-        \item \textbf{Equalize Integrals:} Scale each pass to the same integrated area
-        \item \textbf{Advanced Options:} Opens a popup with the following options:
+        \item \textbf{Smooth Average:} Apply smoothing filter to average pattern. Checked by default.
+        \item \textbf{Align Center Average:} Shift average pattern horizontally using chosen center method. Checked by default.
+        \item \textbf{Equalize Integrals:} Scale each pass to the same integrated area. Checked by default.
+        \item \textbf{Advanced Options:} Opens a popup with the following options (defaults as set in Settings/String (\autoref{sec:settings_string_process})):
         \begin{itemize}
             \item \textbf{Smoothing Window:} X-domain based distance over which the sliding smoothing filter is fit and applied
             \item \textbf{Smoothing Order:} Polynomial order for smoothing filter
             \item \textbf{Center Method:} Choose whether to center the pattern with the centroid or Center of Distribution.
         \end{itemize}
     \end{itemize}
-    The \textbf{String Analysis} tab also contains controls for setting the \textbf{Adjusted Swath Width} which defaults to the target swath width but is saved independently.\\\\
-    The \textbf{String Analysis} tab also contains a \textbf{Plot Options} button which opens a popup with the following options. These options have no mathematical effect on the analysis and are merely ways to adjust the generated graphics.
-    \begin{itemize}
-        \item \textbf{Average Plot Dashed Overlay:} Enable/Disable
-        \begin{itemize}
-            \item \textbf{Inner-Swath-Half-Average:} Computes one-half the average y-value within the \textbf{Adjusted Swath Width} range and draws a horizontal line at that value bounded by vertical lines at the bounds of the \textbf{Adjusted Swath Width}. This is sometimes referred to as the "old-school" way of determining effective swath width, where the intersection points of the horizontal and vertical lines should approximately touch the plotted pattern.
-            \item \textbf{Average:} Computes the average y-value of the entire pattern and draws a horizontal line at that value.
-        \end{itemize}
-        \item \textbf{Simulation X Range:} Set the x-bounds of the overlap simulation plots as one of:
-        \begin{itemize}
-            \item \textbf{One Swath Width:} Only the mathematically relevant portion of the simulated overlap will be shown, specifically datapoints between -swathwidth/2 and swathwidth/2.
-            \item \textbf{Sum of All Swath Widths:} All selected simulated adjacent passes will be shown. Can be useful for illustrating the big picture of in-field overlap.
-        \end{itemize}
-    \end{itemize}
+    \textbf{Swath Width} defaults to the target swath width but is saved independently as the \textbf{Adjusted Swath Width}. This is the value that drives the average overlay (if inner-swath-half-average is selected), simulations and CV calculations.\par
+    The \textbf{Plot Options} button opens a popup with alternative, but equivalent, control to those in \autoref{sec:settings_string_plot}. These options have no mathematical effect on the analysis and are merely ways to adjust the generated graphics.
 
     \newpage
 
-    \subsection{Spray-Card Analysis}
+    \section{Spray-Card Analysis}
     Card data is collected on a per-pass basis but may be analyzed on a per-card or per-series basis as well. The \textbf{Card Analysis} tab provides a list of passes in the series. This tab also contains sub-tabs for viewing/modifying data as discussed below.
 
-    \subsubsection{Capture Pass}
-    \textit{AccuPatt} does not provide any functionality for digitizing spray-cards; instead, images acquired by the scanning software of your choice can be uploaded, saved to the datafile and used for further processing.\par
-    In the \textbf{Card Analysis} tab, click the \textbf{Capture/Edit Pass} button to open the \textbf{Card Manager} window (Figure~\ref{fig:card_manager}).\par 
-    \begin{figure}[h]
+    \subsection{Capture Pass}
+    In the \textbf{Card Analysis} tab, click the \textbf{Capture/Edit Pass} button to open the \textbf{Card Manager} window (\autoref{fig:card_manager}). Pass Observables can be entered at the right at any time if not already recorded in the \textbf{Application Info} tab.
+
+    \begin{figure}[H]
         \centering
         \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_manager.png}}
         \caption{Spray-Card Analysis - Card Manager}
         \label{fig:card_manager}
     \end{figure}
-    The \textbf{Card Manager} window provides a table of card data, with each row representing a card and each column a property of that card. properties may be edited by either double-clicking on them or utilizing provided checkboxes as applicable.\par
-    Rows may be selected individually or by click-dragging over multiple rows. There are 4 buttons below this table:
+
+    \subsubsection{Adding Cards to Pass}
+    The first step is to declare/add the cards to the Pass. They can be declared/added one-by-one or via \textbf{Defined Sets}.This includes setting their names and locations (if desired). Cards are represented by rows in the table with editable property columns. The rows/cards can be selected individually, as a group by click-dragging over multiple rows or as a group by holding Shift (continuous selection) or Ctrl/Cmd (non-continuous selection). There are four buttons below the table:
     \begin{itemize}
-        \item \textbf{Add:} Adds a new card in the last row, with default settings.
+        \item \textbf{Add:} Adds a new card in the last row, setup with default Thresholding (\autoref{sec:settings_card_threshold}), Stain Processing (\autoref{sec:settings_card_stain} and Spread Factor (\autoref{sec:settings_card_spread})) settings.
         \item \textbf{Remove:} Removes all selected cards. If any selected cards have image data in the datafile, a confirmation will appear prior to removal.
         \item \textbf{Shift Up:} Shift selected cards up by one row, if possible
         \item \textbf{Shift Down:} Shift selected cards down by one row, if possible.
     \end{itemize}
-    Below these buttons are controls for utilizing \textbf{Defined Sets} which facilitate adding a pre-configured list of spray-cards to the list. Use the dropdown to select a set and click \textbf{Add Set To Pass} to append the cards to the table. More details can be found in the \hyperref[sec:defined_sets]{Defined Sets} section.\par
-    To the right of the card table, under the \textbf{Observables} tab, is a set of text fields for entering in observables for the current pass. These observables are shared between string and card data on the same pass. See the \hyperref[sec:data]{Data Structure} settings for more details.\par
-    At the bottom of the window are controls to \textbf{Upload Images} to the selected cards in the table. A dropdown facilitates choice of the upload method and clicking the \textbf{Upload Image(s) to Selection} button will open a file chooser window to select all applicable files. A more detailed description of image upload methods and their processes can be found in the \hyperref[sec:image_upload]{Spray-Card - Image Upload} section.\par
-    Once a card has image data associated with it, selecting its row in the table will make a preview image visible in the \textbf{Image} tab at the right of the window (Figure~\ref{fig:card_manager_image}). The image may be viewed as follows:
+    Below these buttons are controls for utilizing \textbf{Defined Sets} which facilitate adding a pre-configured list of spray-cards to the list. Use the dropdown to select a set and click \textbf{Add Set To Pass} to append the cards to the table. More details can be found in \autoref{sec:settings_card_defined_sets}.\par
+
+    \subsubsection{Uploading Images to Cards}
+    The next step is to select the cards you want to upload images to (see above selection procedure). At the bottom of the window are controls to add images to the selected cards in the table. A dropdown facilitates choice of the upload method (see \autoref{sec:settings_card_image_acquisition}) and clicking the \textbf{Upload} button will open a file chooser window to select all applicable files. \textit{Note: Image files must be of type \textit{*.png}, \textit{*.tif} or \textit{*.tiff}. Ensure that images are acquired with no pre-processing, corrections, enhancements or compression.}
+    
+    \paragraph{One Card Per File}
+    \label{sec:card_upload_one}
+    For images which are already cropped appropriately, they can be directly uploaded to the datafile (\autoref{fig:card_upload_singles}). Selected files [right column] can be dragged to alter the order to match the proper order of declared card names. An \textbf{Assert DPI} menu allows setting of image DPI as automatic (set by image metadata) or to one of several common values. It may also optionally be supplied via direct-type entry to be applied to all uploaded cards.
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_upload_singles.png}}
+        \caption{Spray-Card Analysis - Upload Single Images}
+        \label{fig:card_upload_singles}
+    \end{figure}
+
+    \paragraph{Multiple Cards Per File}
+    When multiple cards are acquired in a single large scan, this method will allow cropping of each card and saving individually to the datafile. After selecting the file, the image will be shown with each card's independently draggable, resizable region-of-interest (ROI) (\autoref{fig:card_upload_multiple}). The image may be panned or zoomed-upon. To decrease RAM consumption, large images are shown in lower resolution here, but full-resolution ROIs will be cropped out of the original image using a scaled coordinate system.
+
+    \begin{figure}[hb]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_upload_multiple.png}}
+        \caption{Spray-Card Analysis - Upload Image with Multiple Cards}
+        \label{fig:card_upload_multiple}
+    \end{figure}
+
+    The \textbf{Pixels Per Inch} is automatically set by the image metadata, but user-adjustable. This is used in conjunction with the image pixel dimensions to show calculated image dimensions. These are provided only to allow verification by the user of proper pixels per inch setting.\par
+    The image acquisition options adjust the method by which the ROIs are drawn. They are persistent settings discussed in \autoref{sec:settings_card_image_acquisition}.\par
+    In the case that ROIs are not automatically drawn properly, the \textbf{Add} and \textbf{Remove} buttons may be used as follows:
+    \begin{itemize} 
+        \item \textbf{Add:} Click the \textbf{Add} button. The cursor will change to a crosshair. Press the left mouse button on one corner of the spray-card, drag the cursor to the other corner, then release the left mouse button. A new ROI will be drawn (scaled per the \textbf{Sampling Area} set above) and all ROIs will be relabeled as necessary (per the \textbf{Orientation} and \textbf{Order} set above). Note that if your original selection of spray-cards (selected from the Card Manager) already each have ROIs drawn, no more may be drawn.
+        \item \textbf{Remove:} First, click an ROI you would like to remove. The \textbf{Remove} button will become enabled, and its text will change to "Remove [spray-card.name]." Clicking the button will remove the ROI and all ROIs will be relabeled as necessary (per the \textbf{Orientation} and \textbf{Order} set above).
+    \end{itemize}
+    You can manipulate each ROI manually to fine-tune what part of the card to sample:
+    \begin{itemize}
+        \item \textbf{Drag:} Click and hold within the ROI to reposition it.
+        \item \textbf{Adjust Width:} Use the red handle on the right edge of the ROI to adjust only the width.
+        \item \textbf{Adjust Height:} Use the red handle on the lower edge of the ROI to adjust only the height.
+        \item \textbf{Adjust Height/Width Together:} Use the red handle on the lower right corner of the ROI.
+    \end{itemize}
+    
+    \paragraph{From ZIP}
+    This option is primarily present to ease importing Swath Gobbler\texttrademark data which saves sequentially identified images in a ZIP archive. After selecting the ZIP file, images are unpacked and fed to the \textbf{One Card per File} interface (see \autoref{sec:card_upload_one}).
+
+    \newpage
+
+    \subsubsection{Verify Image Processing Efficacy}
+    Once a card has image data associated with it, selecting its row in the table will make a preview image visible in the \textbf{Image} tab at the right of the window (\autoref{fig:card_manager_image}). The image may be viewed as follows (see \autoref{fig:settings_report_card_image} for a visual representation):
     \begin{itemize}
         \item \textbf{Original:} The unmodified original image.
         \item \textbf{Outline:} The original image forms the base layer. All stains have their perimeter outlined.
         \item \textbf{Processed:} A blank image with stains drawn (filled) and colored according to the following:
         \begin{itemize}
-            \item \textbf{Undersize:} Not counted toward coverage or droplet spectrum analysis.
-            \item \textbf{Edge:} Counted toward coverage, but not droplet spectrum analysis.
-            \item \textbf{Valid:} Counted toward coverage and droplet spectrum analysis.
+            \item \textbf{Undersize:} [\textbf{\textcolor{red}{Red}}] Not counted toward coverage or droplet spectrum analysis.
+            \item \textbf{Edge:} [\textbf{\textcolor{pink}{Pink}}] Counted toward coverage, but not droplet spectrum analysis.
+            \item \textbf{Valid:} [\textbf{\textcolor{blue}{Blue}}] Counted toward coverage and droplet spectrum analysis.
         \end{itemize}
     \end{itemize}
-    \begin{figure}[hb]
+    The purpose of these image views is to subjectively verify the image processing efficacy. Adjusting the \textbf{Threshold} and \textbf{Stain Processing} settings for the card in the table will trigger the preview image to reprocess. A more interactive adjustment is described below.
+    \begin{figure}[H]
         \centering
         \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_manager_image.png}}
         \caption{Spray-Card Analysis - Card Manager}
         \label{fig:card_manager_image}
     \end{figure}
-    The purpose of these image views is to subjectively verify the image processing efficacy. In addition to editing process options in the table directly, clicking the \textbf{Process Options} button will provide a more interactive adjustment experience. For more details, see the \hyperref[sec:image_process]{Image Process Options} section.\par
-    In addition to editing spread factor options in the table directly, clicking the \textbf{Spread Factors} button will provide a more interactive adjustment experience.
-    Once satisfied with the properties in the card table and with images uploaded, click \textbf{Ok} to return to the main window.
-    \FloatBarrier
+
     \newpage
 
-    \subsubsection{Individual Passes}
-    When a pass is selected from the pass list on the \textbf{Card Analysis} tab, the \textbf{Individual Passes} sub-tab contains a location-domained plot and a table of spray-card statistics (Figure~\ref{fig:card_individual_pass}). The table's first several columns are editable, so that card name, location, location units and inclusion in composite flag may be set here. The plot will automatically update according to modifications made in the table. The y-scale of the plot as well as the inclusion of shading are based on the respective options in the Card \textbf{Plot Options} window.
+    \subsubsection{Threshold and Stain Proccessing Adjustments}
+    If desired, a selected card's \textbf{Threshold} and \textbf{Stain Processing} settings may adjusted by clicking the \textbf{Process Options} button below the card preview image which opens an interactive window with both the \textbf{Outline} and \textbf{Processed} images side-by-side for subjective review (\autoref{fig:card_image_process}).
 
-    \begin{figure}[hb]
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_image_process.png}}
+        \caption{Spray-Card Analysis - Card Manager - Process Options}
+        \label{fig:card_image_process}
+    \end{figure}
+
+    Discussion of the \textbf{Threshold} parameters are in \autoref{sec:settings_card_threshold}.\par Discussion of the \textbf{Stain Processing} parameters are in \autoref{sec:settings_card_stain}.\par
+    Adjustments are saved only to the selected card unless \textbf{Apply to Current Cards in Pass} or \textbf{Apply to Current Cards in Series} is checked before saving. Additionally, checking \textbf{Update defaults with selection} will change your persistent settings for future cards (\autoref{sec:settings_card_threshold}, \autoref{sec:settings_card_stain}).
+
+    \newpage
+
+    \subsubsection{Spread Factor Adjustments}
+    If desired, a selected card's \textbf{Spread Factor} settings may be adjusted by clicking the \textbf{Spread Factors} button below the card preview image which opens an interactive window with a preview of the equation used to compute droplet size from stain size (\autoref{fig:card_spread_factors}).
+
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_spread_factors.png}}
+        \caption{Spray-Card Analysis - Card Manager - Spread Factors}
+        \label{fig:card_spread_factors}
+    \end{figure}
+
+    Discussion of the \textbf{Spread Factor} parameters are in \autoref{sec:settings_card_spread}.\par
+    Adjustments are saved only to the selected card unless \textbf{Apply to Current Cards in Pass} or \textbf{Apply to Current Cards in Series} is checked before saving. Additionally, checking \textbf{Update defaults with selection} will change your persistent settings for future cards (\autoref{sec:settings_card_spread}).
+
+    \newpage
+
+    \subsection{Individual Passes Tab}
+    When a pass is selected from the pass list on the \textbf{Card Analysis} tab, the \textbf{Individual Passes} sub-tab contains a location-domained plot and a table of spray-card statistics (\autoref{fig:card_individual_pass}). The table's first several columns are editable, so that card name, location, location units and inclusion in composite flag may be set here. The plot will automatically update according to modifications made in the table.\par
+    The y-scale of the plot as well as the inclusion of shading are based on the respective options in the Card \textbf{Plot Options} window and is discussed in \autoref{sec:settings_card_pattern} and \autoref{sec:settings_card_plot}.
+
+    \begin{figure}[H]
         \centering
         \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_individual_pass.png}}
-        \caption{Spray-Card Analysis - Individual Pass View}
+        \caption{Spray-Card Analysis - Individual Pass Tab}
         \label{fig:card_individual_pass}
     \end{figure}
-    \FloatBarrier
+
     \newpage
 
-    \subsubsection{Composite}
-    The \textbf{Composite} tab contains two plots (Figure~\ref{fig:card_composite}):
+    \subsection{Composite Tab}
+    The \textbf{Composite} tab contains two plots (\autoref{fig:card_composite}):
     \begin{itemize}
-        \item \textbf{Overlay:} [Uppper Plot] Each individual (non-excluded) pass is plotted together.
-        \item \textbf{Average:} [Lower Plot] Each individual (non-excluded) pass is used to generate an average pattern.  A dashed overlay can be optionally plotted based on the respective option in the Card \textbf{Plot Options} window. The plot can optionally include shading based on the respective options in the Card \textbf{Plot Options} window.
+        \item \textbf{Overlay:} [Upper Plot] Each individual (non-excluded) pass is plotted together.
+        \item \textbf{Average:} [Lower Plot] Each individual (non-excluded) pass is used to generate an average pattern. A dashed overlay and/or shading can be optionally applied based on the respective option in the Card \textbf{Plot Options} window and is discussed in \autoref{sec:settings_card_plot}.
     \end{itemize}
     \begin{figure}[hb]
         \centering
@@ -310,26 +836,37 @@
     \FloatBarrier
     \newpage
 
-    \subsubsection{Simulations}
-    The \textbf{Simulations} sub-tab contains two plots (Figure~\ref{fig:card_simulations}). Both plots simulate additively overlapping the measured pattern at intervals of the adjusted swath width. The bold black line represents the resultant summed pattern and is interpreted here as projected in-field uniformity. The dashed horizontal line represents the mean value, about which standard deviations are computed for coefficient of variation (CV) calculations. In other words, the further a data point on the bold black line is (vertically) from the dashed line, the more it contributes to the CV.
+    \subsection{Simulations Tab}
+    The \textbf{Simulations} sub-tab contains two plots (\autoref{fig:card_simulations}). Both plots simulate additively overlapping the measured pattern at intervals of the adjusted swath width. The bold black line represents the resultant summed pattern, and is interpreted here as projected in-field uniformity. The dashed horizontal line represents the mean value, about which standard deviations are computed for coefficient of variation (CV) calculations. In other words, the further a data point on the bold black line is (vertically) from the dashed line, the more it contributes to the CV.
     \begin{itemize}
-        \item \textbf{Racetrack:} [Uppper Plot] Each simulated pass is plotted going the same direction (into the screen/paper)
+        \item \textbf{Racetrack:} [Upper Plot] Each simulated pass is plotted going the same direction (into the screen/paper)
         \item \textbf{Back \& Forth:} [Lower Plot] Every odd simulated pass is mirrored about the center. \color{red} The back \& forth simulation will not accurately represent in-field uniformity if the base pattern is obtained in a crosswind. \color{black}
     \end{itemize}
-    The number of \textbf{simulated adjacent passes} (each side) can be set to any non-negative integer. The plots may be generated either with only the mathematically relevant portion or with all simulated passes shown based on the respective setting in the Card \textbf{Plot Options} window.
-    \\\\
+    The number of simulated adjacent passes is determined automatically based on the adjusted swath width and pattern width. The plots will denote the number used when it exceeds the legend's available area.\par
+    The visible x-value range of the plot windows can be set to show only the mathematically relevant range (single swath width) or all simulated passes (see \autoref{sec:settings_card_plot}).\par
     A table is included which calculates the CV for select swath widths near the set adjusted swath width.
 
-    \begin{figure}[hb]
+    \begin{figure}[H]
         \centering
         \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_simulations.png}}
         \caption{Spray-Card Analysis - Simulations}
         \label{fig:card_simulations}
     \end{figure}
+
+    \subsubsection{Extended Simulations}
+    Clicking the \textbf{Extended Simulations} button will open a window wherein a range of swath widths can be simulated and plotted to show both their CV and in-swath min/mean/max coverage (\autoref{fig:card_simulations_extended}). Setting targets of Min/Max coverage and Max CV allows the plot to highlight swath widths which meet those criteria.
+
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_simulations_extended.png}}
+        \caption{Spray-Card Analysis - Simulations - Extended}
+        \label{fig:card_simulations_extended}
+    \end{figure}
+
     \newpage
 
-    \subsubsection{Droplet Distribution}
-    The \textbf{Droplet Distribution} sub-tab contains two histogram plots (Figure~\ref{fig:card_droplet_dist}):
+    \subsection{Droplet Distribution Tab}
+    The \textbf{Droplet Distribution} sub-tab contains two histogram plots (\autoref{fig:card_droplet_dist}):
     \begin{itemize}
         \item \textbf{Spray Volume Contribution:} [Upper Plot] After discretizing the droplet spectrum, shows how much relative spray volume is contained in droplets of each discrete bin.
         \item \textbf{Quantity:} [Lower Plot] After discretizing the droplet spectrum, shows how many droplets of each discrete bin are found.
@@ -346,255 +883,57 @@
     \FloatBarrier
     \newpage
 
-    \subsubsection{Options}
-    The \textbf{Card Analysis} tab contains \textbf{Pass Options} which affect only the selected pass:
+    \subsection{Pattern Processing Options}
+    \textbf{Pass Options} affect only the selected pass:
     \begin{itemize}
         \item \textbf{Align Center:} Shift pattern left/right using chosen center method.
     \end{itemize}
-    The \textbf{Card Analysis} tab also contains \textbf{Series Options} which apply only to the average pattern.
+    \textbf{Series Options} apply only to the average pattern.
     \begin{itemize}
         \item \textbf{Align Center Average:} Shift pattern left/right using chosen center method.
     \end{itemize}
-    The \textbf{Card Analysis} tab also contains controls for setting the \textbf{Adjusted Swath Width} which defaults to the target swath width but is saved independently.\\\\
-    The \textbf{Card Analysis} tab also contains a \textbf{Plot Options} button which opens a popup with the following options. These options have no mathematical effect on the analysis and are merely ways to adjust the generated graphics.
-    \begin{itemize}
-        \item \textbf{Y-Axis:} Choice of plotting calculated \textbf{Coverage} or \textbf{Deposition}. If \textbf{Deposition} is chosen, units will be either \textit{gal/a} or \textit{l/ha} depending on the \textbf{Target Rate} units selected in the \textbf{Application Info} tab.
-        \item \textbf{Shading:} Enable/Disable shading (filling) the plots using the following options:
-        \begin{itemize}
-            \item \textbf{Color Method:} Currently only \textbf{DSC} method is supported which computes the Droplet Spectrum Category for all points and shows the pseudo-standard color.
-            \item \textbf{Interpolation:} For coloration between measured data points, \textbf{Linear} interpolation may be used or simply the \textbf{Nearest} neighbor values. \color{red}Note: \textbf{Linear} interpolation (i.e., interpolating the $D_{V0.1}$ and $D_{V0.5}$ values between measured datapoints) may result in values (i.e., DSC colors) shown between measured datapoints which do not actually exist in the measured data.\color{black}
-        \end{itemize}
-        \item \textbf{Average Plot Dashed Overlay:} Enable/Disable
-        \begin{itemize}
-            \item \textbf{Inner-Swath-Half-Average:} Computes one-half the average y-value within the \textbf{Adjusted Swath Width} range and draws a horizontal line at that value bounded by vertical lines at the bounds of the \textbf{Adjusted Swath Width}. This is sometimes referred to as the "old-school" way of determining effective swath width, where the intersection points of the horizontal and vertical lines should approximately touch the plotted pattern.
-            \item \textbf{Average:} Computes the average y-value of the entire pattern and draws a horizontal line at that value.
-        \end{itemize}
-        \item \textbf{Simulation X Range:} Set the x-bounds of the overlap simulation plots as one of:
-        \begin{itemize}
-            \item \textbf{One Swath Width:} Only the mathematically relevant portion of the simulated overlap will be shown, specifically datapoints between -swathwidth/2 and swathwidth/2.
-            \item \textbf{Sum of All Swath Widths:} All selected simulated adjascent passes will be shown. Can be useful for illustrating the big picture of in-field overlap.
-        \end{itemize}
-    \end{itemize}
+    \textbf{Swath Width} defaults to the target swath width but is saved independently as the \textbf{Adjusted Swath Width}. This is the value that drives the average overlay (if inner-swath-half-average is selected), simulations and CV calculations.\par
+    The \textbf{Plot Options} button opens a popup with alternative, but equivalent, control to those in \autoref{sec:settings_card_plot}.
 
     \newpage
 
-    \section{Spray-Card - Details}
+    \section{Operation SAFE Report}
+    Creates a standardized printable/distributable PDF report for both string and spray card data. It can be configured/customized as discussed in \autoref{sec:settings_report}.
 
-    \subsection{Defined Sets}
-    \label{sec:defined_sets}
-    A convenient method for adding spray-cards to a pass is through the use of \textbf{Defined Sets} (Figure~\ref{fig:card_defined_set}). Navigate to the \textbf{Card Analysis} tab $\rightarrow$ \textbf{Add/Edit Cards} $\rightarrow$ \textbf{Define/Edit Sets}.\par
-    A list of locally defined sets at the left can be modified via the \textbf{Add Set}, \textbf{Remove Set} and double-clicking the name to rename it. Selecting the set will populate the tableview at right with the cards in the set. Cards may be added, removed and shifted within the set via the respective buttons below the tableview.\par
-    For regularly spaced cards, they may be added to the set in batch format by clicking the \textbf{Add Regularly Spaced Cards to Set} button (Figure~\ref{fig:card_defined_set_batch}). Given an initial location, quantity and either step distance or final location, a list of cards can be added to meet those requirements.\par
-    All sets are stored on your local machine and will be available whenever you use the program.
-    \begin{figure}[hb]
-        \centering
-        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_defined_set.png}}
-        \caption{Spray-Card Analysis - Defined Set}
-        \label{fig:card_defined_set}
-    \end{figure}
-    \begin{figure}[hb]
-        \centering
-        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_defined_set_batch.png}}
-        \caption{Spray-Card Analysis - Defined Set - Add Batch}
-        \label{fig:card_defined_set_batch}
-    \end{figure}
-    \FloatBarrier
+    \textbf{String Summary Page}
+    (\autoref{fig:report_example_1}) Headers with all reported application info and observables. Plots overlay, average and simulations. Includes a uniformity (Coefficient of Variation) table. Page will only be included if at least one string pass is collected and selected for inclusion in the composite.
 
-    \subsection{Image Upload}
-    \label{sec:image_upload}
-    Images are uploaded to the datafile using the method selected in the \textbf{Image Upload Method} dropdown. With the cards you intend to upload selected in the Card Manager tableview, click \textbf{Upload Image(s) to Selection}. Note that image files must be of type \textit{*.png : Portable Network Graphics} or \textit{*.tif, *.tiff : Tagged Image File Format}. Ensure that images are acquired with no pre-processing, corrections, enhancements or compression.
-
-    \subsubsection{One File, Multiple Cards}
-    When multiple cards are acquired in a single large scan, this method will allow cropping of each card and saving individually to the datafile. After selecting the file, the image will be shown with each card's independently draggable, resizable region-of-interest (ROI) (Figure~\ref{fig:card_upload_multiple}).\par 
-    The image may be panned or zoomed-upon. To decrease RAM consuption, large images are shown in lower resolution here, but full-resolution ROIs will be cropped out of the original image using a scaled coordinate system. The following options are available to adjust the method for which these ROI's are drawn:
-    \begin{itemize}
-        \item \textbf{Pixels Per Inch:} Automatically set by the image metadata, but user-adjustable. This is used in conjunction with the image pixel dimensions to show calculated image dimensions. These are provided only to allow verification by the user of proper pixels per inch setting.
-        \item \textbf{Flip Horizontal/Vertical:} Flips the entire image about the center axes. Allows for multiple configurations of physical card placement on the scanner glass. 
-        \item \textbf{Card Detection:} For WSP, looks for cards darker than background. For White Cards, looks for cards lighter than background. Note that a suitable background is needed for white card detection, such as a manilla envelope or darker construction paper affixed the the scanner lid.
-        \item \textbf{Orientation:} Used in conjunction with order to decide automatic assigning of names to cards. Either vertical or horizontal.
-        \item \textbf{Order:} Used in conjunction with orientation to dictate automatic assigning of names to cards. Either Increasing or decreasing.
-        \item \textbf{Sampling Area:} After cards are located, the percentage of width and height to draw the rectangular ROI.
-    \end{itemize}
-    In the case that ROIs are not automatically drawn properly, the \textbf{Add} and \textbf{Remove} buttons may be used as follows:
-    \begin{itemize} 
-        \item \textbf{Add:} Click the \textbf{Add} button. The cursor will change to a crosshair. Press the left mouse button on one corner of the spray-card, drag the cursor to the other corner, then release the left mouse button. A new ROI will be drawn (scaled per the \textbf{Sampling Area} set above) and all ROIs will be relabeled as necessary (per the \textbf{Orientation} and \textbf{Order} set above). Note that if your original selection of spray-cards (selected from the Card Manager) already each have ROIs drawn, no more may be drawn.
-        \item \textbf{Remove:} First, click an ROI you would like to remove. The \textbf{Remove} button will become enabled, and its text will change to "Remove [spray-card.name]." Clicking the button will remove the ROI and all ROIs will be relabeled as necessary (per the \textbf{Orientation} and \textbf{Order} set above).
-    \end{itemize}
-    \begin{figure}[hb]
+    \begin{figure}[H]
         \centering
-        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_upload_multiple.png}}
-        \caption{Spray-Card Analysis - Upload Image with Multiple Cards}
-        \label{fig:card_upload_multiple}
+        \fbox{\includegraphics[page=1, width=0.85\textwidth]{report_example.pdf}}
+        \caption{Operation SAFE Report - String Summary Page}
+        \label{fig:report_example_1}
     \end{figure}
-    \FloatBarrier
-
-    \subsubsection{One File per Card}
-    For images which are already cropped appropriately, they can be directly uploaded to the datafile (Figure~\ref{fig:card_upload_singles}). Selected files [right column] can be dragged to alter the order to match the proper order of declared card names. An \textbf{Assert DPI} menu allows setting of image DPI as automatic (set by image metadata) or to one of several common values. It may also optionally be supplied via direct-type entry. This setting will affect the upload of each file.
-    \begin{figure}[hb]
-        \centering
-        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_upload_singles.png}}
-        \caption{Spray-Card Analysis - Upload Single Images}
-        \label{fig:card_upload_singles}
-    \end{figure}
-    \FloatBarrier
-
-    \subsection{Image Process Options}
-    \label{sec:image_process}
-    The \textbf{Image Process Options} window is opened by selecting a card in the card list which has image data, and then clicking the \textbf{Edit Threshold} button. It contains the following options:
-    \begin{itemize}
-        \item \textbf{Threshold Type:} Dropdown menu to select the type of threshold to use when binarizing the image. Options are HSB (Hue-Saturation-Brightness) or Grayscale. This choice will limit the threshold options as follows:
-        \begin{itemize}
-            \item \textbf{HSB:} Binarizes image by pixel filtering the color image by ranges of Hue (0-179), Saturation (0-255) and Brightness (0-255). Each range is independently applied as either a band-pass (checking the \textbf{Pass} checkbox) or band-reject filter. The resultant 3 binary masks are then combined with bitwise AND logic. (Figure~\ref{fig:card_image_process_hsb})
-            \item \textbf{Grayscale:} Converts the image to an 8-bit (0-255) grayscale image, then uses a threshold value to binarize the image, where values below the threshold are treated as background and values above the threshold are treated as part of a stain. This threshold may be set manually, or automatically. The automatic method uses Otsu's Threshold Method and is sufficient for most bimodal images. The threshold chosen will be used as a set value for the manual method and an upper limit for the automatic method (the threshold will be automatically calculated and shown, not to exceed the set value; for fully automatic thresholding, set the value to 255). (Figure~\ref{fig:card_image_process_grayscale})
-        \end{itemize}
-        \item \textbf{Watershed Segmentation:} Attempt to separate adjoining stains. This applies a Euclidian Distance Transform to the image, locates local maxima and then runs a segmentation algorithm to split stains containing multiple local maxima.
-        \item \textbf{Stain Approximation:} After thresholding and segmentation, optionally attempt to transform each stain using the chosen method.
-        \begin{itemize}
-            \item \textbf{Minimum Enclosing Circle:} Draw the smallest circle possible which contains the stain.
-            \item \textbf{Fit Ellipse:} Enclose the stain in the smallest possible rotated rectangle; draw the largest ellipse possible within it. Stain contours with less than 5 perimeter points are left unchanged.
-            \item \textbf{Convex Hull:} Expand the stain such that there is no convexity defects (concave regions) between any perimeter points.
-        \end{itemize}
-        \item \textbf{Minimum Stain Size:} integer area in pixels below which stains should be treated as background.
-    \end{itemize}
-    By default, options are saved only to the selected card. Checking the \textbf{Apply To All} option of \textbf{Pass} or \textbf{Series} prior to saving will apply the options set to all applicable other cards and save that to the datafile. Additionally, checking \textbf{Update defaults with selection} will cause any spray cards created in the future to utilize these settings by default.
-    
-    \begin{figure}[hb]
-        \centering
-        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_image_process_grayscale.png}}
-        \caption{Spray-Card Analysis - Image Process Options - Grayscale}
-        \label{fig:card_image_process_grayscale}
-    \end{figure}
-    \begin{figure}[hb]
-        \centering
-        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_image_process_hsb.png}}
-        \caption{Spray-Card Analysis - Image Process Options - HSB}
-        \label{fig:card_image_process_hsb}
-    \end{figure}
-    \FloatBarrier
-
-    \subsection{Stain to Droplet Calculation}
-    \label{sec:spread_factors}
-    The \textbf{Spread Factors} window (Figure~\ref{fig:card_spread_factors}) is opened by selecting a card in the card list which has image data, and then clicking the \textbf{Spread Factors} button. Spread Factor Equations are optionally applied to estimate the droplet size (Droplet Diameter, $D_D$) which created a given stain (Stain Diameter, $D_S$). The Stain Diameter is determined from the circle of equal projection area of the stain. Two equation types are provided, with adjustable spread factors (\textbf{a}, \textbf{b} and \textbf{c} coefficients):
-    \begin{itemize}
-        \item \textbf{Adaptive:} $D_D = D_S / (aD_S^2+bD_S+cD_S)$
-        \item \textbf{Direct:} $D_D = aD_S^2+bD_S+cD_S$
-    \end{itemize}
-    By default, options are saved only to the selected card. Checking the \textbf{Apply To All} option of \textbf{Pass} or \textbf{Series} prior to will apply the options set to all applicable other cards and save that to the datafile. Additionally, checking \textbf{Update defaults with selection} will cause any spray cards created in the future to utilize these settings by default.
-    \begin{figure}[hb]
-        \centering
-        \makebox[\textwidth]{\includegraphics[width=\textwidth]{card_spread_factors.png}}
-        \caption{Spray-Card Analysis - Spread Factors}
-        \label{fig:card_spread_factors}
-    \end{figure}
-    \FloatBarrier
 
     \newpage
 
-    \section{String Hardware System Settings}
-    \label{sec:string_hardware_settings}
+    \textbf{Card Summary Page}
+    (\autoref{fig:report_example_2}) Headers with all reported application info and observables. Plots coverage and droplet spectrum category by location, spray volume by droplet diameter and number of droplets by droplet diameter. Pass-wise droplet spectrum characteristics are shown for measured data as well as a USDA Model simulation for the provided nozzle/observable parameters. One page will be included for each pass which has card data associated with it and is selected for inclusion in the composite.
 
-    \subsection{String Drive}
-    From the \textbf{Capture/Edit Pass} window, string drive settings can be adjusted by clicking the \textbf{Edit String Drive} button, which opens the applicable window (Figure~\ref{fig:string_drive_settings}). This window contains a dropdown for choosing a serial communication port and accompanying refresh button to re-populate this list (for example, if a device is plugged-in after opening this window). With a port chosen in the list, that port's manufacturer and product information will be displayed.\par
-    There are two fields which allow setting of the \textbf{String Length} and \textbf{String Forward Speed}. The units of string length [ft or m] can also be set here, and this will trigger the units of string forward speed [ft/sec or m/sec] to follow. While the string forward speed can be set manually here, this can also be calculated interactively by clicking the \textbf{Calculate String Speed} button (see below) 
-    A \textbf{Direct Command} interface is included to facilitate querying and setting string drive stepper motor parameters to onboard nonvolatile memory. The Take-Up Reel corresponds to address \textbf{A} and the Supply Reel corresponds to address \textbf{B}. With a command typed into the text field, clicking the \textbf{Send} button will append a carriage return, encode the message and send it to the stepper motor driver. A string of return text is normally received, and is displayed when available. This return text may simply be an echo of your command, or it may contain parameter information. See the stepper motor driver documentation by clicking the \textbf{?} button for specific commands.\par
-    For convenience, this window may also be reached from the main menu by choosing \textbf{Extras $\rightarrow$ Shortcut - String Drive}.
-    \begin{figure}[hb]
+    \begin{figure}[H]
         \centering
-        \makebox[\textwidth]{\includegraphics[width=0.90\textwidth]{string_drive_settings.png}}
-        \caption{String Drive Settings}
-        \label{fig:string_drive_settings}
+        \fbox{\includegraphics[page=2, width=0.85\textwidth]{report_example.pdf}}
+        \caption{Operation SAFE Report - Card Summary Page}
+        \label{fig:report_example_2}
     \end{figure}
+
     \newpage
     
-    \subsubsection{Calculate String Speed}
-    This function will use a known length of string to calculate the forward string speed.
-    \begin{enumerate}
-        \item Enter the known length of string to test with. This defaults to currently set \textbf{String Length} from the \textbf{Edit String Drive} window, but any value may be used.
-        \item Align the string so that the start point (mark) is just to the right of (before) the mirror block.
-        \item Click the \textbf{Start} button. This will begin advancing string and start a timer.
-        \item Once the end point (mark) passes the mirror block, click the \textbf{Stop} button to stop the string drive.
-        \item A calculated speed will be shown using \textit{[known-length / elapsed-time]}.
-        \item Click \textbf{OK} to save this speed (or \textbf{Cancel} to not do so) and return to the \textbf{Edit String Drive} window.
-    \end{enumerate}
+    \textbf{Card Image Page}
+    (\autoref{fig:report_example_3}) Individual card images displayed as per the report settings. Individual card statistics are shown below each card. Pages are included for each pass which has card data associated with it and is selected for inclusion in the composite. Number of pages required will vary based on number of cards and report options selected.
+
+    \begin{figure}[H]
+        \centering
+        \fbox{\includegraphics[page=3, width=\textwidth]{report_example.pdf}}
+        \caption{Operation SAFE Report - Card Image Page}
+        \label{fig:report_example_3}
+    \end{figure}
     
-    \begin{figure}[hb]
-        \centering
-        \makebox[\textwidth]{\includegraphics[width=1\textwidth]{string_drive_speed.png}}
-        \caption{Interactively Calculate String Drive Speed}
-        \label{fig:string_drive_speed}
-    \end{figure}
-    \FloatBarrier
-    \newpage
-
-    \subsection{Spectrometer}
-    From the \textbf{Capture/Edit Pass} window, spectrometer settings can be adjusted by clicking the \textbf{Edit Spectrometer} button, which opens the applicable window (Figure~\ref{fig:spectrometer_settings}). This window displays the currently connected spectrometer. An accompanying refresh button is included to re-scan for a spectrometer (for example, if one is plugged-in after opening this window).\\\\
-    The \textbf{Dye} can be selected from a dropdown menu, and an accompanying edit button will open the \textbf{Dye Manager}.\\\\
-    The \textbf{Display Units} can be chosen here and dictate the y-axis view in the \textbf{Test Spectrometer} and \textbf{Capture/Edit Pass} window only. 
-    \begin{itemize}
-        \item \textbf{Absolute} will output 16-bit values directly from the spectrometer (0-65,535)
-        \item \textbf{Relative (\%):} will output scaled values from 0-100\% by dividing absolute values by 655.35
-    \end{itemize}
-    There is also a \textbf{Test Spectrometer} button which will open a popup to do just that (defined further below)
-    \\\\
-    For convenience, this window may also be reached from the main menu by choosing \textbf{Extras $\rightarrow$ Shortcut - Spectrometer}.
-
-    \begin{figure}[hb]
-        \centering
-        \makebox[\textwidth]{\includegraphics[width=0.80\textwidth]{spectrometer_settings.png}}
-        \caption{Spectrometer Settings}
-        \label{fig:spectrometer_settings}
-    \end{figure}
-    \FloatBarrier
-    \newpage
-
-    \subsubsection{Dye Manager}
-    An editable list of user-configurable Dyes (Figure~\ref{fig:spectrometer_dye}) corresponding to set values for the following:
-    \begin{itemize}
-        \item \textbf{Excitation Wavelength (nm):} Target wavelength of excitation source. Currently only used in \textbf{Test Spectrometer}.
-        \item \textbf{Emission Wavelength (nm):} Target wavelength for dye emission.
-        \item \textbf{Integration Time (milliseconds):} Time to collect light for a spectrometer reading. Think of this as the exposure on a camera; longer times correspond with more detail incorporated in each data frame, but a lower quantity of data frames per unit length of string.
-        \item \textbf{Boxcar Width (nm):} Sets the wavelength width to average for each spectrometer reading. A value of 0 means to take a reading only from the spectrometer pixel nearest the target emission wavelength. A value of 5, for example, would have each spectrometer reading be an average of every pixel within 5 nm (+/-2.5 nm) of the target emission wavelength. 
-    \end{itemize}
-
-    \begin{figure}[hb]
-        \centering
-        \makebox[\textwidth]{\includegraphics[width=0.80\textwidth]{spectrometer_dye.png}}
-        \caption{Dye Manager}
-        \label{fig:spectrometer_dye}
-    \end{figure}
-    \FloatBarrier
-    \newpage
-
-    \subsubsection{Test Spectrometer}
-    With a spectrometer connected, this window will show a live readout of the entire measured spectrum. The dye selected in the \textbf{Edit Spectrometer} window is used to set target excitation/emission wavelengths as well as integration time and boxcar width. In addition to the plot, live values are shown for relevant measurements. The scale of the y-axis uses the \textbf{Display Units} option set in the \textbf{Spectrometer Settings} window.
-
-    \begin{figure}[hb]
-        \centering
-        \makebox[\textwidth]{\includegraphics[width=0.95\textwidth]{spectrometer_test.png}}
-        \caption{Test Spectrometer}
-        \label{fig:spectrometer_test}
-    \end{figure}
-    \FloatBarrier
-    
-    \newpage
-
-    \section{Creating PDF Reports}
-    Creating a printable/distributable report is a key function, and \textit{AccuPatt} provides utility to generate various report permutations using the \textit{Portable Document Format (*.pdf)}. The following options can be set from the \textbf{Report} menu:
-    \begin{itemize}
-        \item \textbf{Include Card Images:} [True/False] Whether to add page(s) to the report with individual card images/statistics.
-        \item \textbf{Downsample Card Images:} [True/False] Whether to use Gaussian Pyramid down sampling to reduce card image size by a factor of 2, thereby making the pdf file smaller.
-        \item \textbf{Card Image Type:} [Original, Outline, Mask] What type of image to use in report.
-        \item \textbf{Card Images Per Page:} [5, 7, 9] Card images are scaled to fit, so this effectively allows balancing desired image size and resultant number of pages required.
-        \item \textbf{Include Logo:} If enabled, a chosen image will be added within the report headers.
-    \end{itemize}
-
-    \subsection{Operation S.A.F.E. Report}
-    Creates a standardized report with the following pages:
-    \begin{itemize}
-        \item \textbf{String Summary Page:} Headers with all reported application info and observables. Plots overlay, average and simulations. Includes a uniformity (Coefficient of Variation) table. Page will only be included if at least one string pass is collected and selected for inclusion in the composite.
-        \item \textbf{Card Summary Page:} Headers with all reported application info and observables. Plots coverage and droplet spectrum category by location, spray volume by droplet diameter and number of droplets by droplet diameter. Pass-wise droplet spectrum characteristics are shown for measured data as well as a USDA Model simulation for the provided nozzle/observable parameters. One page will be included for each pass which has card data associated with it and is selected for inclusion in the composite.
-        \item \textbf{Card Image Page:} Individual card images displayed as per the report settings. Individual card statistics are shown below each card. Pages are included for each pass which has card data associated with it and is selected for inclusion in the composite. Number of pages required will vary based on number of cards and report options selected.
-    \end{itemize}
     \newpage
 
     \section{Exporting Data to Excel}
@@ -605,150 +944,324 @@
         \item \textbf{Processed Data:} \color{red} To-Do \color{black}
         \item \textbf{All Images:} \color{red} To-Do \color{black}
     \end{itemize}
+    Datafiles are stored as self-contained SQLite3 databases which can be opened directly using a tool such as \hyperlink{https://sqlitebrowser.org}{DB Browser for SQLite}. See \autoref{sec:data} for schema.
     \newpage
 
     \section{Opening Past Datafiles}
-    From the menubar choose \textbf{File $\rightarrow$ Open} to open a filechooser window and select the file to open. When opening AccuPatt Legacy (\textit{*.xlsx}), USDA (\textit{*.txt}) or WRK (\textit{*.*A}) will cause a choice prompt to open the file as \textbf{View Only} or to \textbf{Create Compatible Copy} (Figure~\ref{fig:open}). If the latter is chosen, a native file will be created (\textit{[series.registration] [series.series-number].db}) and placed in the same directory as the original file. Regardless of choice, the original file is never edited, only read.
+    From the menubar choose \textbf{File $\rightarrow$ Open} to open a filechooser window and select the file to open. When opening AccuPatt Legacy (\textit{*.xlsx}), USDA (\textit{*.txt}) or WRK (\textit{*.*A}) will cause a choice prompt to open the file as \textbf{View Only} or to \textbf{Create Compatible Copy} (\autoref{fig:open}). If the latter is chosen, a native file will be created (\textit{[series.registration] [series.series-number].db}) and placed in the same directory as the original file. Regardless of choice, the original file is never edited, only read.
     \begin{figure}[hb]
         \centering
         \makebox[\textwidth]{\includegraphics[width=0.75\textwidth]{open.png}}
         \caption{Open Datafile}
         \label{fig:open}
     \end{figure}
+
+    \newpage
+
+    \section{Database Browser}
+    It is often necessary to search a repository of data files for some specific parameters, such as registration number, aircraft model or nozzle to either find a specific series or view all matching series for broader analysis.\par
+    Clicking \textbf{File} $\rightarrow$ \textbf{Database Browser} will open an interactive search for this purpose (\autoref{fig:database_browser}). 
+
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{database_browser.png}}
+        \caption{Interactive Database Browser}
+        \label{fig:database_browser}
+    \end{figure}
+
+    After choosing a directory, all \textit{*.db} files within it are recursively obtained and a row created in the table for its series. A chosen subset of columns are shown by default, but these can be optionally hidden and or additional columns shown via the \textbf{Columns} dropdown.\par
+    A global filter line allows filtering to all rows with any column containing the entered text. Each column header can be left clicked to sort by that column or right clicked to set a column specific filter (all column filters are additive).\par
+    The table can be exported to Excel it its current format by clicking \textbf{Export to Excel}.\par
+    Selecting any individual row will enable two additional buttons. \textbf{Reveal in Finder...} will open the file's parent folder on your file system. This is useful if you store PDF reports or accompanying photos in that folder. \textbf{Open in AccuPatt} will do just that, opening the datafile into AccuPatt for further analysis.\par
+    The table may be somewhat slow to load for large repositories ($\approx$30 files per second) due to each series being fully processed for string CV calculations and nozzle-based DSC model projections.
+
+    \newpage
+
+    \section{Atomization Model \& Calibration Calculator}
+    Clicking \textbf{Extras} $\rightarrow$ \textbf{Atomization Model} will open the \textbf{Atomization Model} window. This is a dual-purpose interface to the USDA atomization models and calibration calculator (\autoref{fig:model_and_calibration}). This tool is useful to quickly and simultaneously assess the projected impacts of nozzle set modifications on required flow and droplet spectrum.\par
+
+    \begin{figure}[H]
+        \centering
+        \makebox[\textwidth]{\includegraphics[width=\textwidth]{model_and_calibration.png}}
+        \caption{Interactive Atomization Model and Calibration Calculator}
+        \label{fig:model_and_calibration}
+    \end{figure}
+
+    If the currently open series has nozzles, pressure and airspeed (calculated from ground speed, wind speed, wind direction and pass heading) entered, these fields will pre-populate.\par
+    Entering in Nozzles (Step 1 and optionally Step 2) and Operating Conditions (Step 3) will output the model-projected droplet spectrum as well as total flow rate.\par
+    If the currently open series has application rate and swath width entered, these fields will also pre-populate (Step 4). If they are populated, the required flow rate is computed and the output will also compare the calculated flow rate to the required flow rate and show the required flow rate as a percentage of the required flow rate.\par
+
     \newpage
 
     \section{Data Structure}
     \label{sec:data}
-    To the greatest extent practical, all provided analysis options are persistent for a saved data file. This is to ensure that, when re-opened at a later date or on another computer, results will be as close to identical as possible. Below is a relational outline for a data file.
-    \begin{itemize}
-        \item \textbf{series-id:} unique identifier, automatically generated.
-        \item \textbf{series-number:} integer
-        \item \textbf{flyin:}
-        \begin{itemize}
-            \item \textbf{name:} text
-            \item \textbf{location:} text
-            \item \textbf{date:} integer, unix timestamp
-            \item \textbf{analyst:} text
-        \end{itemize}
-        \item \textbf{applicator:} 
-        \begin{itemize}
-            \item \textbf{pilot:} text
-            \item \textbf{business:} text
-            \item \textbf{street:} text
-            \item \textbf{city:} text
-            \item \textbf{state:} text
-            \item \textbf{zip:} text
-            \item \textbf{phone:} text
-            \item \textbf{email:} text
-        \end{itemize}
-        \item \textbf{aircraft:} 
-        \begin{itemize}
-            \item \textbf{registration:} text
-            \item \textbf{make:} text
-            \item \textbf{model:} text
-            \item \textbf{wingspan:} float, units=[ft, m]
-            \item \textbf{winglets:} true/false
-        \end{itemize}
-        \item \textbf{spray-system:} 
-        \begin{itemize}
-            \item \textbf{swath-target:} float, units=[ft, m]
-            \item \textbf{rate-target:} float, units=[gpa, l/ha]
-            \item \textbf{boom-pressure:} float, units=[psi, bar, kpa]
-            \item \textbf{boom-width:} float, units=[ft, m]
-            \item \textbf{boom-drop:} float, units=[in, cm]
-            \item \textbf{nozzle-spacing:} float, units=[in, cm]
-        \end{itemize}
-        \item \textbf{nozzles:} [list]
-        \begin{itemize}
-            \item \textbf{type:} text
-            \item \textbf{size:} text
-            \item \textbf{deflection:} text
-            \item \textbf{quantity:} integer
-        \end{itemize}
-        \item \textbf{notes-setup:} text
-        \item \textbf{notes-analyst:} text, will not print on reports
-        \item \textbf{string-settings:} 
-        \begin{itemize}
-            \item \textbf{equalize-integrals:} true/false, scale all passes to largest integrated area
-            \item \textbf{average-center:} true/false, apply average-center-method
-            \item \textbf{average-center-method:} text, option=[centroid, center-of-distribution]
-            \item \textbf{average-smooth:} true/false, apply smoothing filter to average pattern
-            \item \textbf{average-smooth-window} float, x-domain window over which to apply smoothing
-            \item \textbf{average-smooth-order} integer, polynomial order for smoothing filter
-            \item \textbf{number-simulated-adjacent-passes:} integer, per-side basis
-        \end{itemize}
-        \item \textbf{spray-card-settings:} 
-        \begin{itemize}
-            \item \textbf{average-center:} true/false, apply average-center-method
-            \item \textbf{average-center-method:} text, option=[centroid, center-of-distribution]
-        \end{itemize}
-        \item \textbf{passes:} [list]
-        \begin{itemize}
-            \item \textbf{pass-id:} unique identifier, automatically generated
-            \item \textbf{name:} editable text, default is 'Pass ' + position in passes list at creation
-            \item \textbf{observables:} 
-            \begin{itemize}
-                \item \textbf{ground-speed:} float, units=[mph, kph, kn]
-                \item \textbf{spray-height:} float, units=[ft, m]
-                \item \textbf{pass-heading:} integer, range=[0-359]
-                \item \textbf{wind-direction:} integer, range=[0-359]
-                \item \textbf{wind-speed:} float, units=[mph, kph, kn]
-                \item \textbf{temperature:} float, units=[\degree F, \degree C]
-                \item \textbf{humidity:} float
-            \end{itemize}
-            \item \textbf{string:} 
-            \begin{itemize}
-                \item \textbf{wavelength-excitation:} integer, units=[nm]
-                \item \textbf{wavelength-emission:} integer, units=[nm]
-                \item \textbf{integration-time:} integer, units=[ms]
-                \item \textbf{data-excitation:} list[float, float], [location, intensity]
-                \item \textbf{data-emission:} list[float, float], [location, intensity]
-                \item \textbf{data-location-units:} units=[ft, m]
-                \item \textbf{trim-left:} integer, number of sample points to set to floor value
-                \item \textbf{trim-right:} integer, number of sample points to set to floor value
-                \item \textbf{trim-vertical:} float, value to subtract from all points in addition to floor value
-                \item \textbf{rebase:} true/false, use trim-l/trim-r to scale x-domain 
-                \item \textbf{center:} true/false, apply center-method to pass
-                \item \textbf{center-method:} text, option=[centroid, center-of-distribution]
-                \item \textbf{smooth:} true/false, apply smoothing filter to pass
-                \item \textbf{smooth-window} float, x-domain window over which to apply smoothing
-                \item \textbf{smooth-order} integer, polynomial order for smoothing filter
-                \item \textbf{swath-adjusted:} float, units follow swath-target
-                \item \textbf{include-in-composite:} True/False, include pass in series-wise calculations/plots
-            \end{itemize}
-            \item \textbf{spray-cards:}
-            \begin{itemize}
-                \item \textbf{center:} true/false, apply center-method to pass
-                \item \textbf{center-method:} text, option=[centroid, center-of-distribution]
-                \item \textbf{swath-adjusted:} float, units follow swath-target
-                \item \textbf{include-in-composite:} True/False, include pass in series-wise calculations/plots
-                \item \textbf{spray-cards:} [list]
-                \begin{itemize}
-                    \item \textbf{id:} unique identifier, automatically generated
-                    \item \textbf{name:} text
-                    \item \textbf{include-in-composite} true/false, include spray-card in pass-wise calculations/plots
-                    \item \textbf{location:} float, optional linear location of spray-card, units=[ft,m]
-                    \item \textbf{ppi:} integer, image resolution in pixels per inch, symmetric only
-                    \item \textbf{threshold-type:} text, options=[grayscale, hue-saturation-brightness]
-                    \item \textbf{threshold-grayscale-method:} text, options=[automatic, manual]
-                    \item \textbf{threshold-grayscale:} integer, range=[0-255]
-                    \item \textbf{threshold-hsb-hue-range:} [integer, integer], range=[0-179]
-                    \item \textbf{threshold-hsb-hue-pass:} true/false, band pass/reject
-                    \item \textbf{threshold-hsb-saturation-range:} [integer, integer], range=[0-255]
-                    \item \textbf{threshold-hsb-saturation-pass:} true/false, band pass/reject
-                    \item \textbf{threshold-hsb-brightness-range:} [integer, integer], range=[0-255]
-                    \item \textbf{threshold-hsb-brightness-pass:} true/false, band pass/reject
-                    \item \textbf{watershed:} true/false, stain segmentation using euclidian distance map
-                    \item \textbf{min-stain-area:} integer, minimum square pixel area to count as stain
-                    \item \textbf{stain-approximation-method:} text, options=[none, min-enclosing-circle, fit-ellipse, convex-hull]
-                    \item \textbf{spread-factor-equation:} text, options=[none, direct, adaptive]
-                    \item \textbf{spread-factor-a:} float
-                    \item \textbf{spread-factor-b:} float
-                    \item \textbf{spread-factor-c:} float
-                    \item \textbf{image:} image, limited to *.png *.tif *.tiff
-                \end{itemize}
-            \end{itemize}
-        \end{itemize}
-    \end{itemize}
+    To the greatest extent practical, all provided analysis options are persistent for a saved data file. This is to ensure that, when re-opened at a later date or on another computer, results will be as close to identical as possible. Datafiles are stored as self-contained SQLite3 databases which can be opened directly using a tool such as \hyperlink{https://sqlitebrowser.org}{DB Browser for SQLite}.\par
+    
+    Below are the tables and relational outline for a datafile.
+
+    \subsection*{alembic\_version}
+    \begin{table}[H]
+        \begin{tabular}{l l l}
+            \hline
+            Variable & Type & Expected Values\\
+            \hline
+            version\_num* & VARCHAR(32) & Unique, Maintains version compatibility\\
+            \hline
+        \end{tabular}
+    \end{table}
+
+    \subsection*{series}
+    \begin{table}[H]
+        \begin{tabular}{l l l}
+            \hline
+            Variable & Type & Expected Values\\
+            \hline
+            id* & TEXT & Unique, Autogenerated\\
+            series & INTEGER & 1, 2, 3, etc.\\
+            created & INTEGER & Unix Timestamp\\
+            modified & INTEGER & Unix Timestamp\\
+            notes\_setup & TEXT & \\
+            notes\_analyst & TEXT & \\
+            version\_major & INTEGER & \\
+            version\_minor & INTEGER & \\
+            version\_release & INTEGER & \\
+            \hline
+        \end{tabular}
+    \end{table}
+
+    \subsection*{flyin}
+    \begin{table}[H]
+        \begin{tabular}{l l l}
+            \hline
+            Variable & Type & Expected Values\\
+            \hline
+            series\_id* & TEXT & \\
+            flyin\_name & TEXT & \\
+            flyin\_location & TEXT & \\
+            flyin\_date & INTEGER & Unix Timestamp\\
+            flyin\_analyst & TEXT & \\
+            \hline
+        \end{tabular}
+    \end{table}
+
+    \subsection*{applicator}
+    \begin{table}[H]
+        \begin{tabular}{l l l}
+            \hline
+            Variable & Type & Expected Values\\
+            \hline
+            series\_id* & TEXT & \\
+            pilot & TEXT & \\
+            business & TEXT & \\
+            street & TEXT & \\
+            city & TEXT & \\
+            state & TEXT & \\
+            zip & TEXT & \\
+            phone & TEXT & \\
+            email & TEXT & \\
+            \hline
+        \end{tabular}
+    \end{table}
+
+    \subsection*{aircraft}
+    \begin{table}[H]
+        \begin{tabular}{l l l}
+            \hline
+            Variable & Type & Expected Values\\
+            \hline
+            series\_id* & TEXT & \\
+            regnum & TEXT & \\
+            make & TEXT & \\
+            model & TEXT & \\
+            wingspan & REAL & \\
+            wingspan\_units & TEXT & ft, m\\
+            winglets & TEXT & Yes, No\\
+            \hline
+        \end{tabular}
+    \end{table}
+
+    \subsection*{spray\_system}
+    \begin{table}[H]
+        \begin{tabular}{l l l}
+            \hline
+            Variable & Type & Expected Values\\
+            \hline
+            series\_id* & TEXT & \\
+            swath & REAL & \\
+            swath\_units & TEXT & ft, m\\
+            rate & REAL & \\
+            rate\_units & TEXT & gpa, l/ha\\
+            pressure & REAL & \\
+            pressure\_units & TEXT & psi, bar, kpa\\
+            boom\_width & REAL & \\
+            boom\_width\_units & TEXT & ft, m\\
+            boom\_drop & REAL & \\
+            boom\_drop\_units & TEXT & in, cm\\
+            nozzle\_spacing & REAL & \\
+            nozzle\_spacing\_units & TEXT & in, cm\\
+            \hline
+        \end{tabular}
+    \end{table}
+
+    \subsection*{nozzles}
+    One row per set of nozzles.
+    \begin{table}[H]
+        \begin{tabular}{l l l}
+            \hline
+            Variable & Type & Expected Values\\
+            \hline
+            id* & TEXT & 1, 2, 3, etc.\\
+            series\_id & TEXT & \\
+            type & TEXT & \\
+            size & TEXT & \\
+            deflection & TEXT & \\
+            quantity & INTEGER & \\
+            \hline
+        \end{tabular}
+    \end{table}
+
+    \subsection*{series\_string}
+    \begin{table}[H]
+        \begin{tabular}{l l l}
+            \hline
+            Variable & Type & Expected Values\\
+            \hline
+            series\_id* & TEXT & \\
+            average\_center & INTEGER & 0, 1\\
+            average\_center\_method & TEXT & centroid, center-of-distribution\\
+            average\_smooth & INTEGER & 0, 1\\
+            average\_smooth\_window & REAL & \\
+            average\_smooth\_order & INTEGER & \\
+            equalize\_integrals & INTEGER & 0, 1\\
+            swath\_adjusted & REAL & \\
+            simulated\_adjascent\_passes & INTEGER & No longer used\\
+            \hline
+        \end{tabular}
+    \end{table}
+
+    \subsection*{series\_spray\_card}
+    \begin{table}[H]
+        \begin{tabular}{l l l}
+            \hline
+            Variable & Type & Expected Values\\
+            \hline
+            series\_id* & TEXT & \\
+            average\_center & INTEGER & 0, 1\\
+            average\_center\_method & TEXT & centroid, center-of-distribution\\
+            swath\_adjusted & REAL & \\
+            simulated\_adjascent\_passes & INTEGER & No longer used\\
+            \hline
+        \end{tabular}
+    \end{table}
+
+    \subsection*{passes}
+    One row per pass.
+    \begin{table}[H]
+        \begin{tabular}{l l l}
+            \hline
+            Variable & Type & Expected Values\\
+            \hline
+            id* & TEXT & Unique, Autogenerated\\
+            series\_id & TEXT & \\
+            pass\_name & TEXT & \\
+            pass\_number & INTEGER & \\
+            ground\_speed & REAL & \\
+            ground\_speed\_units & TEXT & mph, kph, kn\\
+            spray\_height & REAL & \\
+            spray\_height\_units & TEXT & ft, m\\
+            pass\_heading & INTEGER & 0-359\\
+            wind\_direction & INTEGER & 0-359\\
+            wind\_speed & REAL & \\
+            wind\_speed\_units & mph, kph, kn\\
+            temperature & REAL & \\
+            temperature\_units & TEXT & \degree F, \degree C\\
+            humidity & REAL & \\
+            \hline
+        \end{tabular}
+    \end{table}
+
+    \subsection*{pass\_string}
+    One row per pass.
+    \begin{table}[H]
+        \begin{tabular}{l l l}
+            \hline
+            Variable & Type & Expected Values\\
+            \hline
+            pass\_id* & TEXT & \\
+            dye & TEXT & \\
+            excitation\_wav & INTEGER & \\
+            emission\_wav & INTEGER & \\
+            integration\_time\_ms & INTEGER & \\
+            boxcar\_width & INTEGER & \\
+            trim\_left & INTEGER & \\
+            trim\_right & INTEGER & \\
+            trim\_vertical & REAL & \\
+            rebase & INTEGER & 0, 1\\
+            center & INTEGER & 0, 1\\
+            center\_method & TEXT & centroid, center-of-distribution\\
+            smooth & INTEGER & 0, 1\\
+            smooth\_window & REAL & \\
+            smooth\_order & INTEGER & \\
+            data\_loc\_units & TEXT & ft, m\\
+            excitation\_data & TEXT & JSON List[location, intensity]\\
+            emission\_data & TEXT & JSON List[location, intensity]\\
+            include\_in\_composite & INTEGER & 0, 1\\
+            \hline
+        \end{tabular}
+    \end{table}
+
+    \subsection*{pass\_spray\_card}
+    One row per pass.
+    \begin{table}[H]
+        \begin{tabular}{l l l}
+            \hline
+            Variable & Type & Expected Values\\
+            \hline
+            pass\_id* & TEXT & \\
+            center & INTEGER & 0, 1\\
+            center\_method & TEXT & centroid, center-of-distribution\\
+            include\_in\_composite & INTEGER & 0, 1\\
+            \hline
+        \end{tabular}
+    \end{table}
+
+    \subsection*{spray\_card}
+    One row per spray card.
+    \begin{table}[H]
+        \begin{tabular}{l l l}
+            \hline
+            Variable & Type & Expected Values\\
+            \hline
+            id* & TEXT & Unique, Autogenerated\\
+            pass\_id & TEXT & \\
+            name & TEXT & \\
+            location & REAL & \\
+            location\_units & TEXT & ft, m\\
+            include\_in\_composite & INTEGER & 0, 1\\
+            threshold\_type & INTEGER & 0 \textit{grayscale}, 1 \textit{HSB}\\
+            threshold\_method\_grayscale & INTEGER & 0 \textit{automatic}, 1 \textit{manual}\\
+            threshold\_grayscale & INTEGER & 0-255\\
+            threshold\_color\_hue\_min & INTEGER & 0-255\\
+            threshold\_color\_hue\_max & INTEGER & 0-255\\
+            threshold\_color\_hue\_pass & INTEGER & 0 \textit{band-reject}, 1 \textit{band-pass}\\
+            threshold\_color\_saturation\_min & INTEGER & 0-255\\
+            threshold\_color\_saturation\_max & INTEGER & 0-255\\
+            threshold\_color\_saturation\_pass & INTEGER & 0 \textit{band-reject}, 1 \textit{band-pass}\\
+            threshold\_color\_brightness\_min & INTEGER & 0-255\\
+            threshold\_color\_brightness\_max & INTEGER & 0-255\\
+            threshold\_color\_brightness\_pass & INTEGER & 0 \textit{band-reject}, 1 \textit{band-pass}\\
+            watershed & INTEGER & 0, 1\\
+            min\_stain\_area\_px & INTEGER & \\
+            stain\_approximation\_method & TEXT & none, min-enclosing-circle, fit-ellipse, convex-hull\\
+            dpi & INTEGER & \\
+            spread\_method & INTEGER & 0 \textit{none}, 1 \textit{direct}, 2 \textit{adaptive}, 3 \textit{logarithmic}\\
+            spread\_factor\_a & REAL & \\
+            spread\_factor\_b & REAL & \\
+            spread\_factor\_c & REAL & \\
+            has\_image & INTEGER & 0, 1\\
+            image & BLOB & \\
+            \hline
+        \end{tabular}
+    \end{table}
 
 \end{document}

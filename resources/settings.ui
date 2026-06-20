@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>750</width>
+    <width>900</width>
     <height>640</height>
    </rect>
   </property>
@@ -923,96 +923,81 @@
            <item>
             <layout class="QVBoxLayout" name="vl_cards_left">
              <item>
-              <widget class="QGroupBox" name="gb_image_loading">
+              <widget class="QGroupBox" name="gb_image_acquisition">
                <property name="title">
-                <string>Image Loading</string>
+                <string>Image Acquisition</string>
                </property>
                <layout class="QFormLayout">
                 <item row="0" column="0">
+                 <widget class="QLabel" name="lbl_image_dpi">
+                  <property name="text">
+                   <string>Resolution</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QComboBox" name="cbb_image_dpi"/>
+                </item>
+                <item row="1" column="0">
                  <widget class="QLabel" name="lbl_image_load_method">
                   <property name="text">
                    <string>Load Method</string>
                   </property>
                  </widget>
                 </item>
-                <item row="0" column="1">
+                <item row="1" column="1">
                  <widget class="QComboBox" name="cbb_image_load_method"/>
                 </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="lbl_flip_x">
-                  <property name="text">
-                   <string>Flip Horizontal</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="1">
-                 <widget class="QCheckBox" name="cb_flip_x">
-                  <property name="text">
-                   <string/>
-                  </property>
-                 </widget>
-                </item>
                 <item row="2" column="0">
-                 <widget class="QLabel" name="lbl_flip_y">
+                 <widget class="QLabel" name="lbl_flip">
                   <property name="text">
-                   <string>Flip Vertical</string>
+                   <string>Flip</string>
                   </property>
                  </widget>
                 </item>
                 <item row="2" column="1">
-                 <widget class="QCheckBox" name="cb_flip_y">
-                  <property name="text">
-                   <string/>
-                  </property>
-                 </widget>
+                 <layout class="QHBoxLayout" name="hl_flip">
+                  <item>
+                   <widget class="QCheckBox" name="cb_flip_x">
+                    <property name="text">
+                     <string>Horizontal</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="cb_flip_y">
+                    <property name="text">
+                     <string>Vertical</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
                 </item>
                 <item row="3" column="0">
-                 <widget class="QLabel" name="lbl_image_dpi">
+                 <widget class="QLabel" name="lbl_roi_order">
                   <property name="text">
-                   <string>Scan DPI</string>
+                   <string>Card Order</string>
                   </property>
                  </widget>
                 </item>
                 <item row="3" column="1">
-                 <widget class="QComboBox" name="cbb_image_dpi"/>
+                 <layout class="QHBoxLayout" name="hl_roi_order">
+                  <item>
+                   <widget class="QComboBox" name="cbb_roi_order"/>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="cbb_roi_orientation"/>
+                  </item>
+                 </layout>
                 </item>
-               </layout>
-              </widget>
-             </item>
-             <item>
-              <widget class="QGroupBox" name="gb_roi_detection">
-               <property name="title">
-                <string>ROI Detection</string>
-               </property>
-               <layout class="QFormLayout">
-                <item row="0" column="0">
-                 <widget class="QLabel" name="lbl_roi_orientation">
-                  <property name="text">
-                   <string>Orientation</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QComboBox" name="cbb_roi_orientation"/>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="lbl_roi_order">
-                  <property name="text">
-                   <string>Order</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="1">
-                 <widget class="QComboBox" name="cbb_roi_order"/>
-                </item>
-                <item row="2" column="0">
+                <item row="4" column="0">
                  <widget class="QLabel" name="lbl_roi_scale">
                   <property name="text">
-                   <string>ROI Scale (%)</string>
+                   <string>Card Crop</string>
                   </property>
                  </widget>
                 </item>
-                <item row="2" column="1">
+                <item row="4" column="1">
                  <widget class="QComboBox" name="cbb_roi_scale"/>
                 </item>
                </layout>
@@ -1256,7 +1241,7 @@
              <item>
               <widget class="QGroupBox" name="gb_processing">
                <property name="title">
-                <string>Processing</string>
+                <string>Stain Processing</string>
                </property>
                <layout class="QFormLayout">
                 <item row="0" column="0">
@@ -1276,12 +1261,15 @@
                 <item row="1" column="0">
                  <widget class="QLabel" name="lbl_min_stain_area">
                   <property name="text">
-                   <string>Min Stain Area (px)</string>
+                   <string>Min. Area</string>
                   </property>
                  </widget>
                 </item>
                 <item row="1" column="1">
                  <widget class="QSpinBox" name="sb_min_stain_area">
+                  <property name="suffix">
+                   <string> px</string>
+                  </property>
                   <property name="minimum">
                    <number>1</number>
                   </property>
@@ -1293,7 +1281,7 @@
                 <item row="2" column="0">
                  <widget class="QLabel" name="lbl_stain_approximation">
                   <property name="text">
-                   <string>Stain Approximation</string>
+                   <string>Approximation</string>
                   </property>
                  </widget>
                 </item>
@@ -1303,19 +1291,30 @@
                 <item row="3" column="0">
                  <widget class="QLabel" name="lbl_max_stain_count">
                   <property name="text">
-                   <string>Max Stain Count</string>
+                   <string>Max Count</string>
                   </property>
                  </widget>
                 </item>
                 <item row="3" column="1">
-                 <widget class="QSpinBox" name="sb_max_stain_count">
-                  <property name="minimum">
-                   <number>100</number>
-                  </property>
-                  <property name="maximum">
-                   <number>99999</number>
-                  </property>
-                 </widget>
+                 <layout class="QHBoxLayout" name="hl_max_stain_count">
+                  <item>
+                   <widget class="QLabel" name="lbl_max_stain_count_per_card">
+                    <property name="text">
+                     <string>per Card</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QSpinBox" name="sb_max_stain_count">
+                    <property name="minimum">
+                     <number>100</number>
+                    </property>
+                    <property name="maximum">
+                     <number>99999</number>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
                 </item>
                </layout>
               </widget>
@@ -1323,87 +1322,104 @@
              <item>
               <widget class="QGroupBox" name="gb_spread_factors">
                <property name="title">
-                <string>Spread Factors</string>
+                <string>Spread Factor</string>
                </property>
-               <layout class="QFormLayout">
-                <item row="0" column="0">
-                 <widget class="QLabel" name="lbl_spread_equation">
+               <layout class="QVBoxLayout">
+                <item>
+                 <widget class="QLabel" name="lbl_spread_equation_value">
                   <property name="text">
-                   <string>Equation</string>
+                   <string/>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignmentFlag::AlignCenter</set>
+                  </property>
+                  <property name="wordWrap">
+                   <bool>true</bool>
                   </property>
                  </widget>
                 </item>
-                <item row="0" column="1">
-                 <widget class="QComboBox" name="cbb_spread_equation"/>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="lbl_spread_a">
-                  <property name="text">
-                   <string>A</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="1">
-                 <widget class="QDoubleSpinBox" name="dsb_spread_a">
-                  <property name="decimals">
-                   <number>4</number>
-                  </property>
-                  <property name="minimum">
-                   <double>-999.999900000000000</double>
-                  </property>
-                  <property name="maximum">
-                   <double>999.999900000000000</double>
-                  </property>
-                  <property name="singleStep">
-                   <double>0.000100000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="0">
-                 <widget class="QLabel" name="lbl_spread_b">
-                  <property name="text">
-                   <string>B</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="1">
-                 <widget class="QDoubleSpinBox" name="dsb_spread_b">
-                  <property name="decimals">
-                   <number>4</number>
-                  </property>
-                  <property name="minimum">
-                   <double>-999.999900000000000</double>
-                  </property>
-                  <property name="maximum">
-                   <double>999.999900000000000</double>
-                  </property>
-                  <property name="singleStep">
-                   <double>0.000100000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="0">
-                 <widget class="QLabel" name="lbl_spread_c">
-                  <property name="text">
-                   <string>C</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="1">
-                 <widget class="QDoubleSpinBox" name="dsb_spread_c">
-                  <property name="decimals">
-                   <number>4</number>
-                  </property>
-                  <property name="minimum">
-                   <double>-999.999900000000000</double>
-                  </property>
-                  <property name="maximum">
-                   <double>999.999900000000000</double>
-                  </property>
-                  <property name="singleStep">
-                   <double>0.000100000000000</double>
-                  </property>
-                 </widget>
+                <item>
+                 <layout class="QFormLayout">
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="lbl_spread_equation">
+                    <property name="text">
+                     <string>Equation</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QComboBox" name="cbb_spread_equation"/>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="lbl_spread_a">
+                    <property name="text">
+                     <string>A</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QDoubleSpinBox" name="dsb_spread_a">
+                    <property name="decimals">
+                     <number>4</number>
+                    </property>
+                    <property name="minimum">
+                     <double>-999.999900000000000</double>
+                    </property>
+                    <property name="maximum">
+                     <double>999.999900000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>0.000100000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QLabel" name="lbl_spread_b">
+                    <property name="text">
+                     <string>B</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QDoubleSpinBox" name="dsb_spread_b">
+                    <property name="decimals">
+                     <number>4</number>
+                    </property>
+                    <property name="minimum">
+                     <double>-999.999900000000000</double>
+                    </property>
+                    <property name="maximum">
+                     <double>999.999900000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>0.000100000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="0">
+                   <widget class="QLabel" name="lbl_spread_c">
+                    <property name="text">
+                     <string>C</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="1">
+                   <widget class="QDoubleSpinBox" name="dsb_spread_c">
+                    <property name="decimals">
+                     <number>4</number>
+                    </property>
+                    <property name="minimum">
+                     <double>-999.999900000000000</double>
+                    </property>
+                    <property name="maximum">
+                     <double>999.999900000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>0.000100000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
                 </item>
                </layout>
               </widget>
@@ -1425,9 +1441,9 @@
               </widget>
              </item>
              <item>
-              <widget class="QGroupBox" name="gb_card_plot">
+              <widget class="QGroupBox" name="gb_card_pattern_processing">
                <property name="title">
-                <string>Plot Options</string>
+                <string>Pattern Processing</string>
                </property>
                <layout class="QFormLayout">
                 <item row="0" column="0">
@@ -1441,58 +1457,64 @@
                  <widget class="QComboBox" name="cbb_card_plot_y_axis"/>
                 </item>
                 <item row="1" column="0">
-                 <widget class="QLabel" name="lbl_card_shading">
-                  <property name="text">
-                   <string>Shading</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="1">
-                 <widget class="QComboBox" name="cbb_card_shading"/>
-                </item>
-                <item row="2" column="0">
-                 <widget class="QLabel" name="lbl_card_shading_interp">
-                  <property name="text">
-                   <string>Interpolate Shading</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="1">
-                 <widget class="QCheckBox" name="cb_card_shading_interpolate">
-                  <property name="text">
-                   <string/>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="0">
-                 <widget class="QLabel" name="lbl_card_dash_overlay">
-                  <property name="text">
-                   <string>Average Overlay</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="1">
-                 <widget class="QComboBox" name="cbb_card_dash_overlay"/>
-                </item>
-                <item row="4" column="0">
-                 <widget class="QLabel" name="lbl_card_simulation_view">
-                  <property name="text">
-                   <string>Simulation View</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="4" column="1">
-                 <widget class="QComboBox" name="cbb_card_simulation_view"/>
-                </item>
-                <item row="5" column="0">
                  <widget class="QLabel" name="lbl_center_method_card">
                   <property name="text">
                    <string>Center Method</string>
                   </property>
                  </widget>
                 </item>
-                <item row="5" column="1">
+                <item row="1" column="1">
                  <widget class="QComboBox" name="cbb_center_method_card"/>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QGroupBox" name="gb_card_plot">
+               <property name="title">
+                <string>Plot Options</string>
+               </property>
+               <layout class="QFormLayout">
+                <item row="0" column="0">
+                 <widget class="QLabel" name="lbl_card_shading">
+                  <property name="text">
+                   <string>Shading</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <layout class="QHBoxLayout" name="hl_card_shading">
+                  <item>
+                   <widget class="QComboBox" name="cbb_card_shading"/>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="cb_card_shading_interpolate">
+                    <property name="text">
+                     <string>Interpolate</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="lbl_card_dash_overlay">
+                  <property name="text">
+                   <string>Average Overlay</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QComboBox" name="cbb_card_dash_overlay"/>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="lbl_card_simulation_view">
+                  <property name="text">
+                   <string>Simulation View</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QComboBox" name="cbb_card_simulation_view"/>
                 </item>
                </layout>
               </widget>
