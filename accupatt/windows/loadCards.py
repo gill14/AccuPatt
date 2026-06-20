@@ -264,16 +264,14 @@ class _CardImageBase(QDialog):
     def _find_rois(self, img) -> list:
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         img_gray = cv2.GaussianBlur(img_gray, (0, 0), 3, borderType=cv2.BORDER_REFLECT)
-        contours, _ = cv2.findContours(
-            cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1],
-            cv2.RETR_LIST,
-            cv2.CHAIN_APPROX_SIMPLE,
-        )
-        return [
-            r
-            for r in [cv2.boundingRect(c) for c in contours]
-            if self._check_roi_params(r, img.shape)
-        ]
+
+        def _detect(thresh_type):
+            _, img_thresh = cv2.threshold(img_gray, 0, 255, thresh_type | cv2.THRESH_OTSU)
+            contours, _ = cv2.findContours(img_thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            return [r for r in [cv2.boundingRect(c) for c in contours] if self._check_roi_params(r, img.shape)]
+
+        rois = _detect(cv2.THRESH_BINARY)
+        return rois if rois else _detect(cv2.THRESH_BINARY_INV)
 
     def _check_roi_params(self, rectangle, img_shape) -> bool:
         x, y, w, h = rectangle
