@@ -37,14 +37,18 @@ from aerial_spray_nozzle_models.gui.atomizationModelWindow import AtomizationMod
 
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QFont, QPixmap
 from PyQt6.QtWidgets import (
+    QDialog,
+    QDialogButtonBox,
     QFileDialog,
+    QFrame,
     QLabel,
     QMenu,
     QMessageBox,
     QProgressDialog,
     QTabWidget,
+    QVBoxLayout,
 )
 
 from send2trash import send2trash
@@ -56,9 +60,7 @@ from accupatt.windows.stringPlotOptions import StringPlotOptions
 Ui_Form, baseclass = uic.loadUiType(
     os.path.join(os.getcwd(), "resources", "mainWindow.ui")
 )
-Ui_Form_About, baseclass_about = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "about.ui")
-)
+
 testing = False
 testfile = "/Users/gill14/Library/Mobile Documents/com~apple~CloudDocs/Projects/AccuPatt/testing/N497GA 03.db"
 
@@ -626,13 +628,77 @@ class MainWindow(baseclass):
             os.startfile(file)
 
 
-class About(baseclass_about):
+class About(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        # Your code will go here
-        self.ui = Ui_Form_About()
-        self.ui.setupUi(self)
-        self.ui.label_version.setText(
-            f"AccuPatt Version:  {cfg.VERSION_MAJOR}.{cfg.VERSION_MINOR}.{cfg.VERSION_RELEASE}"
+        self.setWindowTitle("About")
+        self.setWindowModality(Qt.WindowModality.WindowModal)
+        self.setFixedSize(520, 560)
+
+        layout = QVBoxLayout(self)
+        layout.setSpacing(10)
+        layout.setContentsMargins(20, 20, 20, 16)
+
+        logo_label = QLabel()
+        logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        pixmap = QPixmap(os.path.join(os.getcwd(), "resources", "accupatt_logo.png"))
+        logo_label.setPixmap(
+            pixmap.scaledToWidth(480, Qt.TransformationMode.SmoothTransformation)
         )
+        layout.addWidget(logo_label)
+
+        version_label = QLabel(
+            f"Version  {cfg.VERSION_MAJOR}.{cfg.VERSION_MINOR}.{cfg.VERSION_RELEASE}"
+        )
+        version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        font = QFont()
+        font.setPointSize(13)
+        font.setBold(True)
+        version_label.setFont(font)
+        layout.addWidget(version_label)
+
+        line1 = QFrame()
+        line1.setFrameShape(QFrame.Shape.HLine)
+        line1.setFrameShadow(QFrame.Shadow.Sunken)
+        layout.addWidget(line1)
+
+        disclaimer = QLabel(
+            "AccuPatt is provided freely on an as-is basis.  It is highly recommended "
+            "that you consult an Operation S.A.F.E. Analyst when interpreting your "
+            "results. S.A.F.E. Analysts are certified with the National Aerial "
+            "Application Research & Education Foundation (NAAREF)."
+        )
+        disclaimer.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        disclaimer.setWordWrap(True)
+        layout.addWidget(disclaimer)
+
+        line2 = QFrame()
+        line2.setFrameShape(QFrame.Shape.HLine)
+        line2.setFrameShadow(QFrame.Shadow.Sunken)
+        layout.addWidget(line2)
+
+        credits = QLabel(
+            "<div style='text-align:center; line-height:1.5;'>"
+            "<b>Developed By:</b><br>"
+            "Matt Gill - National Agricultural Aviation Association<br><br>"
+            "<b>Based on Previous Work By:</b><br>"
+            "Dr. Richard Whitney - WRK of Oklahoma<br>"
+            "Phil Jank - USDA Aerial Application Technology Research Unit<br>"
+            "Mark Ledebuhr - Application Insight, LLC<br><br>"
+            "<b>Aided Significantly by the Technical Expertise Of:</b><br>"
+            "Dr. Scott Bretthauer - National Agricultural Aviation Association<br>"
+            "Dr. Brad Fritz - USDA-ARS Aerial Application Technology Research Unit<br>"
+            "Dr. Dennis Gardisser - WRK of Arkansas"
+            "</div>"
+        )
+        credits.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        small_font = QFont()
+        small_font.setPointSize(10)
+        credits.setFont(small_font)
+        layout.addWidget(credits)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
+        buttons.accepted.connect(self.accept)
+        layout.addWidget(buttons)
+
         self.show()
