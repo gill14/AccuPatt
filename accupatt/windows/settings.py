@@ -18,7 +18,7 @@ from serial import Serial
 from serial.tools import list_ports
 
 Ui_Form, baseclass = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "settings.ui")
+    cfg.resource_path("resources", "settings.ui")
 )
 
 
@@ -40,7 +40,7 @@ class Settings(baseclass):
         self.ui.btn_datafile_dir.clicked.connect(self._browse_datafile_dir)
         self.ui.btn_logo_path.clicked.connect(self._browse_logo_path)
         self.ui.btn_reset_defaults.clicked.connect(self._reset_defaults)
-        icon_file = os.path.join(os.getcwd(), "resources", "refresh.png")
+        icon_file = cfg.resource_path("resources", "refresh.png")
         self.ui.btn_refresh_port.setIcon(QIcon(icon_file))
         self.ui.btn_refresh_port.clicked.connect(self._refresh_port_list)
         self.ui.btn_refresh_spec.setIcon(QIcon(icon_file))
@@ -453,9 +453,7 @@ class Settings(baseclass):
             self.ui.lbl_command_return.setText(self.ser.readline().decode("utf-8"))
 
     def _open_stepper_manual(self):
-        file = os.path.join(
-            os.getcwd(), "resources", "documents", "weeder_stepper_driver_manual.pdf"
-        )
+        file = cfg.resource_path("resources", "documents", "weeder_stepper_driver_manual.pdf")
         if sys.platform == "darwin":
             subprocess.call(["open", file])
         elif sys.platform == "win32":

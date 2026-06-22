@@ -31,6 +31,7 @@ if sys.platform == 'win32':
         '--windowed', # change to --nowindowed for console troubleshooting
         '--exclude-module=tkinter',
         '--exclude-module=py2app',
+        '--exclude-module=pyobjc-framework-ImageCaptureCore',
         '--hidden-import=matplotlib.backends.backend_svg',
         '--hidden-import=libusb',
         '--hidden-import=pyusb',

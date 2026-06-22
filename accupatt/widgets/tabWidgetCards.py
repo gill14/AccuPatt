@@ -29,7 +29,7 @@ from accupatt.windows.cardPlotOptions import CardPlotOptions
 class TabWidgetCards(TabWidgetBase):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(
-            ui_file=os.path.join(os.getcwd(), "resources", "cardMainWidget.ui"),
+            ui_file=cfg.resource_path("resources", "cardMainWidget.ui"),
             subtype="cards",
             parent=parent,
             *args,

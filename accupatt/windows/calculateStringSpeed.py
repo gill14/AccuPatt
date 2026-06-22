@@ -6,7 +6,7 @@ from PyQt6 import uic
 from PyQt6.QtCore import QTimer, pyqtSignal, pyqtSlot
 
 Ui_Form, baseclass = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "calculateStringSpeed.ui")
+    cfg.resource_path("resources", "calculateStringSpeed.ui")
 )
 
 

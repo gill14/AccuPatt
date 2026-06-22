@@ -34,12 +34,12 @@ def _angle_descriptor(nozzle: str) -> str:
     return "Angle"
 
 Ui_Form, baseclass = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "seriesInfo.ui")
+    cfg.resource_path("resources", "seriesInfo.ui")
 )
 
 
 class SeriesInfoWidget(baseclass):
-    aircraftFile = os.path.join(os.getcwd(), "resources", "AgAircraftData.xlsx")
+    aircraftFile = cfg.resource_path("resources", "AgAircraftData.xlsx")
 
     target_swath_changed = pyqtSignal()
     request_file_save = pyqtSignal()

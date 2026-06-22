@@ -20,7 +20,7 @@ from PyQt6.QtWidgets import (
 from accupatt.models.sprayCard import SprayCard
 
 Ui_Form, baseclass = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "editThreshold.ui")
+    cfg.resource_path("resources", "editThreshold.ui")
 )
 
 
@@ -378,7 +378,7 @@ class EditThreshold(baseclass):
 
 
 Ui_Form_2, baseclass_2 = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "processOptionsAdvanced.ui")
+    cfg.resource_path("resources", "processOptionsAdvanced.ui")
 )
 
 

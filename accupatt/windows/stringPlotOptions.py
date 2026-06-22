@@ -6,7 +6,7 @@ from PyQt6.QtCore import pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import QGroupBox, QRadioButton
 
 Ui_Form, baseclass = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "stringPlotOptions.ui")
+    cfg.resource_path("resources", "stringPlotOptions.ui")
 )
 
 

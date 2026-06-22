@@ -1,1 +1,0 @@
-hiddenimports = ['skimage.filters.edges', ]

@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import QListView, QMessageBox
 from accupatt.windows.createDefinedSet import CreateDefinedSet
 
 Ui_Form, baseclass = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "editDefinedSets.ui")
+    cfg.resource_path("resources", "editDefinedSets.ui")
 )
 
 

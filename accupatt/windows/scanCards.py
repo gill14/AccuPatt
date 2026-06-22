@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
 )
 
 Ui_Form, _ = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "scanCards.ui")
+    cfg.resource_path("resources","scanCards.ui")
 )
 
 try:

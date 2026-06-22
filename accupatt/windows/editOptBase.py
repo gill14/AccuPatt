@@ -5,7 +5,7 @@ from PyQt6 import uic
 from PyQt6.QtWidgets import QDialogButtonBox, QLineEdit, QSpinBox
 
 Ui_Form, baseclass = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "editOptBase.ui")
+    cfg.resource_path("resources", "editOptBase.ui")
 )
 
 

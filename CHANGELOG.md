@@ -1,5 +1,29 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+## [2.2.0] - 21 June 2026
+### Added
+- Unified Settings Window
+- Database Browser tool for searching an archive of data files
+- Interactive string individual pass trim plot SNR highlighting and default floor at SNR=3
+- Option to collect string data from Right to Left
+- Direct scanner access via ICA on MacOS
+- Logarithmic spread factor equation option (DropFlight)
+- Card image loading from ZIP (Swath Gobbler)
+- Card data interactive extended Coverage/CV optimization tool
+- Interactive Atomization Model and Calibration Calculator Tool
+### Changed
+- Pass Observable entry directly within Application Info tab
+- Simulated adjacent passes for string and cards automatically computed
+- Spectrometer driver updated to OceanDirect 3.3.0
+- USDA Atomization Models updated and migrated externally
+- Swath (Target and Adjusted) now sets/saves as a float rather than an integer
+### Fixed
+- Major optimization of card image processing
+- Card plot x-axis units and labeling to match target swath units
+- Card defined sets not loading process parameters
+- No color in DSC shading if all cards have same DSC
+- New Series / File Aircraft sometimes doesn't populate Aircraft Model
+- Uploading Multiple cards per file with darker cards on lighter background (WSP) doesn't locate rois
 ## [2.1.1] - 26 January 2024
 ### Added
 - Support for SR4 spectrometers, via OceanDirect API
@@ -250,6 +274,9 @@ All notable changes to this project will be documented in this file.
 
 
 [Unreleased]: https://github.com/gill14/accupatt/compare/v2.0.20...HEAD
+[2.2.0]: https://github.com/gill14/AccuPatt/compare/v2.1.1...v2.2.0
+[2.1.1]: https://github.com/gill14/AccuPatt/compare/v2.1.0...v2.1.1
+[2.1.0]: https://github.com/gill14/AccuPatt/compare/v2.0.20...v2.1.0
 [2.0.20]: https://github.com/gill14/accupatt/compare/v2.0.19...v2.0.20
 [2.0.19]: https://github.com/gill14/accupatt/compare/v2.0.18...v2.0.19
 [2.0.18]: https://github.com/gill14/accupatt/compare/v2.0.17...v2.0.18

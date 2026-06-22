@@ -23,8 +23,8 @@ def plot(
     ax.set_ylabel(cfg.get_card_plot_y_axis_label())
     if not d.empty:
         locs_i = np.linspace(d["loc"].iloc[0], d["loc"].iloc[-1], num=d.shape[0] * 10)
-        y_i = interpolate.interp1d(
-            d["loc"], d[cfg.get_card_plot_y_axis()], kind="slinear"
+        y_i = interpolate.make_interp_spline(
+            d["loc"], d[cfg.get_card_plot_y_axis()], k=1
         )(locs_i)
         if cfg.get_card_plot_shading():
             method = cfg.get_card_plot_shading_method()
@@ -40,12 +40,13 @@ def plot(
                 kind = (
                     "slinear" if cfg.get_card_plot_shading_interpolate() else "nearest"
                 )
-                dv_i = interpolate.interp1d(
-                    d["loc"],
-                    np.array([d["dv01"], d["dv05"]]),
-                    kind=kind,
-                    fill_value="extrapolate",
-                )(locs_i)
+                if kind == "slinear":
+                    dv_i = interpolate.make_interp_spline(
+                        d["loc"], np.array([d["dv01"], d["dv05"]]).T, k=1
+                    )(locs_i).T
+                else:
+                    idx = np.abs(d["loc"].values[:, None] - locs_i[None, :]).argmin(axis=0)
+                    dv_i = np.array([d["dv01"].values, d["dv05"].values])[:, idx]
                 model = AtomizationModel()
                 dsc_i = np.array(
                     [

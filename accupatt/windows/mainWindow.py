@@ -58,7 +58,7 @@ from accupatt.windows.reportManager import ReportManager
 from accupatt.windows.stringPlotOptions import StringPlotOptions
 
 Ui_Form, baseclass = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "mainWindow.ui")
+    cfg.resource_path("resources", "mainWindow.ui")
 )
 
 testing = False
@@ -621,7 +621,7 @@ class MainWindow(baseclass):
         self.openResourceDocument("WRK_spectrometer_manual.pdf")
 
     def openResourceDocument(self, file):
-        file = os.path.join(os.getcwd(), "resources", "documents", file)
+        file = cfg.resource_path("resources", "documents", file)
         if sys.platform == "darwin":
             subprocess.call(["open", file])
         elif sys.platform == "win32":
@@ -641,7 +641,7 @@ class About(QDialog):
 
         logo_label = QLabel()
         logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        pixmap = QPixmap(os.path.join(os.getcwd(), "resources", "accupatt_logo.png"))
+        pixmap = QPixmap(cfg.resource_path("resources", "accupatt_logo.png"))
         logo_label.setPixmap(
             pixmap.scaledToWidth(480, Qt.TransformationMode.SmoothTransformation)
         )

@@ -41,12 +41,10 @@ class PassDataString(PassDataBase):
         old = getattr(self, "_name", None)
         self._name = value
         if old is not None and old != value:
-            for df in [
-                getattr(self, "data", None),
-                getattr(self, "data_ex", None),
-            ]:
+            for attr in ["data", "data_ex"]:
+                df = getattr(self, attr, None)
                 if df is not None and not df.empty and old in df.columns:
-                    df.rename(columns={old: value}, inplace=True)
+                    setattr(self, attr, df.rename(columns={old: value}))
 
     def get_data_mod(self, data=pd.DataFrame(), loc_units_override=None, center_override=None, smooth_override=None) -> pd.DataFrame:
         if data.empty:
@@ -59,7 +57,7 @@ class PassDataString(PassDataBase):
         # Trim it horizontally
         self.trimLR(data, self.trim_l, self.trim_r)
         # Rebase it
-        self.rebaseIt(data, self.rebase, self.trim_l, self.trim_r)
+        data = self.rebaseIt(data, self.rebase, self.trim_l, self.trim_r)
         # Trim it vertically
         self.trimV(data, self.trim_v)
         # Center it
@@ -85,17 +83,18 @@ class PassDataString(PassDataBase):
 
     def rebaseIt(
         self, d: pd.DataFrame, isRebase: bool = False, trimL: int = 0, trimR: int = 0
-    ):
+    ) -> pd.DataFrame:
         if not isRebase:
-            return
+            return d
         # Calculate trimmed/untrimmed distances
         untrimmed_dist = d.at[d.index[-1], "loc"] - d.at[d.index[0], "loc"]
         trimmed_dist = d.at[d.index[-1 - trimR], "loc"] - d.at[d.index[trimL], "loc"]
-        # Drop data points outside trimmed area in place
+        # Drop data points outside trimmed area
         to_drop = d.index[(d.index < trimL) | (d.index > d.index[-1 - trimR])]
-        d.drop(to_drop, inplace=True)
+        d = d.drop(to_drop)
         # Rebase locations according to ratio of untrimmed:trimmed length
         d["loc"] = d["loc"].multiply(untrimmed_dist / trimmed_dist)
+        return d
 
     def trimV(self, d: pd.DataFrame, trimV: float | None = None):
         if trimV:

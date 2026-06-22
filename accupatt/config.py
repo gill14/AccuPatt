@@ -1,6 +1,20 @@
 import json
+import os
+import sys
 from pathlib import Path
 from PyQt6.QtCore import QSettings
+
+
+def resource_path(*parts: str) -> str:
+    if getattr(sys, 'frozen', False):
+        if sys.frozen == 'macosx_app':
+            base = os.environ['RESOURCEPATH']
+        else:
+            base = sys._MEIPASS
+    else:
+        base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, *parts)
+
 
 VERSION_MAJOR = 2
 VERSION_MINOR = 2

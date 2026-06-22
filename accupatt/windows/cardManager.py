@@ -18,13 +18,12 @@ from accupatt.windows.definedSetManager import (
 from accupatt.windows.editSpreadFactors import EditSpreadFactors
 from accupatt.windows.editThreshold import EditThreshold
 from accupatt.windows.loadCards import LoadCards, LoadCardsPreBatch
-from accupatt.windows.scanCards import ScanCards
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import QDialogButtonBox, QFileDialog, QLabel, QMessageBox, QComboBox, QProgressDialog
 
 Ui_Form, baseclass = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "cardManager.ui")
+    cfg.resource_path("resources", "cardManager.ui")
 )
 
 
@@ -325,6 +324,7 @@ class CardManager(baseclass):
             )
             if msg == QMessageBox.StandardButton.No:
                 return
+        from accupatt.windows.scanCards import ScanCards
         e = ScanCards(card_list=selected_cards, parent=self)
         e.accepted.connect(self.passDataChanged.emit)
         e.resize(self.size())

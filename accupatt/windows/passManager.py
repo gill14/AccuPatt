@@ -9,7 +9,7 @@ from accupatt.models.passTable import PassTable, ComboBoxDelegate
 from accupatt.models.seriesData import SeriesData
 
 Ui_Form, baseclass = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "passManager.ui")
+    cfg.resource_path("resources", "passManager.ui")
 )
 
 

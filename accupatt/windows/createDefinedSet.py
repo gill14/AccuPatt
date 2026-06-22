@@ -13,7 +13,7 @@ from accupatt.windows.editSpreadFactors import EditSpreadFactors
 from accupatt.windows.editThreshold import EditThreshold
 
 Ui_Form, baseclass = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "createDefinedSet.ui")
+    cfg.resource_path("resources", "createDefinedSet.ui")
 )
 
 

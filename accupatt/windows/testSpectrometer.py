@@ -17,7 +17,7 @@ from accupatt.models.dye import Dye
 import accupatt.config as cfg
 
 Ui_Form, baseclass = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "testSpectrometer.ui")
+    cfg.resource_path("resources", "testSpectrometer.ui")
 )
 
 

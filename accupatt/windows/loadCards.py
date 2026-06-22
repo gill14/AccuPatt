@@ -25,10 +25,10 @@ from PyQt6.QtWidgets import (
 from pyqtgraph.functions import mkPen
 
 Ui_Form, _ = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "loadCards.ui")
+    cfg.resource_path("resources", "loadCards.ui")
 )
 Ui_Form_Pre, baseclass_pre = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "loadCardsPreBatch.ui")
+    cfg.resource_path("resources", "loadCardsPreBatch.ui")
 )
 
 

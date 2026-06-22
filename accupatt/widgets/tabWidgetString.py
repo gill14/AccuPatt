@@ -17,7 +17,7 @@ from accupatt.windows.stringPlotOptions import StringPlotOptions
 class TabWidgetString(TabWidgetBase):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(
-            ui_file=os.path.join(os.getcwd(), "resources", "stringMainWidget.ui"),
+            ui_file=cfg.resource_path("resources", "stringMainWidget.ui"),
             subtype="string",
             parent=parent,
             *args,

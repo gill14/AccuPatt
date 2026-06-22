@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
 )
 
 Ui_Form, baseclass = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "cardTableWidget.ui")
+    cfg.resource_path("resources", "cardTableWidget.ui")
 )
 
 

@@ -1,9 +1,10 @@
 import os
+import accupatt.config as cfg
 from pyqtgraph.parametertree import Parameter, ParameterTree, parameterTypes
 from PyQt6 import uic
 
 Ui_Form, baseclass = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "editReports.ui")
+    cfg.resource_path("resources", "editReports.ui")
 )
 
 

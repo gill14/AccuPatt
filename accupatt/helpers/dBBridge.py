@@ -16,8 +16,8 @@ from accupatt.models.seriesData import SeriesData
 from accupatt.models.seriesDataString import SeriesDataString
 from accupatt.models.sprayCard import SprayCard
 
-schema_filename = os.path.join(os.getcwd(), "resources", "schema.sql")
-alembic_ini = os.path.join(os.getcwd(), "resources", "alembic.ini")
+schema_filename = cfg.resource_path("resources", "schema.sql")
+alembic_ini = cfg.resource_path("resources", "alembic.ini")
 
 
 """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """''

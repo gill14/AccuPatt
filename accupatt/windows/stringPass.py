@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import QMessageBox, QLabel, QPushButton
 from oceandirect.OceanDirectAPI import OceanDirectAPI
 
 Ui_Form, baseclass = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "readString.ui")
+    cfg.resource_path("resources", "readString.ui")
 )
 
 

@@ -5,7 +5,7 @@ from accupatt.models.passData import Pass
 from PyQt6 import uic
 
 Ui_Form, baseclass = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "passInfo.ui")
+    cfg.resource_path("resources", "passInfo.ui")
 )
 
 

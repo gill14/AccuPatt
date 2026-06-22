@@ -9,7 +9,7 @@ from PyQt6.QtCore import QSignalBlocker, Qt
 from PyQt6.QtWidgets import QDialogButtonBox, QMessageBox
 
 Ui_Form, baseclass = uic.loadUiType(
-    os.path.join(os.getcwd(), "resources", "editSpreadFactors.ui")
+    cfg.resource_path("resources", "editSpreadFactors.ui")
 )
 
 
