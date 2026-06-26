@@ -46,6 +46,7 @@ OPTIONS = {
 
 if sys.platform == 'darwin':
     shutil.rmtree('./dist/osx/dist/AccuPatt.app', ignore_errors=True)
+    shutil.rmtree('./dist/osx/build', ignore_errors=True)
 
     subprocess.call(["cp","./user_manual/accupatt_2_user_manual.pdf","./resources/documents/accupatt_2_user_manual.pdf"])
 
