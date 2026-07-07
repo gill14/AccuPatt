@@ -1,3 +1,5 @@
+import re
+
 import accupatt.config as cfg
 from dataclasses import dataclass, field
 
@@ -92,8 +94,10 @@ class AppInfo:
 
     def string_phone(self) -> str:
         p = self.phone
-        if len(p) == 10:
-            return f"({p[:3]}) {p[3:6]}-{p[6:]}"
+        digits = re.sub(r"\D", "", p)
+        if len(digits) == 10:
+            return f"({digits[:3]}) {digits[3:6]}-{digits[6:]}"
+        return p
 
     def string_wingspan(self) -> str:
         if self.wingspan > 0:
