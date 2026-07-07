@@ -24,6 +24,7 @@ class py2app(_Py2AppBase):
 OPTIONS = {
     'iconfile':'./resources/accupatt_logo.icns',
     'resources':['./resources'],
+    'packages': ['aerial_spray_nozzle_models'],
     'bdist_base':'./dist/osx/build',
     'dist_dir':'./dist/osx/dist',
     'plist': {'CFBundleShortVersionString':VERSION,
