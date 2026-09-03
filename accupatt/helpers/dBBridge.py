@@ -406,7 +406,7 @@ def _update_table_series_string(c: sqlite3.Cursor, s: SeriesData):
     c.execute(
         """INSERT INTO series_string (series_id, average_center, average_center_method, average_smooth, average_smooth_window, average_smooth_order, equalize_integrals, swath_adjusted) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(series_id) DO UPDATE SET
-                    average_center = excluded.average_center, average_center_method = excluded.average_center_method, average_smooth = excluded.average_smooth, average_smooth_window = excluded.average_smooth_window, average_smooth_order = excluded.average_smooth_window, equalize_integrals = excluded.equalize_integrals, swath_adjusted = excluded.swath_adjusted""",
+                    average_center = excluded.average_center, average_center_method = excluded.average_center_method, average_smooth = excluded.average_smooth, average_smooth_window = excluded.average_smooth_window, average_smooth_order = excluded.average_smooth_order, equalize_integrals = excluded.equalize_integrals, swath_adjusted = excluded.swath_adjusted""",
         (
             s.id,
             ss.center,
