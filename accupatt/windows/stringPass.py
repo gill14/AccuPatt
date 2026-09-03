@@ -300,7 +300,7 @@ class StringPass(baseclass):
 
     def _update_dye_pill(self):
         dye = self.passData.string.dye
-        self.pill_dye.setText(f"Dye: {dye.name} | {dye.wavelength_excitation} nm")
+        self.pill_dye.setText(f"Dye: {dye.name} | {dye.wavelength_excitation}{'\u2192'}{dye.wavelength_emission} nm")
         self.pill_dye.setStyleSheet(self._pill_ready_style)
 
     def _update_resolution_pill(self):
