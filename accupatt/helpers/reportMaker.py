@@ -376,17 +376,27 @@ class ReportMaker:
         y_row1 = y_flyin_header - (h_row1 + h_space)
         
         line_1 = []
+        col_widths_1 = []
         if applicator:
-            line_1.append(self._header_applicator())
+            col_widths_1.append(150)
+            line_1.append(self._header_applicator(box_width=col_widths_1[-1]))
         if aircraft:
-            line_1.append(self._header_aircraft())
+            col_widths_1.append(150)
+            line_1.append(self._header_aircraft(box_width=col_widths_1[-1]))
         if spray_system:
-            line_1.append(self._header_spray_system())
+            col_widths_1.append(125)
+            line_1.append(self._header_spray_system(box_width=col_widths_1[-1]))
         if nozzles:
-            line_1.append(self._header_nozzles())
+            col_widths_1.append(125)
+            line_1.append(self._header_nozzles(box_width=col_widths_1[-1]))
         if len(line_1) > 0:
             # Make table of tables for row 1 and add it to canvas
-            t_1 = Table([line_1], hAlign="CENTER", vAlign="CENTER")
+            t_1 = Table(
+                [line_1],
+                hAlign="CENTER",
+                vAlign="CENTER",
+                colWidths=col_widths_1,
+            )
             t_1.wrapOn(self.canvas, w, h_row1)
             f_1 = Frame(
                 x1=x,
@@ -440,62 +450,95 @@ class ReportMaker:
             f_2.addFromList([t_2], self.canvas)
         return x, y_row2
 
-    def _header_applicator(self):
+    def _truncate(
+        self, text: str, max_width: float, font_name: str = "Helvetica", font_size: float = 8
+    ) -> str:
+        """Truncate text with an ellipsis so it fits within max_width."""
+        text = str(text) if text is not None else ""
+        if not text or self.canvas.stringWidth(text, font_name, font_size) <= max_width:
+            return text
+        ellipsis = "…"
+        while text and self.canvas.stringWidth(text + ellipsis, font_name, font_size) > max_width:
+            text = text[:-1]
+        return text + ellipsis
+
+    def _header_applicator(self, box_width):
+        # colWidths=[14, None] -> single data column, minus its padding (4+4)
+        value_width = box_width - 14 - 8
         return Table(
             [
-                [TTR("Applicator"), self.i.pilot],
-                ["", self.i.business],
-                ["", self.i.addressLine1()],
-                ["", self.i.addressLine2()],
-                ["", self.i.string_phone()],
-                ["", self.i.email],
+                [TTR("Applicator"), self._truncate(self.i.pilot, value_width)],
+                ["", self._truncate(self.i.business, value_width)],
+                ["", self._truncate(self.i.addressLine1(), value_width)],
+                ["", self._truncate(self.i.addressLine2(), value_width)],
+                ["", self._truncate(self.i.string_phone(), value_width)],
+                ["", self._truncate(self.i.email, value_width)],
             ],
             colWidths=[14, None],
             style=self.tablestyle,
         )
 
-    def _header_aircraft(self):
+    def _header_aircraft(self, box_width):
         tablestyle_alt = self.tablestyle + [
             ("BACKGROUND", (1, 0), (-1, 1), colors.palegreen),
         ]
+        labels = ["Reg. #:", "Series:", "Make:", "Model:", "Wingspan:", "Winglets?:"]
+        # colWidths=[14, None, None] -> label col sized to its widest label,
+        # value col gets whatever's left of box_width (each col padded 4+4)
+        label_width = max(self.canvas.stringWidth(l, "Helvetica", 8) for l in labels)
+        value_width = box_width - 14 - 8 - 8 - label_width
         return Table(
             [
-                [TTR("Aircraft"), "Reg. #:", self.i.regnum],
-                ["", "Series:", self.i.series],
-                ["", "Make:", self.i.make],
-                ["", "Model:", self.i.model],
-                ["", "Wingspan:", self.i.string_wingspan()],
-                ["", "Winglets?:", self.i.winglets],
+                [TTR("Aircraft"), labels[0], self._truncate(self.i.regnum, value_width)],
+                ["", labels[1], self._truncate(self.i.string_series(), value_width)],
+                ["", labels[2], self._truncate(self.i.make, value_width)],
+                ["", labels[3], self._truncate(self.i.model, value_width)],
+                ["", labels[4], self._truncate(self.i.string_wingspan(), value_width)],
+                ["", labels[5], self._truncate(self.i.winglets, value_width)],
             ],
             colWidths=[14, None, None],
             style=tablestyle_alt,
         )
 
-    def _header_spray_system(self):
+    def _header_spray_system(self, box_width):
+        labels = [
+            "Target Swath:",
+            "Target Rate:",
+            "Boom Pressure:",
+            "Boom Width:",
+            "Boom Drop:",
+            "Nozzle Spacing:",
+        ]
+        label_width = max(self.canvas.stringWidth(l, "Helvetica", 8) for l in labels)
+        value_width = box_width - 14 - 8 - 8 - label_width
         return Table(
             [
-                [TTR("Spray System"), "Target Swath:", self.i.string_swath()],
-                ["", "Target Rate:", self.i.string_rate()],
-                ["", "Boom Pressure:", self.i.string_pressure()],
-                ["", "Boom Width:", self.i.string_boom_width()],
-                ["", "Boom Drop:", self.i.string_boom_drop()],
-                ["", "Nozzle Spacing:", self.i.string_nozzle_spacing()],
+                [TTR("Spray System"), labels[0], self._truncate(self.i.string_swath(), value_width)],
+                ["", labels[1], self._truncate(self.i.string_rate(), value_width)],
+                ["", labels[2], self._truncate(self.i.string_pressure(), value_width)],
+                ["", labels[3], self._truncate(self.i.string_boom_width(), value_width)],
+                ["", labels[4], self._truncate(self.i.string_boom_drop(), value_width)],
+                ["", labels[5], self._truncate(self.i.string_nozzle_spacing(), value_width)],
             ],
             colWidths=[14, None, None],
             style=self.tablestyle,
         )
 
-    def _header_nozzles(self):
+    def _header_nozzles(self, box_width):
         tablestyle_alt = self.tablestyle + [
             ("BACKGROUND", (1, 0), (-1, 0), colors.lightgrey),
             ("BACKGROUND", (1, 3), (-1, 3), colors.lightgrey),
         ]
+        # colWidths=[14, None] -> single data column, minus its padding (4+4)
+        value_width = box_width - 14 - 8
         nozzle1 = (
             self.i.nozzles[0].as_string_tuple() if len(self.i.nozzles) > 0 else ("", "")
         )
         nozzle2 = (
             self.i.nozzles[1].as_string_tuple() if len(self.i.nozzles) > 1 else ("", "")
         )
+        nozzle1 = tuple(self._truncate(v, value_width) for v in nozzle1)
+        nozzle2 = tuple(self._truncate(v, value_width) for v in nozzle2)
         return Table(
             [
                 [TTR("Nozzles"), "Set #1"],
