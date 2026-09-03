@@ -1,14 +1,15 @@
 from PyQt6 import uic
-from PyQt6.QtCore import pyqtSignal, pyqtSlot, QSignalBlocker, Qt
+from PyQt6.QtCore import pyqtSignal, pyqtSlot, QEvent, QSignalBlocker, Qt
+from PyQt6.QtGui import QIcon, QPainter, QPalette, QPen, QPixmap
 from PyQt6.QtWidgets import (
     QPushButton,
     QCheckBox,
     QDoubleSpinBox,
     QListWidget,
     QListWidgetItem,
-    QSlider,
     QTableWidget,
     QTabWidget,
+    QToolButton,
     QWidget,
 )
 from accupatt.models.passData import Pass
@@ -56,8 +57,16 @@ class TabWidgetBase(QWidget):
         )
         self.spinBoxSwathAdjusted: QDoubleSpinBox = self.ui.spinBoxSwathAdjusted
         self.spinBoxSwathAdjusted.valueChanged[float].connect(self.swathAdjustedChanged)
-        self.sliderSimulatedSwath: QSlider = self.ui.sliderSimulatedSwath
-        self.sliderSimulatedSwath.valueChanged[int].connect(lambda v: self.swathAdjustedChanged(float(v)))
+        # Native button symbols render inconsistently (or identically for
+        # PlusMinus/UpDownArrows) across platforms/styles, so the spinbox's
+        # built-in buttons are hidden (see .ui) and these stand in for them,
+        # with icons painted from the current palette so they read correctly
+        # in both light and dark mode.
+        self.buttonSwathMinus: QToolButton = self.ui.buttonSwathMinus
+        self.buttonSwathPlus: QToolButton = self.ui.buttonSwathPlus
+        self.buttonSwathMinus.clicked.connect(self.spinBoxSwathAdjusted.stepDown)
+        self.buttonSwathPlus.clicked.connect(self.spinBoxSwathAdjusted.stepUp)
+        self._updateSwathButtonIcons()
         self.buttonPlotOptions: QPushButton = self.ui.buttonPlotOptions
         self.buttonPlotOptions.clicked.connect(self.clickedPlotOptions)
         self.tabWidget: QTabWidget = self.ui.tabWidget
@@ -66,6 +75,34 @@ class TabWidgetBase(QWidget):
         self.plotWidgetRacetrack: MplWidget = self.ui.plotWidgetRacetrack
         self.plotWidgetBackAndForth: MplWidget = self.ui.plotWidgetBackAndForth
         self.tableWidgetCV: QTableWidget = self.ui.tableWidgetCV
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        # Re-paint the swath +/- icons when the OS switches light/dark mode
+        if event.type() == QEvent.Type.PaletteChange:
+            self._updateSwathButtonIcons()
+
+    def _updateSwathButtonIcons(self):
+        self.buttonSwathMinus.setIcon(self._makePlusMinusIcon(plus=False))
+        self.buttonSwathPlus.setIcon(self._makePlusMinusIcon(plus=True))
+
+    def _makePlusMinusIcon(self, plus: bool) -> QIcon:
+        size = 16
+        pixmap = QPixmap(size, size)
+        pixmap.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        pen = QPen(self.palette().color(QPalette.ColorRole.WindowText))
+        pen.setWidth(2)
+        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        painter.setPen(pen)
+        margin = 3
+        mid = size // 2
+        painter.drawLine(margin, mid, size - margin, mid)
+        if plus:
+            painter.drawLine(mid, margin, mid, size - margin)
+        painter.end()
+        return QIcon(pixmap)
 
     """
     External Method to fill data
@@ -100,10 +137,6 @@ class TabWidgetBase(QWidget):
             opt.swath_adjusted = swath
         opt.swath_units = swath_units
         # Update UI
-        with QSignalBlocker(self.sliderSimulatedSwath):
-            self.sliderSimulatedSwath.setMinimum(round(0.5 * float(opt.swath_adjusted)))
-            self.sliderSimulatedSwath.setMaximum(round(1.5 * float(opt.swath_adjusted)))
-            self.sliderSimulatedSwath.setValue(round(opt.swath_adjusted))
         with QSignalBlocker(self.spinBoxSwathAdjusted):
             is_metric = opt.swath_units == cfg.UNIT_M
             self.spinBoxSwathAdjusted.setSingleStep(0.5 if is_metric else 1.0)
@@ -276,8 +309,6 @@ class TabWidgetBase(QWidget):
         self.getSeriesOpt().swath_adjusted = swath
         with QSignalBlocker(self.spinBoxSwathAdjusted):
             self.spinBoxSwathAdjusted.setValue(swath)
-        with QSignalBlocker(self.sliderSimulatedSwath):
-            self.sliderSimulatedSwath.setValue(round(swath))
         self.updatePlots(composites=True, simulations=True)
 
     @pyqtSlot()
