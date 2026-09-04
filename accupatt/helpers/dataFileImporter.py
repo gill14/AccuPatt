@@ -327,38 +327,42 @@ def load_from_accustain_file(file, s: SeriesData):
 
 
 def load_from_usda_file(file: str, s: SeriesData):
-    # Split file name for parts
-    parts = file.split(os.sep)[-1].split(" ")
-    print(file.split(os.sep))
-    print(parts)
+    # Split file name for parts: "<regnum> <series letter> <pass number> .txt"
+    parts = os.path.basename(file).split(" ")
     regnum = parts[0]
-    print(regnum)
     series_letter = parts[1]
-    print(series_letter)
-    id = regnum + " " + series_letter
+    series_id = f"{regnum} {series_letter}"
 
-    # Get a sorted list of pass files for this series
+    # Get a sorted list of pass files for this series (same regnum/series letter,
+    # differing only in pass number), matched by exact naming stem rather than a
+    # loose substring check
     dir = os.path.dirname(file)
     files = [
         os.path.join(dir, f)
         for f in os.listdir(dir)
         if os.path.isfile(os.path.join(dir, f))
+        and f.startswith(f"{series_id} ")
+        and f.endswith(".txt")
     ]
-    files = [fn for fn in files if id in fn]
     files.sort()
 
     i = s.info
 
     i.regnum = regnum
     i.series = ord(series_letter.lower()) - 96
-    print(i.series)
     i.swath = 65  # Hard default added to analyst notes below
 
     # get pilot parameters file
     if os.path.isfile(os.path.join(dir, "Pilot Paramters.prn")):
+        # dtype=str prevents pandas from inferring all-digit columns (e.g. Zip
+        # Code, Office Number) as int64 - which would both lose leading zeros
+        # and crash Qt widgets expecting a str
         pdf = pd.read_csv(
-            os.path.join(dir, "Pilot Paramters.prn"), sep="\t", index_col=0
-        )
+            os.path.join(dir, "Pilot Paramters.prn"),
+            sep="\t",
+            index_col=0,
+            dtype=str,
+        ).fillna("")
         i.pilot = pdf.loc[regnum, "Pilot Name"]
         i.street = pdf.loc[regnum, "Street Address"]
         i.city = pdf.loc[regnum, "City"]
@@ -373,17 +377,19 @@ def load_from_usda_file(file: str, s: SeriesData):
         note5 = "SWATH WIDTH SET TO 65 FT BY GLOBAL DEFAULT FOR USDA FILES"
         i.notes_analyst = "\r".join([note0, note1, note2, note3, note4, note5])
 
-    for file in files:
-        p = Pass(number=int(parts[2]))
+    for pass_file in files:
+        # Each pass file is independently numbered, e.g. "<regnum> <letter> <n> .txt" -
+        # parse it from this specific file's own name, not the originally selected one
+        pass_number = int(os.path.basename(pass_file).split(" ")[2])
+        p = Pass(number=pass_number)
 
-        lines = []
-        with open(file) as ffile:
+        with open(pass_file) as ffile:
             lines = ffile.readlines()
         is_right = lines[0].strip().split("\t")[-1] == "Right"
         d_ex = []
         d_em = []
-        for i, line in enumerate(lines):
-            if i < 2:
+        for line_num, line in enumerate(lines):
+            if line_num < 2:
                 continue
             line_item = line.strip().split("\t")
             loc = float(line_item[1])
@@ -404,10 +410,8 @@ def load_from_wrk_file(file, s: SeriesData):
     lines = []
     with open(file) as ffile:
         lines = ffile.readlines()
-    for i, line in enumerate(lines):
-        lines[i] = lines[i].strip()
-        lines[i] = lines[i].strip('"')
-        print("Line {}: {}".format(i, lines[i]))
+    for line_num, line in enumerate(lines):
+        lines[line_num] = line.strip().strip('"')
 
     i = s.info
     i.regnum = file.split(os.sep)[-1][2:-3]
@@ -422,7 +426,7 @@ def load_from_wrk_file(file, s: SeriesData):
     _analysis_speed = lines[5]
     _n1flow40 = lines[6]
     _n2flow40 = lines[7]
-    _n2q = int(lines[8].strip() or 0)
+    _n2q = int(float(lines[8].strip() or 0))
     _n1s = lines[9]
     _n2s = lines[10]
     _n1s_name = lines[11]
@@ -444,7 +448,7 @@ def load_from_wrk_file(file, s: SeriesData):
     _n2t = (
         _n1t  # WRK only allowed selection of different orifice sizes, not nozzle types
     )
-    _n_total_q = int(lines[25].strip() or 0)
+    _n_total_q = int(float(lines[25].strip() or 0))
     _n1q = _n_total_q - _n2q
     if _n1q > 0:
         i.nozzles.append(
@@ -455,57 +459,64 @@ def load_from_wrk_file(file, s: SeriesData):
             translateNozzle(id=2, type=_n2t, size=_n2s, defl=_n2d, quant=_n2q)
         )
 
-    i.pressure = int(lines[26])
-    i.rate = float(lines[27])
-    i.swath = float(lines[28])
+    i.set_pressure(lines[26])
+    i.set_rate(lines[27])
+    i.set_swath(lines[28])
 
-    # Get a sorted list of pass files for this series
+    # Get a sorted list of pass files for this series (same regnum/series number,
+    # differing only in the trailing pass letter), matched by exact naming stem
+    # rather than a loose substring check
     dir = os.path.dirname(file)
-    files = [f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f))]
-    files = [os.path.join(dir, fn) for fn in files if fn[:-1] in file]
-    files.sort()
+    series_stem = os.path.basename(file)[:-1]
+    pass_files = [
+        os.path.join(dir, f)
+        for f in os.listdir(dir)
+        if os.path.isfile(os.path.join(dir, f)) and f[:-1] == series_stem
+    ]
+    pass_files.sort()
 
-    for file in files:
-        lines = []
-        with open(file) as ffile:
-            lines = ffile.readlines()
-        for i, line in enumerate(lines):
-            lines[i] = lines[i].strip()
-            lines[i] = lines[i].strip('"')
+    for pass_file in pass_files:
+        pass_lines = []
+        with open(pass_file) as ffile:
+            pass_lines = ffile.readlines()
+        for line_num, line in enumerate(pass_lines):
+            pass_lines[line_num] = line.strip().strip('"')
 
-        p = Pass(number=ord(file[-1].lower()) - 96)
+        p = Pass(number=ord(pass_file[-1].lower()) - 96)
+        # Numeric fields are handed to the Pass setters as raw strings so their
+        # built-in float-tolerant parsing applies (readings like "58.1" or "49.9"
+        # are common and previously crashed a premature int() cast here)
         p.set_ground_speed(
-            int(lines[29]), units=cfg.UNIT_KPH if isMetric else cfg.UNIT_MPH
+            pass_lines[29], units=cfg.UNIT_KPH if isMetric else cfg.UNIT_MPH
         )
         p.set_wind_speed(
-            float(lines[30]), units=cfg.UNIT_KPH if isMetric else cfg.UNIT_MPH
+            pass_lines[30], units=cfg.UNIT_KPH if isMetric else cfg.UNIT_MPH
         )
-        p.set_wind_direction(int(lines[31]))
-        # Complicated Pass Heading conversion:
-        _cw = float(lines[32])
-        """if _cw > 0:
-            _ph = (180/math.pi) *(math.asin(_cw) / float(lines[30])) + float(lines[31])
-        else:
-            _ph = abs((180/math.pi)*(math.asin(abs(_cw)) / float(lines[30])) - float(lines[31]))"""
+        p.set_wind_direction(pass_lines[31])
+        # Pass Heading is not derivable from the WRK fields recorded here; the
+        # formula would need wind speed/direction and crosswind component, but
+        # was never finished by the original author.
         _ph = 0  # TODO
         p.pass_heading = _ph
         p.set_temperature(
-            int(lines[33]), units=cfg.UNIT_DEG_C if isMetric else cfg.UNIT_DEG_F
+            pass_lines[33], units=cfg.UNIT_DEG_C if isMetric else cfg.UNIT_DEG_F
         )
         p.set_spray_height(
-            float(lines[34]), units=cfg.UNIT_M if isMetric else cfg.UNIT_FT
+            pass_lines[34], units=cfg.UNIT_M if isMetric else cfg.UNIT_FT
         )
-        p.set_humidity(int(lines[35]))
+        p.set_humidity(pass_lines[35])
 
         # calculate data point spacing from fl length and num data points
-        _fl = int(lines[4])
-        _num_data_points = int(lines[37])
+        _fl = float(pass_lines[4])
+        _num_data_points = int(float(pass_lines[37]))
         _spacing = _fl / _num_data_points
 
         # loop over data points and get them into a dataframe
         d = []
-        for i in range(38, 38 + _num_data_points):
-            d.append({"loc": (i - 38) * _spacing, p.name: float(lines[i] or 0)})
+        for pt in range(38, 38 + _num_data_points):
+            d.append(
+                {"loc": (pt - 38) * _spacing, p.name: float(pass_lines[pt] or 0)}
+            )
         p.string.data = pd.DataFrame(d)
 
         # Turn off smoothing

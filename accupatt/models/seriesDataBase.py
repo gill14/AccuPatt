@@ -63,7 +63,12 @@ class SeriesDataBase:
         y_fill_cum_center = y_fill_cum[
             np.where(((xfill >= -swath_width / 2) & (xfill <= swath_width / 2)))
         ]
-        return round(variation(y_fill_cum_center, axis=0) * 100)
+        if y_fill_cum_center.size == 0:
+            return 0
+        cv = variation(y_fill_cum_center, axis=0)
+        # variation() is std/mean - undefined (nan/inf) for all-zero or near-zero
+        # deposition, which real (especially short/test) pass data can produce
+        return round(cv * 100) if np.isfinite(cv) else 0
 
     def _calc_cv_coverage_stats(
         self,
@@ -93,8 +98,9 @@ class SeriesDataBase:
         y_center = y_cum[mask]
         if y_center.size == 0:
             return 0, 0.0, 0.0, 0.0
+        cv = variation(y_center, axis=0)
         return (
-            round(variation(y_center, axis=0) * 100),
+            round(cv * 100) if np.isfinite(cv) else 0,
             float(np.min(y_center)),
             float(np.mean(y_center)),
             float(np.max(y_center)),

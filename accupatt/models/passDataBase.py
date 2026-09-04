@@ -25,12 +25,17 @@ class PassDataBase:
             return
         if centerMethod == cfg.CENTER_METHOD_CENTROID:
             y = d[columnName]
-            c = (y * d["loc"]).sum() / y.sum()
+            y_sum = y.sum()
+            if y_sum == 0:
+                return
+            c = (y * d["loc"]).sum() / y_sum
         elif centerMethod == cfg.CENTER_METHOD_COD:
             y = d[columnName].to_numpy()
             x = d["loc"].to_numpy()
             numerator = (y[:-1] * (x[1:] + x[:-1]) + (y[1:] - y[:-1]) * (2 * x[1:] + x[:-1]) / 3).sum()
             denominator = (y[1:] + y[:-1]).sum()
+            if denominator == 0:
+                return
             c = numerator / denominator
         else:
             return

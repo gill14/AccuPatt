@@ -23,7 +23,7 @@ def plot_individual(
     x = string.data["loc"].to_numpy(dtype=float)
     y_raw = string.data[string.name].to_numpy(dtype=float)
     y_disp = y_raw * scale
-    floor_disp = (min_ + string.trim_v) * scale
+    floor_disp = (min_ + (string.trim_v or 0.0)) * scale
     # Draw SNR overlay first so data and trim lines render on top
     if string.snr_result is not None:
         N_rms, y_bar, noise_x_start, noise_x_end = string.snr_result

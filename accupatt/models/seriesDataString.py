@@ -41,7 +41,8 @@ class SeriesDataString(SeriesDataBase):
         ]
         area_max = max(areas)
         for p, area in zip(passes, areas):
-            p.string.equalize_factor = area_max / area
+            if area != 0:
+                p.string.equalize_factor = area_max / area
 
     def _averagePattern(self, passes: list[Pass]) -> pd.DataFrame:
         average_df = pd.DataFrame()
