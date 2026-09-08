@@ -17,6 +17,27 @@ Outside of the much appreciated bug finding and reporting, feel free to clone th
 poetry install
 poetry run python -m accupatt
 ```
+## Spectrometer support (OceanDirect SDK)
+AccuPatt talks to Ocean Optics spectrometers through the OceanDirect SDK. That SDK is proprietary and is **not** included in this repository — the OceanDirect API Terms only permit distributing it as part of a built application, so it is staged locally instead of committed.
+
+If you want string analysis to work from a source checkout, install the SDK yourself and stage it:
+
+1. Download and install the OceanDirect SDK from [Ocean Optics](https://www.oceanoptics.com/software/oceandirect/). You accept Ocean Optics' API Terms when you install it — that acceptance is yours to give and cannot be made on your behalf.
+2. Stage the Python bindings into the working tree:
+   ```shell
+   poetry run python tools/sync_oceandirect.py
+   ```
+   Set `OCEANDIRECT_HOME` first if you installed it somewhere non-standard. Run it once per platform you build on; it leaves other platforms' libraries alone.
+
+Everything else in AccuPatt — spray card analysis, reporting, the database tools — works without the SDK. Spectrometer features report "OceanDirect Driver Not Installed" and stay disabled.
+
+To confirm a spectrometer is working, plug one in and run:
+```shell
+poetry run python tools/check_spectrometer.py
+```
+It reports the SDK version, the device's capabilities, and a few live frames — which distinguishes "no SDK" from "no device" from "device misbehaving" without going through the GUI.
+
+Released installers bundle the SDK, so end users do not need to do any of this. They accept the [AccuPatt EULA](resources/documents/AccuPatt_EULA.txt) instead, which carries the restrictions Ocean Optics requires be passed through.
 # What if I just want to use it?
 You can access a compiled installer as well as the user manual using the links below:
 - [macOS and Windows Installers](https://github.com/gill14/AccuPatt/releases)

@@ -1,0 +1,141 @@
+ACCUPATT END USER LICENSE AGREEMENT
+
+Version 1.0
+
+IMPORTANT - READ CAREFULLY. This End User License Agreement ("Agreement") is a
+legal agreement between you ("You") and Matt Gill ("Developer") governing your
+use of the AccuPatt software application, including all associated files,
+documentation, and third-party components distributed with it ("AccuPatt").
+
+BY INSTALLING, ACCEPTING, OR USING ACCUPATT, YOU AGREE TO BE BOUND BY THIS
+AGREEMENT. IF YOU DO NOT AGREE, DO NOT INSTALL OR USE ACCUPATT.
+
+
+1. LICENSE GRANT
+
+Subject to your compliance with this Agreement, Developer grants you a
+non-exclusive, non-transferable, revocable license to install and use AccuPatt
+for the purpose of conducting and analyzing agricultural aircraft spray pattern
+tests.
+
+AccuPatt is provided free of charge. No fee is required for this license.
+
+
+2. THIRD-PARTY COMPONENTS - OCEANDIRECT
+
+AccuPatt incorporates the OceanDirect software development kit and runtime
+libraries ("OceanDirect APIs"), which are the property of Ocean Optics, Inc.
+(formerly Ocean Insight) and are licensed, not sold. OceanDirect is a trademark
+of Ocean Optics, Inc.
+
+The OceanDirect APIs are distributed to you solely as an integrated component
+of AccuPatt. As a condition of this Agreement, and in addition to every other
+restriction herein:
+
+   (a) You may NOT use the OceanDirect APIs on a stand-alone basis, or for any
+       purpose, outside of AccuPatt. The OceanDirect APIs are licensed to you
+       only for use through AccuPatt's own interfaces.
+
+   (b) You may NOT use the OceanDirect APIs with any hardware other than Ocean
+       Optics spectrometers. Use of the OceanDirect APIs with non-Ocean Optics
+       hardware, including competing spectrometers or similar devices, is
+       expressly prohibited.
+
+   (c) You may NOT extract, copy, redistribute, sublicense, sell, rent, lease,
+       lend, or otherwise separate the OceanDirect APIs from AccuPatt.
+
+   (d) You may NOT reverse engineer, decompile, disassemble, or modify the
+       OceanDirect APIs, or extract the USB protocols they implement, except
+       and only to the extent applicable law expressly permits despite this
+       limitation.
+
+Ocean Optics, Inc. retains all right, title, and interest in and to the
+OceanDirect APIs. Nothing in this Agreement grants you any right in the
+OceanDirect APIs beyond use as an integrated part of AccuPatt.
+
+If you wish to use the OceanDirect APIs for any other purpose, you must obtain
+a license directly from Ocean Optics, Inc.
+
+
+3. RESTRICTIONS
+
+You may not: (i) use AccuPatt for any unlawful purpose; (ii) remove or alter
+any copyright, trademark, or other proprietary notice in AccuPatt; or
+(iii) distribute a modified version of AccuPatt in a manner that removes,
+weakens, or fails to pass through the restrictions in Section 2.
+
+
+4. MEASUREMENT ACCURACY AND OPERATOR RESPONSIBILITY
+
+AccuPatt is an analysis aid. It does not certify, approve, or validate any
+aircraft, spray system, nozzle configuration, or application practice.
+
+You are solely responsible for the correctness of your test setup, the
+calibration and condition of your equipment, the interpretation of AccuPatt's
+output, and any operational decision you make on the basis of that output.
+Results depend on factors outside AccuPatt's control, including equipment
+condition, environmental conditions, and test methodology.
+
+AccuPatt is not designed for, and must not be relied upon as, the sole basis
+for any decision where an error could result in harm to persons, property, or
+the environment.
+
+
+5. NO WARRANTY
+
+ACCUPATT IS PROVIDED "AS IS" AND "AS AVAILABLE," WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, ACCURACY, AND
+NON-INFRINGEMENT. DEVELOPER DOES NOT WARRANT THAT ACCUPATT WILL BE
+UNINTERRUPTED, ERROR-FREE, OR THAT ITS RESULTS WILL BE ACCURATE OR RELIABLE.
+
+THIS DISCLAIMER APPLIES EQUALLY TO ANY THIRD-PARTY COMPONENT DISTRIBUTED WITH
+ACCUPATT, INCLUDING THE OCEANDIRECT APIS. OCEAN OPTICS, INC. MAKES NO WARRANTY
+OF ANY KIND TO YOU WITH RESPECT TO THE OCEANDIRECT APIS AND SHALL HAVE NO
+LIABILITY TO YOU ARISING FROM YOUR USE OF ACCUPATT.
+
+
+6. LIMITATION OF LIABILITY
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL DEVELOPER
+OR OCEAN OPTICS, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, PUNITIVE, OR CONSEQUENTIAL DAMAGES, INCLUDING WITHOUT LIMITATION
+LOST PROFITS, LOST DATA, CROP LOSS, PROPERTY DAMAGE, BUSINESS INTERRUPTION, OR
+PERSONAL INJURY, ARISING OUT OF OR RELATING TO YOUR USE OF OR INABILITY TO USE
+ACCUPATT, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+BECAUSE ACCUPATT IS PROVIDED FREE OF CHARGE, DEVELOPER'S TOTAL AGGREGATE
+LIABILITY TO YOU UNDER THIS AGREEMENT SHALL NOT EXCEED FIVE U.S. DOLLARS
+($5.00).
+
+
+7. TERM AND TERMINATION
+
+This Agreement is effective until terminated. It terminates automatically,
+without notice, if you fail to comply with any of its terms. Upon termination
+you must cease all use of AccuPatt and delete all copies in your possession,
+including the OceanDirect APIs distributed with it.
+
+
+8. GOVERNING LAW
+
+This Agreement is governed by the laws of the State of Florida, United States,
+without regard to its conflict of laws rules. Any dispute arising out of or
+relating to this Agreement shall be brought in the state or federal courts
+located in the State of Florida.
+
+
+9. ENTIRE AGREEMENT
+
+This Agreement constitutes the entire agreement between you and Developer
+regarding AccuPatt and supersedes any prior or contemporaneous understanding
+regarding its subject matter. If any provision is held unenforceable, it shall
+be modified to the minimum extent necessary to make it enforceable, and the
+remaining provisions shall continue in full force and effect.
+
+
+10. CONTACT
+
+Matt Gill
+mgill@agaviation.org
+https://github.com/gill14/AccuPatt

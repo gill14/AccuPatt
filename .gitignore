@@ -12,6 +12,7 @@ dist/osx/*
 dist/osx/dist/*
 !dist/osx/dist/Applications
 !dist/osx/genAppDmg.sh
+!dist/osx/attach_dmg_license.py
 !dist/osx/entitlements.plist
 !dist/osx/sign_mac.sh
 !dist/osx/notarize_mac.sh
@@ -24,3 +25,9 @@ user_manual/*
 !user_manual/accupatt_2_user_manual.tex
 !user_manual/accupatt_2_user_manual.pdf
 !user_manual/images
+
+# OceanDirect SDK -- vendored at build time, never committed.
+# Ocean Optics property, used under the OceanDirect API Terms; 1.2 forbids
+# redistributing the APIs on their own and 3.3 requires we prevent it.
+# Stage a local copy with: python tools/sync_oceandirect.py
+oceandirect/

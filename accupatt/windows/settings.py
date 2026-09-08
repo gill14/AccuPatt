@@ -4,11 +4,8 @@ import sys
 
 import accupatt.config as cfg
 
-try:
-    from oceandirect.OceanDirectAPI import OceanDirectAPI, Spectrometer
-    _OCEANDIRECT_AVAILABLE = True
-except ImportError:
-    _OCEANDIRECT_AVAILABLE = False
+from accupatt.hardware import spectrometer as spec_backend
+from accupatt.hardware.spectrometer import Spectrometer, SpectrometerError
 from accupatt.windows.calculateStringSpeed import CalculateStringSpeed
 from PyQt6 import uic
 from PyQt6.QtCore import QDate, QSignalBlocker, pyqtSignal
@@ -31,7 +28,7 @@ class Settings(baseclass):
         self.ui.setupUi(self)
         self.ser: Serial | None = None
         self._port_device: str | None = None
-        self.spec = None
+        self.spec: Spectrometer | None = None
         self.btn_reverse = self.ui.btn_manual_reverse
         self.btn_forward = self.ui.btn_manual_advance
         self._populate()
@@ -386,7 +383,7 @@ class Settings(baseclass):
 
     def _close_spectrometer(self):
         if self.spec:
-            self.spec.close_device()
+            self.spec.close()
             self.spec = None
 
     def _update_serial_controls(self):
@@ -464,17 +461,13 @@ class Settings(baseclass):
         self.ui.lbl_string_speed_units.setText(f"{units}/sec")
 
     def _refresh_spectrometer(self):
-        if not _OCEANDIRECT_AVAILABLE:
+        if not spec_backend.backend_available():
             self._update_spectrometer_status("no_driver")
             return
         try:
             if self.spec is None:
-                od = OceanDirectAPI()
-                od.find_usb_devices()
-                device_ids = od.get_device_ids()
-                if device_ids:
-                    self.spec = od.open_device(device_ids[0])
-        except Exception:
+                self.spec = spec_backend.open_first_device()
+        except SpectrometerError:
             self.spec = None
             self._update_spectrometer_status("error")
             return
@@ -482,7 +475,7 @@ class Settings(baseclass):
 
     def _update_spectrometer_status(self, state: str):
         lbl = self.ui.lbl_spec_status
-        model = self.spec.get_model() if self.spec else ""
+        model = self.spec.model if self.spec else ""
         match state:
             case "no_driver":
                 lbl.setText("OceanDirect Driver Not Installed")

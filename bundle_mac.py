@@ -30,7 +30,7 @@ class py2app(_Py2AppBase):
 OPTIONS = {
     'iconfile':'./resources/accupatt_logo.icns',
     'resources':['./resources'],
-    'packages': ['aerial_spray_nozzle_models'],
+    'packages': ['aerial_spray_nozzle_models', 'oceandirect'],
     'bdist_base':'./dist/osx/build',
     'dist_dir':'./dist/osx/dist',
     'plist': {'CFBundleShortVersionString':VERSION,
@@ -50,6 +50,17 @@ OPTIONS = {
     ],
     'includes': ["objc", "Foundation", "ImageCaptureCore"],
 }
+
+# The OceanDirect SDK is staged locally, not committed (tools/sync_oceandirect.py),
+# and the EULA must ship for both the DMG agreement and the first-run dialog.
+for required, remedy in [
+    ('./oceandirect/lib/liboceandirect.dylib',
+     'Install the OceanDirect SDK, then: poetry run python tools/sync_oceandirect.py'),
+    ('./resources/documents/AccuPatt_EULA.txt',
+     'The AccuPatt EULA is missing from resources/documents.'),
+]:
+    if not os.path.isfile(required):
+        sys.exit(f'error: {required} not found.\n  {remedy}')
 
 if sys.platform == 'darwin':
     shutil.rmtree('./dist/osx/dist/AccuPatt.app', ignore_errors=True)

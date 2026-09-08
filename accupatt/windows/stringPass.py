@@ -11,7 +11,8 @@ from accupatt.widgets.passinfowidget import PassInfoWidget
 from PyQt6 import uic
 from PyQt6.QtCore import QTimer, pyqtSlot
 from PyQt6.QtWidgets import QMessageBox, QLabel, QPushButton
-from oceandirect.OceanDirectAPI import OceanDirectAPI
+from accupatt.hardware import spectrometer as spec_backend
+from accupatt.hardware.spectrometer import Spectrometer, SpectrometerError
 
 Ui_Form, baseclass = uic.loadUiType(
     cfg.resource_path("resources", "readString.ui")
@@ -65,7 +66,7 @@ class StringPass(baseclass):
         self.setup_and_clear_plot(showPopup=False)
 
         # Setup Spectrometer and String Drive
-        self.spec = None
+        self.spec: Spectrometer | None = None
         self.spec_connected = False
         self.ser = None
         self.ser_connected = False
@@ -152,7 +153,7 @@ class StringPass(baseclass):
             ),
         )
         # Take a full spectrum reading, correct dark pixels and nonlinearity if supported by device & backend
-        intensities = np.array(self.spec.get_formatted_spectrum(), dtype=np.float32)
+        intensities = self.spec.intensities()
         # record y_val (emission amplitute) and request plot update
         self.y = np.append(
             self.y, intensities[self.pix_em]
@@ -194,12 +195,13 @@ class StringPass(baseclass):
                 self.location_start = -cfg.get_string_length() / 2
                 self.speed_per_milli = cfg.get_string_speed() / 1000.0
             # Get a handle on pixels for chosen wavelengths
-            wavelengths = np.array(self.spec.get_wavelengths(), np.float32)
-            nm_per_pixel = float(wavelengths[-1] - wavelengths[0]) / (len(wavelengths) - 1)
-            hw_boxcar = max(0, round(self.passData.string.dye.boxcar_width / 2 / nm_per_pixel))
-            self.spec.set_boxcar_width(hw_boxcar)
-            self.pix_ex, _wav = self.spec.get_index_at_wavelength(self.passData.string.dye.wavelength_excitation)
-            self.pix_em = np.abs(wavelengths - self.passData.string.dye.wavelength_emission).argmin()
+            self.spec.set_boxcar_width_nm(self.passData.string.dye.boxcar_width)
+            self.pix_ex = self.spec.index_at_wavelength(
+                self.passData.string.dye.wavelength_excitation
+            )
+            self.pix_em = self.spec.index_at_wavelength(
+                self.passData.string.dye.wavelength_emission
+            )
             # Set the intervals and timeouts
             self.timer.setSingleShot(True)
             self.timer.setInterval(
@@ -244,7 +246,7 @@ class StringPass(baseclass):
         if self.ser and self.ser.is_open:
             self.ser.close()
         if self.spec:
-            self.spec.close_device()
+            self.spec.close()
         # Nofiy requestor and close
         super().reject()
 
@@ -262,7 +264,7 @@ class StringPass(baseclass):
         if self.ser:
             self.ser.close()
         if self.spec:
-            self.spec.close_device()
+            self.spec.close()
         # If all checks out, notify requestor and close
         super().accept()
 
@@ -323,7 +325,7 @@ class StringPass(baseclass):
             self.ser = None
         self.ser_connected = False
         if self.spec:
-            self.spec.close_device()
+            self.spec.close()
             self.spec = None
         self.spec_connected = False
         e = Settings(parent=self)
@@ -402,23 +404,19 @@ class StringPass(baseclass):
         # Get a handle to the spec object, else return "Disconnected" status
         if self.spec is None:
             try:
-                od = OceanDirectAPI()
-                od.find_usb_devices()
-                device_ids = od.get_device_ids()
-                if len(device_ids) > 0:
-                    self.spec = od.open_device(device_ids[0])
-                else:
-                    raise Exception("No spectrometer found")
-            except:
+                self.spec = spec_backend.open_first_device()
+            except SpectrometerError:
+                self.spec = None
+            if self.spec is None:
                 self._set_pill(self.pill_spec, "Spectrometer: Not Ready", ready=False)
                 self.spec_connected = False
                 return
         # Inform spectrometer of new int time
         try:
-            self.spec.set_integration_time(
-                self.passData.string.dye.integration_time_milliseconds * 1000
+            self.spec.set_integration_time_ms(
+                self.passData.string.dye.integration_time_milliseconds
             )
-        except:
+        except Exception:
             print("Unable to set Spectrometer Integration Time")
             return
         int_ms = self.passData.string.dye.integration_time_milliseconds

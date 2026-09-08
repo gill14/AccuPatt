@@ -32,6 +32,9 @@ DisableProgramGroupPage=yes
 PrivilegesRequiredOverridesAllowed=dialog
 OutputDir={#OutputDir}
 OutputBaseFilename=Install AccuPatt
+; Required by the OceanDirect API Terms (1.2(b)): the AccuPatt EULA must be
+; accepted before the user can access the application.
+LicenseFile={#ResourceDir}\documents\AccuPatt_EULA.txt
 SetupIconFile={#ResourceDir}\accupatt_logo.ico
 Compression=lzma
 SolidCompression=yes

@@ -6,11 +6,7 @@ from PyQt6 import uic
 from PyQt6.QtCore import QObject, QThread, pyqtSignal
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QDialog
-try:
-    from oceandirect.OceanDirectAPI import OceanDirectAPI, Spectrometer
-    _OCEANDIRECT_AVAILABLE = True
-except ImportError:
-    _OCEANDIRECT_AVAILABLE = False
+from accupatt.hardware.spectrometer import Spectrometer
 import pyqtgraph
 
 from accupatt.models.dye import Dye
@@ -24,7 +20,7 @@ Ui_Form, baseclass = uic.loadUiType(
 class SpectrometerWorker(QObject):
     data_ready = pyqtSignal(np.ndarray)
 
-    def __init__(self, spectrometer: "Spectrometer", interval_ms: int):
+    def __init__(self, spectrometer: Spectrometer, interval_ms: int):
         super().__init__()
         self._spec = spectrometer
         self._interval_ms = interval_ms
@@ -39,9 +35,9 @@ class SpectrometerWorker(QObject):
 
     def _acquire(self):
         while self._running:
-            raw = self._spec.get_formatted_spectrum()
-            if raw:
-                self.data_ready.emit(np.array(raw, dtype=np.float32))
+            intensities = self._spec.intensities()
+            if intensities.size:
+                self.data_ready.emit(intensities)
             QThread.msleep(self._interval_ms)
 
 
@@ -52,9 +48,8 @@ class TestSpectrometer(baseclass):
         self.ui.setupUi(self)
 
         self.spec: Spectrometer = spectrometer
-        self.spec.set_integration_time(dye.integration_time_milliseconds * 1000)
-        self.spec.set_nonlinearity_correction_usage(True)
-        self.spec.set_electric_dark_correction_usage(True)
+        self.spec.set_integration_time_ms(dye.integration_time_milliseconds)
+        self.spec.enable_corrections()
         self.dye = dye
 
         self.pw: pyqtgraph.PlotWidget = self.ui.plotWidget
@@ -62,10 +57,8 @@ class TestSpectrometer(baseclass):
         self._unit_str = "%" if self._use_rel else "AU"
 
         # Init plot
-        self.x = np.array(self.spec.get_wavelengths(), dtype=np.float32)
-        nm_per_pixel = float(self.x[-1] - self.x[0]) / (len(self.x) - 1)
-        hw_boxcar = max(0, round(dye.boxcar_width / 2 / nm_per_pixel))
-        self.spec.set_boxcar_width(hw_boxcar)
+        self.x = self.spec.wavelengths
+        hw_boxcar = self.spec.set_boxcar_width_nm(dye.boxcar_width)
         pyqtgraph.setConfigOptions(antialias=True)
         pyqtgraph.setConfigOption("background", "k")
         pyqtgraph.setConfigOption("foreground", "w")
@@ -102,7 +95,7 @@ class TestSpectrometer(baseclass):
         )
 
         # Init cursors
-        self.pix_ex = np.abs(self.x - self.dye.wavelength_excitation).argmin()
+        self.pix_ex = self.spec.index_at_wavelength(self.dye.wavelength_excitation)
         self._ex_nm_str = f"{float(self.x[self.pix_ex]):.1f} nm"
         ex_rgb = self._get_rgb_from_wavelength(self.dye.wavelength_excitation)
         self._line_ex = pyqtgraph.InfiniteLine(
@@ -117,7 +110,7 @@ class TestSpectrometer(baseclass):
         )
         self.pw.addItem(self._line_ex)
 
-        self.pix_em = np.abs(self.x - self.dye.wavelength_emission).argmin()
+        self.pix_em = self.spec.index_at_wavelength(self.dye.wavelength_emission)
         self._em_nm_str = f"{float(self.x[self.pix_em]):.1f} nm"
         em_rgb = self._get_rgb_from_wavelength(self.dye.wavelength_emission)
         self._line_em = pyqtgraph.InfiniteLine(
@@ -133,15 +126,18 @@ class TestSpectrometer(baseclass):
         self.pw.addItem(self._line_em)
 
         # Hardware Properties
-        self.ui.lbl_hw_model.setText(self.spec.get_model())
-        self.ui.lbl_hw_serial.setText(self.spec.get_serial_number())
-        self.ui.lbl_hw_pixels.setText(f"{self.spec.get_spectrum_length()} px")
+        self.ui.lbl_hw_model.setText(self.spec.model)
+        self.ui.lbl_hw_serial.setText(self.spec.serial_number)
+        self.ui.lbl_hw_pixels.setText(f"{self.spec.pixel_count} px")
         self.ui.lbl_hw_wl_range.setText(f"{x_min:.1f} – {x_max:.1f} nm")
-        self.ui.lbl_hw_max_intensity.setText(f"{int(self.spec.get_max_intensity())} AU")
-        int_min_ms = self.spec.get_minimum_integration_time() / 1000
-        int_max_ms = self.spec.get_maximum_integration_time() / 1000
-        self.ui.lbl_hw_int_range.setText(f"{int_min_ms:.3f} – {int_max_ms:.0f} ms")
-        self.ui.lbl_hw_int_increment.setText(f"{self.spec.get_integration_time_increment()} µs")
+        self.ui.lbl_hw_max_intensity.setText(f"{int(self.spec.max_intensity)} AU")
+        self.ui.lbl_hw_int_range.setText(
+            f"{self.spec.min_integration_time_ms:.3f} – "
+            f"{self.spec.max_integration_time_ms:.0f} ms"
+        )
+        self.ui.lbl_hw_int_increment.setText(
+            f"{self.spec.integration_time_increment_us} µs"
+        )
 
         # Acquisition Settings (Global)
         self.ui.lbl_acq_dark_corr.setText("Enabled")

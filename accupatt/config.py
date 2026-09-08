@@ -584,6 +584,34 @@ def set_spectrometer_display_unit(value: str):
     QSettings().setValue(_SPECTROMETER_DISPLAY_UNIT, value)
 
 
+# End User License Agreement
+#
+# The OceanDirect API Terms (1.2(b)) require that AccuPatt be distributed under
+# a written EULA accepted by the user *before* they access the application.
+# Acceptance is recorded per EULA version, so bumping EULA_VERSION re-prompts
+# everyone on next launch.
+
+_EULA_ACCEPTED_VERSION = "eula_accepted_version"
+EULA_VERSION = "1.0"
+EULA_FILENAME = "AccuPatt_EULA.txt"
+
+
+def get_eula_accepted_version() -> str:
+    return QSettings().value(_EULA_ACCEPTED_VERSION, defaultValue="", type=str)
+
+
+def set_eula_accepted_version(value: str):
+    QSettings().setValue(_EULA_ACCEPTED_VERSION, value)
+
+
+def is_eula_accepted() -> bool:
+    return get_eula_accepted_version() == EULA_VERSION
+
+
+def get_eula_path() -> str:
+    return resource_path("resources", "documents", EULA_FILENAME)
+
+
 # SprayCard Image Loading Operations / Attributes
 
 _IMAGE_LOAD_DIR = "image_load_dir"

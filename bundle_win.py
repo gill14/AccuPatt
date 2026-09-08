@@ -21,6 +21,18 @@ data[4] = f"#define MyAppVersion \"{VERSION}\"\n"
 with open("./dist/win/innoSetupScript.iss", "w", encoding="utf-8") as file:
     file.writelines(data)
 
+# The OceanDirect SDK is staged locally, not committed (tools/sync_oceandirect.py),
+# and the EULA must ship for the Inno Setup LicenseFile page. Fail loudly rather
+# than cutting a release that silently lacks either.
+for required, remedy in [
+    ('./oceandirect/lib/OceanDirect.dll',
+     'Install the OceanDirect SDK, then: poetry run python tools/sync_oceandirect.py'),
+    ('./resources/documents/AccuPatt_EULA.txt',
+     'The AccuPatt EULA is missing from resources/documents.'),
+]:
+    if not os.path.isfile(required):
+        sys.exit(f'error: {required} not found.\n  {remedy}')
+
 if sys.platform == 'win32':
     
     shutil.copyfile("./user_manual/accupatt_2_user_manual.pdf","./resources/documents/accupatt_2_user_manual.pdf")
@@ -33,12 +45,8 @@ if sys.platform == 'win32':
         '--exclude-module=py2app',
         '--exclude-module=pyobjc-framework-ImageCaptureCore',
         '--hidden-import=matplotlib.backends.backend_svg',
-        '--hidden-import=libusb',
-        '--hidden-import=pyusb',
-        '--hidden-import=seabreeze.pyseabreeze',
         f'--additional-hooks-dir=./hooks',
         f'--add-data=../../resources{os.pathsep}resources',
-        #'--add-data=C:/Windows/System32/libusb-1.0.dll;.',
         f'--add-data=../../oceandirect/lib{os.pathsep}.',
         '--icon=../../resources/accupatt_logo.ico',
         '--distpath=./dist/win/dist',
