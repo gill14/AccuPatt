@@ -51,7 +51,13 @@ from PyQt6.QtWidgets import (
 
 from aerial_spray_nozzle_models.reference import DSC_REFERENCE
 
+from accupatt.helpers.dataFileImporter import (
+    get_file_type,
+    load_from_usda_file,
+    load_from_wrk_file,
+)
 from accupatt.models.passData import Pass
+from accupatt.models.seriesData import SeriesData
 from accupatt.models.seriesDataString import SeriesDataString
 
 
@@ -379,6 +385,7 @@ class DateRangeDialog(_FilterDialogBase):
 class SeriesRecord:
     filepath: str = ""
     filename: str = ""
+    source: str = ""
     series_id: str = ""
     # Fly-In
     flyin_name: str = ""
@@ -456,6 +463,7 @@ _D = FilterType.DATE
 # filters them out.
 ALL_COLUMNS: list[Union[ColumnDef, ColumnSection]] = [
     ColumnDef("filename",             "File",                False, _LEFT,   _T),
+    ColumnDef("source",               "Source",              True,  _CENTER, _T),
     ColumnSection("Fly-In"),
     ColumnDef("flyin_name",           "Event Name",          True,  _LEFT,   _T),
     ColumnDef("flyin_location",       "Location",            False, _LEFT,   _T),
@@ -538,21 +546,19 @@ class DatabaseScanner(QObject):
 
     @pyqtSlot()
     def run(self):
-        db_files: list[str] = []
-        for root, _, files in os.walk(self.directory):
-            for f in files:
-                if f.lower().endswith(".db"):
-                    db_files.append(os.path.join(root, f))
-        db_files.sort()
+        files_to_read = self._collect_files()
 
-        total = len(db_files)
+        total = len(files_to_read)
         found = 0
-        for i, filepath in enumerate(db_files):
+        for i, (filepath, file_type) in enumerate(files_to_read):
             if self._cancelled:
                 break
             self.progress.emit(i + 1, total)
             try:
-                record = self._read_record(filepath)
+                if file_type == cfg.DATA_FILE_TYPE_ACCUPATT:
+                    record = self._read_record(filepath)
+                else:
+                    record = self._read_legacy_record(filepath, file_type)
                 if record is not None:
                     self.record_found.emit(record)
                     found += 1
@@ -560,6 +566,60 @@ class DatabaseScanner(QObject):
                 self.scan_error.emit(filepath, str(e))
 
         self.finished.emit(found)
+
+    def _collect_files(self) -> list[tuple[str, int]]:
+        """Walk the directory for openable series files, as (filepath, file_type).
+
+        File types come from get_file_type() so the browser and the File > Open
+        dialog always agree on what is openable.
+        """
+        found: list[tuple[str, int]] = []
+        # USDA series span multiple pass files that each report as USDA; collect
+        # them per (dir, regnum, series letter) and keep one entry file per series
+        usda_groups: dict[tuple[str, str, str], list[tuple[int, str]]] = {}
+
+        for root, _, files in os.walk(self.directory):
+            for f in files:
+                filepath = os.path.join(root, f)
+                file_type = get_file_type(f)
+                if file_type == cfg.DATA_FILE_TYPE_ACCUPATT:
+                    found.append((filepath, file_type))
+                elif file_type == cfg.DATA_FILE_TYPE_WRK:
+                    # get_file_type only accepts the series' first pass file
+                    # (trailing "A"), so WRK series are already de-duplicated
+                    found.append((filepath, file_type))
+                elif file_type == cfg.DATA_FILE_TYPE_USDA:
+                    parsed = self._parse_usda_name(f)
+                    if parsed is None:
+                        continue
+                    regnum, series_letter, pass_number = parsed
+                    key = (root, regnum, series_letter)
+                    usda_groups.setdefault(key, []).append((pass_number, filepath))
+
+        for passes in usda_groups.values():
+            # Lowest-numbered pass file is the series entry point
+            found.append((min(passes)[1], cfg.DATA_FILE_TYPE_USDA))
+
+        found.sort()
+        return found
+
+    @staticmethod
+    def _parse_usda_name(filename: str) -> Optional[tuple[str, str, int]]:
+        """Parse "<regnum> <series letter> <pass number> .txt" into its parts.
+
+        get_file_type() classifies any sufficiently long .txt as USDA, so this
+        shape check is what keeps unrelated text files out of the scan.
+        """
+        parts = os.path.basename(filename).split(" ")
+        if len(parts) < 3:
+            return None
+        try:
+            pass_number = int(parts[2])
+        except ValueError:
+            return None
+        if not parts[0] or not parts[1]:
+            return None
+        return parts[0], parts[1], pass_number
 
     def _read_record(self, filepath: str) -> Optional[SeriesRecord]:
         uri = f"file:{filepath}?mode=ro"
@@ -580,6 +640,7 @@ class DatabaseScanner(QObject):
             rec = SeriesRecord(
                 filepath=filepath,
                 filename=os.path.basename(filepath),
+                source="AccuPatt",
                 series_id=series_id,
                 series_num=str(row["series"] or ""),
                 notes_setup=str(row["notes_setup"] or ""),
@@ -732,24 +793,14 @@ class DatabaseScanner(QObject):
             airspeed_mph = _to_mph(avg_speed_val, speed_unit)
             pressure_psi = _to_psi(pressure_raw, pressure_units_str)
 
-            if all_nozzles and airspeed_mph and pressure_psi:
-                try:
-                    model = AtomizationModelMulti()
-                    for n in all_nozzles:
-                        nozzle_type = str(n["type"] or "")
-                        if not nozzle_type:
-                            continue
-                        model.addNozzleSet(
-                            name=nozzle_type,
-                            orifice=float(n["size"]) if n["size"] else 0.0,
-                            airspeed=airspeed_mph,
-                            pressure=pressure_psi,
-                            angle=int(float(n["deflection"])) if n["deflection"] else 0,
-                            quantity=int(float(n["quantity"])) if n["quantity"] else 1,
-                        )
-                    rec.modeled_dsc = model.dsc() or ""
-                except Exception:
-                    rec.modeled_dsc = ""
+            rec.modeled_dsc = self._compute_dsc(
+                [
+                    (n["type"], n["size"], n["deflection"], n["quantity"])
+                    for n in all_nozzles
+                ],
+                airspeed_mph,
+                pressure_psi,
+            )
 
             # RT CV / B&F CV
             rec.rt_cv, rec.bf_cv = self._compute_cv(cur, series_id, swath_units)
@@ -757,6 +808,129 @@ class DatabaseScanner(QObject):
             return rec
         finally:
             con.close()
+
+    def _read_legacy_record(
+        self, filepath: str, file_type: int
+    ) -> Optional[SeriesRecord]:
+        """Build a record from a legacy WRK or USDA-ARS file.
+
+        Uses the app's own importers so the browser shows exactly what opening
+        the file would produce.
+        """
+        s = SeriesData()
+        if file_type == cfg.DATA_FILE_TYPE_WRK:
+            load_from_wrk_file(filepath, s)
+            source = "WRK"
+        else:
+            load_from_usda_file(filepath, s)
+            source = "USDA"
+
+        i = s.info
+        mtime = _fmt_timestamp(os.path.getmtime(filepath))
+        rec = SeriesRecord(
+            filepath=filepath,
+            filename=os.path.basename(filepath),
+            source=source,
+            series_id=s.id,
+            series_num=str(i.series or ""),
+            flyin_name=str(i.flyin_name or ""),
+            flyin_location=str(i.flyin_location or ""),
+            flyin_date=str(i.flyin_date or ""),
+            flyin_analyst=str(i.flyin_analyst or ""),
+            pilot=str(i.pilot or ""),
+            business=str(i.business or ""),
+            street=str(i.street or ""),
+            city=str(i.city or ""),
+            state=str(i.state or ""),
+            zip_code=str(i.zip or ""),
+            phone=str(i.phone or ""),
+            email=str(i.email or ""),
+            regnum=str(i.regnum or ""),
+            make=str(i.make or ""),
+            model=str(i.model or ""),
+            wingspan=_fmt_with_units(i.wingspan, i.wingspan_units),
+            winglets=str(i.winglets or ""),
+            swath=_fmt_with_units(i.swath, i.swath_units),
+            rate=_fmt_with_units(i.rate, i.rate_units),
+            pressure=_fmt_with_units(i.pressure, i.pressure_units),
+            boom_drop=_fmt_with_units(i.boom_drop, i.boom_drop_units),
+            nozzle_spacing=_fmt_with_units(i.nozzle_spacing, i.nozzle_spacing_units),
+            notes_setup=str(i.notes_setup or ""),
+            notes_analyst=str(i.notes_analyst or ""),
+            pass_count=str(len(s.passes)),
+            created=mtime,
+            modified=mtime,
+        )
+
+        if i.nozzles:
+            n = i.nozzles[0]
+            rec.nozzle1_type = str(n.type or "")
+            rec.nozzle1_size = str(n.size or "")
+            rec.nozzle1_deflection = str(n.deflection or "")
+            rec.nozzle1_quantity = str(n.quantity or "")
+
+        # Observables — aggregate the same way the .db path does
+        speeds, speed_unit = [], ""
+        heights, height_unit = [], ""
+        for p in s.passes:
+            if p.ground_speed and p.ground_speed > 0:
+                speeds.append(p.ground_speed)
+                if not speed_unit:
+                    speed_unit = str(p.ground_speed_units or "")
+            if p.spray_height and p.spray_height > 0:
+                heights.append(p.spray_height)
+                if not height_unit:
+                    height_unit = str(p.spray_height_units or "")
+
+        avg_speed_val = sum(speeds) / len(speeds) if speeds else None
+        avg_height_val = sum(heights) / len(heights) if heights else None
+        if avg_speed_val is not None:
+            rec.avg_speed = _fmt_with_units(f"{avg_speed_val:.0f}", speed_unit)
+        if avg_height_val is not None:
+            rec.avg_height = _fmt_with_units(f"{avg_height_val:.0f}", height_unit)
+
+        rec.modeled_dsc = self._compute_dsc(
+            [(n.type, n.size, n.deflection, n.quantity) for n in i.nozzles],
+            _to_mph(avg_speed_val, speed_unit),
+            _to_psi(i.pressure, i.pressure_units),
+        )
+
+        # Legacy loaders leave swath_adjusted unset (SeriesData snapshots
+        # info.swath before the loader populates it), so fall back to the
+        # target swath - otherwise CV is uncomputable at swath 0
+        swath_adj_raw = s.string.swath_adjusted or i.swath
+        if swath_adj_raw and float(swath_adj_raw) > 0:
+            swath_adj = float(swath_adj_raw)
+            # Format from the raw value so this matches the Target Swath column
+            rec.string_swath_adjusted = _fmt_with_units(swath_adj_raw, i.swath_units)
+            s.string.swath = swath_adj
+            s.string.swath_adjusted = swath_adj
+            s.string.swath_units = i.swath_units
+            rec.rt_cv, rec.bf_cv = self._cv_from_series_string(s.string, swath_adj)
+
+        return rec
+
+    def _compute_dsc(self, nozzles: list[tuple], airspeed_mph, pressure_psi) -> str:
+        """Modeled DSC from (type, size, deflection, quantity) rows. '' on failure."""
+        if not nozzles or not airspeed_mph or not pressure_psi:
+            return ""
+        try:
+            model = AtomizationModelMulti()
+            for n_type, n_size, n_defl, n_quant in nozzles:
+                nozzle_type = str(n_type or "")
+                if not nozzle_type:
+                    continue
+                model.addNozzleSet(
+                    name=nozzle_type,
+                    orifice=float(n_size) if n_size else 0.0,
+                    airspeed=airspeed_mph,
+                    pressure=pressure_psi,
+                    angle=int(float(n_defl)) if n_defl else 0,
+                    quantity=int(float(n_quant)) if n_quant else 1,
+                )
+            return model.dsc() or ""
+        except Exception:
+            return ""
 
     def _compute_cv(
         self, cur, series_id: str, swath_units: str
@@ -831,6 +1005,19 @@ class DatabaseScanner(QObject):
             sds.smooth_order = int(ss_row["average_smooth_order"] or 3)
             sds.equalize_integrals = bool(ss_row["equalize_integrals"])
 
+            return self._cv_from_series_string(sds, swath_adj)
+
+        except Exception:
+            return "", ""
+
+    def _cv_from_series_string(
+        self, sds: SeriesDataString, swath_adj: float
+    ) -> tuple[str, str]:
+        """Run the CV math on a populated SeriesDataString. ('', '') on failure.
+
+        Shared by the .db and legacy paths so all sources compute CV identically.
+        """
+        try:
             sds.modifyPatterns()
             average_df = sds.get_average_mod()
             y_label = sds.get_average_y_label()
@@ -841,7 +1028,6 @@ class DatabaseScanner(QObject):
             rt = sds._calcCV(average_df, y_label, swath_adj, mirrorAdjacent=False)
             bf = sds._calcCV(average_df, y_label, swath_adj, mirrorAdjacent=True)
             return f"{rt}%", f"{bf}%"
-
         except Exception:
             return "", ""
 
@@ -1380,7 +1566,7 @@ class DatabaseBrowserWindow(QDialog):
         total = self._model.rowCount()
         shown = self._proxy.rowCount()
         if total == 0:
-            self._status_label.setText("No AccuPatt series found in directory.")
+            self._status_label.setText("No series found in directory.")
             return
         has_global = bool(self._filter_input.text().strip())
         has_col = self._proxy.has_any_filter()
