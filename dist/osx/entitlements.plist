@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Required: py2app's bootstrap sets DYLD_* env vars to locate bundled frameworks -->
+	<key>com.apple.security.cs.allow-dyld-environment-variables</key>
+	<true/>
+	<!-- Required: vendored liboceandirect.dylib (Ocean Optics SDK) and several OpenCV
+	     dylibs are only ad-hoc/third-party signed, not signed by our Team ID -->
+	<key>com.apple.security.cs.disable-library-validation</key>
+	<true/>
+	<!-- Helps avoid Hardened Runtime issues with ctypes/numpy/scipy/opencv native callbacks -->
+	<key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+	<true/>
+</dict>
+</plist>

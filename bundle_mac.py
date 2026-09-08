@@ -4,8 +4,14 @@ This script will generate the a .app file
 Usage:
     AS NEEDED: poetry install --with dev-osx
     poetry run python bundle_mac.py py2app
+
+To also codesign (and optionally notarize) the build for distribution outside
+the App Store, export these before running (see dist/osx/SIGNING.md):
+    CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)"
+    NOTARY_PROFILE="accupatt-notary"   # optional; skips notarization if unset
 """
 
+import os
 import shutil
 import subprocess
 import sys
@@ -58,5 +64,21 @@ if sys.platform == 'darwin':
         version=VERSION,
         cmdclass={'py2app': py2app},
     )
-    
+
+    codesign_identity = os.environ.get('CODESIGN_IDENTITY')
+    if codesign_identity:
+        subprocess.check_call(
+            ['sh', './dist/osx/sign_mac.sh', './dist/osx/dist/AccuPatt.app']
+        )
+    else:
+        print('CODESIGN_IDENTITY not set, skipping codesigning (unsigned dev build)')
+
     subprocess.call(['sh','./dist/osx/genAppDmg.sh'])
+
+    notary_profile = os.environ.get('NOTARY_PROFILE')
+    if codesign_identity and notary_profile:
+        subprocess.check_call(
+            ['sh', './dist/osx/notarize_mac.sh', './dist/osx/AccuPatt.dmg']
+        )
+    elif codesign_identity:
+        print('NOTARY_PROFILE not set, skipping notarization/stapling')
