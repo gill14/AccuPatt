@@ -10,13 +10,15 @@ dist/*
 dist/osx/*
 !dist/osx/dist/
 dist/osx/dist/*
-!dist/osx/dist/Applications
 !dist/osx/genAppDmg.sh
+!dist/osx/style_dmg.sh
 !dist/osx/attach_dmg_license.py
 !dist/osx/entitlements.plist
 !dist/osx/sign_mac.sh
 !dist/osx/notarize_mac.sh
 !dist/osx/SIGNING.md
+!dist/osx/make_dmg_background.py
+!dist/osx/dmg_background.png
 dist/win/*
 !dist/win/createInstaller.bat
 !dist/win/innoSetupScript.iss
