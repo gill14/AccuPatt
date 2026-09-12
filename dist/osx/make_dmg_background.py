@@ -21,8 +21,8 @@ REPO_ROOT = HERE.parent.parent
 SCALE = 2
 W, H = 660, 400
 
-NAVY = (9, 35, 54)
-BLUE = (31, 119, 180)
+NAVY = (14, 58, 95)
+MAGENTA = (214, 59, 122)
 BG = (247, 246, 243)
 
 # Must match the icon centers set in style_dmg.sh's AppleScript.
@@ -39,15 +39,19 @@ def rounded_arrow(draw, x0, x1, y, color, shaft_h=14, head_w=34, head_h=44):
     head_w *= SCALE
     head_h *= SCALE
     x0, x1, y = x0 * SCALE, x1 * SCALE, y * SCALE
-    shaft_end = x1 - head_w
+    head_back = x1 - head_w
+    # Extend the shaft well past the triangle's back edge so its rounded
+    # right end is fully covered by the triangle instead of peeking out as
+    # a stray curve where the two shapes meet.
+    shaft_end = head_back + shaft_h
     draw.rounded_rectangle(
         [x0, y - shaft_h / 2, shaft_end, y + shaft_h / 2], radius=shaft_h / 2, fill=color
     )
     draw.polygon(
         [
-            (shaft_end - 2, y - head_h / 2),
+            (head_back, y - head_h / 2),
             (x1, y),
-            (shaft_end - 2, y + head_h / 2),
+            (head_back, y + head_h / 2),
         ],
         fill=color,
     )
@@ -64,7 +68,7 @@ def main():
     img.paste(logo, ((W * SCALE - logo_w) // 2, 26 * SCALE), logo)
 
     arrow_y = APP_ICON_CENTER[1]
-    rounded_arrow(draw, APP_ICON_CENTER[0] + 95, APPS_ICON_CENTER[0] - 95, arrow_y, BLUE)
+    rounded_arrow(draw, APP_ICON_CENTER[0] + 95, APPS_ICON_CENTER[0] - 95, arrow_y, MAGENTA)
 
     label_font = font("Arial Bold", 20)
     label = "Drag AccuPatt to Applications to install"

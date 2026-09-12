@@ -50,6 +50,11 @@ hdiutil create -volname "$VOLNAME" -srcfolder "$SRC_DIR" -fs HFS+ \
 
 hdiutil attach "$RW_DMG" -readwrite -noverify -noautoopen -mountpoint "$MOUNTPOINT"
 
+# Spotlight indexing a few hundred MB of app bundle right as we try to detach
+# is a common cause of "Resource busy" on unmount -- tell mds/mdworker to
+# never bother with this scratch volume in the first place.
+touch "$MOUNTPOINT/.metadata_never_index"
+
 ln -s /Applications "$MOUNTPOINT/Applications"
 mkdir "$MOUNTPOINT/.background"
 cp "$BACKGROUND" "$MOUNTPOINT/.background/background.png"
@@ -160,13 +165,33 @@ on run
             if waitTime > 30 then exit repeat
         end repeat
         log "waited " & waitTime & " seconds for .DS_Store to be created."
+
+        -- Close the window before we try to unmount -- Finder holding a
+        -- window open on the volume is itself a cause of "Resource busy"
+        -- on detach, separate from Spotlight/mdworker.
+        tell disk "$VOLNAME" to close
     end tell
 end run
 OSA
 
 chmod -Rf go-w "$MOUNTPOINT" || true
 sync
-hdiutil detach "$MOUNTPOINT"
+
+# A large app bundle can leave Spotlight/thumbnail processes or Finder
+# itself with the volume open for a few seconds after the AppleScript
+# returns; retry before resorting to -force.
+detached=0
+for attempt in 1 2 3 4 5; do
+    if hdiutil detach "$MOUNTPOINT" >/dev/null 2>&1; then
+        detached=1
+        break
+    fi
+    sleep 2
+done
+if [ "$detached" -ne 1 ]; then
+    echo "plain detach failed after retries, forcing..." >&2
+    hdiutil detach "$MOUNTPOINT" -force
+fi
 
 echo "Converting to compressed image..."
 rm -f "$OUT_DMG"
