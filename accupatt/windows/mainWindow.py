@@ -633,7 +633,7 @@ class About(QDialog):
         super().__init__(parent=parent)
         self.setWindowTitle("About")
         self.setWindowModality(Qt.WindowModality.WindowModal)
-        self.setFixedSize(520, 560)
+        self.setFixedSize(520, 645)
 
         layout = QVBoxLayout(self)
         layout.setSpacing(10)
@@ -655,7 +655,22 @@ class About(QDialog):
         font.setPointSize(13)
         font.setBold(True)
         version_label.setFont(font)
-        layout.addWidget(version_label)
+
+        links_label = QLabel(
+            '<a href="https://github.com/gill14/AccuPatt">Source Code</a>'
+            "  •  "
+            '<a href="https://github.com/gill14/AccuPatt/releases">Release Notes</a>'
+            "  •  "
+            '<a href="https://github.com/gill14/AccuPatt/issues">Report an Issue</a>'
+        )
+        links_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        links_label.setOpenExternalLinks(True)
+
+        header_layout = QVBoxLayout()
+        header_layout.setSpacing(2)
+        header_layout.addWidget(version_label)
+        header_layout.addWidget(links_label)
+        layout.addLayout(header_layout)
 
         line1 = QFrame()
         line1.setFrameShape(QFrame.Shape.HLine)
