@@ -13,12 +13,14 @@ from accupatt.helpers.dataFileImporter import (
 )
 from accupatt.helpers.exportExcel import export_all_to_excel, safe_report
 from accupatt.helpers.reportMaker import ReportMaker
+from accupatt.helpers.updateChecker import UpdateCheckWorker
 from accupatt.models.dye import Dye
 from accupatt.models.passData import Pass
 from accupatt.models.seriesData import SeriesData
 from accupatt.widgets.tabWidgetCards import TabWidgetCards
 from accupatt.widgets.seriesinfowidget import SeriesInfoWidget
 from accupatt.widgets.tabWidgetString import TabWidgetString
+from accupatt.widgets.updateBanner import UpdateBanner
 from accupatt.windows.cardPlotOptions import CardPlotOptions
 from accupatt.windows.passManager import PassManager
 from accupatt.windows.settings import Settings
@@ -36,7 +38,7 @@ from accupatt.widgets import (
 from aerial_spray_nozzle_models.gui.atomizationModelWindow import AtomizationModelWindow
 
 from PyQt6 import uic
-from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QAction, QFont, QPixmap
 from PyQt6.QtWidgets import (
     QDialog,
@@ -77,9 +79,7 @@ class MainWindow(baseclass):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
-        self.setWindowTitle(
-            f"AccuPatt {cfg.VERSION_MAJOR}.{cfg.VERSION_MINOR}.{cfg.VERSION_RELEASE}"
-        )
+        self.setWindowTitle(f"AccuPatt {cfg.get_version_string()}")
 
         # Setup MenuBar
         # --> Setup File Menu
@@ -163,12 +163,26 @@ class MainWindow(baseclass):
         # Setup Statusbar
         self.status_label_file = QLabel("No Current Datafile")
         self.status_label_modified = QLabel()
+        self.update_banner = UpdateBanner()
         self.ui.statusbar.addWidget(self.status_label_file)
+        self.ui.statusbar.addPermanentWidget(self.update_banner)
         self.ui.statusbar.addPermanentWidget(self.status_label_modified)
         self.show()
+
+        self._start_update_check()
+
         # Testing
         if testing:
             self.openFile(file=testfile)
+
+    def _start_update_check(self):
+        self._update_check_thread = QThread(self)
+        self._update_check_worker = UpdateCheckWorker()
+        self._update_check_worker.moveToThread(self._update_check_thread)
+        self._update_check_thread.started.connect(self._update_check_worker.run)
+        self._update_check_worker.update_available.connect(self.update_banner.show_update)
+        self._update_check_worker.finished.connect(self._update_check_thread.quit)
+        self._update_check_thread.start()
 
     """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """''
     Menubar
@@ -647,9 +661,7 @@ class About(QDialog):
         )
         layout.addWidget(logo_label)
 
-        version_label = QLabel(
-            f"Version  {cfg.VERSION_MAJOR}.{cfg.VERSION_MINOR}.{cfg.VERSION_RELEASE}"
-        )
+        version_label = QLabel(f"Version  {cfg.get_version_string()}")
         version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         font = QFont()
         font.setPointSize(13)

@@ -21,6 +21,10 @@ VERSION_MINOR = 2
 VERSION_RELEASE = 0
 
 
+def get_version_string() -> str:
+    return f"{VERSION_MAJOR}.{VERSION_MINOR}.{VERSION_RELEASE}"
+
+
 # For clearning all QSettings
 def clear_all_settings():
     QSettings().clear()
@@ -610,6 +614,24 @@ def is_eula_accepted() -> bool:
 
 def get_eula_path() -> str:
     return resource_path("resources", "documents", EULA_FILENAME)
+
+
+# Update Notification
+#
+# Tracks which version's "update available" banner the user has dismissed, so
+# it doesn't reappear every launch -- but a *newer* release than the one
+# dismissed will still show, since this is an equality check against a
+# specific version rather than a blanket "never show again" flag.
+
+_UPDATE_DISMISSED_VERSION = "update_dismissed_version"
+
+
+def get_update_dismissed_version() -> str:
+    return QSettings().value(_UPDATE_DISMISSED_VERSION, defaultValue="", type=str)
+
+
+def set_update_dismissed_version(value: str):
+    QSettings().setValue(_UPDATE_DISMISSED_VERSION, value)
 
 
 # SprayCard Image Loading Operations / Attributes

@@ -12,9 +12,7 @@ if __name__ == "__main__":
     app.setOrganizationName("mattgill")
     app.setApplicationDisplayName("AccuPatt")
     app.setApplicationName("accupatt")
-    app.setApplicationVersion(
-        f"{str(cfg.VERSION_MAJOR)}.{str(cfg.VERSION_MINOR)}.{str(cfg.VERSION_RELEASE)}"
-    )
+    app.setApplicationVersion(cfg.get_version_string())
     # Required by the OceanDirect API Terms (1.2(b)): the user accepts the
     # AccuPatt EULA before reaching the application.
     if not require_acceptance():

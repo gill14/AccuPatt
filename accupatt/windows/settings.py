@@ -10,7 +10,7 @@ from accupatt.windows.calculateStringSpeed import CalculateStringSpeed
 from PyQt6 import uic
 from PyQt6.QtCore import QDate, QSignalBlocker, pyqtSignal
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QFileDialog, QMessageBox
+from PyQt6.QtWidgets import QDialog, QFileDialog, QMessageBox
 from serial import Serial
 from serial.tools import list_ports
 
@@ -486,14 +486,13 @@ class Settings(baseclass):
                 lbl.setStyleSheet("background-color: yellow; color: black; padding: 3px;")
                 self.ui.le_spec_display.clear()
             case "error":
-                lbl.setText("Connection Error — check driver and USB, then refresh")
+                lbl.setText("Connection Error — press Test Spectrometer for help")
                 lbl.setStyleSheet("background-color: orange; color: black; padding: 3px;")
                 self.ui.le_spec_display.clear()
             case "connected":
                 lbl.setText("Connected: Checks Good")
                 lbl.setStyleSheet("background-color: green; color: white; padding: 3px;")
                 self.ui.le_spec_display.setText(model)
-        self.ui.btn_test_spectrometer.setEnabled(state == "connected")
 
     def _refresh_dyes(self):
         from accupatt.models.dye import Dye
@@ -548,6 +547,22 @@ class Settings(baseclass):
         DefinedSetManager(parent=self).exec()
 
     def _test_spectrometer(self):
+        # No working spectrometer: explain why rather than sitting disabled.
+        # The troubleshooter opens the device itself, so only run it when we
+        # are not already holding one -- otherwise it would diagnose our own
+        # handle as "in use by another program".
+        if self.spec is None:
+            from accupatt.windows.spectrometerTroubleshooter import (
+                SpectrometerTroubleshooter,
+            )
+            troubleshooter = SpectrometerTroubleshooter(parent=self)
+            wants_live_view = troubleshooter.exec() == QDialog.DialogCode.Accepted
+            # It closed whatever it opened; reconnect so status and the live
+            # view below both reflect what it found.
+            self._refresh_spectrometer()
+            if not (wants_live_view and self.spec):
+                return
+
         from accupatt.windows.testSpectrometer import TestSpectrometer
         from accupatt.models.dye import Dye
         dye = Dye.fromConfig(name=self.ui.cbb_dye.currentText())
