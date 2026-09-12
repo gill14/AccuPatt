@@ -20,6 +20,7 @@ from accupatt.hardware import spectrometer as spec_backend
 # Verdicts. "ok" means a device was opened and read from successfully.
 OK = "ok"
 NO_DRIVER = "no_driver"
+DRIVER_LOAD_FAILED = "driver_load_failed"
 NO_DEVICE = "no_device"
 OPEN_FAILED = "open_failed"
 DEVICE_ERROR = "device_error"
@@ -94,10 +95,32 @@ def diagnose() -> Diagnosis:
             details=details,
         )
 
-    details.append(("OceanDirect SDK", spec_backend.sdk_version() or "loaded"))
+    sdk_version = spec_backend.sdk_version()
+    details.append(("OceanDirect SDK", sdk_version if sdk_version else "NOT LOADED"))
 
     try:
         spec = spec_backend.open_first_device()
+    except spec_backend.DriverLoadError as e:
+        details.append(("Open attempt", f"FAILED — {e}"))
+        return Diagnosis(
+            status=DRIVER_LOAD_FAILED,
+            headline="Spectrometer driver is present but failed to load",
+            explanation=(
+                "AccuPatt found the OceanDirect driver files, but the "
+                "underlying library did not load. This points to an incomplete "
+                "or corrupted installation rather than a cabling or hardware "
+                "issue — closing other programs or reseating the USB cable "
+                "will not fix this."
+            ),
+            steps=[
+                "Reinstall AccuPatt from the official installer.",
+                "If your antivirus quarantined files during installation, allow "
+                "AccuPatt and reinstall.",
+                "If the problem continues, copy the details below and send them "
+                "to AccuPatt support.",
+            ],
+            details=details,
+        )
     except spec_backend.SpectrometerError as e:
         details.append(("Open attempt", f"FAILED — {e}"))
         return Diagnosis(

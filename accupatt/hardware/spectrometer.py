@@ -33,6 +33,16 @@ class SpectrometerError(Exception):
     """A spectrometer was present but could not be opened or configured."""
 
 
+class DriverLoadError(SpectrometerError):
+    """The OceanDirect SDK is importable but its native library didn't load.
+
+    Distinct from other SpectrometerErrors: this means the DLL/dylib itself
+    is missing, the wrong architecture, or not where the vendored
+    sdk_properties.py expects it -- a packaging problem, not "a device is
+    present but something else has it open".
+    """
+
+
 def backend_available() -> bool:
     """True when the OceanDirect SDK is importable in this environment."""
     return _BACKEND_AVAILABLE
@@ -64,6 +74,13 @@ def open_first_device() -> "Spectrometer | None":
         raise SpectrometerError("The OceanDirect driver is not installed.")
     try:
         api = OceanDirectAPI()
+    except OSError as e:
+        # cdll.LoadLibrary failed: the native library is missing, the wrong
+        # architecture, or bundled somewhere sdk_properties.py won't look.
+        raise DriverLoadError(
+            f"The OceanDirect native library could not be loaded: {e}"
+        ) from e
+    try:
         api.find_usb_devices()
         device_ids = api.get_device_ids()
         if not device_ids:

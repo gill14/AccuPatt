@@ -33,6 +33,7 @@ _STATUS_COLORS = {
     diagnostics.OPEN_FAILED: "#a86b00",
     diagnostics.DEVICE_ERROR: "#a83232",
     diagnostics.NO_DRIVER: "#a83232",
+    diagnostics.DRIVER_LOAD_FAILED: "#a83232",
 }
 
 

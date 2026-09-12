@@ -9,8 +9,13 @@
 #define MyAppAssocName MyAppName + " Data File"
 #define MyAppAssocExt ".db"
 #define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
-#define OutputDir "C:\Mac\Home\Desktop\AccuPatt\dist\win"
-#define ResourceDir "C:\Mac\Home\Desktop\AccuPatt\resources"
+; Derived from the script's own location rather than hardcoded, so builds
+; keep working if the checkout is renamed or moved (e.g. across Parallels'
+; Mac-shared-folder path) -- a hardcoded path here previously broke the build
+; on exactly that. SourcePath (not __DIR__/__PATHFILENAME__, which are only
+; meaningful for #include'd files) is the directory of this root script.
+#define OutputDir SourcePath
+#define ResourceDir AddBackslash(SourcePath) + "..\..\resources"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.

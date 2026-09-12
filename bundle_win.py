@@ -47,11 +47,30 @@ if sys.platform == 'win32':
         '--hidden-import=matplotlib.backends.backend_svg',
         f'--additional-hooks-dir=./hooks',
         f'--add-data=../../resources{os.pathsep}resources',
-        f'--add-data=../../oceandirect/lib{os.pathsep}.',
+        # sdk_properties.py (vendored, not ours) locates the DLL as
+        # os.path.dirname(__file__) + "/lib/OceanDirect.dll" -- i.e. it
+        # expects lib/ nested under the oceandirect package directory.
+        # PyInstaller's --add-data destination is taken literally, so it
+        # must match that nesting; a destination of "." previously flattened
+        # the DLL to the bundle root, where the SDK could never find it.
+        f'--add-data=../../oceandirect/lib{os.pathsep}oceandirect/lib',
         '--icon=../../resources/accupatt_logo.ico',
         '--distpath=./dist/win/dist',
         '--specpath=./dist/win',
         '--workpath=./dist/win/build'
         ])
-    
+
+    # Confirm PyInstaller actually placed the DLL where sdk_properties.py
+    # will look for it at runtime. This has silently broken before (a
+    # destination of "." landed it at the bundle root instead) with no
+    # error at build time -- only a SpectrometerError once installed.
+    bundled_dll = './dist/win/dist/AccuPatt/_internal/oceandirect/lib/OceanDirect.dll'
+    if not os.path.isfile(bundled_dll):
+        sys.exit(
+            f'error: {bundled_dll} not found after build.\n'
+            '  OceanDirect.dll was not bundled where the SDK expects it '
+            '(oceandirect/lib/ next to the oceandirect package) -- the '
+            'spectrometer will fail to load in the installed app.'
+        )
+
     subprocess.call(r'"./dist/win/createInstaller.bat"')
