@@ -38,6 +38,21 @@ def backend_available() -> bool:
     return _BACKEND_AVAILABLE
 
 
+def sdk_version() -> "str | None":
+    """The OceanDirect version actually loaded, or None if unavailable.
+
+    Read from the library rather than any shipped header: the vendor's
+    installer leaves OceanDirectProductVersion.h reporting the previous
+    version after an in-place upgrade.
+    """
+    if not _BACKEND_AVAILABLE:
+        return None
+    try:
+        return ".".join(str(n) for n in OceanDirectAPI().get_api_version_numbers())
+    except Exception:
+        return None
+
+
 def open_first_device() -> "Spectrometer | None":
     """Open the first spectrometer found on the USB bus.
 
