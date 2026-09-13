@@ -444,6 +444,22 @@ def set_string_plot_average_dash_overlay_method(value: str):
     QSettings().setValue(_STRING_PLOT_AVERAGE_DASH_OVERLAY_METHOD, value)
 
 
+_STRING_PLOT_AVERAGE_STD_DEV_OVERLAY = "string_plot_average_std_dev_overlay"
+STRING_PLOT_AVERAGE_STD_DEV_OVERLAY__DEFAULT = False
+
+
+def get_string_plot_average_std_dev_overlay() -> bool:
+    return QSettings().value(
+        _STRING_PLOT_AVERAGE_STD_DEV_OVERLAY,
+        defaultValue=STRING_PLOT_AVERAGE_STD_DEV_OVERLAY__DEFAULT,
+        type=bool,
+    )
+
+
+def set_string_plot_average_std_dev_overlay(value: bool):
+    QSettings().setValue(_STRING_PLOT_AVERAGE_STD_DEV_OVERLAY, value)
+
+
 _STRING_SIMULATION_VIEW_WINDOW = "string_simulation_view_window"
 STRING_SIMULATION_VIEW_WINDOW_ONE = "One Swath Width"
 STRING_SIMULATION_VIEW_WINDOW_ALL = "All Swaths"
@@ -1204,6 +1220,22 @@ def get_card_plot_average_dash_overlay_method() -> str:
 
 def set_card_plot_average_dash_overlay_method(value: str):
     QSettings().setValue(_CARD_PLOT_AVERAGE_DASH_OVERLAY_METHOD, value)
+
+
+_CARD_PLOT_AVERAGE_STD_DEV_OVERLAY = "card_plot_average_std_dev_overlay"
+CARD_PLOT_AVERAGE_STD_DEV_OVERLAY__DEFAULT = False
+
+
+def get_card_plot_average_std_dev_overlay() -> bool:
+    return QSettings().value(
+        _CARD_PLOT_AVERAGE_STD_DEV_OVERLAY,
+        defaultValue=CARD_PLOT_AVERAGE_STD_DEV_OVERLAY__DEFAULT,
+        type=bool,
+    )
+
+
+def set_card_plot_average_std_dev_overlay(value: bool):
+    QSettings().setValue(_CARD_PLOT_AVERAGE_STD_DEV_OVERLAY, value)
 
 
 _CARD_SIMULATION_VIEW_WINDOW = "card_simulation_view_window"

@@ -2,6 +2,7 @@ import numpy as np
 import accupatt.config as cfg
 
 from accupatt.models.passTable import _MPL_COLORS
+from accupatt.models.seriesDataBase import STD_DEV_LABEL
 from accupatt.models.seriesDataString import SeriesDataString
 from accupatt.widgets.mplwidget import MplWidget
 from accupatt.plotting import series_base_plotter
@@ -28,10 +29,16 @@ def plot_average(widget: MplWidget, series: SeriesDataString):
     if not a.empty:
         x = np.array(a["loc"], dtype=float)
         y = np.array(a["Average"], dtype=float)
+        mask = y != 0
         widget.canvas.ax.plot(
-            x[y != 0], y[y != 0], color="black", linewidth=2, label="Average"
+            x[mask], y[mask], color="black", linewidth=2, label="Average"
         )
-        widget.canvas.ax.fill_between(x[y != 0], 0, y[y != 0], alpha=0.7)
+        widget.canvas.ax.fill_between(x[mask], 0, y[mask], alpha=0.7)
+        if cfg.get_string_plot_average_std_dev_overlay() and STD_DEV_LABEL in a.columns:
+            sd = np.array(a[STD_DEV_LABEL], dtype=float)
+            series_base_plotter.plot_std_dev_overlay(
+                widget, x[mask], y[mask], sd[mask]
+            )
         _sw = series.swath_adjusted
         if cfg.get_string_plot_average_dash_overlay():
             method = cfg.get_string_plot_average_dash_overlay_method()

@@ -3,6 +3,7 @@ import accupatt.config as cfg
 
 from accupatt.models.passDataCard import PassDataCard
 from accupatt.models.passTable import _MPL_COLORS
+from accupatt.models.seriesDataBase import STD_DEV_LABEL
 from accupatt.models.seriesDataCard import SeriesDataCard
 from accupatt.widgets.mplwidget import MplWidget
 from accupatt.plotting import pass_card_plotter, series_base_plotter
@@ -36,9 +37,17 @@ def plot_average(widget: MplWidget, series: SeriesDataCard):
     avg = avgPass.get_data_mod(loc_units=series.swath_units, data=avg)
     avg["loc_units"] = series.swath_units
     pass_card_plotter.plot(widget, avgPass, series.swath_units, d=avg)
+    y_axis = cfg.get_card_plot_y_axis()
+    added_legend_entry = False
+    if cfg.get_card_plot_average_std_dev_overlay() and STD_DEV_LABEL in avg.columns:
+        added_legend_entry = series_base_plotter.plot_std_dev_overlay(
+            widget,
+            np.array(avg["loc"], dtype=float),
+            np.array(avg[y_axis], dtype=float),
+            np.array(avg[STD_DEV_LABEL], dtype=float),
+        )
     if cfg.get_card_plot_average_dash_overlay():
         method = cfg.get_card_plot_average_dash_overlay_method()
-        y_axis = cfg.get_card_plot_y_axis()
         if method == cfg.DASH_OVERLAY_METHOD_ISHA:
             half_swath = series.swath_adjusted / 2
             dash_x = [-half_swath, -half_swath, half_swath, half_swath]
@@ -54,10 +63,29 @@ def plot_average(widget: MplWidget, series: SeriesDataCard):
         widget.canvas.ax.plot(
             dash_x, dash_y, color="black", linewidth=1, dashes=(3, 2), label=dash_label
         )
-        if not cfg.get_card_plot_shading():
+        added_legend_entry = True
+    if added_legend_entry:
+        if cfg.get_card_plot_shading():
+            _extend_shading_legend(widget)
+        else:
             widget.canvas.ax.legend()
-        widget.canvas.ax.set_ylim(bottom=0, auto=None)
-        widget.canvas.draw()
+    widget.canvas.ax.set_ylim(bottom=0, auto=None)
+    widget.canvas.draw()
+
+
+def _extend_shading_legend(widget: MplWidget):
+    """
+    Append this plot's labeled artists to the shading-category legend installed by
+    pass_card_plotter, whose swatches are passed in as handles and so would be lost
+    by a bare ax.legend() call.
+    """
+    ax = widget.canvas.ax
+    handles, labels = ax.get_legend_handles_labels()
+    legend = ax.get_legend()
+    if legend is not None:
+        handles = list(legend.legend_handles) + handles
+        labels = [text.get_text() for text in legend.get_texts()] + labels
+    ax.legend(handles, labels, loc="center left", bbox_to_anchor=(1, 0.5))
 
 
 def plot_racetrack(widget: MplWidget, series: SeriesDataCard):

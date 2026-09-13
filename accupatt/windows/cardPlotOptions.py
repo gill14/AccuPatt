@@ -3,7 +3,7 @@ import os
 import accupatt.config as cfg
 from PyQt6 import uic
 from PyQt6.QtCore import pyqtSignal, pyqtSlot
-from PyQt6.QtWidgets import QGroupBox, QRadioButton
+from PyQt6.QtWidgets import QCheckBox, QGroupBox, QRadioButton
 
 Ui_Form, baseclass = uic.loadUiType(
     cfg.resource_path("resources", "cardPlotOptions.ui")
@@ -59,6 +59,10 @@ class CardPlotOptions(baseclass):
         self.rb_average_value.setChecked(dash == cfg.DASH_OVERLAY_METHOD_AVERAGE)
         self.rb_swath_box.toggled[bool].connect(self._rb_swath_box)
         self.rb_average_value.toggled[bool].connect(self._rb_average)
+
+        self.cb_std_dev_overlay: QCheckBox = self.ui.cb_std_dev_overlay
+        self.cb_std_dev_overlay.setChecked(cfg.get_card_plot_average_std_dev_overlay())
+        self.cb_std_dev_overlay.toggled[bool].connect(self._cb_std_dev_overlay)
 
         self.gb_simulation: QGroupBox = self.ui.gb_simulation
         self.rb_one: QRadioButton = self.ui.rb_one
@@ -152,6 +156,15 @@ class CardPlotOptions(baseclass):
 
     def _set_average_dash_overlay_method(self, option: str):
         cfg.set_card_plot_average_dash_overlay_method(option)
+        self.request_update_plots.emit(False, True, False)
+
+    """
+    Std. Dev. Overlay
+    """
+
+    @pyqtSlot(bool)
+    def _cb_std_dev_overlay(self, checked):
+        cfg.set_card_plot_average_std_dev_overlay(checked)
         self.request_update_plots.emit(False, True, False)
 
     """

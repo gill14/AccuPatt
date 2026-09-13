@@ -5,6 +5,10 @@ import accupatt.config as cfg
 from accupatt.models.passData import Pass
 from scipy.stats import variation
 
+# Column label carried alongside the average in any average DataFrame, holding the
+# sample standard deviation of the contributing passes at each location.
+STD_DEV_LABEL = "Std. Dev."
+
 
 class SeriesDataBase:
     def __init__(

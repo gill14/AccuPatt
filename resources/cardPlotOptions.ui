@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>432</width>
-    <height>423</height>
+    <height>451</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -176,6 +176,16 @@
        </spacer>
       </item>
      </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="cb_std_dev_overlay">
+     <property name="toolTip">
+      <string>Shade ±1 standard deviation of the contributing passes at every location</string>
+     </property>
+     <property name="text">
+      <string>Average Plot ±1 Std. Dev. Band</string>
+     </property>
     </widget>
    </item>
    <item>

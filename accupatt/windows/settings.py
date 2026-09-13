@@ -115,6 +115,9 @@ class Settings(baseclass):
             if cfg.get_string_plot_average_dash_overlay()
             else "None"
         )
+        self.ui.cb_string_std_dev_overlay.setChecked(
+            cfg.get_string_plot_average_std_dev_overlay()
+        )
         self.ui.cbb_string_simulation_view.addItems(
             [cfg.STRING_SIMULATION_VIEW_WINDOW_ONE, cfg.STRING_SIMULATION_VIEW_WINDOW_ALL]
         )
@@ -228,6 +231,9 @@ class Settings(baseclass):
             if cfg.get_card_plot_average_dash_overlay()
             else "None"
         )
+        self.ui.cb_card_std_dev_overlay.setChecked(
+            cfg.get_card_plot_average_std_dev_overlay()
+        )
         self.ui.cbb_card_simulation_view.addItems(
             [cfg.CARD_SIMULATION_VIEW_WINDOW_ONE, cfg.CARD_SIMULATION_VIEW_WINDOW_ALL]
         )
@@ -281,6 +287,9 @@ class Settings(baseclass):
         cfg.set_string_plot_average_dash_overlay(_string_overlay != "None")
         if _string_overlay != "None":
             cfg.set_string_plot_average_dash_overlay_method(_string_overlay)
+        cfg.set_string_plot_average_std_dev_overlay(
+            self.ui.cb_string_std_dev_overlay.isChecked()
+        )
         cfg.set_string_simulation_view_window(
             self.ui.cbb_string_simulation_view.currentText()
         )
@@ -339,6 +348,9 @@ class Settings(baseclass):
         cfg.set_card_plot_average_dash_overlay(_card_overlay != "None")
         if _card_overlay != "None":
             cfg.set_card_plot_average_dash_overlay_method(_card_overlay)
+        cfg.set_card_plot_average_std_dev_overlay(
+            self.ui.cb_card_std_dev_overlay.isChecked()
+        )
         cfg.set_card_simulation_view_window(
             self.ui.cbb_card_simulation_view.currentText()
         )

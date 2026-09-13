@@ -2,7 +2,7 @@ import accupatt.config as cfg
 import numpy as np
 import pandas as pd
 from accupatt.models.passData import Pass
-from accupatt.models.seriesDataBase import SeriesDataBase
+from accupatt.models.seriesDataBase import STD_DEV_LABEL, SeriesDataBase
 
 
 class SeriesDataString(SeriesDataBase):
@@ -51,7 +51,13 @@ class SeriesDataString(SeriesDataBase):
             s = d.set_index("loc")[p.name].multiply(p.string.equalize_factor)
             average_df = average_df.join(s, how="outer", lsuffix="_l", rsuffix="_r")
         average_df = average_df.interpolate(limit_area="inside")
-        average_df["Average"] = average_df.fillna(0).mean(axis="columns")
+        # Snapshot before adding derived columns so neither is fed back into the other
+        pass_df = average_df.fillna(0)
+        average_df["Average"] = pass_df.mean(axis="columns")
+        # Sample std dev across passes; undefined for a lone pass, so report 0
+        average_df[STD_DEV_LABEL] = (
+            pass_df.std(axis="columns", ddof=1) if len(passes) > 1 else 0.0
+        )
         return average_df.reset_index()
 
     # Overrides for superclass

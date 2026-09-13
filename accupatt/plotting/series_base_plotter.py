@@ -5,6 +5,8 @@ from accupatt.models.seriesDataBase import SeriesDataBase
 from accupatt.widgets.mplwidget import MplWidget
 from accupatt import config as cfg
 
+STD_DEV_LEGEND_LABEL = "±1 Std. Dev."
+
 
 def plot_simulation(
     widget: MplWidget,
@@ -90,6 +92,28 @@ def plot_cv_table(table_widget: QTableWidget, series: SeriesDataBase):
         item_sw.setText(f"{_sw} {series.swath_units}")
         item_rt.setText(f"{series._calcCV(average_df, average_y_label, _sw, False)} %")
         item_bf.setText(f"{series._calcCV(average_df, average_y_label, _sw, True)} %")
+
+
+def plot_std_dev_overlay(
+    widget: MplWidget, x: np.ndarray, y: np.ndarray, std_dev: np.ndarray
+) -> bool:
+    """
+    Shade ±1 standard deviation of y at every x. Drawn over the average fill (as a
+    later artist of the same zorder) so both halves of the band stay visible.
+    Returns True if a band was actually drawn.
+    """
+    if x.size == 0 or not np.any(std_dev > 0):
+        return False
+    widget.canvas.ax.fill_between(
+        x,
+        np.clip(y - std_dev, 0, None),
+        y + std_dev,
+        facecolor="black",
+        edgecolor="none",
+        alpha=0.18,
+        label=STD_DEV_LEGEND_LABEL,
+    )
+    return True
 
 
 def _configure(widget: MplWidget, swath_units: str, suppress_yticks: bool = False):

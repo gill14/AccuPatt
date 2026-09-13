@@ -3,7 +3,7 @@ import pandas as pd
 import accupatt.config as cfg
 from accupatt.models.passDataCard import PassDataCard
 from accupatt.models.passData import Pass
-from accupatt.models.seriesDataBase import SeriesDataBase
+from accupatt.models.seriesDataBase import STD_DEV_LABEL, SeriesDataBase
 
 
 class SeriesDataCard(SeriesDataBase):
@@ -48,6 +48,10 @@ class SeriesDataCard(SeriesDataBase):
 
         avg = pd.DataFrame(index=dd.index)
         avg[y_axis] = dd[y_cols].mean(axis=1)
+        # Sample std dev across passes; undefined for a lone pass, so report 0
+        avg[STD_DEV_LABEL] = (
+            dd[y_cols].std(axis=1, ddof=1) if len(y_cols) > 1 else 0.0
+        )
         avg["dv01"] = dd.loc[:, dd.columns.str.startswith("dv01")].mean(axis=1)
         avg["dv05"] = dd.loc[:, dd.columns.str.startswith("dv05")].mean(axis=1)
         avg["loc_units"] = self.swath_units

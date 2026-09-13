@@ -544,7 +544,21 @@
                </widget>
               </item>
               <item row="1" column="1">
-               <widget class="QComboBox" name="cbb_string_dash_overlay"/>
+               <layout class="QHBoxLayout" name="hl_string_dash_overlay">
+                <item>
+                 <widget class="QComboBox" name="cbb_string_dash_overlay"/>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="cb_string_std_dev_overlay">
+                  <property name="toolTip">
+                   <string>Shade ±1 standard deviation of the contributing passes at every location</string>
+                  </property>
+                  <property name="text">
+                   <string>±1 Std. Dev.</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
               </item>
               <item row="2" column="0">
                <widget class="QLabel" name="lbl_string_simulation_view">
@@ -1501,7 +1515,21 @@
                  </widget>
                 </item>
                 <item row="1" column="1">
-                 <widget class="QComboBox" name="cbb_card_dash_overlay"/>
+                 <layout class="QHBoxLayout" name="hl_card_dash_overlay">
+                  <item>
+                   <widget class="QComboBox" name="cbb_card_dash_overlay"/>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="cb_card_std_dev_overlay">
+                    <property name="toolTip">
+                     <string>Shade ±1 standard deviation of the contributing passes at every location</string>
+                    </property>
+                    <property name="text">
+                     <string>±1 Std. Dev.</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
                 </item>
                 <item row="2" column="0">
                  <widget class="QLabel" name="lbl_card_simulation_view">
