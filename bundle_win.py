@@ -43,7 +43,13 @@ if sys.platform == 'win32':
         '--windowed', # change to --nowindowed for console troubleshooting
         '--exclude-module=tkinter',
         '--exclude-module=py2app',
-        '--exclude-module=pyobjc-framework-ImageCaptureCore',
+        # PyInstaller excludes take MODULE names, not distribution names --
+        # 'pyobjc-framework-ImageCaptureCore' silently matched nothing. These
+        # are the modules scanCards.py imports on macOS; they can never resolve
+        # on Windows, and the scanner backend falls back cleanly when they don't.
+        '--exclude-module=ImageCaptureCore',
+        '--exclude-module=Foundation',
+        '--exclude-module=objc',
         '--hidden-import=matplotlib.backends.backend_svg',
         f'--additional-hooks-dir=./hooks',
         f'--add-data=../../resources{os.pathsep}resources',

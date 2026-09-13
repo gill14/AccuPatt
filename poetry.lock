@@ -1829,6 +1829,7 @@ description = "Python<->ObjC Interoperability Module"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
+markers = "sys_platform == \"darwin\""
 files = [
     {file = "pyobjc_core-12.2.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:56c6c39f1de059fcbb174ebca5525505fc8feaa89be2a28c329bf09b6b25ee75"},
     {file = "pyobjc_core-12.2.2-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:b9cdd686e32db8e451feb19f8a85bc4cd52c2893103881d04aca51e1f35371d1"},
@@ -1849,6 +1850,7 @@ description = "Wrappers for the Cocoa frameworks on macOS"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
+markers = "sys_platform == \"darwin\""
 files = [
     {file = "pyobjc_framework_cocoa-12.2.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:5a751c8033a3b51f7996f0327e0675eb44dcfdfe7920fae01e3d78b662723fff"},
     {file = "pyobjc_framework_cocoa-12.2.2-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:851dca4c16e70b405e5cd5a8c166cf7c445ae54a4cdd95ce9a523803172f32d1"},
@@ -1872,6 +1874,7 @@ description = "Wrappers for the framework ImageCaptureCore on macOS"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
+markers = "sys_platform == \"darwin\""
 files = [
     {file = "pyobjc_framework_imagecapturecore-12.2.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:cfb587b50a65e066ff8566e3365ff825a07adce2c7fb1e5825ef7c09583e5f10"},
     {file = "pyobjc_framework_imagecapturecore-12.2.2-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:7568da297c4c4beb2620c5619489e7a877dd234c835e91847701b062e02d9190"},
@@ -2583,4 +2586,4 @@ test = ["pytest", "ruff"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "7185fc158968d4c54b2c8cca363f3ecd093a793f8ff6cb7286e7c4b40640c7e1"
+content-hash = "932f1fcc3196f0024b920a078c5f1a1cf2dac637699d7e903d03b84739d13d7d"
