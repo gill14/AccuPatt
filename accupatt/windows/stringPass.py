@@ -152,7 +152,7 @@ class StringPass(baseclass):
                 * self.speed_per_milli
             ),
         )
-        # Take a full spectrum reading, correct dark pixels and nonlinearity if supported by device & backend
+        # Take a full spectrum reading, corrected per enable_corrections() in setupSpectrometer()
         intensities = self.spec.intensities()
         # record y_val (emission amplitute) and request plot update
         self.y = np.append(
@@ -418,6 +418,12 @@ class StringPass(baseclass):
             )
         except Exception:
             print("Unable to set Spectrometer Integration Time")
+            return
+        # Enable dark-pixel/nonlinearity correction so captures match diagnostics
+        try:
+            self.spec.enable_corrections()
+        except Exception:
+            print("Unable to enable Spectrometer Corrections")
             return
         int_ms = self.passData.string.dye.integration_time_milliseconds
         self._set_pill(
