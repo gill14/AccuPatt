@@ -1,5 +1,22 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+## [2.2.1] - 15 September 2026
+### Added
+- (MacOS) Apple Notarization to mitigate gatekeeper issues
+- Spectrometer Troubleshooting and Diagnostic Tool
+- WRK and USDA files to scope of database browser tool
+- Optional 1 std. dev. overlay for average plot
+### Changed
+- OceanDirect Spectrometer Driver packaging
+- String Pass Window Dye Pill text shows ex and em wavelengths
+- Swath spinbox cleanup and remove slider
+- Logo redesign for cross-platform visual consistency
+### Fixed
+- Nozzle/Atomization models import for dropdowns and calibration calculator
+- Spectrometer dark/nonlinearity corrections in stringPass
+- String series smooth window/order upsert on save
+- Phone number missing on report if pre-formatted
+- USDA and WRK import issues
 ## [2.2.0] - 21 June 2026
 ### Added
 - Unified Settings Window
@@ -273,7 +290,8 @@ All notable changes to this project will be documented in this file.
 - Initial rewrite of AccuPatt using Python/Qt. Based on prior (1.xx) version using Java/JavaFX. Final release of the legacy version is 1.06+.
 
 
-[Unreleased]: https://github.com/gill14/accupatt/compare/v2.0.20...HEAD
+[Unreleased]: https://github.com/gill14/accupatt/compare/v2.2.1...HEAD
+[2.2.1]: https://github.com/gill14/AccuPatt/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/gill14/AccuPatt/compare/v2.1.1...v2.2.0
 [2.1.1]: https://github.com/gill14/AccuPatt/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/gill14/AccuPatt/compare/v2.0.20...v2.1.0

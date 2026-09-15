@@ -18,7 +18,7 @@ def resource_path(*parts: str) -> str:
 
 VERSION_MAJOR = 2
 VERSION_MINOR = 2
-VERSION_RELEASE = 0
+VERSION_RELEASE = 1
 
 
 def get_version_string() -> str:

@@ -1,6 +1,6 @@
 [project]
 name="accupatt"
-version="2.2.0"
+version="2.2.1"
 description="Aircraft Spray Pattern Testing Analysis"
 readme = "README.md"
 requires-python = ">=3.12,<3.15"

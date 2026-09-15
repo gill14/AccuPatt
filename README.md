@@ -6,9 +6,9 @@ Minimum system requirements:
 - Windows 10 (x86-64 only if using compiled installer)
 - macOS 11 (ARM only if using compiled installer)
 ## For String Analysis
-Currently, AccuPatt is configured to interoperate only with the WRK String Spectrometer System, available for purchase from WRK of Oklahoma. While the timeframe is unknown, interoperability is also planned for the USDA-ARS Aerial Application Technology Research Unit's Spectrometer System.
+Currently, AccuPatt is configured to interoperate only with the WRK String Spectrometer System. Limited view-only functionality for past AccuPatt (.xlsx), USDA (.txt, .prn) and WRK (.1A, etc.) is also included.
 ## For Spray Card Analysis
-A flatbed scanner (and spray cards, of course!). You will use the scanning software that came with the scanner (or any other software of your choice) to scan the cards. AccuPatt can then be used to process those images and perform stain/droplet analyses.
+A flatbed scanner (and spray cards, of course!). You can use the scanning software that came with the scanner (or any other software of your choice) to scan the cards, then import the images for card segmentation and processing. On MacOS, scanning may alternatively be done natively within AccuPatt.
 # How much does it cost?
 If you are satisfied with the application and it provides value for your operation, consider supporting the National Aerial Application Research and Education Foundation (NAAREF). NAAREF is a 501(c)(3) non-profit organization that seeks to promote and foster research, technology transfer and advanced education among aerial applicators, allied industries, government agencies and academic institutions.
 # How can I contribute or make my own changes?
